@@ -14,11 +14,11 @@
       --border: #1a2a1c;
       --gold: #c8a94a;
       --gold2: #8a7030;
-      --green: #52c97a;
+      --green: #3fad64;
       --red: #c94040;
       --amber: #d4842a;
-      --text: #c8d4c8;
-      --dim: #8aaa8a;
+      --text: #d0d8d0;
+      --dim: #7a9a7a;
       --muted: #1a2a1c;
     }
 
@@ -36,6 +36,7 @@
       background: var(--bg);
       color: var(--text);
       font-family: 'IBM Plex Mono', monospace;
+      font-size: 13px;
       min-height: 100vh;
       overflow-x: hidden;
     }
@@ -302,7 +303,7 @@
     }
 
     .hs-l {
-      font-size: 7px;
+      font-size: 8px;
       letter-spacing: 3px;
       color: var(--dim);
       text-transform: uppercase;
@@ -462,7 +463,7 @@
     }
 
     .ins-text {
-      font-size: 12px;
+      font-size: 13px;
       color: var(--text);
       line-height: 1.7;
       padding-right: 80px;
@@ -526,7 +527,7 @@
     }
 
     .mini-l {
-      font-size: 7px;
+      font-size: 8px;
       letter-spacing: 2px;
       color: var(--dim);
       text-transform: uppercase;
@@ -562,7 +563,7 @@
     }
 
     .bar-label {
-      font-size: 10px;
+      font-size: 11px;
       color: var(--gold);
     }
 
@@ -596,7 +597,7 @@
     }
 
     .bar-val {
-      font-size: 10px;
+      font-size: 11px;
       color: var(--text);
       text-align: right;
     }
@@ -698,7 +699,7 @@
     }
 
     .tbl td {
-      font-size: 11px;
+      font-size: 12px;
       padding: 9px 12px 9px 0;
       border-bottom: 1px solid var(--muted);
       color: var(--text);
@@ -861,7 +862,7 @@
       border: 1px solid var(--border);
       border-radius: 4px;
       padding: 8px 12px;
-      font-size: 10px;
+      font-size: 11px;
     }
 
     .hrow-pos {
@@ -1178,10 +1179,15 @@
     <div id="paste-wrap">
       <div class="paste-box">
         <div class="paste-suit">♠</div>
-        <div class="paste-title">Paste your session export</div>
-        <div class="paste-sub">Hit Export in the Tampermonkey panel, then paste the JSON below</div>
-        <textarea id="jin" placeholder="Paste JSON here..."></textarea>
-        <button class="go-btn" id="go-btn">Analyse Session</button>
+        <div class="paste-title">Analyse your session</div>
+        <div class="paste-sub">Click below to paste your tracked session data from the TC Poker Tracker</div>
+        <button class="go-btn" id="paste-btn" style="margin-bottom:14px;">Paste from Clipboard</button>
+        <div id="paste-error" style="display:none;font-size:10px;color:var(--red);margin-bottom:10px;"></div>
+        <div style="border-top:1px solid var(--border);padding-top:14px;margin-top:4px;">
+          <div style="font-size:9px;color:var(--dim);margin-bottom:8px;">Or paste manually:</div>
+          <textarea id="jin" placeholder="Paste JSON here..."></textarea>
+          <button class="go-btn" id="go-btn" style="border-color:var(--gold2);color:var(--gold2);">Analyse Session</button>
+        </div>
         <div id="restore-block" style="display:none;" class="restore-block">
           <div class="restore-label" id="restore-label"></div>
           <button class="go-btn" id="restore-btn" style="margin-top:0;border-color:var(--gold2);color:var(--gold2);">Restore Previous Session</button>
@@ -1210,6 +1216,8 @@
           <button class="tab" data-tab="log">Hand Log</button>
         </div>
       </div>
+
+      <div id="sample-note"></div>
 
       <div class="panel on" id="p-cards"></div>
       <div class="panel" id="p-position"></div>
@@ -1820,7 +1828,7 @@
         year: 'numeric'
       });
       // HERO
-      const sampleNote = d.n < 50 ? '<div style="padding:8px 32px;font-size:9px;color:var(--amber);background:rgba(212,132,42,0.06);border-bottom:1px solid var(--border);">⚠ Small sample: ' + d.n + ' hands. The more hands you play and track, the more accurate these stats become. Aim for 100+ hands for reliable patterns.</div>' : '';
+      const sampleNote = d.n < 50 ? '<div style="padding:12px 32px;font-size:12px;color:var(--amber);background:rgba(212,132,42,0.08);border-bottom:1px solid var(--border);">⚠ Small sample: ' + d.n + ' hands. The more hands you play and track, the more accurate these stats become. Aim for 100+ hands for reliable patterns.</div>' : '';
       document.getElementById('hero-strip').innerHTML = [{
           l: 'Hands',
           v: d.n,
@@ -1851,10 +1859,9 @@
           c: 'w'
         },
       ].map(h => '<div class="hs"><div class="hs-l">' + h.l + '</div><div class="hs-v ' + h.c + '">' + h.v + '</div></div>').join('');
-      // Insert sample note after hero strip if needed
-      if (sampleNote) {
-        document.getElementById('hero-strip').insertAdjacentHTML('afterend', sampleNote);
-      }
+      // Insert sample note if needed
+      var noteEl = document.getElementById('sample-note');
+      if (noteEl) noteEl.innerHTML = sampleNote;
       // ── CARDS ──
       const htOrder = ['Pocket Pairs', 'Broadway', 'Ace-Rag', 'Suited Connectors', 'Suited', 'Connectors', 'Offsuit Trash'];
       const htData = htOrder.filter(ht => d.htMap[ht]);
@@ -2259,7 +2266,7 @@
             freqGrid += '<div class="rc" style="background:' + freqColor(data.dealt) + ';" data-tip="' + key + ' | ' + data.dealt + ' dealt · ' + data.played + ' played"><span>' + key + '</span></div>';
           } else {
             // Unseen hands: visible text on dark background so the full grid is readable
-            var cellType = (ri === ci) ? 'pair' : (ri < ci) ? 'suited' : 'offsuit';
+            var cellType = (r === c) ? 'pair' : (r < c) ? 'suited' : 'offsuit';
             var cellLabel = cellType === 'pair' ? 'Pair' : cellType === 'suited' ? 'Suited' : 'Offsuit';
             wrGrid += '<div class="rc rc-unseen" data-tip="' + key + ' | Not yet dealt (' + cellLabel + ')"><span>' + key + '</span></div>';
             freqGrid += '<div class="rc rc-unseen" data-tip="' + key + ' | Not yet dealt (' + cellLabel + ')"><span>' + key + '</span></div>';
@@ -2409,6 +2416,23 @@
       const v = document.getElementById('jin').value.trim();
       if (v) process(v);
       else alert('Paste JSON first.');
+    };
+    document.getElementById('paste-btn').onclick = async function() {
+      var errEl = document.getElementById('paste-error');
+      errEl.style.display = 'none';
+      try {
+        var text = await navigator.clipboard.readText();
+        if (!text || !text.trim()) {
+          errEl.textContent = 'Clipboard is empty. Make sure you clicked "Analyse Session" in the TC Poker Tracker first.';
+          errEl.style.display = 'block';
+          return;
+        }
+        process(text.trim());
+      } catch (e) {
+        // Clipboard API denied or unavailable
+        errEl.textContent = 'Could not read clipboard. Your browser may have blocked it. Try pasting manually in the box below instead.';
+        errEl.style.display = 'block';
+      }
     };
     document.getElementById('jin').addEventListener('keydown', function(e) {
       if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) process(this.value);
