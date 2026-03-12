@@ -1019,6 +1019,42 @@
       background: var(--border);
     }
 
+    /* TABLE FILTER */
+    .table-filter {
+      background: var(--s2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      padding: 6px 10px;
+      border-radius: 4px;
+      outline: none;
+      cursor: pointer;
+      max-width: 220px;
+    }
+    .table-filter:hover { border-color: var(--dim); }
+    .table-filter:focus { border-color: var(--gold2); }
+    .table-filter option { background: var(--s1); color: var(--text); }
+
+    /* TABLES COMPARISON */
+    .tbl-compare { width: 100%; border-collapse: collapse; }
+    .tbl-compare th {
+      font-size: 8px; letter-spacing: 2px; color: var(--dim);
+      text-transform: uppercase; text-align: left;
+      padding: 0 12px 10px 0; border-bottom: 1px solid var(--border);
+    }
+    .tbl-compare td {
+      font-size: 12px; padding: 10px 12px 10px 0;
+      border-bottom: 1px solid var(--muted); color: var(--text); vertical-align: middle;
+    }
+    .tbl-compare td:first-child { color: var(--gold); font-size: 11px; }
+    .tbl-compare tr:last-child td { border-bottom: none; }
+    .tbl-compare .pnl-pos { color: var(--green); }
+    .tbl-compare .pnl-neg { color: var(--red); }
+    .tbl-compare .wr-good { color: var(--green); }
+    .tbl-compare .wr-bad { color: var(--red); }
+    .tbl-spark { display: inline-block; height: 14px; border-radius: 2px; min-width: 2px; vertical-align: middle; }
+
     /* Example Hand Modal */
     .modal-overlay {
       position: fixed;
@@ -1200,6 +1236,9 @@
         <div class="header-inner">
           <div class="header-title">TC Poker Analysis</div>
           <div style="display:flex;align-items:center;gap:16px;">
+            <select id="table-filter" style="display:none;" class="table-filter">
+              <option value="all">All Tables</option>
+            </select>
             <div class="header-meta" id="page-meta"></div>
             <button class="reset-btn" id="reset-btn">New session</button>
           </div>
@@ -1213,6 +1252,7 @@
           <button class="tab" data-tab="bets">Bets</button>
           <button class="tab" data-tab="combined">Combined</button>
           <button class="tab" data-tab="range">Range</button>
+          <button class="tab" data-tab="tables">Tables</button>
           <button class="tab" data-tab="log">Hand Log</button>
         </div>
       </div>
@@ -1226,6 +1266,7 @@
       <div class="panel" id="p-bets"></div>
       <div class="panel" id="p-combined"></div>
       <div class="panel" id="p-range"></div>
+      <div class="panel" id="p-tables"></div>
       <div class="panel" id="p-log"></div>
     </div>
   </div>
@@ -1320,11 +1361,13 @@
         rl.textContent = hands.length + ' hands from ' + (json.player || 'Unknown') + (date ? ' · ' + date : '') + ' found in storage';
         rb.style.display = 'block';
         document.getElementById('restore-btn').onclick = function() {
+          _allHands = hands;
+          _meta = {
+            player: json.player || 'Unknown',
+            exportedAt: json.exportedAt || new Date().toISOString()
+          };
           showImportLoader(hands.length, () => render(
-            analyse(hands), hands, {
-              player: json.player || 'Unknown',
-              exportedAt: json.exportedAt || new Date().toISOString()
-            }
+            analyse(hands), hands, _meta
           ));
         };
       } catch (_) {}
@@ -1593,6 +1636,87 @@
       if (hi - lo <= 2) return 'Connectors';
       return 'Offsuit Trash';
     }
+    // ── TABLE METADATA ─────────────────────────────────────────────────────────
+    const TABLE_META = {
+      2:{name:"Newbie Corner",bb:10,sb:5,max:9},
+      3:{name:"Hobo Holdem",bb:25,sb:13,max:9},
+      4:{name:"8-bit",bb:100,sb:50,max:5},
+      5:{name:"Sprinkles",bb:250,sb:125,max:9},
+      6:{name:"Gatling Gun",bb:1000,sb:500,max:9},
+      7:{name:"Quickdraw",bb:2500,sb:1250,max:9},
+      8:{name:"Tight Knit",bb:5000,sb:2500,max:6},
+      9:{name:"Ballsy",bb:25000,sb:12500,max:9},
+      10:{name:"Pound It",bb:250000,sb:125000,max:9},
+      11:{name:"Old 'n Slow",bb:100000,sb:50000,max:6},
+      12:{name:"Tripod",bb:1000000,sb:500000,max:3},
+      13:{name:"Slow Cooker",bb:5000000,sb:2500000,max:9},
+      14:{name:"Fire Pit",bb:25000000,sb:12500000,max:9},
+      15:{name:"High Rollers",bb:10000000,sb:5000000,max:9},
+      16:{name:"Oligarch",bb:100000000,sb:50000000,max:6},
+      17:{name:"Fourplay",bb:100000,sb:50000,max:4},
+      18:{name:"Duel at Dawn",bb:100000,sb:50000,max:2},
+      19:{name:"Juan on Juan",bb:5000000,sb:2500000,max:2},
+      20:{name:"Boom or Bust",bb:50000,sb:25000,max:9},
+      21:{name:"Old Folks Home",bb:500000,sb:250000,max:6},
+      22:{name:"Comatose Cove",bb:1000000,sb:500000,max:6},
+      23:{name:"Periodic",bb:100000,sb:50000,max:9},
+      24:{name:"E-asy Street",bb:500,sb:250,max:9},
+      25:{name:"Cat's Chance",bb:2500000,sb:1250000,max:9},
+      26:{name:"Broke Jokes",bb:50,sb:25,max:9},
+      27:{name:"Six of the Best",bb:10000,sb:5000,max:6},
+      28:{name:"River Wizard",bb:1000000,sb:500000,max:9},
+      32:{name:"Spilled Milk",bb:10,sb:5,max:6},
+      33:{name:"Dive Bar",bb:10,sb:5,max:6},
+      34:{name:"Lost at Sea",bb:10,sb:5,max:6},
+      35:{name:"Jaded",bb:10,sb:5,max:6},
+      36:{name:"Hell For",bb:10,sb:5,max:6},
+      37:{name:"Beach Please",bb:10,sb:5,max:6},
+      38:{name:"Cut the Cord",bb:10,sb:5,max:6},
+      39:{name:"Natural Talent",bb:10,sb:5,max:6},
+      40:{name:"Luxe",bb:10,sb:5,max:6},
+      41:{name:"Bloody Hell",bb:10,sb:5,max:6},
+      43:{name:"tsop test 1",bb:500,sb:250,max:4},
+      44:{name:"tsop test 2",bb:500,sb:250,max:7},
+    };
+    const BB_TO_TABLES = {};
+    for (const [id, t] of Object.entries(TABLE_META)) {
+      if (!BB_TO_TABLES[t.bb]) BB_TO_TABLES[t.bb] = [];
+      BB_TO_TABLES[t.bb].push(Number(id));
+    }
+    function inferTable(hand) {
+      if (hand.table) {
+        const num = String(hand.table).replace(/\D/g, '');
+        if (num && TABLE_META[num]) return Number(num);
+      }
+      const actions = hand.actions || [];
+      let bbAmt = null;
+      const players = new Set();
+      for (const line of actions) {
+        const clean = line.replace(/^>>\s*/, '').replace(/^\s+/, '').trim();
+        const ci = clean.indexOf(': ');
+        if (ci > 0) { const author = clean.slice(0, ci); if (!author.startsWith('The ')) players.add(author); }
+        const bbMatch = clean.match(/posted big blind \$?([\d,]+)/);
+        if (bbMatch) { bbAmt = parseInt(bbMatch[1].replace(/,/g, '')); continue; }
+        const bbChips = clean.match(/posted big blind ([\d,]+) chips/);
+        if (bbChips) { bbAmt = parseInt(bbChips[1].replace(/,/g, '')); }
+      }
+      const playerCount = players.size;
+      if (bbAmt === null) return null;
+      const candidates = BB_TO_TABLES[bbAmt];
+      if (!candidates || !candidates.length) return null;
+      if (candidates.length === 1) return candidates[0];
+      if (playerCount > 0) {
+        const fits = candidates.filter(id => playerCount <= TABLE_META[id].max);
+        if (fits.length === 1) return fits[0];
+        if (fits.length > 1) { fits.sort((a, b) => Math.abs(TABLE_META[a].max - playerCount) - Math.abs(TABLE_META[b].max - playerCount)); return fits[0]; }
+      }
+      return candidates[0];
+    }
+    function getTableLabel(tableId) {
+      if (!tableId || !TABLE_META[tableId]) return 'Unknown';
+      const t = TABLE_META[tableId];
+      return t.name + ' (' + fmt(t.sb) + '/' + fmt(t.bb) + ')';
+    }
     // ── ANALYSE ────────────────────────────────────────────────────────────────
     function analyse(hands) {
       const n = hands.length;
@@ -1826,7 +1950,7 @@
         day: 'numeric',
         month: 'short',
         year: 'numeric'
-      });
+      }) + (_allHands.length && hands.length < _allHands.length ? ' · Filtered: ' + hands.length + '/' + _allHands.length + ' hands' : '');
       // HERO
       const sampleNote = d.n < 50 ? '<div style="padding:12px 32px;font-size:12px;color:var(--amber);background:rgba(212,132,42,0.08);border-bottom:1px solid var(--border);">⚠ Small sample: ' + d.n + ' hands. The more hands you play and track, the more accurate these stats become. Aim for 100+ hands for reliable patterns.</div>' : '';
       document.getElementById('hero-strip').innerHTML = [{
@@ -2368,21 +2492,117 @@
         if (nextBtn) nextBtn.onclick = function() { logPage++; renderLogPage(); };
       }
       renderLogPage();
+      // ── TABLES COMPARISON ──
+      const allTableGroups = {};
+      for (const h of _allHands) {
+        const tid = inferTable(h);
+        const key = tid || 'unknown';
+        if (!allTableGroups[key]) allTableGroups[key] = [];
+        allTableGroups[key].push(h);
+      }
+      const filterEl = document.getElementById('table-filter');
+      const prevVal = filterEl.value || 'all';
+      filterEl.innerHTML = '<option value="all">All Tables (' + _allHands.length + ')</option>';
+      const sortedTables = Object.keys(allTableGroups)
+        .filter(k => k !== 'unknown')
+        .map(Number)
+        .sort((a, b) => (TABLE_META[b] ? TABLE_META[b].bb : 0) - (TABLE_META[a] ? TABLE_META[a].bb : 0));
+      for (const tid of sortedTables) {
+        const label = getTableLabel(tid);
+        const count = allTableGroups[tid].length;
+        filterEl.innerHTML += '<option value="' + tid + '">' + label + ' (' + count + ')</option>';
+      }
+      if (allTableGroups['unknown'] && allTableGroups['unknown'].length) {
+        filterEl.innerHTML += '<option value="unknown">Unknown (' + allTableGroups['unknown'].length + ')</option>';
+      }
+      filterEl.style.display = Object.keys(allTableGroups).length > 1 ? '' : 'none';
+      filterEl.value = prevVal;
+      let tablesHtml = '';
+      if (Object.keys(allTableGroups).length <= 1) {
+        tablesHtml = ins('n', 'Single Table', 'All hands are from a single table. Play across multiple tables to see comparisons.', []);
+      } else {
+        const tableRows = [];
+        const allTableIds = [...sortedTables];
+        if (allTableGroups['unknown']) allTableIds.push('unknown');
+        for (const tid of allTableIds) {
+          const tHands = allTableGroups[tid];
+          const tD = analyse(tHands);
+          const tWr = pct(tD.handsWon, tD.handsWithOutcome);
+          const tNet = tD.totalWonAmount - tD.totalInvested;
+          const tVpip = pct(tD.vpip, tD.n);
+          const tAgg = pct(tD.raises, tD.totalActs);
+          const label = tid === 'unknown' ? 'Unknown' : getTableLabel(tid);
+          const blinds = tid !== 'unknown' && TABLE_META[tid] ? fmt(TABLE_META[tid].sb) + '/' + fmt(TABLE_META[tid].bb) : '';
+          tableRows.push({ tid, label, blinds, n: tD.n, wr: tWr, net: tNet, vpipP: tVpip, aggP: tAgg,
+            avgPot: tD.handsWithOutcome > 0 ? Math.round((tD.totalWonAmount + tD.totalInvested) / tD.handsWithOutcome) : 0
+          });
+        }
+        const maxHands = Math.max(...tableRows.map(r => r.n), 1);
+        tablesHtml += '<div class="sec-subtitle" style="margin-top:0;">Performance by Table</div>';
+        tablesHtml += '<div style="overflow-x:auto;"><table class="tbl-compare"><thead><tr>';
+        tablesHtml += '<th>Table</th><th>Blinds</th><th>Hands</th><th></th><th>Win Rate</th><th>Net P&L</th><th>VPIP</th><th>Aggression</th><th>Avg Pot</th>';
+        tablesHtml += '</tr></thead><tbody>';
+        for (const r of tableRows) {
+          const barW = Math.round(r.n / maxHands * 100);
+          tablesHtml += '<tr><td>' + r.label + '</td><td style="color:var(--dim);font-size:10px;">' + r.blinds + '</td><td>' + r.n + '</td>';
+          tablesHtml += '<td style="width:80px;"><span class="tbl-spark" style="width:' + barW + '%;background:var(--gold2);"></span></td>';
+          tablesHtml += '<td class="' + (r.wr >= 50 ? 'wr-good' : r.wr !== null ? 'wr-bad' : '') + '">' + (r.wr !== null ? r.wr + '%' : '—') + '</td>';
+          tablesHtml += '<td class="' + (r.net >= 0 ? 'pnl-pos' : 'pnl-neg') + '">' + (r.net >= 0 ? '+' : '') + fmt(r.net) + '</td>';
+          tablesHtml += '<td>' + (r.vpipP !== null ? r.vpipP + '%' : '—') + '</td>';
+          tablesHtml += '<td>' + (r.aggP !== null ? r.aggP + '%' : '—') + '</td>';
+          tablesHtml += '<td style="color:var(--dim);">' + (r.avgPot > 0 ? fmt(r.avgPot) : '—') + '</td></tr>';
+        }
+        tablesHtml += '</tbody></table></div>';
+        const tIns = [];
+        if (tableRows.length >= 2) {
+          const best = tableRows.filter(r => r.wr !== null).sort((a, b) => b.wr - a.wr)[0];
+          const worst = tableRows.filter(r => r.wr !== null && r.n >= 5).sort((a, b) => a.wr - b.wr)[0];
+          const mostProfit = tableRows.sort((a, b) => b.net - a.net)[0];
+          if (best && best.wr >= 40) tIns.push(ins(best.wr >= 50 ? 'g' : 'n', 'Best Win Rate', best.label + ' at ' + best.wr + '% across ' + best.n + ' hands.', [{v: best.wr + '%', hi: true}, {v: best.n + ' hands'}]));
+          if (worst && worst.wr < 40 && worst.n >= 5) tIns.push(ins('r', 'Lowest Win Rate', worst.label + ' at ' + worst.wr + '% across ' + worst.n + ' hands. Consider whether the stakes or player pool suit your style.', [{v: worst.wr + '%', hi: true}, {v: worst.n + ' hands'}]));
+          if (mostProfit && mostProfit.net > 0) tIns.push(ins('g', 'Most Profitable', mostProfit.label + ' with a net of +' + fmt(mostProfit.net) + '.', [{v: '+' + fmt(mostProfit.net), hi: true}]));
+          const bigLoss = tableRows.filter(r => r.net < 0).sort((a, b) => a.net - b.net)[0];
+          if (bigLoss) tIns.push(ins('a', 'Biggest Loss', bigLoss.label + ' at ' + fmt(bigLoss.net) + '. Review whether leaks are table-specific or general.', [{v: fmt(bigLoss.net), hi: true}]));
+        }
+        if (!tIns.length) tIns.push(ins('n', 'Tables', 'More data needed for table-level insights.', []));
+        tablesHtml += '<div style="margin-top:24px;">' + tIns.join('') + '</div>';
+      }
+      document.getElementById('p-tables').innerHTML = tablesHtml;
+      // ── TABLE FILTER HANDLER ──
+      filterEl.onchange = function() {
+        const v = this.value;
+        let filtered = _allHands;
+        if (v !== 'all') {
+          filtered = _allHands.filter(h => {
+            const tid = inferTable(h);
+            return v === 'unknown' ? tid === null : tid === Number(v);
+          });
+        }
+        if (!filtered.length) { alert('No hands for this table.'); this.value = 'all'; return; }
+        const fd = analyse(filtered);
+        render(fd, filtered, _meta);
+        document.getElementById('table-filter').value = v;
+      };
       document.getElementById('reset-btn').onclick = function() {
         document.getElementById('paste-wrap').style.display = 'block';
         document.getElementById('jin').value = '';
         document.getElementById('dash').classList.remove('on');
+        document.getElementById('table-filter').value = 'all';
+        document.getElementById('table-filter').style.display = 'none';
+        _allHands = [];
+        _meta = {};
         document.querySelectorAll('.tab').forEach((b, i) => {
           b.classList.toggle('active', i === 0);
         });
         document.querySelectorAll('.panel').forEach((p, i) => {
           p.classList.toggle('on', i === 0);
         });
-        // Re-check for saved session so restore button reappears
         checkSavedSession();
       };
     }
     // ── PROCESS ────────────────────────────────────────────────────────────────
+    let _allHands = [];
+    let _meta = {};
     function process(raw) {
       let json;
       try {
@@ -2396,21 +2616,21 @@
         alert('No hands found in export. Play some hands first, then export.');
         return;
       }
-      // Persist to localStorage
       try {
         localStorage.setItem('tc_poker_analysis', raw);
       } catch (_) {}
-      const d = analyse(hands);
       var playerName = json.player || 'Unknown';
       if (playerName === 'Unknown') {
         var detected = detectPlayerFromActions(hands);
         if (detected) playerName = detected;
       }
-      const meta = {
+      _allHands = hands;
+      _meta = {
         player: playerName,
         exportedAt: json.exportedAt || new Date().toISOString()
       };
-      showImportLoader(hands.length, () => render(d, hands, meta));
+      const d = analyse(hands);
+      showImportLoader(hands.length, () => render(d, hands, _meta));
     }
     document.getElementById('go-btn').onclick = function() {
       const v = document.getElementById('jin').value.trim();
