@@ -946,17 +946,6 @@
       font-weight: 400;
     }
 
-    /* Dealt but never played range cells */
-    .rc-dealt-only {
-      background: #151e17;
-      border: 1px solid #1e2e20;
-    }
-
-    .rc-dealt-only span {
-      color: #3a5a3e !important;
-      font-weight: 400;
-    }
-
     /* Log header row */
     .hrow-header {
       background: transparent !important;
@@ -1200,66 +1189,6 @@
       border-color: var(--gold2);
       color: var(--gold);
     }
-
-    /* Hand list modal (intermediate step before hand replay) */
-    .hand-list-item {
-      display: grid;
-      grid-template-columns: 70px 50px 1fr 80px;
-      gap: 8px;
-      align-items: center;
-      padding: 8px 10px;
-      border-bottom: 1px solid rgba(26,42,28,0.5);
-      cursor: pointer;
-      border-radius: 3px;
-      transition: background .15s;
-    }
-
-    .hand-list-item:hover {
-      background: var(--s2);
-    }
-
-    .hand-list-item:last-child {
-      border-bottom: none;
-    }
-
-    .hli-cards {
-      font-size: 12px;
-      font-weight: 500;
-      color: var(--text);
-    }
-
-    .hli-pos {
-      font-size: 10px;
-      color: var(--gold);
-    }
-
-    .hli-board {
-      font-size: 9px;
-      color: var(--dim);
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .hli-result {
-      font-size: 11px;
-      font-weight: 500;
-      text-align: right;
-    }
-
-    .hli-result.w { color: var(--green); }
-    .hli-result.l { color: var(--red); }
-    .hli-result.f { color: var(--dim); }
-
-    /* Make hand log rows clickable */
-    .hrow-clickable {
-      cursor: pointer;
-      transition: background .15s;
-    }
-
-    .hrow-clickable:hover {
-      background: var(--s2);
-    }
   </style>
 </head>
 
@@ -1311,7 +1240,7 @@
             <select id="table-filter" style="display:none;" class="table-filter">
               <option value="all">All Tables</option>
             </select>
-            <div class="header-meta" id="page-meta"></div>
+            <div class="header-meta" id="page-meta" style="cursor:pointer;padding:4px 8px;border-radius:4px;border:1px solid transparent;transition:border-color .2s,color .2s;" onmouseover="this.style.borderColor='var(--border)';this.style.color='var(--gold)';" onmouseout="this.style.borderColor='transparent';this.style.color='';" onclick="openProfile()"></div>
             <button class="reset-btn" id="reset-btn">New session</button>
           </div>
         </div>
@@ -1342,6 +1271,7 @@
       <div class="panel" id="p-tables"></div>
       <div class="panel" id="p-trends"></div>
       <div class="panel" id="p-log"></div>
+      <div class="panel" id="p-profile"></div>
     </div>
   </div>
 
@@ -1582,20 +1512,10 @@
       var title = '<div class="modal-title">' + (hand.hole ? hand.hole.join(' ') : '??') + '</div>';
       var subtitle = '<div class="modal-subtitle">Example hand · ' + (hand.position || '?') + ' position</div>';
 
-      var modalResult = '?';
-      if (hand.outcome) {
-        var modalInvested = hand.invested || calcInvestmentFromActions(hand.actions || []);
-        var modalAmt = hand.outcome.amount || 0;
-        if (hand.outcome.result === 'won' && modalAmt < modalInvested) {
-          modalResult = 'lost (got change back)';
-        } else {
-          modalResult = hand.outcome.result;
-        }
-      }
       var metaHtml = '<div class="modal-hand-meta">' +
         '<span>Board: <strong>' + (hand.board && hand.board.length ? hand.board.join(' ') : 'none') + '</strong></span>' +
         '<span>Pot: <strong>' + fmt(hand.pot || 0) + '</strong></span>' +
-        '<span>Result: <strong>' + modalResult + '</strong></span>' +
+        '<span>Result: <strong>' + (hand.outcome ? hand.outcome.result : '?') + '</strong></span>' +
         '</div>';
 
       var actionsHtml = '';
@@ -1632,14 +1552,6 @@
       }
     }
 
-    function findAllMatchingHands(filterFn) {
-      var results = [];
-      for (var i = _modalHands.length - 1; i >= 0; i--) {
-        if (filterFn(_modalHands[i])) results.push(_modalHands[i]);
-      }
-      return results;
-    }
-
     function findExampleHand(filterFn) {
       for (var i = _modalHands.length - 1; i >= 0; i--) {
         if (filterFn(_modalHands[i])) return _modalHands[i];
@@ -1647,108 +1559,16 @@
       return null;
     }
 
-    function handResultLabel(hand) {
-      if (!hand.outcome) return { text: '?', cls: 'f' };
-      var invested = hand.invested || calcInvestmentFromActions(hand.actions || []);
-      var a = hand.outcome.amount || 0;
-      if (hand.outcome.result === 'won') {
-        if (a < invested) return { text: '-' + fmt(invested - a), cls: 'l' };
-        var profit = a - invested;
-        return { text: '+' + fmt(profit > 0 ? profit : a), cls: 'w' };
-      } else if (hand.outcome.result === 'folded') {
-        return { text: invested > 0 ? '-' + fmt(invested) : 'Folded', cls: invested > 0 ? 'l' : 'f' };
-      } else {
-        return { text: '-' + fmt(invested), cls: 'l' };
-      }
-    }
-
-    // Show a modal with a list of hands. Clicking one opens the full hand replay.
-    function showHandListModal(titleText, hands, filterFn, coachingNote) {
-      var matching;
-      if (filterFn) {
-        matching = findAllMatchingHands(filterFn);
-      } else if (typeof titleText === 'string' && hands) {
-        // Range key mode: filter hands by parseHoleKey match
-        var rk = titleText;
-        matching = hands.filter(function(h) {
-          return parseHoleKey(h.hole) === rk;
-        });
-        titleText = rk;
-      }
-      if (!matching || !matching.length) return;
-
-      var existing = document.getElementById('example-hand-modal');
-      if (existing) existing.remove();
-
-      var overlay = document.createElement('div');
-      overlay.id = 'example-hand-modal';
-      overlay.className = 'modal-overlay';
-      overlay.onclick = function(e) { if (e.target === overlay) closeModal(); };
-
-      var box = document.createElement('div');
-      box.className = 'modal-box';
-      box.style.position = 'relative';
-
-      var html = '<button class="modal-close" id="modal-close-btn">&times;</button>';
-      html += '<div class="modal-title">' + titleText + '</div>';
-      html += '<div class="modal-subtitle">' + matching.length + ' hand' + (matching.length !== 1 ? 's' : '') + '</div>';
-      html += '<div style="margin-top:12px;">';
-      for (var i = 0; i < matching.length; i++) {
-        var h = matching[i];
-        var res = handResultLabel(h);
-        var cards = h.hole ? h.hole.join(' ') : '??';
-        var board = h.board && h.board.length ? h.board.join(' ') : 'no board';
-        html += '<div class="hand-list-item" data-hli-idx="' + i + '">' +
-          '<div class="hli-cards">' + cards + '</div>' +
-          '<div class="hli-pos">' + (h.position || '?') + '</div>' +
-          '<div class="hli-board">' + board + '</div>' +
-          '<div class="hli-result ' + res.cls + '">' + res.text + '</div>' +
-          '</div>';
-      }
-      html += '</div>';
-
-      box.innerHTML = html;
-      overlay.appendChild(box);
-      document.body.appendChild(overlay);
-      requestAnimationFrame(function() { overlay.classList.add('show'); });
-      document.getElementById('modal-close-btn').onclick = closeModal;
-
-      // Bind clicks on each hand row
-      box.querySelectorAll('.hand-list-item').forEach(function(el) {
-        el.onclick = function() {
-          var idx = parseInt(el.getAttribute('data-hli-idx'));
-          var hand = matching[idx];
-          if (hand) {
-            closeModal();
-            setTimeout(function() {
-              showExampleHandModal(hand, coachingNote || null);
-            }, 250);
-          }
-        };
-      });
-    }
-
-    function insWithExample(sev, label, text, chips, filterFnOrHand, coachingNote) {
+    function insWithExample(sev, label, text, chips, exampleHand, coachingNote) {
       var base = ins(sev, label, text, chips);
-      // Accept either a single hand (legacy) or a filter function (new)
-      var isFilterFn = typeof filterFnOrHand === 'function';
-      var singleHand = !isFilterFn ? filterFnOrHand : null;
-      if (!isFilterFn && !singleHand) return base;
-
+      if (!exampleHand) return base;
       var btnId = 'ex-' + Math.random().toString(36).slice(2, 8);
-      var btn = '<button class="example-hand-btn" id="' + btnId + '">See card examples</button>';
+      var btn = '<button class="example-hand-btn" id="' + btnId + '">See example hand</button>';
       var insertPoint = base.lastIndexOf('</div>');
       var result = base.slice(0, insertPoint) + btn + base.slice(insertPoint);
       setTimeout(function() {
         var el = document.getElementById(btnId);
-        if (!el) return;
-        if (isFilterFn) {
-          el.onclick = function() {
-            showHandListModal(label, _modalHands, filterFnOrHand, coachingNote);
-          };
-        } else {
-          el.onclick = function() { showExampleHandModal(singleHand, coachingNote); };
-        }
+        if (el) el.onclick = function() { showExampleHandModal(exampleHand, coachingNote); };
       }, 50);
       return result;
     }
@@ -2041,26 +1861,16 @@
           const invested = h.invested || calcInvestmentFromActions(h.actions || []);
           if (cash) totalInvested += invested;
           const a = h.outcome.amount || 0;
-          // Fix: Torn reports getting change back as a "win" (e.g. shove 10M vs 1M call,
-          // opponent wins, you get 9M back and Torn says you "won 9M"). Detect by checking
-          // if the "won" amount is less than what was invested — that's actually a loss.
-          const isRealWin = h.outcome.result === 'won' && a >= invested;
-          if (isRealWin) {
+          if (h.outcome.result === 'won') {
             handsWon++;
             const profit = a - invested;
             if (cash) totalWonAmount += a;
             posMap[p].won++;
             if (cash) posMap[p].pnl += profit;
-          } else if (h.outcome.result === 'won' && a < invested) {
-            // False win: got change back but actually lost
-            if (cash) totalWonAmount += a; // include returned amount for P&L calc
-            if (cash) posMap[p].pnl -= (invested - a);
           } else {
             // folded or lost: investment is the loss
             if (cash) posMap[p].pnl -= invested;
           }
-          // Store whether this was a real win for use by range/ht counters
-          h._isRealWin = isRealWin;
         }
         const hkey = parseHoleKey(h.hole);
         if (hkey) {
@@ -2078,7 +1888,7 @@
             vpip++;
             posMap[p].vpip++;
           }
-          if (h._isRealWin) rangeMap[hkey].won++;
+          if (h.outcome && h.outcome.result === 'won') rangeMap[hkey].won++;
           const pfFold = myActs.find(a => a.street === 'Preflop' && a.type === 'fold');
           if (pfFold) posMap[p].foldPre++;
           const ht = classifyKey(hkey);
@@ -2089,7 +1899,7 @@
           };
           htMap[ht].dealt++;
           if (didPlay) htMap[ht].played++;
-          if (h._isRealWin) htMap[ht].won++;
+          if (h.outcome && h.outcome.result === 'won') htMap[ht].won++;
           for (const a of myActs) {
             const s = a.street;
             if (!ss[s]) continue;
@@ -2448,24 +2258,24 @@
       actHtml += '</tbody></table></div>';
       const aIns = [];
       if (caPct > raPct + 20) {
-        var callHeavyFilter = function(h) {
+        var exCallHeavy = findExampleHand(function(h) {
           var ma = parseActions(h.actions).filter(function(a) { return a.isMe; });
           return ma.some(function(a) { return a.type === 'call'; }) && !ma.some(function(a) { return a.type === 'raise'; }) && h.outcome && h.outcome.result !== 'won';
-        };
+        });
         aIns.push(insWithExample('a', 'Call-Heavy', 'You call ' + caPct + '% but raise only ' + raPct + '% of the time. In TC where everyone calls anyway, raising more extracts more value.', [{
           v: 'Call: ' + caPct + '%'
         }, {
           v: 'Raise: ' + raPct + '%'
-        }], callHeavyFilter, 'This hand was called when a raise could have taken down the pot or extracted more value. In TC, passive play lets draws get there for free.'));
+        }], exCallHeavy, 'This hand was called when a raise could have taken down the pot or extracted more value. In TC, passive play lets draws get there for free.'));
       }
       if (aggPct !== null && aggPct < 15) {
-        var lowAggFilter = function(h) {
+        var exLowAgg = findExampleHand(function(h) {
           var ma = parseActions(h.actions).filter(function(a) { return a.isMe; });
           return ma.some(function(a) { return a.type === 'call'; }) && !ma.some(function(a) { return a.type === 'raise'; });
-        };
+        });
         aIns.push(insWithExample('r', 'Low Aggression', 'Only ' + aggPct + '% aggression. Strong hands need to be bet, not called.', [{
           v: d.raises + ' raises from ' + actTotal + ' actions'
-        }], lowAggFilter, 'Only ' + aggPct + '% of actions are raises. Strong hands need to be bet for value. Checking and calling lets opponents draw cheaply and control the pot size.'));
+        }], exLowAgg, 'Only ' + aggPct + '% of actions are raises. Strong hands need to be bet for value. Checking and calling lets opponents draw cheaply and control the pot size.'));
       }
       else if (aggPct !== null && aggPct <= 40) aIns.push(ins('g', 'Aggression', aggPct + '% raise frequency is solid. Taking initiative without overdoing it.', [{
         v: d.raises + ' raises'
@@ -2476,7 +2286,7 @@
       if (d.faced3bet >= 3) {
         const f3 = pct(d.fold3bet, d.faced3bet);
         if (f3 > 70) {
-          var threeBetFilter = function(h) {
+          var ex3bet = findExampleHand(function(h) {
             var acts = parseActions(h.actions);
             var rc = 0;
             for (var a of acts) {
@@ -2484,10 +2294,10 @@
               if (a.isMe && a.street === 'Preflop' && rc >= 2 && a.type === 'fold') return true;
             }
             return false;
-          };
+          });
           aIns.push(insWithExample('r', '3-Bet Response', 'Folding to 3-bets ' + f3 + '% of the time. In TC players 3-bet light, so consider calling more with strong hands.', [{
             v: d.fold3bet + '/' + d.faced3bet + ' situations'
-          }], threeBetFilter, 'You folded here facing a 3-bet. In TC, many 3-bets are light. With a decent holding, calling can be profitable given how often opponents are bluffing or semi-bluffing.'));
+          }], ex3bet, 'You folded here facing a 3-bet. In TC, many 3-bets are light. With a decent holding, calling can be profitable given how often opponents are bluffing or semi-bluffing.'));
         }
       }
       if (!aIns.length) aIns.push(ins('n', 'Actions', 'Keep building data for action pattern insights.', []));
@@ -2530,14 +2340,14 @@
       }]));
       const fbo = d.betOpps['Flop'];
       if (fbo && fbo.t >= 3 && pct(fbo.b, fbo.t) < 30) {
-        var flopPassiveFilter = function(h) {
+        var exFlopPassive = findExampleHand(function(h) {
           if (!h.board || h.board.length < 3) return false;
           var ma = parseActions(h.actions).filter(function(a) { return a.isMe && a.street === 'Flop'; });
           return ma.some(function(a) { return a.type === 'check' || a.type === 'call'; }) && !ma.some(function(a) { return a.type === 'raise'; });
-        };
+        });
         bIns.push(insWithExample('r', 'Flop Passivity', 'Only betting the flop ' + pct(fbo.b, fbo.t) + '% of the time. Checking strong hands gives free cards to draws.', [{
           v: fbo.b + '/' + fbo.t + ' opportunities'
-        }], flopPassiveFilter, 'On this flop you checked or called instead of betting. Betting puts opponents on the defensive and charges draws. In TC where players call wide, you want to be the one setting the price.'));
+        }], exFlopPassive, 'On this flop you checked or called instead of betting. Betting puts opponents on the defensive and charges draws. In TC where players call wide, you want to be the one setting the price.'));
       }
       if (!bIns.length) bIns.push(ins('n', 'Bets', 'More hands needed for bet sizing patterns.', []));
       betHtml += bIns.join('');
@@ -2546,15 +2356,15 @@
       const combIns = [];
       if (vpipPct !== null && aggPct !== null) {
         if (vpipPct > 50 && aggPct < 20) {
-          var widePassiveFilter = function(h) {
+          var exWidePassive = findExampleHand(function(h) {
             var ma = parseActions(h.actions).filter(function(a) { return a.isMe; });
             return ma.some(function(a) { return a.type === 'call'; }) && !ma.some(function(a) { return a.type === 'raise'; }) && h.outcome && h.outcome.result !== 'won';
-          };
+          });
           combIns.push(insWithExample('r', 'VPIP x Aggression', 'Playing ' + vpipPct + '% of hands but raising only ' + aggPct + '% of the time. Wide and passive is the worst combination in poker.', [{
             v: 'VPIP: ' + vpipPct + '%'
           }, {
             v: 'Raise: ' + aggPct + '%'
-          }], widePassiveFilter, 'You entered this pot by calling but never took the lead with a raise. Playing many hands passively means you pay to see cards without building pots when you are strong, and you give opponents easy decisions.'));
+          }], exWidePassive, 'You entered this pot by calling but never took the lead with a raise. Playing many hands passively means you pay to see cards without building pots when you are strong, and you give opponents easy decisions.'));
         }
         if (vpipPct < 30 && aggPct > 35) combIns.push(ins('g', 'VPIP x Aggression', 'Tight (' + vpipPct + '% VPIP) and aggressive (' + aggPct + '%). You pick good spots and bet for value — a strong profile.', [{
           v: 'VPIP: ' + vpipPct + '%'
@@ -2611,100 +2421,81 @@
         }
       }
 
-      function playedColor(n) {
-        if (n === 0) return null; // handled by dealt-only or unseen class
+      function freqColor(n) {
+        if (n === 0) return '#111a12';
         if (n === 1) return '#1a2e1e';
         if (n <= 3) return '#24422a';
         if (n <= 5) return '#2e5835';
         return '#c8a94a';
       }
-
-      // Build range grids: Win Rate When Played + Times Played
       let wrGrid = '',
-        playedGrid = '';
+        freqGrid = '';
       for (let r = 0; r < 13; r++)
         for (let c = 0; c < 13; c++) {
           const key = buildKey(r, c);
           const data = d.rangeMap[key];
-          var cellType = (r === c) ? 'pair' : (r < c) ? 'suited' : 'offsuit';
-          var cellLabel = cellType === 'pair' ? 'Pair' : cellType === 'suited' ? 'Suited' : 'Offsuit';
-          if (!data || data.dealt === 0) {
-            // Never dealt
-            wrGrid += '<div class="rc rc-unseen" data-tip="' + key + ' | Not yet dealt (' + cellLabel + ')"><span>' + key + '</span></div>';
-            playedGrid += '<div class="rc rc-unseen" data-tip="' + key + ' | Not yet dealt (' + cellLabel + ')"><span>' + key + '</span></div>';
-          } else if (data.played === 0) {
-            // Dealt but never played
-            wrGrid += '<div class="rc rc-dealt-only" data-tip="' + key + ' | Dealt ' + data.dealt + 'x, never played (' + cellLabel + ')"><span>' + key + '</span></div>';
-            playedGrid += '<div class="rc rc-dealt-only" data-tip="' + key + ' | Dealt ' + data.dealt + 'x, never played (' + cellLabel + ')"><span>' + key + '</span></div>';
+          if (data && data.dealt > 0) {
+            const wr2 = pct(data.won, data.dealt);
+            wrGrid += '<div class="rc" style="background:' + (wr2 !== null ? wrColor(wr2) : '#1e3020') + ';" data-tip="' + key + ' | Win: ' + (wr2 !== null ? wr2 + '%' : '?') + ' (' + data.won + '/' + data.dealt + ')"><span>' + key + '</span></div>';
+            freqGrid += '<div class="rc" style="background:' + freqColor(data.dealt) + ';" data-tip="' + key + ' | ' + data.dealt + ' dealt · ' + data.played + ' played"><span>' + key + '</span></div>';
           } else {
-            // Played at least once
-            const wrPlayed = pct(data.won, data.played);
-            const wrBg = wrPlayed !== null ? wrColor(wrPlayed) : '#1e3020';
-            const pBg = playedColor(data.played);
-            wrGrid += '<div class="rc rc-range-click" style="background:' + wrBg + ';" data-tip="' + key + ' | Win when played: ' + (wrPlayed !== null ? wrPlayed + '%' : '?') + ' (' + data.won + '/' + data.played + ') · Dealt ' + data.dealt + 'x" data-range-key="' + key + '"><span>' + key + '</span></div>';
-            playedGrid += '<div class="rc rc-range-click" style="background:' + pBg + ';" data-tip="' + key + ' | Played ' + data.played + '/' + data.dealt + ' dealt · Won ' + data.won + '" data-range-key="' + key + '"><span>' + key + '</span></div>';
+            // Unseen hands: visible text on dark background so the full grid is readable
+            var cellType = (r === c) ? 'pair' : (r < c) ? 'suited' : 'offsuit';
+            var cellLabel = cellType === 'pair' ? 'Pair' : cellType === 'suited' ? 'Suited' : 'Offsuit';
+            wrGrid += '<div class="rc rc-unseen" data-tip="' + key + ' | Not yet dealt (' + cellLabel + ')"><span>' + key + '</span></div>';
+            freqGrid += '<div class="rc rc-unseen" data-tip="' + key + ' | Not yet dealt (' + cellLabel + ')"><span>' + key + '</span></div>';
           }
         }
       const seen = Object.keys(d.rangeMap).length;
-      const played = Object.keys(d.rangeMap).filter(function(k) { return d.rangeMap[k].played > 0; }).length;
       const totalCombos = 169;
       const legend1 = '<div class="range-legend">' +
         '<div class="leg"><div class="leg-sw rc-unseen" style="width:9px;height:9px;"></div>Not dealt</div>' +
-        '<div class="leg"><div class="leg-sw rc-dealt-only" style="width:9px;height:9px;"></div>Dealt, not played</div>' +
         '<div class="leg"><div class="leg-sw" style="background:rgb(190,45,45);"></div>&lt;30% win</div>' +
         '<div class="leg"><div class="leg-sw" style="background:rgb(220,135,45);"></div>~50% win</div>' +
         '<div class="leg"><div class="leg-sw" style="background:rgb(50,170,65);"></div>&gt;70% win</div>' +
         '</div>';
       const legend2 = '<div class="range-legend">' +
         '<div class="leg"><div class="leg-sw rc-unseen" style="width:9px;height:9px;"></div>Not dealt</div>' +
-        '<div class="leg"><div class="leg-sw rc-dealt-only" style="width:9px;height:9px;"></div>Dealt, not played</div>' +
         '<div class="leg"><div class="leg-sw" style="background:#1a2e1e;"></div>1 time</div>' +
         '<div class="leg"><div class="leg-sw" style="background:#2e5835;"></div>2-5 times</div>' +
         '<div class="leg"><div class="leg-sw" style="background:#c8a94a;"></div>6+ times</div>' +
         '</div>';
-      // Range insights (now based on played, not dealt)
+      // Range insights
       const rangeIns = [];
+      // Best and worst hands
       var bestKey = null, bestWr = -1, worstKey = null, worstWr = 101;
-      var mostPlayedKey = null, mostPlayedCount = 0;
+      var mostPlayed = null, mostCount = 0;
       Object.keys(d.rangeMap).forEach(function(k) {
         var rm = d.rangeMap[k];
-        if (rm.played >= 2) {
-          var w = pct(rm.won, rm.played);
+        if (rm.dealt >= 2) {
+          var w = pct(rm.won, rm.dealt);
           if (w !== null && w > bestWr) { bestWr = w; bestKey = k; }
           if (w !== null && w < worstWr) { worstWr = w; worstKey = k; }
         }
-        if (rm.played > mostPlayedCount) { mostPlayedCount = rm.played; mostPlayedKey = k; }
+        if (rm.dealt > mostCount) { mostCount = rm.dealt; mostPlayed = k; }
       });
-      if (bestKey) rangeIns.push(ins('g', 'Best Hand', 'Your strongest combo when played is ' + bestKey + ' at ' + bestWr + '% win rate. Sample size matters though.', [{v: bestKey, hi: true}, {v: bestWr + '% win'}]));
-      if (worstKey && worstKey !== bestKey) rangeIns.push(ins('r', 'Worst Hand', worstKey + ' has been your weakest when played at ' + worstWr + '% win rate. Consider tightening or adjusting play with this hand.', [{v: worstKey, hi: true}, {v: worstWr + '% win'}]));
-      if (mostPlayedKey) rangeIns.push(ins('n', 'Most Played', 'You have played ' + mostPlayedKey + ' the most (' + mostPlayedCount + ' times out of ' + d.rangeMap[mostPlayedKey].dealt + ' dealt).', [{v: mostPlayedKey, hi: true}, {v: mostPlayedCount + ' played'}]));
+      if (bestKey) rangeIns.push(ins('g', 'Best Hand', 'Your strongest combo so far is ' + bestKey + ' at ' + bestWr + '% win rate. Sample size matters though.', [{v: bestKey, hi: true}, {v: bestWr + '% win'}]));
+      if (worstKey && worstKey !== bestKey) rangeIns.push(ins('r', 'Worst Hand', worstKey + ' has been your weakest at ' + worstWr + '% win rate. Consider tightening or adjusting play with this hand.', [{v: worstKey, hi: true}, {v: worstWr + '% win'}]));
+      if (mostPlayed) rangeIns.push(ins('n', 'Most Dealt', 'You have been dealt ' + mostPlayed + ' the most (' + mostCount + ' times). ' + (d.rangeMap[mostPlayed].played < mostCount / 2 ? 'You fold it more than half the time.' : 'You play it frequently.'), [{v: mostPlayed, hi: true}, {v: mostCount + ' dealt'}]));
       var coveragePct = Math.round(seen / totalCombos * 100);
-      rangeIns.push(ins('n', 'Coverage', 'You have seen ' + seen + ' of ' + totalCombos + ' possible hand combos (' + coveragePct + '%). Played ' + played + ' of those.', [{v: seen + '/' + totalCombos + ' combos'}, {v: played + ' played'}]));
+      rangeIns.push(ins('n', 'Coverage', 'You have seen ' + seen + ' of ' + totalCombos + ' possible hand combos (' + coveragePct + '%). The more hands you play, the more complete this picture becomes.', [{v: seen + '/' + totalCombos + ' combos'}]));
       // Side by side grids
       document.getElementById('p-range').innerHTML =
-        '<div style="font-size:9px;color:var(--dim);margin-bottom:20px;">' + seen + ' of ' + totalCombos + ' hand combos seen · ' + played + ' played · click any played cell for hand examples</div>' +
+        '<div style="font-size:9px;color:var(--dim);margin-bottom:20px;">' + seen + ' of ' + totalCombos + ' hand combos seen · hover any cell for detail</div>' +
         '<div class="two-col" style="gap:20px;align-items:start;">' +
         '<div>' +
-        '<div class="sec-subtitle" style="margin-top:0;">Win Rate When Played</div>' +
+        '<div class="sec-subtitle" style="margin-top:0;">Win Rate by Hand</div>' +
         '<div class="range-grid-sm">' + wrGrid + '</div>' +
         legend1 +
         '</div>' +
         '<div>' +
-        '<div class="sec-subtitle" style="margin-top:0;">Times Played</div>' +
-        '<div class="range-grid-sm">' + playedGrid + '</div>' +
+        '<div class="sec-subtitle" style="margin-top:0;">Hands Dealt</div>' +
+        '<div class="range-grid-sm">' + freqGrid + '</div>' +
         legend2 +
         '</div>' +
         '</div>' +
         '<div class="divider"></div>' +
         rangeIns.join('');
-      // Bind range cell clicks to show hand list modal
-      document.querySelectorAll('.rc-range-click').forEach(function(el) {
-        el.style.cursor = 'pointer';
-        el.onclick = function() {
-          var rk = el.getAttribute('data-range-key');
-          if (rk) showHandListModal(rk, hands);
-        };
-      });
       // ── LOG ──
       const PAGE_SIZE = 50;
       let logPage = 0;
@@ -2725,20 +2516,14 @@
         logHtml += '</div></div>';
         // Column headers
         logHtml += '<div class="hrow hrow-header"><div class="hrow-pos">Pos</div><div class="hrow-cards">Cards</div><div class="hrow-board">Board</div><div class="hrow-acts">Actions</div><div class="hrow-res">Result</div></div>';
-        logHtml += '<div class="hlog">' + pageHands.map(function(h, idx) {
+        logHtml += '<div class="hlog">' + pageHands.map(function(h) {
           const myActs = parseActions(h.actions).filter(function(a) { return a.isMe; }).map(function(a) { return a.type; }).join(' · ');
           const invested = h.invested || calcInvestmentFromActions(h.actions || []);
           let res;
           if (h.outcome) {
             if (h.outcome.result === 'won') {
-              const amt = h.outcome.amount || 0;
-              if (amt < invested) {
-                // False win: got change back
-                res = '<div class="hrow-res l">-' + fmt(invested - amt) + '</div>';
-              } else {
-                const profit = amt - invested;
-                res = '<div class="hrow-res w">+' + fmt(profit > 0 ? profit : amt) + '</div>';
-              }
+              const profit = (h.outcome.amount || 0) - invested;
+              res = '<div class="hrow-res w">+' + fmt(profit > 0 ? profit : h.outcome.amount || h.pot || 0) + '</div>';
             } else if (h.outcome.result === 'folded') {
               res = '<div class="hrow-res l">' + (invested > 0 ? '-' + fmt(invested) : 'folded') + '</div>';
             } else {
@@ -2747,17 +2532,9 @@
           } else {
             res = '<div class="hrow-res u">?</div>';
           }
-          return '<div class="hrow hrow-clickable" data-log-idx="' + (start + idx) + '"><div class="hrow-pos">' + (h.position || '?') + '</div><div class="hrow-cards">' + (h.hole && h.hole.length ? h.hole.join(' ') : '?? ??') + '</div><div class="hrow-board">' + (h.board && h.board.length ? h.board.join(' ') : '—') + '</div><div class="hrow-acts">' + myActs + '</div>' + res + '</div>';
+          return '<div class="hrow"><div class="hrow-pos">' + (h.position || '?') + '</div><div class="hrow-cards">' + (h.hole && h.hole.length ? h.hole.join(' ') : '?? ??') + '</div><div class="hrow-board">' + (h.board && h.board.length ? h.board.join(' ') : '—') + '</div><div class="hrow-acts">' + myActs + '</div>' + res + '</div>';
         }).join('') + '</div>';
         document.getElementById('p-log').innerHTML = logHtml;
-        // Bind log row clicks to open hand replay
-        document.querySelectorAll('.hrow-clickable').forEach(function(el) {
-          el.onclick = function() {
-            var idx = parseInt(el.getAttribute('data-log-idx'));
-            var hand = allHands[idx];
-            if (hand) showExampleHandModal(hand, null);
-          };
-        });
         // Bind pagination
         var prevBtn = document.getElementById('log-prev');
         var nextBtn = document.getElementById('log-next');
@@ -3057,6 +2834,172 @@
       });
       if (tip) tip.classList.toggle('active');
     });
+    // ── PROFILE ────────────────────────────────────────────────────────────────
+    const CHANGELOG = [
+      {
+        version: 'v1.4', date: 'Mar 2026', latest: true,
+        headline: 'Table detection + tournament filtering',
+        items: [
+          { tag: 'new', text: 'Auto-detects which TC table a hand was played at using blind amounts and player count' },
+          { tag: 'new', text: 'Table filter dropdown lets you isolate stats to a single table' },
+          { tag: 'new', text: 'Tournament hands separated from cash hand analysis' },
+          { tag: 'imp', text: 'Per-table stats: win rate, VPIP, aggression, and net chips by table' },
+          { tag: 'imp', text: 'Trend charts now group by session day with cumulative P&L line' },
+        ]
+      },
+      {
+        version: 'v1.3', date: 'Feb 2026',
+        headline: 'Session persistence and paste-from-clipboard',
+        items: [
+          { tag: 'new', text: 'One-click paste from clipboard' },
+          { tag: 'new', text: 'Last session stored locally and auto-loaded on next visit' },
+          { tag: 'imp', text: 'Import loader with hand count animation on paste' },
+          { tag: 'fix', text: 'Player name detection from action log when not in export metadata' },
+        ]
+      },
+      {
+        version: 'v1.2', date: 'Jan 2026',
+        headline: 'Insights engine and street-level breakdown',
+        items: [
+          { tag: 'new', text: 'Automated insight cards flagging leaks: positional weaknesses, fold frequency, VPIP bands' },
+          { tag: 'new', text: 'Street-by-street action breakdown (preflop, flop, turn, river)' },
+          { tag: 'new', text: 'Hole card range heatmap showing VPIP and win rate by starting hand' },
+          { tag: 'imp', text: 'Position stats panel with per-seat win rate and net chip delta' },
+        ]
+      },
+      {
+        version: 'v1.1', date: 'Dec 2025',
+        headline: 'Live viewer panel and outcome tracking',
+        items: [
+          { tag: 'new', text: 'Tampermonkey panel shows current hand in real time on the TC poker page' },
+          { tag: 'new', text: 'Outcome detection for wins, losses, and folds with fold street recorded' },
+          { tag: 'fix', text: 'Hands with no hole cards no longer logged to the export' },
+        ]
+      },
+      {
+        version: 'v1.0', date: 'Nov 2025',
+        headline: 'Initial release',
+        items: [
+          { tag: 'new', text: 'WebSocket interception via Tampermonkey to silently capture hands as they are played' },
+          { tag: 'new', text: 'Hand data stored in localStorage only — nothing sent externally' },
+          { tag: 'new', text: 'JSON export for pasting into the analysis tool' },
+          { tag: 'new', text: 'Basic stats: hands played, win rate, VPIP, aggression factor' },
+        ]
+      },
+    ];
+
+    function openProfile() {
+      // Hide all panels, show profile
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('on'));
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.getElementById('p-profile').classList.add('on');
+      renderProfile();
+    }
+
+    function renderProfile() {
+      // Pull stats from current session or localStorage fallback
+      var stats = null;
+      var playerName = 'Unknown';
+      var exportDate = '';
+
+      if (_allHands && _allHands.length) {
+        var d = analyse(_allHands);
+        var wr = pct(d.handsWon, d.handsWithOutcome);
+        var netPnl = d.totalWonAmount - d.totalInvested;
+        var vpipPct = pct(d.vpip, d.n);
+        var aggPct = pct(d.raises, d.totalActs);
+        playerName = _meta.player || 'Unknown';
+        exportDate = _meta.exportedAt ? new Date(_meta.exportedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+        stats = { n: d.n, wr: wr, netPnl: netPnl, vpipPct: vpipPct, aggPct: aggPct };
+      } else {
+        try {
+          var saved = localStorage.getItem('tc_poker_analysis');
+          if (saved) {
+            var json = JSON.parse(saved);
+            var hands = (json.hands || []).filter(function(h) { return h.hole && h.hole.length === 2; });
+            if (hands.length) {
+              var d2 = analyse(hands);
+              var wr2 = pct(d2.handsWon, d2.handsWithOutcome);
+              var netPnl2 = d2.totalWonAmount - d2.totalInvested;
+              playerName = json.player || detectPlayerFromActions(hands) || 'Unknown';
+              exportDate = json.exportedAt ? new Date(json.exportedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+              stats = { n: d2.n, wr: wr2, netPnl: netPnl2, vpipPct: pct(d2.vpip, d2.n), aggPct: pct(d2.raises, d2.totalActs) };
+            }
+          }
+        } catch(_) {}
+      }
+
+      var tagColors = { new: 'color:var(--green);background:rgba(63,173,100,0.1);', fix: 'color:var(--amber);background:rgba(212,132,42,0.1);', imp: 'color:var(--dim);background:rgba(122,154,122,0.1);' };
+
+      var html = '<div style="max-width:700px;">';
+
+      // Header
+      html += '<div style="margin-bottom:32px;">';
+      html += '<div style="font-size:9px;letter-spacing:5px;color:var(--dim);text-transform:uppercase;margin-bottom:10px;">TC Poker Analysis</div>';
+      html += '<div style="font-family:\'Cormorant Garamond\',serif;font-size:clamp(28px,4vw,44px);font-weight:700;color:var(--gold);margin-bottom:4px;">' + playerName + '</div>';
+      if (exportDate) html += '<div style="font-size:10px;color:var(--dim);">Last session: ' + exportDate + '</div>';
+      html += '</div>';
+
+      // Stats
+      if (stats) {
+        html += '<div style="font-size:9px;letter-spacing:4px;text-transform:uppercase;color:var(--dim);margin-bottom:14px;">Your Stats</div>';
+        html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:36px;">';
+        var statItems = [
+          { l: 'Hands', v: stats.n, c: 'var(--gold)' },
+          { l: 'Win Rate', v: stats.wr !== null ? stats.wr + '%' : '—', c: stats.wr >= 50 ? 'var(--green)' : 'var(--red)' },
+          { l: 'Net P&L', v: (stats.netPnl >= 0 ? '+' : '') + fmt(stats.netPnl), c: stats.netPnl >= 0 ? 'var(--green)' : 'var(--red)' },
+          { l: 'VPIP', v: stats.vpipPct !== null ? stats.vpipPct + '%' : '—', c: 'var(--text)' },
+          { l: 'Aggression', v: stats.aggPct !== null ? stats.aggPct + '%' : '—', c: 'var(--text)' },
+        ];
+        statItems.forEach(function(s) {
+          html += '<div style="background:var(--s2);border:1px solid var(--border);border-radius:5px;padding:12px 14px;">';
+          html += '<div style="font-size:8px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-bottom:6px;">' + s.l + '</div>';
+          html += '<div style="font-family:\'Cormorant Garamond\',serif;font-size:22px;font-weight:700;line-height:1;color:' + s.c + ';">' + s.v + '</div>';
+          html += '</div>';
+        });
+        html += '</div>';
+      }
+
+      // Custom dashboard CTA
+      html += '<div style="font-size:9px;letter-spacing:4px;text-transform:uppercase;color:var(--dim);margin-bottom:14px;">Custom Dashboards</div>';
+      html += '<div style="background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:24px 28px;margin-bottom:36px;display:flex;gap:24px;align-items:flex-start;">';
+      html += '<div style="font-family:\'Cormorant Garamond\',serif;font-size:44px;color:var(--gold2);opacity:0.4;line-height:1;flex-shrink:0;">♠</div>';
+      html += '<div>';
+      html += '<div style="font-family:\'Cormorant Garamond\',serif;font-size:20px;font-weight:700;color:var(--text);margin-bottom:8px;">Want something specific?</div>';
+      html += '<div style="font-size:11px;color:var(--dim);line-height:1.7;margin-bottom:10px;">If there\'s a stat, pattern, or view the standard tool doesn\'t cover, a custom dashboard can be built to your exact requirements.</div>';
+      html += '<div style="font-size:10px;color:var(--amber);margin-bottom:14px;">Prices start from <span style="color:var(--gold);">100,000,000 chips</span></div>';
+      html += '<a href="https://discord.com" target="_blank" style="display:inline-flex;align-items:center;gap:6px;background:transparent;border:1px solid var(--gold2);color:var(--gold);font-family:\'IBM Plex Mono\',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;padding:8px 16px;border-radius:4px;cursor:pointer;text-decoration:none;">Contact on Discord</a>';
+      html += '</div></div>';
+
+      // Divider
+      html += '<div style="height:1px;background:var(--border);margin-bottom:32px;"></div>';
+
+      // Changelog
+      html += '<div style="font-size:9px;letter-spacing:4px;text-transform:uppercase;color:var(--dim);margin-bottom:20px;">Changelog</div>';
+      CHANGELOG.forEach(function(entry) {
+        html += '<div style="display:grid;grid-template-columns:90px 1fr;gap:0 24px;padding:20px 0;border-bottom:1px solid var(--border);">';
+        html += '<div style="padding-top:2px;">';
+        html += '<div style="font-family:\'Cormorant Garamond\',serif;font-size:18px;font-weight:600;color:var(--gold);margin-bottom:3px;">' + entry.version + '</div>';
+        html += '<div style="font-size:9px;color:var(--dim);">' + entry.date + '</div>';
+        if (entry.latest) html += '<div style="display:inline-block;margin-top:6px;font-size:8px;letter-spacing:1.5px;text-transform:uppercase;padding:2px 6px;border-radius:2px;background:rgba(63,173,100,0.12);color:var(--green);border:1px solid rgba(63,173,100,0.25);">Latest</div>';
+        html += '</div>';
+        html += '<div>';
+        html += '<div style="font-size:12px;color:var(--text);margin-bottom:8px;font-weight:500;">' + entry.headline + '</div>';
+        html += '<ul style="list-style:none;display:flex;flex-direction:column;gap:5px;">';
+        entry.items.forEach(function(item) {
+          var tagStyle = tagColors[item.tag] || '';
+          html += '<li style="font-size:10px;color:var(--dim);line-height:1.55;padding-left:12px;position:relative;">';
+          html += '<span style="position:absolute;left:0;color:var(--border);">—</span>';
+          html += '<span style="font-size:8px;letter-spacing:1px;text-transform:uppercase;margin-right:5px;padding:1px 4px;border-radius:2px;' + tagStyle + '">' + item.tag + '</span>';
+          html += item.text + '</li>';
+        });
+        html += '</ul></div></div>';
+      });
+
+      html += '</div>';
+      document.getElementById('p-profile').innerHTML = html;
+    }
+
   </script>
 </body>
 
