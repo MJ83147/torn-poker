@@ -250,7 +250,7 @@ function classifyKey(key) {
 
 // Infer TC table id from hand metadata and blind sizes
 function inferTable(hand) {
-  // Prefer the tableId field from TM script (e.g. "holdem21")
+  // Use the tableId field from TM script (e.g. "holdem21")
   if (hand.tableId) {
     const num = String(hand.tableId).replace(/\D/g, '');
     if (num && TABLE_META[num]) return Number(num);
@@ -260,43 +260,7 @@ function inferTable(hand) {
     const num = String(hand.table).replace(/\D/g, '');
     if (num && TABLE_META[num]) return Number(num);
   }
-  // Legacy fallback: infer from blind amounts in action log
-  const actions = hand.actions || [];
-  let bbAmt = null;
-  const players = new Set();
-  for (const line of actions) {
-    const clean = line.replace(/^>>\s*/, '').replace(/^\s+/, '').trim();
-    const ci = clean.indexOf(': ');
-    if (ci > 0) {
-      const author = clean.slice(0, ci);
-      if (!author.startsWith('The ')) players.add(author);
-    }
-    const bbMatch = clean.match(/posted big blind \$?([\d,]+)/);
-    if (bbMatch) {
-      bbAmt = parseInt(bbMatch[1].replace(/,/g, ''));
-      continue;
-    }
-    const bbChips = clean.match(/posted big blind ([\d,]+) chips/);
-    if (bbChips) {
-      bbAmt = parseInt(bbChips[1].replace(/,/g, ''));
-    }
-  }
-  const playerCount = players.size;
-  if (bbAmt === null) return null;
-  const candidates = BB_TO_TABLES[bbAmt];
-  if (!candidates || !candidates.length) return null;
-  if (candidates.length === 1) return candidates[0];
-  if (playerCount > 0) {
-    const fits = candidates.filter(id => playerCount <= TABLE_META[id].max);
-    if (fits.length === 1) return fits[0];
-    if (fits.length > 1) {
-      fits.sort((a, b) =>
-        Math.abs(TABLE_META[a].max - playerCount) - Math.abs(TABLE_META[b].max - playerCount)
-      );
-      return fits[0];
-    }
-  }
-  return candidates[0];
+  return null;
 }
 
 // True if a hand should be treated as cash game rather than tournament
