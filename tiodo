@@ -1,0 +1,35 @@
+
+—newAuto-detects which TC table a hand was played at using blind amounts and player count
+    some tables are showing as blank 
+    table detection should be from the web newWebSocket
+
+
+    erroneasly identified tablses and no ability to remove these from logging 
+
+—fixPlayer name detection from action log when not in export metadata some player names are shoiwing as unknown 
+- win rate heat map should only include hands played not all hands dealt.
+the hands reaching street % are wrong and hsowing th esame values for flop turn river 
+all leak tasks shoudl have xample hands
+all hands should open to show that hand.
+
+
+
+on the cards page the chart shuld be full width and the sstats cards in a grid below 
+on the position tab the tooltips are cutt of on th eleft hand side 
+on the position tab the tooltips on the header of the table do ntohing 
+
+
+
+Every leak or note should hsave associated hands alongside it.
+
+One pointer that I noticed on the analysis and hand categorizing side is the hands played seems to be every hand dealt seems to be logged in as played on the analysis side. (the right side that nags about offsuit rags being a leak. I went through most of the 400 hands and I fold them all unless checked to and on BB or when I have been folding for ages and get something on button that I might bet with. 
+
+The analysis side:
+Played 134 offsuit trash hands. These are almost always folds preflop.
+Hands played side:
+Offsuit Trash ?134 dealt · 12 played · 9% win
+
+
+the combined section is fairly useless right now.
+
+
