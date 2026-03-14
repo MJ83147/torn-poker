@@ -137,8 +137,6 @@ function render(d, hands, meta) {
   const vpipPct = pct(d.vpip, d.n);
   const aggPct = pct(d.raises, d.totalActs);
   const allinFoldPct = pct(d.foldAllin, d.facedAllin);
-  const allinWinPct = pct(d.wonAllin, d.callAllin);
-
   document.getElementById('page-meta').textContent = meta.player + ' · ' + new Date(meta.exportedAt).toLocaleDateString('en-GB', {
     day: 'numeric',
     month: 'short',
@@ -430,13 +428,20 @@ function render(d, hands, meta) {
       v: d.raises + ' raises from ' + actTotal + ' actions',
     }], exLowAgg, 'Only ' + aggPct + '% of actions are raises. Strong hands need to be bet for value. Checking and calling lets opponents draw cheaply and control the pot size.'));
   } else if (aggPct !== null && aggPct <= 40) {
-    aIns.push(ins('g', 'Aggression', aggPct + '% raise frequency is solid. Taking initiative without overdoing it.', [{
+    const exGoodAgg = findExampleHand(function(h) {
+      return parseActions(h.actions).some(function(a) { return a.isMe && a.type === 'raise'; });
+    });
+    aIns.push(insWithExample('g', 'Aggression', aggPct + '% raise frequency is solid. Taking initiative without overdoing it.', [{
       v: d.raises + ' raises',
-    }]));
+    }], exGoodAgg, 'A well-timed raise like this one puts opponents on the defensive. Your aggression level is in a healthy range — enough to take initiative without overbluffing.'));
   } else if (aggPct !== null) {
-    aIns.push(ins('a', 'High Aggression', aggPct + '% is high. TC players call, so bluff raises cost real money.', [{
+    const exHighAgg = findExampleHand(function(h) {
+      const ma = parseActions(h.actions).filter(function(a) { return a.isMe; });
+      return ma.filter(function(a) { return a.type === 'raise'; }).length >= 2;
+    });
+    aIns.push(insWithExample('a', 'High Aggression', aggPct + '% is high. TC players call, so bluff raises cost real money.', [{
       v: d.raises + ' raises',
-    }]));
+    }], exHighAgg, 'Multiple raises in this hand illustrate your aggressive tendencies. In TC where players call wide, each bluff raise is more likely to get looked up — save aggression for strong holdings.'));
   }
   if (d.faced3bet >= 3) {
     const f3 = pct(d.fold3bet, d.faced3bet);
@@ -463,13 +468,14 @@ function render(d, hands, meta) {
 
   // ── BETS ──
   const betStreets = ['Preflop', 'Flop', 'Turn', 'River'];
-  const avgBets = {
-    Preflop: d.avgBetPre,
-    Flop: d.avgBetFlop,
-    Turn: d.avgBetTurn,
-    River: d.avgBetRiver,
-  };
-  const maxAvg = Math.max(d.avgBetPre, d.avgBetFlop, d.avgBetTurn, d.avgBetRiver, 1);
+  const avgBets = {};
+  betStreets.forEach(function(s) {
+    var a = d.betAmts[s];
+    avgBets[s] = a && a.length ? Math.round(a.reduce(function(x, y) { return x + y; }, 0) / a.length) : 0;
+  });
+  d.avgBetPre = avgBets.Preflop; d.avgBetFlop = avgBets.Flop;
+  d.avgBetTurn = avgBets.Turn; d.avgBetRiver = avgBets.River;
+  const maxAvg = Math.max(avgBets.Preflop, avgBets.Flop, avgBets.Turn, avgBets.River, 1);
   let betHtml = '<div class="two-col" style="margin-bottom:24px;">';
   betHtml += '<div><div class="sec-subtitle">Average bet size by street</div><div class="bar-group">' +
     betStreets.filter(s => avgBets[s] > 0).map(s =>
@@ -486,23 +492,35 @@ function render(d, hands, meta) {
   betHtml += '</div>';
   const bIns = [];
   if (d.avgBetFlop > 0) {
-    bIns.push(ins('o', 'Flop Sizing', 'Average flop bet: ' + fmt(d.avgBetFlop) + '. In TC, aim for 60–80% of pot. Everyone calls so bet for maximum value.', [{
+    const exFlopBet = findExampleHand(function(h) {
+      if (!h.board || h.board.length < 3) return false;
+      return parseActions(h.actions).some(function(a) { return a.isMe && a.street === 'Flop' && (a.type === 'raise' || a.type === 'bet'); });
+    });
+    bIns.push(insWithExample('o', 'Flop Sizing', 'Average flop bet: ' + fmt(d.avgBetFlop) + '. In TC, aim for 60–80% of pot. Everyone calls so bet for maximum value.', [{
       v: 'Avg: ' + fmt(d.avgBetFlop),
       hi: true,
-    }]));
+    }], exFlopBet, 'This hand shows your typical flop bet sizing. In TC where players call wide, sizing between 60–80% of pot extracts maximum value from weaker hands chasing draws.'));
   }
   if (d.avgBetTurn > 0) {
     const bigger = d.avgBetTurn >= d.avgBetFlop;
-    bIns.push(ins(bigger ? 'g' : 'a', 'Turn Sizing', bigger ? 'Turn bets (' + fmt(d.avgBetTurn) + ') larger than flop — correct as the pot grows.' : 'Turn bets (' + fmt(d.avgBetTurn) + ') smaller than flop (' + fmt(d.avgBetFlop) + '). Size up on the turn.', [{
+    const exTurnBet = findExampleHand(function(h) {
+      if (!h.board || h.board.length < 4) return false;
+      return parseActions(h.actions).some(function(a) { return a.isMe && a.street === 'Turn' && (a.type === 'raise' || a.type === 'bet'); });
+    });
+    bIns.push(insWithExample(bigger ? 'g' : 'a', 'Turn Sizing', bigger ? 'Turn bets (' + fmt(d.avgBetTurn) + ') larger than flop — correct as the pot grows.' : 'Turn bets (' + fmt(d.avgBetTurn) + ') smaller than flop (' + fmt(d.avgBetFlop) + '). Size up on the turn.', [{
       v: 'Avg: ' + fmt(d.avgBetTurn),
       hi: true,
-    }]));
+    }], exTurnBet, bigger ? 'Good turn sizing here — increasing your bet as the pot grows puts maximum pressure on drawing hands and builds value.' : 'Your turn bet here was smaller than your flop bet. As the pot grows, your bets should scale up to charge opponents for chasing.'));
   }
   if (d.avgBetRiver > 0) {
-    bIns.push(ins('o', 'River Sizing', 'Average river bet: ' + fmt(d.avgBetRiver) + '. The river is where you get paid — bet big with the best hand.', [{
+    const exRiverBet = findExampleHand(function(h) {
+      if (!h.board || h.board.length < 5) return false;
+      return parseActions(h.actions).some(function(a) { return a.isMe && a.street === 'River' && (a.type === 'raise' || a.type === 'bet'); });
+    });
+    bIns.push(insWithExample('o', 'River Sizing', 'Average river bet: ' + fmt(d.avgBetRiver) + '. The river is where you get paid — bet big with the best hand.', [{
       v: 'Avg: ' + fmt(d.avgBetRiver),
       hi: true,
-    }]));
+    }], exRiverBet, 'The river is your last chance to extract value. With a strong hand, size up — TC players will call with second-best hands more often than they should.'));
   }
   const fbo = d.betOpps['Flop'];
   if (fbo && fbo.t >= 3 && pct(fbo.b, fbo.t) < 30) {
@@ -548,8 +566,8 @@ function render(d, hands, meta) {
     const awp = pct(d.wonAllin, d.callAllin);
     if (afp > 75 && awp !== null && awp > 60) {
       const exAllinFold = findExampleHand(function(h) {
-        const acts = parseActions(h.actions);
-        return acts.some(function(a) { return !a.isMe && a.msg && a.msg.includes('all-in'); }) && acts.some(function(a) { return a.isMe && a.type === 'fold'; });
+        var acts2 = parseActions(h.actions);
+        return acts2.some(function(a) { return !a.isMe && a.type === 'raise' && a.msg && a.msg.indexOf(' to ') === -1; }) && acts2.some(function(a) { return a.isMe && a.type === 'fold'; });
       });
       combIns.push(insWithExample('r', 'All-in Folds x Win Rate', 'Folding all-ins ' + afp + '% of the time but winning ' + awp + '% when you do call. You\'re folding good equity.', [{
         v: d.callAllin + ' calls, ' + d.wonAllin + ' won',
@@ -740,13 +758,22 @@ function render(d, hands, meta) {
     if (rm.dealt > mostCount) { mostCount = rm.dealt; mostPlayed = k; }
   });
   if (bestKey) {
-    rangeIns.push(ins('g', 'Best Hand', 'Your strongest combo so far is ' + bestKey + ' at ' + bestWr + '% win rate. Sample size matters though.', [{ v: bestKey, hi: true }, { v: bestWr + '% win' }]));
+    const exBest = findExampleHand(function(h) {
+      return parseHoleKey(h.hole) === bestKey && h.result === 'won';
+    });
+    rangeIns.push(insWithExample('g', 'Best Hand', 'Your strongest combo so far is ' + bestKey + ' at ' + bestWr + '% win rate. Sample size matters though.', [{ v: bestKey, hi: true }, { v: bestWr + '% win' }], exBest, 'Here is a hand where you won with ' + bestKey + '. This combo has been your most profitable — keep playing it confidently but watch for sample size.'));
   }
   if (worstKey && worstKey !== bestKey) {
-    rangeIns.push(ins('r', 'Worst Hand', worstKey + ' has been your weakest at ' + worstWr + '% win rate. Consider tightening or adjusting play with this hand.', [{ v: worstKey, hi: true }, { v: worstWr + '% win' }]));
+    const exWorst = findExampleHand(function(h) {
+      return parseHoleKey(h.hole) === worstKey && h.result !== 'won';
+    });
+    rangeIns.push(insWithExample('r', 'Worst Hand', worstKey + ' has been your weakest at ' + worstWr + '% win rate. Consider tightening or adjusting play with this hand.', [{ v: worstKey, hi: true }, { v: worstWr + '% win' }], exWorst, 'This hand with ' + worstKey + ' did not go well. Review whether you are overplaying this combo or getting into bad spots post-flop.'));
   }
   if (mostPlayed) {
-    rangeIns.push(ins('n', 'Most Dealt', 'You have been dealt ' + mostPlayed + ' the most (' + mostCount + ' times). ' + (d.rangeMap[mostPlayed].played < mostCount / 2 ? 'You fold it more than half the time.' : 'You play it frequently.'), [{ v: mostPlayed, hi: true }, { v: mostCount + ' dealt' }]));
+    const exMost = findExampleHand(function(h) {
+      return parseHoleKey(h.hole) === mostPlayed;
+    });
+    rangeIns.push(insWithExample('n', 'Most Dealt', 'You have been dealt ' + mostPlayed + ' the most (' + mostCount + ' times). ' + (d.rangeMap[mostPlayed].played < mostCount / 2 ? 'You fold it more than half the time.' : 'You play it frequently.'), [{ v: mostPlayed, hi: true }, { v: mostCount + ' dealt' }], exMost, 'Here is a hand where you were dealt ' + mostPlayed + '. ' + (d.rangeMap[mostPlayed].played < mostCount / 2 ? 'You fold this hand often — make sure you are not being too tight with it in good positions.' : 'You play this hand frequently — make sure you are not overvaluing it from bad positions.')));
   }
   const coveragePct = Math.round(seen / totalCombos * 100);
   rangeIns.push(ins('n', 'Coverage', 'You have seen ' + seen + ' of ' + totalCombos + ' possible hand combos (' + coveragePct + '%). The more hands you play, the more complete this picture becomes.', [{ v: seen + '/' + totalCombos + ' combos' }]));
@@ -897,11 +924,23 @@ function render(d, hands, meta) {
       const best = tableRows.filter(r => r.wr !== null).sort((a, b) => b.wr - a.wr)[0];
       const worst = tableRows.filter(r => r.wr !== null && r.n >= 5).sort((a, b) => a.wr - b.wr)[0];
       const mostProfit = tableRows.sort((a, b) => b.net - a.net)[0];
-      if (best && best.wr >= 40) tIns2.push(ins(best.wr >= 50 ? 'g' : 'n', 'Best Win Rate', best.label + ' at ' + best.wr + '% across ' + best.n + ' hands.', [{ v: best.wr + '%', hi: true }, { v: best.n + ' hands' }]));
-      if (worst && worst.wr < 40 && worst.n >= 5) tIns2.push(ins('r', 'Lowest Win Rate', worst.label + ' at ' + worst.wr + '% across ' + worst.n + ' hands. Consider whether the stakes or player pool suit your style.', [{ v: worst.wr + '%', hi: true }, { v: worst.n + ' hands' }]));
-      if (mostProfit && mostProfit.net > 0) tIns2.push(ins('g', 'Most Profitable', mostProfit.label + ' with a net of +' + fmt(mostProfit.net) + '.', [{ v: '+' + fmt(mostProfit.net), hi: true }]));
+      if (best && best.wr >= 40) {
+        const exBestTable = findExampleHand(function(h) { return String(inferTable(h) || 'unknown') === String(best.tid) && h.result === 'won'; });
+        tIns2.push(insWithExample(best.wr >= 50 ? 'g' : 'n', 'Best Win Rate', best.label + ' at ' + best.wr + '% across ' + best.n + ' hands.', [{ v: best.wr + '%', hi: true }, { v: best.n + ' hands' }], exBestTable, 'A winning hand from ' + best.label + ', your highest win-rate table. Consider whether the player pool or stakes here suit your style particularly well.'));
+      }
+      if (worst && worst.wr < 40 && worst.n >= 5) {
+        const exWorstTable = findExampleHand(function(h) { return String(inferTable(h) || 'unknown') === String(worst.tid) && h.result !== 'won'; });
+        tIns2.push(insWithExample('r', 'Lowest Win Rate', worst.label + ' at ' + worst.wr + '% across ' + worst.n + ' hands. Consider whether the stakes or player pool suit your style.', [{ v: worst.wr + '%', hi: true }, { v: worst.n + ' hands' }], exWorstTable, 'A losing hand from ' + worst.label + '. Review whether you are adjusting your strategy for this table\'s stakes and player tendencies.'));
+      }
+      if (mostProfit && mostProfit.net > 0) {
+        const exProfitTable = findExampleHand(function(h) { return String(inferTable(h) || 'unknown') === String(mostProfit.tid) && h.result === 'won'; });
+        tIns2.push(insWithExample('g', 'Most Profitable', mostProfit.label + ' with a net of +' + fmt(mostProfit.net) + '.', [{ v: '+' + fmt(mostProfit.net), hi: true }], exProfitTable, 'A winning hand from your most profitable table. The combination of stakes, player pool, and your strategy is working well here.'));
+      }
       const bigLoss = tableRows.filter(r => r.net < 0).sort((a, b) => a.net - b.net)[0];
-      if (bigLoss) tIns2.push(ins('a', 'Biggest Loss', bigLoss.label + ' at ' + fmt(bigLoss.net) + '. Review whether leaks are table-specific or general.', [{ v: fmt(bigLoss.net), hi: true }]));
+      if (bigLoss) {
+        const exLossTable = findExampleHand(function(h) { return String(inferTable(h) || 'unknown') === String(bigLoss.tid) && h.result !== 'won'; });
+        tIns2.push(insWithExample('a', 'Biggest Loss', bigLoss.label + ' at ' + fmt(bigLoss.net) + '. Review whether leaks are table-specific or general.', [{ v: fmt(bigLoss.net), hi: true }], exLossTable, 'A losing hand from ' + bigLoss.label + '. Check if you are playing too loose or calling too much at these stakes.'));
+      }
     }
     if (!tIns2.length) tIns2.push(ins('n', 'Tables', 'More data needed for table-level insights.', []));
     tablesHtml += '<div style="margin-top:24px;">' + tIns2.join('') + '</div>';
@@ -1047,18 +1086,212 @@ function render(d, hands, meta) {
       const mid = points[Math.floor(points.length / 2)];
       if (last.wr !== null && mid.wr !== null) {
         const diff = last.wr - mid.wr;
-        if (diff > 5) tIns.push(ins('g', 'Win Rate Improving', 'Your cumulative win rate has climbed ' + diff + ' percentage points over the second half of your sessions.', [{ v: mid.wr + '% → ' + last.wr + '%', hi: true }]));
-        else if (diff < -5) tIns.push(ins('a', 'Win Rate Declining', 'Your cumulative win rate has dropped ' + Math.abs(diff) + ' percentage points. Check for recent leaks or tilt.', [{ v: mid.wr + '% → ' + last.wr + '%', hi: true }]));
-        else tIns.push(ins('n', 'Win Rate Stable', 'Consistent at around ' + last.wr + '% across sessions.', [{ v: last.wr + '%' }]));
+        if (diff > 5) {
+          const exRecentWin = findExampleHand(function(h) { return h.result === 'won' && (h.timestamp || 0) >= (sorted[Math.floor(sorted.length / 2)].timestamp || 0); });
+          tIns.push(insWithExample('g', 'Win Rate Improving', 'Your cumulative win rate has climbed ' + diff + ' percentage points over the second half of your sessions.', [{ v: mid.wr + '% → ' + last.wr + '%', hi: true }], exRecentWin, 'A recent winning hand from your improving stretch. Whatever adjustments you have made are paying off — keep it up.'));
+        } else if (diff < -5) {
+          const exRecentLoss = findExampleHand(function(h) { return h.result !== 'won' && (h.timestamp || 0) >= (sorted[Math.floor(sorted.length / 2)].timestamp || 0); });
+          tIns.push(insWithExample('a', 'Win Rate Declining', 'Your cumulative win rate has dropped ' + Math.abs(diff) + ' percentage points. Check for recent leaks or tilt.', [{ v: mid.wr + '% → ' + last.wr + '%', hi: true }], exRecentLoss, 'A recent losing hand during your downswing. Review whether you are tilting, calling too wide, or facing tougher competition.'));
+        } else tIns.push(ins('n', 'Win Rate Stable', 'Consistent at around ' + last.wr + '% across sessions.', [{ v: last.wr + '%' }]));
       }
       if (last.vpip !== null && mid.vpip !== null) {
         const vdiff = last.vpip - mid.vpip;
-        if (Math.abs(vdiff) > 8) tIns.push(ins('a', 'VPIP Shift', 'Your VPIP has moved ' + (vdiff > 0 ? 'up' : 'down') + ' by ' + Math.abs(vdiff) + ' points. Check if your hand selection has changed intentionally.', [{ v: mid.vpip + '% → ' + last.vpip + '%', hi: true }]));
+        if (Math.abs(vdiff) > 8) {
+          const exVpipShift = findExampleHand(function(h) {
+            if (!h.timestamp || h.timestamp < (sorted[Math.floor(sorted.length / 2)].timestamp || 0)) return false;
+            var ma = parseActions(h.actions).filter(function(a) { return a.isMe && a.street === 'Preflop'; });
+            return vdiff > 0
+              ? ma.some(function(a) { return a.type === 'call' || a.type === 'raise'; })
+              : ma.some(function(a) { return a.type === 'fold'; });
+          });
+          tIns.push(insWithExample('a', 'VPIP Shift', 'Your VPIP has moved ' + (vdiff > 0 ? 'up' : 'down') + ' by ' + Math.abs(vdiff) + ' points. Check if your hand selection has changed intentionally.', [{ v: mid.vpip + '% → ' + last.vpip + '%', hi: true }], exVpipShift, vdiff > 0 ? 'A recent hand where you voluntarily entered the pot. Your VPIP has increased — make sure you are not playing too many marginal hands.' : 'A recent hand where you folded preflop. Your VPIP has dropped — make sure you are not being too tight and missing value.'));
+        }
       }
     }
     if (!tIns.length) tIns.push(ins('n', 'Trends', 'Keep tracking to build up enough data points for trend insights.', []));
     tHtml += '<div style="margin-top:24px;">' + tIns.join('') + '</div>';
     document.getElementById('p-trends').innerHTML = tHtml;
+  })();
+
+  // ── PLAYERS ──
+  (function renderPlayers() {
+    // Build opponent map from all hands
+    var oppMap = {};
+    for (var i = 0; i < hands.length; i++) {
+      var h = hands[i];
+      var acts = parseActions(h.actions);
+      var seenInHand = {};
+      for (var j = 0; j < acts.length; j++) {
+        var a = acts[j];
+        if (a.isMe || !a.author || seenInHand[a.author]) continue;
+        seenInHand[a.author] = true;
+        if (!oppMap[a.author]) {
+          oppMap[a.author] = { name: a.author, hands: 0, won: 0, lost: 0, folded: 0, profit: 0, handRefs: [] };
+        }
+        oppMap[a.author].hands++;
+        oppMap[a.author].handRefs.push(i);
+        if (h.outcome) {
+          if (h.outcome.result === 'won') {
+            var inv = h.invested || calcInvestmentFromActions(h.actions || []);
+            var pr = (h.outcome.amount || 0) - inv;
+            oppMap[a.author].won++;
+            oppMap[a.author].profit += pr > 0 ? pr : (h.outcome.amount || 0);
+          } else if (h.outcome.result === 'folded') {
+            oppMap[a.author].folded++;
+            var inv2 = h.invested || calcInvestmentFromActions(h.actions || []);
+            oppMap[a.author].profit -= inv2;
+          } else {
+            oppMap[a.author].lost++;
+            var inv3 = h.invested || calcInvestmentFromActions(h.actions || []);
+            oppMap[a.author].profit -= inv3;
+          }
+        }
+      }
+    }
+
+    // Sort by hands played descending
+    var opponents = Object.keys(oppMap).map(function(k) { return oppMap[k]; });
+    opponents.sort(function(a, b) { return b.hands - a.hands; });
+
+    // Filter to opponents with 2+ hands
+    var filtered = opponents.filter(function(o) { return o.hands >= 2; });
+
+    function renderPlayerList() {
+      if (!filtered.length) {
+        document.getElementById('p-players').innerHTML = ins('n', 'Players', 'Not enough shared hands to show opponent stats. Keep playing to build data.', []);
+        return;
+      }
+
+      var maxH = Math.max.apply(null, filtered.map(function(o) { return o.hands; }));
+      var html = '<div class="sec-subtitle" style="margin-top:0;">Frequent Opponents</div>';
+      html += '<div style="font-size:9px;color:var(--dim);margin-bottom:12px;">' + filtered.length + ' opponents with 2+ shared hands · click any row to view hands</div>';
+      html += '<div style="overflow-x:auto;"><table class="tbl-compare"><thead><tr>';
+      html += '<th>Player</th><th>Hands</th><th></th><th>' + tipWrap('Win Rate') + '</th><th>Net P&L</th>';
+      html += '</tr></thead><tbody>';
+
+      for (var k = 0; k < filtered.length; k++) {
+        var o = filtered[k];
+        var wr = pct(o.won, o.won + o.lost);
+        var barW = Math.round(o.hands / maxH * 100);
+        html += '<tr class="player-row" data-player="' + o.name + '" style="cursor:pointer;transition:border-color .15s;" onmouseover="this.style.borderColor=\'var(--gold2)\'" onmouseout="this.style.borderColor=\'\'">';
+        html += '<td>' + o.name + '</td>';
+        html += '<td>' + o.hands + '</td>';
+        html += '<td style="width:80px;"><span class="tbl-spark" style="width:' + barW + '%;background:var(--gold2);"></span></td>';
+        html += '<td class="' + (wr !== null && wr >= 50 ? 'wr-good' : wr !== null ? 'wr-bad' : '') + '">' + (wr !== null ? wr + '%' : '—') + '</td>';
+        html += '<td class="' + (o.profit >= 0 ? 'pnl-pos' : 'pnl-neg') + '">' + (o.profit >= 0 ? '+' : '') + fmt(o.profit) + '</td>';
+        html += '</tr>';
+      }
+      html += '</tbody></table></div>';
+
+      // Insights
+      var pIns = [];
+      if (filtered.length >= 1) {
+        pIns.push(ins('n', 'Most Seen', 'You have played ' + filtered[0].hands + ' hands with ' + filtered[0].name + '.', [{ v: filtered[0].name, hi: true }, { v: filtered[0].hands + ' hands' }]));
+      }
+      var best = null;
+      var worst = null;
+      for (var m = 0; m < filtered.length; m++) {
+        var ow = filtered[m];
+        var owr = pct(ow.won, ow.won + ow.lost);
+        if (owr === null || (ow.won + ow.lost) < 5) continue;
+        if (!best || owr > pct(best.won, best.won + best.lost)) best = ow;
+        if (!worst || owr < pct(worst.won, worst.won + worst.lost)) worst = ow;
+      }
+      if (best) {
+        pIns.push(ins('g', 'Best Record', 'You win ' + pct(best.won, best.won + best.lost) + '% against ' + best.name + ' (' + (best.won + best.lost) + ' contested hands).', [{ v: best.name, hi: true }, { v: pct(best.won, best.won + best.lost) + '% win' }]));
+      }
+      if (worst && worst !== best) {
+        pIns.push(ins('r', 'Toughest Opponent', 'Only ' + pct(worst.won, worst.won + worst.lost) + '% win rate against ' + worst.name + ' (' + (worst.won + worst.lost) + ' contested hands).', [{ v: worst.name, hi: true }, { v: pct(worst.won, worst.won + worst.lost) + '% win' }]));
+      }
+      if (pIns.length) html += '<div style="margin-top:24px;">' + pIns.join('') + '</div>';
+
+      document.getElementById('p-players').innerHTML = html;
+
+      // Wire row clicks
+      document.querySelectorAll('#p-players .player-row').forEach(function(row) {
+        row.onclick = function() {
+          renderPlayerHands(this.getAttribute('data-player'));
+        };
+      });
+    }
+
+    function renderPlayerHands(playerName) {
+      var opp = oppMap[playerName];
+      if (!opp) return;
+      var playerHands = opp.handRefs.map(function(idx) { return hands[idx]; });
+
+      var phPage = 0;
+      var PH_SIZE = 50;
+
+      function renderPage() {
+        var start = phPage * PH_SIZE;
+        var end = Math.min(start + PH_SIZE, playerHands.length);
+        var page = playerHands.slice(start, end);
+        var totalPages = Math.ceil(playerHands.length / PH_SIZE);
+        var wr = pct(opp.won, opp.won + opp.lost);
+
+        var ph = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">';
+        ph += '<div>';
+        ph += '<button class="log-nav-btn" id="players-back" style="margin-right:12px;">&laquo; All Players</button>';
+        ph += '<span style="font-size:14px;font-weight:600;color:var(--gold);">' + playerName + '</span>';
+        ph += '</div>';
+        ph += '<div style="font-size:10px;color:var(--dim);">' + opp.hands + ' hands · ' + (wr !== null ? wr + '% win' : '—') + ' · ' + (opp.profit >= 0 ? '+' : '') + fmt(opp.profit) + '</div>';
+        ph += '</div>';
+
+        if (totalPages > 1) {
+          ph += '<div style="display:flex;justify-content:flex-end;gap:6px;align-items:center;margin-bottom:8px;">';
+          ph += '<button class="log-nav-btn" id="ph-prev" ' + (phPage === 0 ? 'disabled' : '') + '>&laquo; Prev</button>';
+          ph += '<span style="font-size:9px;color:var(--dim);">Page ' + (phPage + 1) + '/' + totalPages + '</span>';
+          ph += '<button class="log-nav-btn" id="ph-next" ' + (phPage >= totalPages - 1 ? 'disabled' : '') + '>Next &raquo;</button>';
+          ph += '</div>';
+        }
+
+        ph += '<div class="hrow hrow-header"><div class="hrow-pos">Pos</div><div class="hrow-cards">Cards</div><div class="hrow-board">Board</div><div class="hrow-acts">Actions</div><div class="hrow-res">Result</div></div>';
+        ph += '<div class="hlog">' + page.map(function(h, pi) {
+          var myActs = parseActions(h.actions).filter(function(a) { return a.isMe; }).map(function(a) { return a.type; }).join(' · ');
+          var invested = h.invested || calcInvestmentFromActions(h.actions || []);
+          var res;
+          if (h.outcome) {
+            if (h.outcome.result === 'won') {
+              var profit = (h.outcome.amount || 0) - invested;
+              res = '<div class="hrow-res w">+' + fmt(profit > 0 ? profit : h.outcome.amount || h.pot || 0) + '</div>';
+            } else if (h.outcome.result === 'folded') {
+              res = '<div class="hrow-res l">' + (invested > 0 ? '-' + fmt(invested) : 'folded') + '</div>';
+            } else {
+              res = '<div class="hrow-res l">-' + fmt(invested) + '</div>';
+            }
+          } else {
+            res = '<div class="hrow-res u">?</div>';
+          }
+          return '<div class="hrow" data-ph-idx="' + (start + pi) + '" style="cursor:pointer;transition:border-color .15s;" onmouseover="this.style.borderColor=\'var(--gold2)\'" onmouseout="this.style.borderColor=\'\'"><div class="hrow-pos">' + (h.position || '?') + '</div><div class="hrow-cards">' + (h.hole && h.hole.length ? h.hole.join(' ') : '?? ??') + '</div><div class="hrow-board">' + (h.board && h.board.length ? h.board.join(' ') : '—') + '</div><div class="hrow-acts">' + myActs + '</div>' + res + '</div>';
+        }).join('') + '</div>';
+
+        document.getElementById('p-players').innerHTML = ph;
+
+        // Wire back button
+        document.getElementById('players-back').onclick = function() { renderPlayerList(); };
+
+        // Wire hand row clicks
+        document.querySelectorAll('#p-players .hrow[data-ph-idx]').forEach(function(row) {
+          row.onclick = function() {
+            var idx = parseInt(this.getAttribute('data-ph-idx'));
+            if (!isNaN(idx) && playerHands[idx]) {
+              showExampleHandModal(playerHands[idx]);
+            }
+          };
+        });
+
+        // Wire pagination
+        var prev = document.getElementById('ph-prev');
+        var next = document.getElementById('ph-next');
+        if (prev) prev.onclick = function() { phPage--; renderPage(); };
+        if (next) next.onclick = function() { phPage++; renderPage(); };
+      }
+
+      renderPage();
+    }
+
+    renderPlayerList();
   })();
 
   // ── TABLE FILTER HANDLER ──
@@ -1103,7 +1336,7 @@ function process(raw) {
     alert('Could not parse JSON.\n\nMake sure you:\n1. Clicked Export in the TC panel\n2. Pasted the full clipboard contents here\n\nError: ' + e.message);
     return;
   }
-  const hands = json.hands || [];
+  const hands = Array.isArray(json) ? json : (json.hands || []);
   if (!hands.length) {
     alert('No hands found in export. Play some hands first, then export.');
     return;
@@ -1151,13 +1384,58 @@ document.getElementById('jin').addEventListener('keydown', function(e) {
   if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) process(this.value);
 });
 
+// Position a tooltip relative to the viewport so it escapes overflow containers
+function positionTip(tooltipEl) {
+  var tipBox = tooltipEl.querySelector('.tip-box');
+  if (!tipBox) return;
+  // Temporarily show to measure
+  tipBox.style.visibility = 'hidden';
+  tipBox.style.display = 'block';
+  var anchor = tooltipEl.getBoundingClientRect();
+  var tw = tipBox.offsetWidth;
+  var th = tipBox.offsetHeight;
+  tipBox.style.display = '';
+  tipBox.style.visibility = '';
+
+  var top = anchor.top - th - 8;
+  var left = anchor.left;
+
+  // Flip below if no room above
+  if (top < 8) top = anchor.bottom + 8;
+  // Clamp horizontal
+  if (left + tw > window.innerWidth - 8) left = window.innerWidth - 8 - tw;
+  if (left < 8) left = 8;
+
+  tipBox.style.top = top + 'px';
+  tipBox.style.left = left + 'px';
+}
+
+// Desktop hover positioning
+document.addEventListener('mouseover', function(e) {
+  var tip = e.target.closest('.tooltip');
+  if (tip) positionTip(tip);
+});
+
 // Mobile tooltip support: tap to toggle
 document.addEventListener('click', function(e) {
   const tip = e.target.closest('.tooltip');
   document.querySelectorAll('.tooltip.active').forEach(function(t) {
     if (t !== tip) t.classList.remove('active');
   });
-  if (tip) tip.classList.toggle('active');
+  if (tip) {
+    tip.classList.toggle('active');
+    if (tip.classList.contains('active')) positionTip(tip);
+  }
+});
+
+// Reposition active tooltip on scroll/resize
+window.addEventListener('scroll', function() {
+  var active = document.querySelector('.tooltip.active');
+  if (active) positionTip(active);
+}, true);
+window.addEventListener('resize', function() {
+  var active = document.querySelector('.tooltip.active');
+  if (active) positionTip(active);
 });
 
 // ── PROFILE ────────────────────────────────────────────────────────────────

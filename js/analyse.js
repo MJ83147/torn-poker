@@ -96,7 +96,7 @@ function analyse(hands) {
         vpip++;
         posMap[p].vpip++;
       }
-      if (h.outcome && h.outcome.result === 'won') {
+      if (didPlay && h.outcome && h.outcome.result === 'won') {
         rangeMap[hkey].won++;
       }
       const pfFold = myActs.find(a => a.street === 'Preflop' && a.type === 'fold');
@@ -108,13 +108,13 @@ function analyse(hands) {
       }
       htMap[ht].dealt++;
       if (didPlay) htMap[ht].played++;
-      if (h.outcome && h.outcome.result === 'won') htMap[ht].won++;
+      if (didPlay && h.outcome && h.outcome.result === 'won') htMap[ht].won++;
     }
 
     // Street-level and action stats
     const acts = parseActions(h.actions);
-    const seenStreets = new Set();
     const heroSeenStreets = new Set();
+    let allinCountedThisHand = false;
     for (const a of acts) {
       // Only count hero actions for aggregate action stats
       if (a.isMe) {
@@ -125,8 +125,8 @@ function analyse(hands) {
         else if (a.type === 'raise') raises++;
       }
 
-      // Track which streets the hero reached (had any action on, including blind posts)
-      if (a.isMe && !heroSeenStreets.has(a.street)) {
+      // Track which streets the hero reached (exclude blind posts — they don't indicate voluntary street play)
+      if (a.isMe && a.type !== 'sb' && a.type !== 'bb' && !heroSeenStreets.has(a.street)) {
         heroSeenStreets.add(a.street);
         if (ss[a.street]) ss[a.street].seen++;
       }
@@ -144,19 +144,25 @@ function analyse(hands) {
         }
       }
 
-      // All-in tracking
-      if (a.msg && a.msg.includes('went all-in')) {
-        facedAllin++;
-        const myAllin = a.isMe;
-        if (!myAllin) {
-          // someone else went all in; check if hero folded/called
-          const laterActs = acts.filter(b => b.isMe && b.street === a.street);
-          const f = laterActs.find(b => b.type === 'fold');
-          const c = laterActs.find(b => b.type === 'call' || b.type === 'raise');
-          if (f) foldAllin++;
-          if (c) callAllin++;
-        } else if (h.outcome && h.outcome.result === 'won') {
-          wonAllin++;
+      // Bet opportunity tracking: when hero acts post-flop, count as opportunity; raises/bets count as betting
+      if (a.isMe && a.street !== 'Preflop' && betOpps[a.street] && a.type !== 'sb' && a.type !== 'bb' && a.type !== 'won') {
+        betOpps[a.street].t++;
+        if (a.type === 'raise') betOpps[a.street].b++;
+      }
+
+      // All-in detection: opponent raise with no "to $X" in the message indicates a shove
+      if (!allinCountedThisHand && !a.isMe && a.type === 'raise' && a.msg && a.msg.indexOf(' to ') === -1) {
+        const heroResp = acts.filter(b => b.isMe && b.street === a.street);
+        const foldResp = heroResp.find(b => b.type === 'fold');
+        const callResp = heroResp.find(b => b.type === 'call' || b.type === 'raise');
+        if (foldResp || callResp) {
+          allinCountedThisHand = true;
+          facedAllin++;
+          if (foldResp) foldAllin++;
+          if (callResp) {
+            callAllin++;
+            if (h.outcome && h.outcome.result === 'won') wonAllin++;
+          }
         }
       }
     }
