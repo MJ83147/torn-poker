@@ -1048,6 +1048,30 @@ textarea#jin:focus {
 .tbl-compare .wr-bad { color: var(--red); }
 .tbl-spark { display: inline-block; height: 14px; border-radius: 2px; min-width: 2px; vertical-align: middle; }
 
+/* Scrollable players table */
+.players-table-scroll {
+  max-height: 340px;
+  overflow-y: auto;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+.players-table-scroll thead th {
+  position: sticky;
+  top: 0;
+  background: var(--s1);
+  z-index: 1;
+}
+.watch-star:hover { color: var(--gold) !important; }
+
+/* Trends 2x2 grid */
+.trends-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
 /* Example Hand Modal */
 .modal-overlay {
   position: fixed;
@@ -1266,6 +1290,9 @@ textarea#jin:focus {
   .log-nav-btn { padding: 8px 14px; font-size: 10px; }
   .example-hand-btn { padding: 6px 12px; font-size: 9px; }
   .reset-btn { padding: 8px 14px; font-size: 10px; }
+
+  /* Trends: stack on tablet */
+  .trends-grid { grid-template-columns: 1fr; }
 }
 
 /* ---------- Phone (<=480px) ---------- */
