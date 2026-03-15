@@ -6,7 +6,7 @@ let _meta = {};
 let _excludedTables = new Set();
 
 function setSession(hands, meta) {
-  _allHands = hands;
+  _allHands = hands.filter(h => inferTable(h) !== null);
   _meta = meta;
 }
 
@@ -102,8 +102,9 @@ function checkSavedSession() {
   if (!saved) return;
   try {
     const json = JSON.parse(saved);
-    const hands = (json.hands || []).filter(h => h.hole && h.hole.length === 2);
+    const hands = (Array.isArray(json) ? json : (json.hands || [])).filter(h => h.hole && h.hole.length === 2);
     if (!hands.length) return;
+    const playerName = json.player || detectPlayerFromActions(hands) || 'Unknown';
     const rb = document.getElementById('restore-block');
     const rl = document.getElementById('restore-label');
     const date = json.exportedAt ? new Date(json.exportedAt).toLocaleDateString('en-GB', {
@@ -111,11 +112,11 @@ function checkSavedSession() {
       month: 'short',
       year: 'numeric',
     }) : '';
-    rl.textContent = hands.length + ' hands from ' + (json.player || 'Unknown') + (date ? ' · ' + date : '') + ' found in storage';
+    rl.textContent = hands.length + ' hands from ' + playerName + (date ? ' · ' + date : '') + ' found in storage';
     rb.style.display = 'block';
     document.getElementById('restore-btn').onclick = function() {
       const meta = {
-        player: json.player || 'Unknown',
+        player: playerName,
         exportedAt: json.exportedAt || new Date().toISOString(),
       };
       setSession(hands, meta);
@@ -208,32 +209,32 @@ function render(d, hands, meta) {
     const w = pct(ps.won, ps.played || 1);
     const exPair = findExampleHand(function(h) {
       const key = parseHoleKey(h.hole);
-      return key && classifyKey(key) === 'Pocket Pairs' && h.outcome && h.outcome.result !== 'won';
+      return key && classifyKey(key) === 'Pocket Pairs' && h.outcome && h.outcome.result === (w < 45 ? 'lost' : 'won');
     });
     cIns.push(insWithExample(w < 45 ? 'r' : 'g', 'Pocket Pairs', w < 45 ? 'Winning only ' + w + '% with pairs (' + ps.played + ' played of ' + ps.dealt + ' dealt). Bet hard preflop and charge draws — don\'t slow play.' : 'Good ' + w + '% win rate with pairs (' + ps.played + ' played of ' + ps.dealt + ' dealt). Keep betting them aggressively.', [{
       v: w + '% win',
     }, {
       v: ps.dealt + ' dealt · ' + ps.played + ' played',
-    }], exPair, 'This pocket pair hand was lost. With pairs, aggression preflop builds the pot and charges draws. Slow playing lets opponents catch up cheaply.'));
+    }], exPair, w < 45 ? 'This pocket pair hand was lost. With pairs, aggression preflop builds the pot and charges draws. Slow playing lets opponents catch up cheaply.' : 'This pocket pair hand was won. Pairs are strong — keep betting them aggressively and charging draws.'));
   }
   if (bw && bw.dealt >= 3) {
     const w = pct(bw.won, bw.played || 1);
     const exBw = findExampleHand(function(h) {
       const key = parseHoleKey(h.hole);
-      return key && classifyKey(key) === 'Broadway' && h.outcome && h.outcome.result !== 'won';
+      return key && classifyKey(key) === 'Broadway' && h.outcome && h.outcome.result === (w < 45 ? 'lost' : 'won');
     });
     cIns.push(insWithExample(w < 45 ? 'a' : 'g', 'Broadway', w + '% win rate across ' + bw.played + ' played broadway hands (' + bw.dealt + ' dealt). These are premium hands — if you\'re losing with them, check your postflop bet sizing.', [{
       v: bw.dealt + ' dealt · ' + bw.played + ' played',
       hi: true,
     }, {
       v: w + '% win',
-    }], exBw, 'This broadway hand was lost. Broadway hands are premium — ensure you are betting for value and not letting opponents draw cheaply.'));
+    }], exBw, w < 45 ? 'This broadway hand was lost. Broadway hands are premium — ensure you are betting for value and not letting opponents draw cheaply.' : 'This broadway hand was won. Premium hands like these should be your bread and butter.'));
   }
   if (as2 && as2.dealt >= 3) {
     const w = pct(as2.won, as2.played || 1);
     const exAceRag = findExampleHand(function(h) {
       const key = parseHoleKey(h.hole);
-      return key && classifyKey(key) === 'Ace-Rag' && h.outcome && h.outcome.result !== 'won';
+      return key && classifyKey(key) === 'Ace-Rag' && h.outcome && h.outcome.result === 'lost';
     });
     cIns.push(insWithExample('a', 'Ace-Rag', 'Dealt ' + as2.dealt + ' times, played ' + as2.played + '. An ace with a weak kicker loses to any better ace — be careful calling raises.', [{
       v: w !== null ? w + '% win' : '?',
@@ -245,6 +246,7 @@ function render(d, hands, meta) {
     const exTrash = findExampleHand(function(h) {
       const key = parseHoleKey(h.hole);
       if (!key || classifyKey(key) !== 'Offsuit Trash') return false;
+      if (!h.outcome || h.outcome.result !== 'lost') return false;
       const ma = parseActions(h.actions).filter(function(a) { return a.isMe; });
       return ma.some(function(a) { return a.type === 'call' || a.type === 'raise'; });
     });
@@ -252,7 +254,7 @@ function render(d, hands, meta) {
       v: ts.dealt + ' dealt',
     }, {
       v: ts.played + ' played',
-    }], exTrash, 'This is an offsuit trash hand that should almost always be folded preflop. Playing these costs chips over time.'));
+    }], exTrash, 'This offsuit trash hand was played and lost. These hands cost chips over time — fold them preflop.'));
   }
   if (scs && scs.dealt >= 3) {
     const w = pct(scs.won, scs.played || 1);
@@ -269,7 +271,7 @@ function render(d, hands, meta) {
       v: 'Keep playing',
     }]));
   }
-  cardsHtml += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:9px;margin-top:20px;">' + cIns.map(function(c) { return c; }).join('') + '</div>';
+  cardsHtml += '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-top:20px;">' + cIns.map(function(c) { return c; }).join('') + '</div>';
   cardsHtml += '</div>';
   document.getElementById('p-cards').innerHTML = cardsHtml;
 
@@ -515,12 +517,13 @@ function render(d, hands, meta) {
   if (d.avgBetRiver > 0) {
     const exRiverBet = findExampleHand(function(h) {
       if (!h.board || h.board.length < 5) return false;
+      if (!h.outcome || h.outcome.result !== 'won') return false;
       return parseActions(h.actions).some(function(a) { return a.isMe && a.street === 'River' && (a.type === 'raise' || a.type === 'bet'); });
     });
     bIns.push(insWithExample('o', 'River Sizing', 'Average river bet: ' + fmt(d.avgBetRiver) + '. The river is where you get paid — bet big with the best hand.', [{
       v: 'Avg: ' + fmt(d.avgBetRiver),
       hi: true,
-    }], exRiverBet, 'The river is your last chance to extract value. With a strong hand, size up — TC players will call with second-best hands more often than they should.'));
+    }], exRiverBet, 'This winning hand shows the river paying off. Size up with strong hands — TC players will call with second-best hands more often than they should.'));
   }
   const fbo = d.betOpps['Flop'];
   if (fbo && fbo.t >= 3 && pct(fbo.b, fbo.t) < 30) {
@@ -700,12 +703,19 @@ function render(d, hands, meta) {
     }
     return 'rgb(50, 170, 65)';
   }
-  function freqColor(n2) {
-    if (n2 === 0) return '#111a12';
-    if (n2 === 1) return '#1a2e1e';
-    if (n2 <= 3) return '#24422a';
-    if (n2 <= 5) return '#2e5835';
-    return '#c8a94a';
+  // Find max played count across all combos for relative colouring
+  let maxPlayed = 0;
+  Object.keys(d.rangeMap).forEach(function(k) {
+    if (d.rangeMap[k].played > maxPlayed) maxPlayed = d.rangeMap[k].played;
+  });
+  function playedColor(played) {
+    if (played === 0) return '#111a12';
+    const ratio = played / maxPlayed;
+    if (ratio <= 0.15) return '#1a2e1e';
+    if (ratio <= 0.35) return '#24422a';
+    if (ratio <= 0.6) return '#2e5835';
+    if (ratio <= 0.8) return '#3a7a42';
+    return 'rgb(50, 170, 65)';
   }
   let wrGrid = '';
   let freqGrid = '';
@@ -717,9 +727,8 @@ function render(d, hands, meta) {
         const wr2 = data.played > 0 ? pct(data.won, data.played) : null;
         const wrBg = (wr2 !== null ? wrColor(wr2) : (data.played > 0 ? '#1e3020' : '#111a12'));
         wrGrid += '<div class="rc" style="background:' + wrBg + ';" data-tip="' + key + ' | Win: ' + (wr2 !== null ? wr2 + '%' : 'n/a') + ' (' + data.won + '/' + data.played + ' played, ' + data.dealt + ' dealt)"><span>' + key + '</span></div>';
-        freqGrid += '<div class="rc" style="background:' + freqColor(data.dealt) + ';" data-tip="' + key + ' | ' + data.dealt + ' dealt · ' + data.played + ' played"><span>' + key + '</span></div>';
+        freqGrid += '<div class="rc" style="background:' + playedColor(data.played) + ';" data-tip="' + key + ' | Played ' + data.played + ' of ' + data.dealt + ' dealt"><span>' + key + '</span></div>';
       } else {
-        // Unseen hands: visible text on dark background so the full grid is readable
         const cellType = (r === c) ? 'pair' : (r < c) ? 'suited' : 'offsuit';
         const cellLabel = cellType === 'pair' ? 'Pair' : cellType === 'suited' ? 'Suited' : 'Offsuit';
         wrGrid += '<div class="rc rc-unseen" data-tip="' + key + ' | Not yet dealt (' + cellLabel + ')"><span>' + key + '</span></div>';
@@ -736,10 +745,10 @@ function render(d, hands, meta) {
     '<div class="leg"><div class="leg-sw" style="background:rgb(50,170,65);"></div>&gt;70% win</div>' +
     '</div>';
   const legend2 = '<div class="range-legend">' +
-    '<div class="leg"><div class="leg-sw rc-unseen" style="width:9px;height:9px;"></div>Not dealt</div>' +
-    '<div class="leg"><div class="leg-sw" style="background:#1a2e1e;"></div>1 time</div>' +
-    '<div class="leg"><div class="leg-sw" style="background:#2e5835;"></div>2-5 times</div>' +
-    '<div class="leg"><div class="leg-sw" style="background:#c8a94a;"></div>6+ times</div>' +
+    '<div class="leg"><div class="leg-sw rc-unseen" style="width:9px;height:9px;"></div>Not played</div>' +
+    '<div class="leg"><div class="leg-sw" style="background:#1a2e1e;"></div>Rarely</div>' +
+    '<div class="leg"><div class="leg-sw" style="background:#2e5835;"></div>Sometimes</div>' +
+    '<div class="leg"><div class="leg-sw" style="background:rgb(50,170,65);"></div>Most played</div>' +
     '</div>';
   const rangeIns = [];
   let bestKey = null;
@@ -786,7 +795,7 @@ function render(d, hands, meta) {
     legend1 +
     '</div>' +
     '<div>' +
-    '<div class="sec-subtitle" style="margin-top:0;">Hands Dealt</div>' +
+    '<div class="sec-subtitle" style="margin-top:0;">Hands Played</div>' +
     '<div class="range-grid-sm">' + freqGrid + '</div>' +
     legend2 +
     '</div>' +
@@ -1109,7 +1118,7 @@ function render(d, hands, meta) {
       }
     }
     if (!tIns.length) tIns.push(ins('n', 'Trends', 'Keep tracking to build up enough data points for trend insights.', []));
-    tHtml += '<div style="margin-top:24px;">' + tIns.join('') + '</div>';
+    tHtml += '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-top:24px;">' + tIns.join('') + '</div>';
     document.getElementById('p-trends').innerHTML = tHtml;
   })();
 
@@ -1510,7 +1519,7 @@ function renderProfile() {
     const netPnl2 = d.totalWonAmount - d.totalInvested;
     const vpipPct2 = pct(d.vpip, d.n);
     const aggPct2 = pct(d.raises, d.totalActs);
-    playerName = _meta.player || 'Unknown';
+    playerName = _meta.player || detectPlayerFromActions(_allHands) || 'Unknown';
     exportDate = _meta.exportedAt ? new Date(_meta.exportedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
     stats = { n: d.n, wr: wr2, netPnl: netPnl2, vpipPct: vpipPct2, aggPct: aggPct2 };
   } else {

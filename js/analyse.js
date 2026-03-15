@@ -84,7 +84,7 @@ function analyse(hands) {
     const hkey = parseHoleKey(h.hole);
     if (hkey) {
       if (!rangeMap[hkey]) {
-        rangeMap[hkey] = { dealt: 0, played: 0, won: 0 };
+        rangeMap[hkey] = { dealt: 0, played: 0, won: 0, pnl: 0 };
       }
       rangeMap[hkey].dealt++;
 
@@ -98,6 +98,15 @@ function analyse(hands) {
       }
       if (didPlay && h.outcome && h.outcome.result === 'won') {
         rangeMap[hkey].won++;
+      }
+      // Track P&L per hand combo
+      if (h.outcome && cash) {
+        const inv = h.invested || calcInvestmentFromActions(h.actions || []);
+        if (h.outcome.result === 'won') {
+          rangeMap[hkey].pnl += (h.outcome.amount || 0) - inv;
+        } else {
+          rangeMap[hkey].pnl -= inv;
+        }
       }
       const pfFold = myActs.find(a => a.street === 'Preflop' && a.type === 'fold');
       if (pfFold) posMap[p].foldPre++;
