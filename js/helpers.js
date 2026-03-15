@@ -90,13 +90,13 @@ const TABLE_META = {
 // Cash tables used to separate tournaments from cash games
 const CASH_TABLE_IDS = new Set([2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28]);
 
-// Map of big blind amount -> table ids (for blind-based inference)
+// Map of big blind amount -> table entries with max seats (for blind-based inference)
 const BB_TO_TABLES = (() => {
   const map = {};
   for (const [id, t] of Object.entries(TABLE_META)) {
     if (t.tournament) continue; // only map cash tables for blind inference
     if (!map[t.bb]) map[t.bb] = [];
-    map[t.bb].push(Number(id));
+    map[t.bb].push({ id: Number(id), max: t.max });
   }
   return map;
 })();
@@ -259,6 +259,42 @@ function inferTable(hand) {
   if (hand.table) {
     const num = String(hand.table).replace(/\D/g, '');
     if (num && TABLE_META[num]) return Number(num);
+  }
+  // Fall back to bigBlind field if present
+  if (hand.bigBlind) {
+    const candidates = BB_TO_TABLES[hand.bigBlind];
+    if (candidates && candidates.length === 1) return candidates[0].id;
+    if (candidates && candidates.length > 1 && hand.tableSize) {
+      const match = candidates.find(c => c.max >= hand.tableSize);
+      if (match) return match.id;
+    }
+  }
+  // Last resort: parse blind from action text
+  if (hand.actions && hand.actions.length) {
+    let bb = 0;
+    const players = new Set();
+    for (let i = 0; i < hand.actions.length; i++) {
+      const line = hand.actions[i];
+      // Extract big blind amount
+      const bbMatch = line.match(/posted big blind \$([0-9,]+)/);
+      if (bbMatch) bb = parseInt(bbMatch[1].replace(/,/g, ''), 10);
+      // Count unique players from action lines (name is word chars, spaces, underscores before first colon)
+      const authorMatch = line.match(/^\s*(?:>> )?([A-Za-z0-9_ -]+?):\s/);
+      if (authorMatch && !authorMatch[1].startsWith('The ')) {
+        players.add(authorMatch[1]);
+      }
+    }
+    if (bb && BB_TO_TABLES[bb]) {
+      const candidates = BB_TO_TABLES[bb];
+      if (candidates.length === 1) return candidates[0].id;
+      // Disambiguate by player count — pick smallest max that fits
+      const playerCount = players.size;
+      const sorted = candidates.slice().sort((a, b) => a.max - b.max);
+      const match = sorted.find(c => c.max >= playerCount);
+      if (match) return match.id;
+      // If player count exceeds all candidates, use the largest table
+      return sorted[sorted.length - 1].id;
+    }
   }
   return null;
 }

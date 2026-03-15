@@ -1,35 +1,17 @@
-
-—newAuto-detects which TC table a hand was played at using blind amounts and player count
-    some tables are showing as blank 
-    table detection should be from the web newWebSocket
-
-
-    erroneasly identified tablses and no ability to remove these from logging 
-
-—fixPlayer name detection from action log when not in export metadata some player names are shoiwing as unknown 
-- win rate heat map should only include hands played not all hands dealt.
-the hands reaching street % are wrong and hsowing th esame values for flop turn river 
-all leak tasks shoudl have xample hands
-all hands should open to show that hand.
-
-
-
-on the cards page the chart shuld be full width and the sstats cards in a grid below 
-on the position tab the tooltips are cutt of on th eleft hand side 
-on the position tab the tooltips on the header of the table do ntohing 
-
-
-
-Every leak or note should hsave associated hands alongside it.
-
-One pointer that I noticed on the analysis and hand categorizing side is the hands played seems to be every hand dealt seems to be logged in as played on the analysis side. (the right side that nags about offsuit rags being a leak. I went through most of the 400 hands and I fold them all unless checked to and on BB or when I have been folding for ages and get something on button that I might bet with. 
-
-The analysis side:
-Played 134 offsuit trash hands. These are almost always folds preflop.
-Hands played side:
-Offsuit Trash ?134 dealt · 12 played · 9% win
-
-
-the combined section is fairly useless right now.
-
-
+- players username showing as "unknown"
+- cards panel the info cards things should be two by 2 right now it's 4 and then 1 random one
+-th ecard sys this Good 47% win rate with pairs (107 played of 120 dealt). Keep betting them aggressively. but the exampelis one where i lost....
+- here Dealt 253 times, played 182. An ace with a weak kicker loses to any better ace — be careful calling raises. the result was folded not lost 
+- Dealt 568 offsuit trash hands, played 136. These are almost always folds preflop. shows a hand where i won..
+-mRiver Sizing
+Average river bet: $20.4M. The river is where you get paid — bet big with the best hand.
+Avg: $20.4M
+See example hand thsi shows a hnd where i lost and the river bet is 2m vs the average...
+-range cards should show me the hands i played those cards in so i cn see the details 
+- the range colouring system isn't working we need o work togyeer to figure out the best way to handle this 
+-there seems to be 1500+ unknown tables? thi s isns't possible. 
+-0 also beach pleasee is atorunament 
+-trendds can we make it a 2x2 grid 
+- session brekown each dau should show me the cards played that day in a list like hand logs 
+- played tab, the list shouldbe much shorter so you see the inisghts card right away, or the insight cards shiould be on top 
+- players tab we need to add functiionaity to be ablke to "Wartcg " specific players, light a highighted list to track 
