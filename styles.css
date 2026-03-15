@@ -496,13 +496,7 @@ textarea#jin:focus {
   gap: 16px;
 }
 
-@media(max-width:760px) {
-
-  .two-col,
-  .three-col {
-    grid-template-columns: 1fr;
-  }
-}
+/* collapsed into responsive section at bottom of file */
 
 /* MINI STATS */
 .mini-row {
@@ -1186,4 +1180,226 @@ textarea#jin:focus {
 .example-hand-btn:hover {
   border-color: var(--gold2);
   color: var(--gold);
+}
+
+/* =============================================
+   MOBILE RESPONSIVE
+   ============================================= */
+
+/* ---------- Tablet & small desktop (<=768px) ---------- */
+@media (max-width: 768px) {
+
+  /* Header */
+  .dash-header { padding: 0 14px; }
+  .header-inner { padding: 10px 0 0; gap: 10px; }
+  .header-title { font-size: 17px; }
+
+  /* Hero strip: 2-row wrap */
+  .hero-strip { flex-wrap: wrap; }
+  .hs { min-width: 33%; flex: 1 1 30%; padding: 10px 12px; }
+  .hs-v { font-size: 18px; }
+  .hs-l { font-size: 8px; letter-spacing: 2px; }
+
+  /* Tabs: horizontal scroll */
+  .tabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab { padding: 10px 14px; font-size: 10px; letter-spacing: 1px; }
+
+  /* Panels */
+  .panel { padding: 24px 16px; }
+
+  /* Paste screen */
+  #paste-wrap { padding: 40px 16px; }
+  .paste-box { padding: 28px 18px; }
+  .paste-suit { font-size: 34px; }
+  .paste-title { font-size: 20px; }
+
+  /* Grid layouts */
+  .two-col, .three-col { grid-template-columns: 1fr; }
+  .two-col { gap: 16px; }
+  .three-col { gap: 12px; }
+
+  /* Bar rows */
+  .bw2 { grid-template-columns: 90px 1fr 45px; }
+  .bw3 { grid-template-columns: 90px 1fr 45px 50px; }
+  .bar-label { font-size: 11px; }
+
+  /* Hand log grid */
+  .hrow {
+    grid-template-columns: 44px 70px 1fr 60px;
+    gap: 6px;
+    padding: 8px 10px;
+    font-size: 11px;
+  }
+  .hrow-board { display: none; }
+
+  /* Range grid */
+  .rc span { font-size: 7px; }
+  .rc:hover { transform: scale(1.3); }
+
+  /* Tables */
+  .tbl, .tbl-compare { font-size: 11px; }
+  .tbl td, .tbl-compare td { padding: 8px 8px 8px 0; font-size: 11px; }
+  .tbl th, .tbl-compare th { font-size: 8px; padding: 0 8px 8px 0; }
+
+  /* Modal */
+  .modal-box { padding: 18px; width: 94vw; }
+
+  /* Mini stats */
+  .mini-row { grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 8px; }
+  .mini { padding: 10px 12px; }
+  .mini-v { font-size: 20px; }
+
+  /* Insight cards */
+  .ins-text { padding-right: 60px; }
+  .ins-label { padding-right: 60px; }
+
+  /* Loader */
+  .l-sub { margin-bottom: 32px; }
+  .l-count { font-size: 42px; }
+
+  /* Buttons - better touch targets */
+  .log-nav-btn { padding: 8px 14px; font-size: 10px; }
+  .example-hand-btn { padding: 6px 12px; font-size: 9px; }
+  .reset-btn { padding: 8px 14px; font-size: 10px; }
+}
+
+/* ---------- Phone (<=480px) ---------- */
+@media (max-width: 480px) {
+
+  body { font-size: 13px; }
+
+  /* Header */
+  .dash-header { padding: 0 10px; }
+  .header-inner {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px 0 0;
+  }
+  .header-title { font-size: 15px; }
+  .header-meta { font-size: 9px; }
+
+  /* Hero strip: stack vertically on very small screens */
+  .hero-strip { flex-wrap: wrap; }
+  .hs { min-width: 48%; flex: 1 1 48%; padding: 8px 10px; }
+  .hs-v { font-size: 16px; }
+  .hs-l { font-size: 7px; letter-spacing: 1.5px; margin-bottom: 3px; }
+
+  /* Tabs: smaller, scroll */
+  .tab {
+    padding: 9px 11px;
+    font-size: 9px;
+    letter-spacing: 1px;
+  }
+
+  /* Panels */
+  .panel { padding: 16px 10px; }
+
+  /* Paste screen */
+  #paste-wrap { padding: 24px 10px; }
+  .paste-box { padding: 20px 14px; }
+  .paste-suit { font-size: 28px; margin-bottom: 10px; }
+  .paste-title { font-size: 18px; }
+  .paste-sub { font-size: 10px; margin-bottom: 16px; }
+  .go-btn { padding: 12px; font-size: 15px; }
+  textarea#jin { font-size: 10px; min-height: 70px; padding: 10px; }
+
+  /* Bar rows: stack label above bar */
+  .bw2 { grid-template-columns: 1fr 45px; }
+  .bw3 { grid-template-columns: 1fr 45px 50px; }
+  .bar-label {
+    grid-column: 1 / -1;
+    font-size: 11px;
+    margin-bottom: -4px;
+  }
+
+  /* Hand log: compact card layout */
+  .hrow {
+    grid-template-columns: 40px 60px 1fr 55px;
+    gap: 4px;
+    padding: 7px 8px;
+    font-size: 10px;
+  }
+  .hrow-header { padding: 2px 8px !important; }
+  .hrow-header div { font-size: 6px !important; }
+  .hrow-board { display: none; }
+  .hrow-acts { font-size: 8px; }
+  .hrow-pos { font-size: 10px; }
+
+  /* Range grid: tighter */
+  .range-grid { gap: 1px; }
+  .rc span { font-size: 6px; }
+  .range-grid-sm .rc span { font-size: 5px; }
+  .rc:hover { transform: scale(1.2); }
+  .range-legend { gap: 6px; }
+  .leg { font-size: 8px; }
+
+  /* Mini stats */
+  .mini-row {
+    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+  .mini { padding: 8px 10px; }
+  .mini-l { font-size: 8px; letter-spacing: 1px; margin-bottom: 4px; }
+  .mini-v { font-size: 18px; }
+
+  /* Tables: horizontal scroll wrapper */
+  .tbl td, .tbl-compare td { padding: 7px 6px 7px 0; font-size: 10px; }
+  .tbl th, .tbl-compare th { font-size: 7px; padding: 0 6px 6px 0; letter-spacing: 1px; }
+
+  /* Insight cards */
+  .ins { padding: 12px; }
+  .ins-text { font-size: 12px; padding-right: 50px; }
+  .ins-label { font-size: 8px; padding-right: 50px; }
+  .ins-badge { top: 10px; right: 8px; font-size: 7px; }
+
+  /* Section subtitles */
+  .sec-subtitle { font-size: 9px; letter-spacing: 2px; }
+
+  /* Modal */
+  .modal-box {
+    width: 96vw;
+    padding: 14px;
+    max-height: 85vh;
+  }
+  .modal-title { font-size: 16px; }
+  .modal-hand-meta { flex-wrap: wrap; gap: 8px; }
+
+  /* Buttons: 44px min touch target */
+  .log-nav-btn { padding: 10px 16px; font-size: 10px; min-height: 40px; }
+  .example-hand-btn { padding: 8px 14px; font-size: 9px; min-height: 36px; }
+  .reset-btn { padding: 10px 16px; font-size: 10px; }
+  .table-filter { font-size: 10px; padding: 8px 10px; max-width: 160px; }
+
+  /* Loader */
+  .l-eyebrow { font-size: 8px; letter-spacing: 4px; }
+  .l-sub { font-size: 8px; letter-spacing: 3px; margin-bottom: 28px; }
+  .l-count { font-size: 36px; min-width: 80px; }
+  .l-prog { width: 140px; }
+  .lc { width: 40px; height: 56px; font-size: 16px; }
+  .l-cards { gap: 8px; margin-bottom: 32px; }
+
+  /* Tooltip: clamp to viewport */
+  .tooltip .tip-box { max-width: 200px; min-width: 120px; font-size: 9px; }
+
+  /* Divider */
+  .divider { margin: 16px 0; }
+
+  /* Stack bar labels */
+  .stack-labels { gap: 10px; }
+  .stack-li { font-size: 10px; }
+
+  /* Hand type stacks */
+  .ht-stack-name { font-size: 10px; }
+  .ht-stack-meta { font-size: 9px; }
+  .ht-stack-legend { gap: 10px; }
+  .ht-leg-item { font-size: 8px; }
+
+  /* Chip tags */
+  .chip { font-size: 8px; padding: 2px 6px; }
 }
