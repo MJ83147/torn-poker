@@ -1374,6 +1374,7 @@ document.getElementById('go-btn').onclick = function() {
 
 document.getElementById('paste-btn').onclick = async function() {
   const errEl = document.getElementById('paste-error');
+  const jin = document.getElementById('jin');
   errEl.style.display = 'none';
   try {
     const text = await navigator.clipboard.readText();
@@ -1384,7 +1385,10 @@ document.getElementById('paste-btn').onclick = async function() {
     }
     process(text.trim());
   } catch (e) {
-    errEl.textContent = 'Could not read clipboard. Your browser may have blocked it. Try pasting manually in the box below instead.';
+    // Clipboard API blocked — focus the textarea so user can Ctrl+V / Cmd+V
+    jin.focus();
+    jin.placeholder = 'Paste here with Ctrl+V (or Cmd+V on Mac), then press Ctrl+Enter';
+    errEl.innerHTML = 'Your browser blocked clipboard access. <strong>Press Ctrl+V</strong> (Cmd+V on Mac) to paste into the box below, then press <strong>Ctrl+Enter</strong> to load.';
     errEl.style.display = 'block';
   }
 };
