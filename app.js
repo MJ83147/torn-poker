@@ -1064,7 +1064,7 @@ function render(d, hands, meta) {
         '<text x="' + (pad - 4) + '" y="' + (10 + chartH) + '" text-anchor="end" fill="var(--dim)" font-size="9">' + yMin + '</text>';
       const xLabels = '<text x="' + pad + '" y="' + (h - 2) + '" text-anchor="start" fill="var(--dim)" font-size="8">' + points[0].label + '</text>' +
         '<text x="' + (w - padR) + '" y="' + (h - 2) + '" text-anchor="end" fill="var(--dim)" font-size="8">' + points[points.length - 1].label + '</text>';
-      return '<div style="margin-bottom:24px;">' +
+      return '<div>' +
         '<div class="sec-subtitle" style="margin-top:0;">' + title + '</div>' +
         '<svg viewBox="0 0 ' + w + ' ' + h + '" style="width:100%;max-width:' + w + 'px;height:auto;">' +
         baseline + yLabels + xLabels +
@@ -1073,10 +1073,12 @@ function render(d, hands, meta) {
         '</svg></div>';
     }
     let tHtml = '';
+    tHtml += '<div class="trends-grid">';
     tHtml += svgChart('Cumulative Win Rate', 'wr', 'var(--green)', '%', 50);
     tHtml += svgChart('Cumulative VPIP', 'vpip', 'var(--gold)', '%');
     tHtml += svgChart('Cumulative Aggression', 'agg', 'var(--amber)', '%');
     tHtml += svgChart('Cumulative Net P&L (Cash Only)', 'netPnl', 'var(--green)', '', 0);
+    tHtml += '</div>';
     tHtml += '<div class="sec-subtitle">Session Breakdown</div>';
     tHtml += '<div style="overflow-x:auto;"><table class="tbl"><thead><tr><th>Date</th><th>Hands</th><th>Session ' + tipWrap('Win Rate') + '</th><th>Cumulative ' + tipWrap('Win Rate') + '</th><th>' + tipWrap('VPIP') + '</th><th>' + tipWrap('Aggression') + '</th></tr></thead><tbody>';
     for (let pi = points.length - 1; pi >= 0; pi--) {
@@ -1165,34 +1167,59 @@ function render(d, hands, meta) {
     // Filter to opponents with 2+ hands
     var filtered = opponents.filter(function(o) { return o.hands >= 2; });
 
+    // Watch list persistence
+    function getWatchedPlayers() {
+      try { return JSON.parse(localStorage.getItem('tc_watched_players') || '[]'); } catch(e) { return []; }
+    }
+    function setWatchedPlayers(list) {
+      localStorage.setItem('tc_watched_players', JSON.stringify(list));
+    }
+    function toggleWatch(name) {
+      var list = getWatchedPlayers();
+      var idx = list.indexOf(name);
+      if (idx >= 0) list.splice(idx, 1); else list.push(name);
+      setWatchedPlayers(list);
+      renderPlayerList();
+    }
+
     function renderPlayerList() {
       if (!filtered.length) {
         document.getElementById('p-players').innerHTML = ins('n', 'Players', 'Not enough shared hands to show opponent stats. Keep playing to build data.', []);
         return;
       }
 
+      var watched = getWatchedPlayers();
       var maxH = Math.max.apply(null, filtered.map(function(o) { return o.hands; }));
-      var html = '<div class="sec-subtitle" style="margin-top:0;">Frequent Opponents</div>';
-      html += '<div style="font-size:9px;color:var(--dim);margin-bottom:12px;">' + filtered.length + ' opponents with 2+ shared hands · click any row to view hands</div>';
-      html += '<div style="overflow-x:auto;"><table class="tbl-compare"><thead><tr>';
-      html += '<th>Player</th><th>Hands</th><th></th><th>' + tipWrap('Win Rate') + '</th><th>Net P&L</th>';
-      html += '</tr></thead><tbody>';
 
-      for (var k = 0; k < filtered.length; k++) {
-        var o = filtered[k];
-        var wr = pct(o.won, o.won + o.lost);
-        var barW = Math.round(o.hands / maxH * 100);
-        html += '<tr class="player-row" data-player="' + o.name + '" style="cursor:pointer;transition:border-color .15s;" onmouseover="this.style.borderColor=\'var(--gold2)\'" onmouseout="this.style.borderColor=\'\'">';
-        html += '<td>' + o.name + '</td>';
-        html += '<td>' + o.hands + '</td>';
-        html += '<td style="width:80px;"><span class="tbl-spark" style="width:' + barW + '%;background:var(--gold2);"></span></td>';
-        html += '<td class="' + (wr !== null && wr >= 50 ? 'wr-good' : wr !== null ? 'wr-bad' : '') + '">' + (wr !== null ? wr + '%' : '—') + '</td>';
-        html += '<td class="' + (o.profit >= 0 ? 'pnl-pos' : 'pnl-neg') + '">' + (o.profit >= 0 ? '+' : '') + fmt(o.profit) + '</td>';
-        html += '</tr>';
+      // Split into watched and unwatched
+      var watchedOpps = filtered.filter(function(o) { return watched.indexOf(o.name) >= 0; });
+
+      var html = '';
+
+      // Watched players section
+      if (watchedOpps.length) {
+        html += '<div class="sec-subtitle" style="margin-top:0;">Watched Players</div>';
+        html += '<div style="font-size:9px;color:var(--dim);margin-bottom:8px;">Click star to unwatch · click row to view hands</div>';
+        html += '<div style="overflow-x:auto;"><table class="tbl-compare"><thead><tr>';
+        html += '<th></th><th>Player</th><th>Hands</th><th></th><th>' + tipWrap('Win Rate') + '</th><th>Net P&L</th>';
+        html += '</tr></thead><tbody>';
+        for (var w = 0; w < watchedOpps.length; w++) {
+          var o = watchedOpps[w];
+          var wr = pct(o.won, o.won + o.lost);
+          var barW = Math.round(o.hands / maxH * 100);
+          html += '<tr class="player-row" data-player="' + o.name + '" style="cursor:pointer;transition:border-color .15s;" onmouseover="this.style.borderColor=\'var(--gold2)\'" onmouseout="this.style.borderColor=\'\'">';
+          html += '<td class="watch-star watched" data-watch="' + o.name + '" title="Unwatch player" style="cursor:pointer;width:24px;text-align:center;color:var(--gold);font-size:14px;">&#9733;</td>';
+          html += '<td>' + o.name + '</td>';
+          html += '<td>' + o.hands + '</td>';
+          html += '<td style="width:80px;"><span class="tbl-spark" style="width:' + barW + '%;background:var(--gold2);"></span></td>';
+          html += '<td class="' + (wr !== null && wr >= 50 ? 'wr-good' : wr !== null ? 'wr-bad' : '') + '">' + (wr !== null ? wr + '%' : '—') + '</td>';
+          html += '<td class="' + (o.profit >= 0 ? 'pnl-pos' : 'pnl-neg') + '">' + (o.profit >= 0 ? '+' : '') + fmt(o.profit) + '</td>';
+          html += '</tr>';
+        }
+        html += '</tbody></table></div>';
       }
-      html += '</tbody></table></div>';
 
-      // Insights
+      // Insights (show before the big table so they're always visible)
       var pIns = [];
       if (filtered.length >= 1) {
         pIns.push(ins('n', 'Most Seen', 'You have played ' + filtered[0].hands + ' hands with ' + filtered[0].name + '.', [{ v: filtered[0].name, hi: true }, { v: filtered[0].hands + ' hands' }]));
@@ -1212,9 +1239,40 @@ function render(d, hands, meta) {
       if (worst && worst !== best) {
         pIns.push(ins('r', 'Toughest Opponent', 'Only ' + pct(worst.won, worst.won + worst.lost) + '% win rate against ' + worst.name + ' (' + (worst.won + worst.lost) + ' contested hands).', [{ v: worst.name, hi: true }, { v: pct(worst.won, worst.won + worst.lost) + '% win' }]));
       }
-      if (pIns.length) html += '<div style="margin-top:24px;">' + pIns.join('') + '</div>';
+      if (pIns.length) html += '<div style="margin-top:20px;margin-bottom:20px;">' + pIns.join('') + '</div>';
+
+      // All opponents table (scrollable)
+      html += '<div class="sec-subtitle">All Opponents</div>';
+      html += '<div style="font-size:9px;color:var(--dim);margin-bottom:8px;">' + filtered.length + ' opponents with 2+ shared hands · click star to watch · click row to view hands</div>';
+      html += '<div class="players-table-scroll"><table class="tbl-compare"><thead><tr>';
+      html += '<th></th><th>Player</th><th>Hands</th><th></th><th>' + tipWrap('Win Rate') + '</th><th>Net P&L</th>';
+      html += '</tr></thead><tbody>';
+
+      for (var k = 0; k < filtered.length; k++) {
+        var o2 = filtered[k];
+        var wr2 = pct(o2.won, o2.won + o2.lost);
+        var barW2 = Math.round(o2.hands / maxH * 100);
+        var isWatched = watched.indexOf(o2.name) >= 0;
+        html += '<tr class="player-row" data-player="' + o2.name + '" style="cursor:pointer;transition:border-color .15s;" onmouseover="this.style.borderColor=\'var(--gold2)\'" onmouseout="this.style.borderColor=\'\'">';
+        html += '<td class="watch-star' + (isWatched ? ' watched' : '') + '" data-watch="' + o2.name + '" title="' + (isWatched ? 'Unwatch' : 'Watch') + ' player" style="cursor:pointer;width:24px;text-align:center;font-size:14px;color:' + (isWatched ? 'var(--gold)' : 'var(--muted)') + ';">' + (isWatched ? '&#9733;' : '&#9734;') + '</td>';
+        html += '<td>' + o2.name + '</td>';
+        html += '<td>' + o2.hands + '</td>';
+        html += '<td style="width:80px;"><span class="tbl-spark" style="width:' + barW2 + '%;background:var(--gold2);"></span></td>';
+        html += '<td class="' + (wr2 !== null && wr2 >= 50 ? 'wr-good' : wr2 !== null ? 'wr-bad' : '') + '">' + (wr2 !== null ? wr2 + '%' : '—') + '</td>';
+        html += '<td class="' + (o2.profit >= 0 ? 'pnl-pos' : 'pnl-neg') + '">' + (o2.profit >= 0 ? '+' : '') + fmt(o2.profit) + '</td>';
+        html += '</tr>';
+      }
+      html += '</tbody></table></div>';
 
       document.getElementById('p-players').innerHTML = html;
+
+      // Wire star clicks (stop propagation so row click doesn't fire)
+      document.querySelectorAll('#p-players .watch-star').forEach(function(star) {
+        star.onclick = function(e) {
+          e.stopPropagation();
+          toggleWatch(this.getAttribute('data-watch'));
+        };
+      });
 
       // Wire row clicks
       document.querySelectorAll('#p-players .player-row').forEach(function(row) {
