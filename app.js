@@ -817,20 +817,26 @@ function render(d, hands, meta) {
     '<div class="divider"></div>' +
     rangeIns.join('');
 
-  // Range cell click: show example hand modal for that combo
-  document.querySelectorAll('#p-range .rc[data-key]').forEach(function(cell) {
-    cell.addEventListener('click', function() {
-      const key = cell.getAttribute('data-key');
-      if (!key) return;
-      const match = findExampleHand(function(h) {
-        return parseHoleKey(h.hole) === key;
-      });
-      if (match) {
-        const rm = d.rangeMap[key];
-        const wr2 = rm && rm.played > 0 ? pct(rm.won, rm.played) : null;
-        showExampleHandModal(match, 'You were dealt ' + key + (rm ? ' ' + rm.dealt + ' times, played ' + rm.played : '') + (wr2 !== null ? ' with a ' + wr2 + '% win rate.' : '.'));
-      }
+  // Range cell click: show example hand modal for that combo (event delegation)
+  document.getElementById('p-range').addEventListener('click', function(e) {
+    var cell = e.target.closest('.rc[data-key]');
+    if (!cell) return;
+    var key = cell.getAttribute('data-key');
+    if (!key) return;
+    var match = findExampleHand(function(h) {
+      return parseHoleKey(h.hole) === key;
     });
+    if (!match) {
+      // Fallback: try matching from all hands directly
+      for (var i = hands.length - 1; i >= 0; i--) {
+        if (parseHoleKey(hands[i].hole) === key) { match = hands[i]; break; }
+      }
+    }
+    if (match) {
+      var rm = d.rangeMap[key];
+      var wr2 = rm && rm.played > 0 ? pct(rm.won, rm.played) : null;
+      showExampleHandModal(match, 'You were dealt ' + key + (rm ? ' ' + rm.dealt + ' times, played ' + rm.played : '') + (wr2 !== null ? ' with a ' + wr2 + '% win rate.' : '.'));
+    }
   });
 
   // ── LOG ──
