@@ -344,6 +344,20 @@ function render(d, hands, meta) {
     return barRow(s, fp2 || 0, 100, fp2 > 55 ? 'r' : 'g', (fp2 !== null ? fp2 + '%' : '—'), ss2.f + ' folds');
   }).join('') + '</div></div>';
   stHtml += '</div>';
+  // Average bet size by street
+  const stAvgBets = {};
+  let stMaxAvg = 1;
+  streets.forEach(function(s) {
+    var a = d.betAmts[s];
+    stAvgBets[s] = a && a.length ? Math.round(a.reduce(function(x, y) { return x + y; }, 0) / a.length) : 0;
+    if (stAvgBets[s] > stMaxAvg) stMaxAvg = stAvgBets[s];
+  });
+  if (stAvgBets.Flop > 0 || stAvgBets.Turn > 0 || stAvgBets.River > 0) {
+    stHtml += '<div class="sec-subtitle">Average bet size by street</div><div class="bar-group">' +
+      streets.filter(function(s) { return stAvgBets[s] > 0; }).map(function(s) {
+        return barRow(s, stAvgBets[s], stMaxAvg, 'o', fmt(stAvgBets[s]), d.betAmts[s] ? d.betAmts[s].length + ' bets' : '');
+      }).join('') + '</div>';
+  }
   const sIns = [];
   const fr = pct(d.ss.Flop.seen, d.ss.Preflop.seen);
   const rr = pct(d.ss.River.seen, d.ss.Preflop.seen);
@@ -726,8 +740,8 @@ function render(d, hands, meta) {
       if (data && data.dealt > 0) {
         const wr2 = data.played > 0 ? pct(data.won, data.played) : null;
         const wrBg = (wr2 !== null ? wrColor(wr2) : (data.played > 0 ? '#1e3020' : '#111a12'));
-        wrGrid += '<div class="rc" style="background:' + wrBg + ';" data-tip="' + key + ' | Win: ' + (wr2 !== null ? wr2 + '%' : 'n/a') + ' (' + data.won + '/' + data.played + ' played, ' + data.dealt + ' dealt)"><span>' + key + '</span></div>';
-        freqGrid += '<div class="rc" style="background:' + playedColor(data.played) + ';" data-tip="' + key + ' | Played ' + data.played + ' of ' + data.dealt + ' dealt"><span>' + key + '</span></div>';
+        wrGrid += '<div class="rc" style="background:' + wrBg + ';cursor:pointer;" data-key="' + key + '" data-tip="' + key + ' | Win: ' + (wr2 !== null ? wr2 + '%' : 'n/a') + ' (' + data.won + '/' + data.played + ' played, ' + data.dealt + ' dealt) · click to see hands"><span>' + key + '</span></div>';
+        freqGrid += '<div class="rc" style="background:' + playedColor(data.played) + ';cursor:pointer;" data-key="' + key + '" data-tip="' + key + ' | Played ' + data.played + ' of ' + data.dealt + ' dealt · click to see hands"><span>' + key + '</span></div>';
       } else {
         const cellType = (r === c) ? 'pair' : (r < c) ? 'suited' : 'offsuit';
         const cellLabel = cellType === 'pair' ? 'Pair' : cellType === 'suited' ? 'Suited' : 'Offsuit';
@@ -768,13 +782,13 @@ function render(d, hands, meta) {
   });
   if (bestKey) {
     const exBest = findExampleHand(function(h) {
-      return parseHoleKey(h.hole) === bestKey && h.result === 'won';
+      return parseHoleKey(h.hole) === bestKey && h.outcome && h.outcome.result === 'won';
     });
     rangeIns.push(insWithExample('g', 'Best Hand', 'Your strongest combo so far is ' + bestKey + ' at ' + bestWr + '% win rate. Sample size matters though.', [{ v: bestKey, hi: true }, { v: bestWr + '% win' }], exBest, 'Here is a hand where you won with ' + bestKey + '. This combo has been your most profitable — keep playing it confidently but watch for sample size.'));
   }
   if (worstKey && worstKey !== bestKey) {
     const exWorst = findExampleHand(function(h) {
-      return parseHoleKey(h.hole) === worstKey && h.result !== 'won';
+      return parseHoleKey(h.hole) === worstKey && h.outcome && h.outcome.result !== 'won';
     });
     rangeIns.push(insWithExample('r', 'Worst Hand', worstKey + ' has been your weakest at ' + worstWr + '% win rate. Consider tightening or adjusting play with this hand.', [{ v: worstKey, hi: true }, { v: worstWr + '% win' }], exWorst, 'This hand with ' + worstKey + ' did not go well. Review whether you are overplaying this combo or getting into bad spots post-flop.'));
   }
@@ -802,6 +816,22 @@ function render(d, hands, meta) {
     '</div>' +
     '<div class="divider"></div>' +
     rangeIns.join('');
+
+  // Range cell click: show example hand modal for that combo
+  document.querySelectorAll('#p-range .rc[data-key]').forEach(function(cell) {
+    cell.addEventListener('click', function() {
+      const key = cell.getAttribute('data-key');
+      if (!key) return;
+      const match = findExampleHand(function(h) {
+        return parseHoleKey(h.hole) === key;
+      });
+      if (match) {
+        const rm = d.rangeMap[key];
+        const wr2 = rm && rm.played > 0 ? pct(rm.won, rm.played) : null;
+        showExampleHandModal(match, 'You were dealt ' + key + (rm ? ' ' + rm.dealt + ' times, played ' + rm.played : '') + (wr2 !== null ? ' with a ' + wr2 + '% win rate.' : '.'));
+      }
+    });
+  });
 
   // ── LOG ──
   const PAGE_SIZE = 50;
@@ -934,20 +964,20 @@ function render(d, hands, meta) {
       const worst = tableRows.filter(r => r.wr !== null && r.n >= 5).sort((a, b) => a.wr - b.wr)[0];
       const mostProfit = tableRows.sort((a, b) => b.net - a.net)[0];
       if (best && best.wr >= 40) {
-        const exBestTable = findExampleHand(function(h) { return String(inferTable(h) || 'unknown') === String(best.tid) && h.result === 'won'; });
+        const exBestTable = findExampleHand(function(h) { return String(inferTable(h) || 'unknown') === String(best.tid) && h.outcome && h.outcome.result === 'won'; });
         tIns2.push(insWithExample(best.wr >= 50 ? 'g' : 'n', 'Best Win Rate', best.label + ' at ' + best.wr + '% across ' + best.n + ' hands.', [{ v: best.wr + '%', hi: true }, { v: best.n + ' hands' }], exBestTable, 'A winning hand from ' + best.label + ', your highest win-rate table. Consider whether the player pool or stakes here suit your style particularly well.'));
       }
       if (worst && worst.wr < 40 && worst.n >= 5) {
-        const exWorstTable = findExampleHand(function(h) { return String(inferTable(h) || 'unknown') === String(worst.tid) && h.result !== 'won'; });
+        const exWorstTable = findExampleHand(function(h) { return String(inferTable(h) || 'unknown') === String(worst.tid) && h.outcome && h.outcome.result !== 'won'; });
         tIns2.push(insWithExample('r', 'Lowest Win Rate', worst.label + ' at ' + worst.wr + '% across ' + worst.n + ' hands. Consider whether the stakes or player pool suit your style.', [{ v: worst.wr + '%', hi: true }, { v: worst.n + ' hands' }], exWorstTable, 'A losing hand from ' + worst.label + '. Review whether you are adjusting your strategy for this table\'s stakes and player tendencies.'));
       }
       if (mostProfit && mostProfit.net > 0) {
-        const exProfitTable = findExampleHand(function(h) { return String(inferTable(h) || 'unknown') === String(mostProfit.tid) && h.result === 'won'; });
+        const exProfitTable = findExampleHand(function(h) { return String(inferTable(h) || 'unknown') === String(mostProfit.tid) && h.outcome && h.outcome.result === 'won'; });
         tIns2.push(insWithExample('g', 'Most Profitable', mostProfit.label + ' with a net of +' + fmt(mostProfit.net) + '.', [{ v: '+' + fmt(mostProfit.net), hi: true }], exProfitTable, 'A winning hand from your most profitable table. The combination of stakes, player pool, and your strategy is working well here.'));
       }
       const bigLoss = tableRows.filter(r => r.net < 0).sort((a, b) => a.net - b.net)[0];
       if (bigLoss) {
-        const exLossTable = findExampleHand(function(h) { return String(inferTable(h) || 'unknown') === String(bigLoss.tid) && h.result !== 'won'; });
+        const exLossTable = findExampleHand(function(h) { return String(inferTable(h) || 'unknown') === String(bigLoss.tid) && h.outcome && h.outcome.result !== 'won'; });
         tIns2.push(insWithExample('a', 'Biggest Loss', bigLoss.label + ' at ' + fmt(bigLoss.net) + '. Review whether leaks are table-specific or general.', [{ v: fmt(bigLoss.net), hi: true }], exLossTable, 'A losing hand from ' + bigLoss.label + '. Check if you are playing too loose or calling too much at these stakes.'));
       }
     }
@@ -1098,10 +1128,10 @@ function render(d, hands, meta) {
       if (last.wr !== null && mid.wr !== null) {
         const diff = last.wr - mid.wr;
         if (diff > 5) {
-          const exRecentWin = findExampleHand(function(h) { return h.result === 'won' && (h.timestamp || 0) >= (sorted[Math.floor(sorted.length / 2)].timestamp || 0); });
+          const exRecentWin = findExampleHand(function(h) { return h.outcome && h.outcome.result === 'won' && (h.timestamp || 0) >= (sorted[Math.floor(sorted.length / 2)].timestamp || 0); });
           tIns.push(insWithExample('g', 'Win Rate Improving', 'Your cumulative win rate has climbed ' + diff + ' percentage points over the second half of your sessions.', [{ v: mid.wr + '% → ' + last.wr + '%', hi: true }], exRecentWin, 'A recent winning hand from your improving stretch. Whatever adjustments you have made are paying off — keep it up.'));
         } else if (diff < -5) {
-          const exRecentLoss = findExampleHand(function(h) { return h.result !== 'won' && (h.timestamp || 0) >= (sorted[Math.floor(sorted.length / 2)].timestamp || 0); });
+          const exRecentLoss = findExampleHand(function(h) { return h.outcome && h.outcome.result !== 'won' && (h.timestamp || 0) >= (sorted[Math.floor(sorted.length / 2)].timestamp || 0); });
           tIns.push(insWithExample('a', 'Win Rate Declining', 'Your cumulative win rate has dropped ' + Math.abs(diff) + ' percentage points. Check for recent leaks or tilt.', [{ v: mid.wr + '% → ' + last.wr + '%', hi: true }], exRecentLoss, 'A recent losing hand during your downswing. Review whether you are tilting, calling too wide, or facing tougher competition.'));
         } else tIns.push(ins('n', 'Win Rate Stable', 'Consistent at around ' + last.wr + '% across sessions.', [{ v: last.wr + '%' }]));
       }
