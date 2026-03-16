@@ -817,26 +817,75 @@ function render(d, hands, meta) {
     '<div class="divider"></div>' +
     rangeIns.join('');
 
-  // Range cell click: show example hand modal for that combo (event delegation)
+  // Range cell click: show hand list for that combo (event delegation)
   document.getElementById('p-range').addEventListener('click', function(e) {
     var cell = e.target.closest('.rc[data-key]');
     if (!cell) return;
     var key = cell.getAttribute('data-key');
     if (!key) return;
-    var match = findExampleHand(function(h) {
-      return parseHoleKey(h.hole) === key;
-    });
-    if (!match) {
-      // Fallback: try matching from all hands directly
-      for (var i = hands.length - 1; i >= 0; i--) {
-        if (parseHoleKey(hands[i].hole) === key) { match = hands[i]; break; }
+    // Find all hands matching this combo
+    var matched = hands.filter(function(h) { return parseHoleKey(h.hole) === key; });
+    if (!matched.length) return;
+    var rm = d.rangeMap[key];
+    var wr2 = rm && rm.played > 0 ? pct(rm.won, rm.played) : null;
+    // Build hand list modal
+    var existing = document.getElementById('example-hand-modal');
+    if (existing) existing.remove();
+    var overlay = document.createElement('div');
+    overlay.id = 'example-hand-modal';
+    overlay.className = 'modal-overlay';
+    overlay.onclick = function(ev) { if (ev.target === overlay) closeModal(); };
+    var box = document.createElement('div');
+    box.className = 'modal-box';
+    box.style.position = 'relative';
+    box.style.maxHeight = '80vh';
+    box.style.overflowY = 'auto';
+    var summary = '<div class="modal-title">' + key + '</div>' +
+      '<div class="modal-subtitle">' + matched.length + ' hands' +
+      (rm ? ' · played ' + rm.played + ' of ' + rm.dealt + ' dealt' : '') +
+      (wr2 !== null ? ' · ' + wr2 + '% win rate' : '') + '</div>';
+    var rows = matched.map(function(h, idx) {
+      var myActs = parseActions(h.actions).filter(function(a) { return a.isMe; }).map(function(a) { return a.type; }).join(' · ');
+      var invested2 = h.invested || calcInvestmentFromActions(h.actions || []);
+      var res;
+      if (h.outcome) {
+        if (h.outcome.result === 'won') {
+          var profit2 = (h.outcome.amount || 0) - invested2;
+          res = '<span style="color:var(--green);">+' + fmt(profit2 > 0 ? profit2 : h.outcome.amount || h.pot || 0) + '</span>';
+        } else if (h.outcome.result === 'folded') {
+          res = '<span style="color:var(--red);">' + (invested2 > 0 ? '-' + fmt(invested2) : 'folded') + '</span>';
+        } else {
+          res = '<span style="color:var(--red);">-' + fmt(invested2) + '</span>';
+        }
+      } else {
+        res = '<span style="color:var(--dim);">?</span>';
       }
-    }
-    if (match) {
-      var rm = d.rangeMap[key];
-      var wr2 = rm && rm.played > 0 ? pct(rm.won, rm.played) : null;
-      showExampleHandModal(match, 'You were dealt ' + key + (rm ? ' ' + rm.dealt + ' times, played ' + rm.played : '') + (wr2 !== null ? ' with a ' + wr2 + '% win rate.' : '.'));
-    }
+      return '<div class="range-hand-row" data-ridx="' + idx + '" style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s;" onmouseover="this.style.background=\'var(--s2)\'" onmouseout="this.style.background=\'\'">' +
+        '<div style="display:flex;gap:12px;align-items:center;">' +
+        '<span style="color:var(--dim);font-size:9px;">' + (h.position || '?') + '</span>' +
+        '<span>' + (h.hole ? h.hole.join(' ') : '??') + '</span>' +
+        '<span style="color:var(--dim);font-size:9px;">' + (h.board && h.board.length ? h.board.join(' ') : '—') + '</span>' +
+        '</div>' +
+        '<div style="display:flex;gap:12px;align-items:center;">' +
+        '<span style="font-size:9px;color:var(--dim);">' + myActs + '</span>' +
+        res +
+        '</div></div>';
+    }).join('');
+    box.innerHTML = '<button class="modal-close" id="modal-close-btn">&times;</button>' +
+      summary + '<div style="margin-top:12px;">' + rows + '</div>';
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+    requestAnimationFrame(function() { overlay.classList.add('show'); });
+    document.getElementById('modal-close-btn').onclick = closeModal;
+    // Wire row clicks to open individual hand detail
+    box.querySelectorAll('.range-hand-row').forEach(function(row) {
+      row.onclick = function() {
+        var idx = parseInt(row.getAttribute('data-ridx'));
+        if (!isNaN(idx) && matched[idx]) {
+          showExampleHandModal(matched[idx]);
+        }
+      };
+    });
   });
 
   // ── LOG ──
