@@ -1,0 +1,546 @@
+// ==UserScript==
+// @name         TC Poker Export
+// @namespace    https://torn.com
+// @version      3.7
+// @description  Tracks and exports your poker hands for analysis
+// @author       Systoned
+// @match        https://www.torn.com/*
+// @grant        GM_setClipboard
+// @run-at       document-start
+// @downloadURL https://update.greasyfork.org/scripts/569290/TC%20Poker%20Export.user.js
+// @updateURL https://update.greasyfork.org/scripts/569290/TC%20Poker%20Export.meta.js
+// ==/UserScript==
+
+(function () {
+  'use strict';
+
+  const STORAGE_KEY = 'tc_poker_hands';
+  const MAX_STORED  = 10000;
+
+  let MY_USER_ID = '';
+  let MY_NAME    = '';
+
+  const SUIT_MAP = { diamonds: '♦', hearts: '♥', clubs: '♣', spades: '♠' };
+
+  // ── CURRENT HAND STATE ────────────────────────────────────────────────────
+
+  let activeChannel = '';
+  let handActive    = false;
+  let handToken     = '';
+  let handStartTime = null;
+  let holeCards     = [];
+  let boardCards    = [];
+  let potSize       = 0;
+  let myPosition    = '';
+  let currentActions = [];
+
+  // ── TABLE METADATA (captured per hand) ────────────────────────────────────
+
+  let tablePlayers  = 0;    // number of seated players at hand start
+  let tableBigBlind = 0;    // big blind amount
+  let tableChannel  = '';   // e.g. "holdem21"
+
+  let lastArchivedToken = '';
+  let exported = false;
+  let confirmingClear = false;
+
+  // ── HELPERS ───────────────────────────────────────────────────────────────
+
+  function decodeHTML(str) {
+    return String(str || '')
+      .replace(/&gt;/g,   '>')
+      .replace(/&lt;/g,   '<')
+      .replace(/&amp;/g,  '&')
+      .replace(/&quot;/g, '"')
+      .replace(/&#039;/g, "'");
+  }
+
+  function parseCard(raw) {
+    const p = String(raw).split('-');
+    return (p[1] || p[0]) + (SUIT_MAP[p[0]] || p[0]);
+  }
+
+  function getPosition(players) {
+    const list = Object.values(players || {});
+    const me   = list.find(function (p) { return String(p.userID) === MY_USER_ID; });
+    if (!me) return '';
+    if (me.isBigBlind)   return 'BB';
+    if (me.isSmallBlind) return 'SB';
+    if (me.isDealer)     return 'BTN';
+    var sorted = list.slice().sort(function (a, b) { return a.place - b.place; });
+    var di = sorted.findIndex(function (p) { return p.isDealer; });
+    var mi = sorted.findIndex(function (p) { return String(p.userID) === MY_USER_ID; });
+    if (di === -1 || mi === -1) return 'Active';
+    var rel = (mi - di + sorted.length) % sorted.length;
+    return ['BTN', 'SB', 'BB', 'UTG', 'UTG+1', 'MP', 'HJ', 'CO'][rel] || 'Active';
+  }
+
+  function tryDetectName(players) {
+    if (MY_NAME || !MY_USER_ID || !players) return;
+    var me = Object.values(players).find(function (p) { return String(p.userID) === MY_USER_ID; });
+    if (!me) return;
+    // "playername" is the actual field name in Torn's WebSocket data
+    MY_NAME = me.playername || me.playerName || me.name || me.username || '';
+  }
+
+  function countSeatedPlayers(players) {
+    if (!players) return 0;
+    // Count players who are not "Waiting BB" or sitting out
+    var list = Object.values(players);
+    return list.filter(function (p) {
+      return p.status !== 'Waiting BB' && !p.isSitOut;
+    }).length;
+  }
+
+  // ── INVESTMENT TRACKING ─────────────────────────────────────────────────
+
+  function calcMyInvestment(actions) {
+    // Sum up every dollar amount the player (>> prefixed lines) posted, called, raised, or bet
+    var total = 0;
+    for (var i = 0; i < actions.length; i++) {
+      var line = decodeHTML(actions[i]);
+      if (!line.startsWith('>> ')) continue;
+
+      // Skip "won" lines, those are payouts not investments
+      if (line.indexOf(' won ') !== -1) continue;
+      // Skip "reveals" lines
+      if (line.indexOf(' reveals ') !== -1) continue;
+      // Skip fold/check lines (no money)
+      if (line.indexOf('folded') !== -1) continue;
+      if (line.indexOf('checked') !== -1) continue;
+
+      // Match dollar amounts: posted blind, called, raised, bet
+      // "raised $2,000,000 to $3,000,000" means total commitment is the "to" amount
+      // but in Torn's format, raised $X to $Y means the raise increment is $X
+      // "called $5,000,000" means added $5M
+      // "posted small blind $500,000" means added $500K
+      // "posted big blind $1,000,000" means added $1M
+      // "bet $6,000,000" means added $6M
+
+      // For "raised $X to $Y" we want the first amount (the increment added)
+      // For everything else, we want the first dollar amount
+      var dm = line.match(/\$([0-9,]+)/);
+      if (dm) {
+        total += parseInt(dm[1].replace(/,/g, ''), 10);
+      }
+    }
+    return total;
+  }
+
+  // ── STORAGE ───────────────────────────────────────────────────────────────
+
+  function loadHands() {
+    try {
+      var raw   = localStorage.getItem(STORAGE_KEY) || '[]';
+      var hands = JSON.parse(raw);
+      hands.forEach(function (h) {
+        if (h.actions) h.actions = h.actions.map(decodeHTML);
+      });
+      return hands;
+    } catch (_) {
+      return [];
+    }
+  }
+
+  function saveHands(hands) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(hands));
+  }
+
+  function saveHand(hand) {
+    var stored = loadHands();
+    stored.push(hand);
+    if (stored.length > MAX_STORED) stored.splice(0, stored.length - MAX_STORED);
+    saveHands(stored);
+    render();
+  }
+
+  function clearAllHands() {
+    localStorage.removeItem(STORAGE_KEY);
+    lastArchivedToken = '';
+    render();
+  }
+
+  // ── OUTCOME ───────────────────────────────────────────────────────────────
+
+  function deriveOutcome(actions) {
+    var street = 'Preflop';
+    var myLastAction = '';
+
+    for (var i = 0; i < actions.length; i++) {
+      var line = decodeHTML(actions[i]);
+
+      if (line.indexOf('The flop') !== -1)  { street = 'Flop';   continue; }
+      if (line.indexOf('The turn') !== -1)  { street = 'Turn';   continue; }
+      if (line.indexOf('The river') !== -1) { street = 'River';  continue; }
+
+      if (!line.startsWith('>> ')) continue;
+
+      if (line.indexOf('folded') !== -1) {
+        myLastAction = 'folded';
+      }
+
+      if (line.indexOf(' won ') !== -1) {
+        var dm = line.match(/\$([0-9,]+)/);
+        var cm = line.match(/won ([0-9,]+) chips/);
+        var amount = dm
+          ? parseInt(dm[1].replace(/,/g, ''))
+          : cm ? parseInt(cm[1].replace(/,/g, '')) : 0;
+        return { result: 'won', amount: amount, foldStreet: null };
+      }
+    }
+
+    if (myLastAction === 'folded') {
+      var foldStreet = 'Preflop';
+      for (var j = 0; j < actions.length; j++) {
+        var l = decodeHTML(actions[j]);
+        if (l.indexOf('The flop') !== -1)  { foldStreet = 'Flop';   continue; }
+        if (l.indexOf('The turn') !== -1)  { foldStreet = 'Turn';   continue; }
+        if (l.indexOf('The river') !== -1) { foldStreet = 'River';  continue; }
+        if (l.startsWith('>> ') && l.indexOf('folded') !== -1) {
+          return { result: 'folded', amount: 0, foldStreet: foldStreet };
+        }
+      }
+    }
+
+    return { result: 'lost', amount: 0, foldStreet: null };
+  }
+
+  // ── HAND LIFECYCLE ────────────────────────────────────────────────────────
+
+  function archiveCurrentHand() {
+    if (holeCards.length !== 2) return;
+    if (handToken && handToken === lastArchivedToken) return;
+    lastArchivedToken = handToken;
+
+    var investment = calcMyInvestment(currentActions);
+
+    saveHand({
+      timestamp:  handStartTime || Date.now(),
+      position:   myPosition,
+      hole:       holeCards.slice(),
+      board:      boardCards.slice(),
+      pot:        potSize,
+      invested:   investment,
+      outcome:    deriveOutcome(currentActions),
+      actions:    currentActions.slice(),
+      tableSize:  tablePlayers,
+      bigBlind:   tableBigBlind,
+      tableId:    tableChannel,
+    });
+  }
+
+  function startNewHand(gameId) {
+    archiveCurrentHand();
+
+    handToken      = gameId || '';
+    handStartTime  = Date.now();
+    handActive     = true;
+    holeCards      = [];
+    boardCards     = [];
+    potSize        = 0;
+    myPosition     = '';
+    currentActions = [];
+  }
+
+  // ── MESSAGE HANDLER ───────────────────────────────────────────────────────
+
+  function handleMsg(raw) {
+    var data;
+    try { data = JSON.parse(raw); } catch (_) { return; }
+    var push = data && data.push;
+    if (!push) return;
+    var channel = String(push.channel || '');
+    var pub     = push.pub && push.pub.data && push.pub.data.message;
+    if (!pub) return;
+
+    // ── Personal channel: hole cards ──
+    var personalMatch = channel.match(/^holdem[0-9]+#([0-9]+)$/);
+    if (personalMatch) {
+      if (!MY_USER_ID) MY_USER_ID = personalMatch[1];
+      if (MY_USER_ID === personalMatch[1] && pub.eventType === 'getState') {
+        var tableMatch = channel.match(/(holdem[0-9]+)/);
+        if (tableMatch) {
+          activeChannel = tableMatch[1];
+          tableChannel  = tableMatch[1];
+        }
+        if (pub.hand && pub.hand.length) {
+          holeCards = pub.hand.map(parseCard);
+          if (pub.token) handToken = pub.token;
+        }
+        tryDetectName(pub.players);
+      }
+      return;
+    }
+
+    // ── Table channel filtering ──
+    if (channel.indexOf('holdem') !== 0 || channel.indexOf('#') !== -1) return;
+    if (activeChannel && channel !== activeChannel) return;
+
+    // ── Chat messages (actions, state, won, and game start) ──
+    if (pub.eventType === 'chat' && pub.data) {
+      var meta   = pub.data.meta || '';
+      var author = decodeHTML(pub.data.author || '');
+      var msg    = decodeHTML(pub.data.message || '');
+
+      // Detect player name from chat actions
+      if (!MY_NAME && MY_USER_ID && String(pub.data.userID) === MY_USER_ID
+          && author && author !== 'Game') {
+        MY_NAME = author;
+      }
+
+      // Detect hand boundary: "Game: <hash> started"
+      if (author === 'Game' && msg.indexOf('started') !== -1) {
+        var gameMatch = msg.match(/([0-9a-f]+)\s+started/);
+        var gameId = gameMatch ? gameMatch[1] : '';
+        startNewHand(gameId);
+        return;
+      }
+
+      // Log actions for the current hand
+      if (meta === 'action' || meta === 'state' || meta === 'won') {
+        var isMe = MY_NAME && author === MY_NAME;
+        currentActions.push((isMe ? '>> ' : '   ') + author + ': ' + msg);
+      }
+      return;
+    }
+
+    // ── Table state updates: board, pot, position, table metadata ──
+    if (pub.eventType === 'getState' || pub.eventType === 'playerMakeMove') {
+      tryDetectName(pub.players);
+      if (Array.isArray(pub.communityCards)) {
+        boardCards = pub.communityCards.map(parseCard);
+      }
+      if (pub.totalPot !== undefined) potSize = pub.totalPot;
+
+      // Capture table metadata
+      if (pub.bigBlind !== undefined) tableBigBlind = pub.bigBlind;
+      if (pub.players) {
+        tablePlayers = countSeatedPlayers(pub.players);
+        myPosition = getPosition(pub.players);
+        var me = Object.values(pub.players).find(function (p) {
+          return String(p.userID) === MY_USER_ID;
+        });
+        if (me && me.hand && me.hand.length && !holeCards.length) {
+          holeCards = me.hand.map(parseCard);
+        }
+      }
+    }
+  }
+
+  // ── EXPORT ────────────────────────────────────────────────────────────────
+
+  function exportSession() {
+    archiveCurrentHand();
+
+    var stored = loadHands();
+    GM_setClipboard(JSON.stringify({
+      exportedAt: new Date().toISOString(),
+      player:     MY_NAME || 'Unknown',
+      totalHands: stored.length,
+      hands:      stored,
+    }, null, 2));
+    exported = true;
+    render();
+    setTimeout(function () { exported = false; render(); }, 3000);
+  }
+
+  // ── RENDER ────────────────────────────────────────────────────────────────
+
+  function updateTrigger() {
+    var btn = document.getElementById('tc-trigger');
+    if (!btn) return;
+    var count = loadHands().length;
+    btn.textContent = 'TC Poker Tracker · ' + count + ' hand' + (count !== 1 ? 's' : '');
+  }
+
+  function render() {
+    updateTrigger();
+  }
+
+  function toggleDropdown() {
+    var existing = document.getElementById('tc-dropdown');
+    if (existing) {
+      existing.remove();
+      return;
+    }
+
+    var trigger = document.getElementById('tc-trigger');
+    if (!trigger) return;
+
+    var count = loadHands().length;
+
+    var drop = document.createElement('div');
+    drop.id = 'tc-dropdown';
+    drop.style.cssText = [
+      'position:absolute', 'top:100%', 'left:0', 'margin-top:6px',
+      'background:#0c0c0c', 'border:1px solid #242424', 'border-radius:6px',
+      'font-family:Georgia,serif', 'padding:16px 18px', 'min-width:300px',
+      'box-shadow:0 8px 30px rgba(0,0,0,0.9)', 'z-index:100000',
+    ].join(';');
+
+    drop.innerHTML =
+      '<div style="font-size:11px;color:#8a7a5a;line-height:1.6;margin-bottom:14px;">' +
+        'This tracker records your poker hands as you play. When you are ready ' +
+        'to analyse your session, hit the button below to copy your data and ' +
+        'open the analysis page. Then paste it in.' +
+      '</div>' +
+      '<div style="font-size:12px;color:#c8d4c8;margin-bottom:14px;">' +
+        '<strong style="color:#c8a94a;">' + count + '</strong> hands logged' +
+      '</div>' +
+      '<div id="tc-dropdown-actions" style="display:flex;flex-direction:column;gap:8px;">' +
+        '<button id="tc-analyse-btn" style="padding:8px 14px;border-radius:4px;' +
+          'border:1px solid #c8a94a;background:transparent;color:#c8a94a;' +
+          'cursor:pointer;font-size:11px;font-family:Georgia,serif;width:100%;text-align:center;"' +
+          (count === 0 ? ' disabled' : '') + '>Analyse Session</button>' +
+        '<button id="tc-clear-btn" style="padding:8px 14px;border-radius:4px;' +
+          'border:1px solid #3a2a2a;background:transparent;color:#6a4a4a;' +
+          'cursor:pointer;font-size:11px;font-family:Georgia,serif;width:100%;text-align:center;"' +
+          (count === 0 ? ' disabled' : '') + '>Clear All Logged Sessions</button>' +
+      '</div>';
+
+    trigger.parentNode.appendChild(drop);
+
+    var analyseBtn = document.getElementById('tc-analyse-btn');
+    if (analyseBtn && count > 0) {
+      analyseBtn.onclick = function () {
+        exportSession();
+        window.open('https://mj83147.github.io/torn-poker/', '_blank');
+      };
+    }
+
+    var clearBtn = document.getElementById('tc-clear-btn');
+    if (clearBtn && count > 0) {
+      clearBtn.onclick = function () {
+        var actionsArea = document.getElementById('tc-dropdown-actions');
+        actionsArea.innerHTML =
+          '<div style="font-size:11px;color:#c94040;margin-bottom:10px;">' +
+            'This will permanently delete all ' + count + ' logged hands. ' +
+            'Export first if you want to keep the data.' +
+          '</div>' +
+          '<div style="display:flex;gap:8px;">' +
+            '<button id="tc-confirm-clear" style="flex:1;padding:8px 14px;border-radius:4px;' +
+              'border:1px solid #c94040;background:transparent;color:#c94040;' +
+              'cursor:pointer;font-size:11px;font-family:Georgia,serif;">Yes, clear all</button>' +
+            '<button id="tc-cancel-clear" style="flex:1;padding:8px 14px;border-radius:4px;' +
+              'border:1px solid #8a7a5a;background:transparent;color:#8a7a5a;' +
+              'cursor:pointer;font-size:11px;font-family:Georgia,serif;">Cancel</button>' +
+          '</div>';
+        document.getElementById('tc-confirm-clear').onclick = function () {
+          clearAllHands();
+          var d = document.getElementById('tc-dropdown');
+          if (d) d.remove();
+          updateTrigger();
+        };
+        document.getElementById('tc-cancel-clear').onclick = function () {
+          var d = document.getElementById('tc-dropdown');
+          if (d) d.remove();
+          toggleDropdown();
+        };
+      };
+    }
+
+    // Close dropdown when clicking outside
+    setTimeout(function () {
+      function outsideClick(e) {
+        var d = document.getElementById('tc-dropdown');
+        var t = document.getElementById('tc-trigger');
+        if (d && !d.contains(e.target) && e.target !== t) {
+          d.remove();
+          document.removeEventListener('click', outsideClick, true);
+        }
+      }
+      document.addEventListener('click', outsideClick, true);
+    }, 10);
+  }
+
+  // ── WEBSOCKET INTERCEPT ───────────────────────────────────────────────────
+
+  var _addEL = WebSocket.prototype.addEventListener;
+  WebSocket.prototype.addEventListener = function (type, listener, options) {
+    if (type === 'message') {
+      var wrapped = function (e) {
+        try { handleMsg(e.data); } catch (_) {}
+        listener.call(this, e);
+      };
+      return _addEL.call(this, type, wrapped, options);
+    }
+    return _addEL.call(this, type, listener, options);
+  };
+
+  var _onmsgDesc = Object.getOwnPropertyDescriptor(WebSocket.prototype, 'onmessage');
+  if (_onmsgDesc && _onmsgDesc.set) {
+    Object.defineProperty(WebSocket.prototype, 'onmessage', {
+      set: function (fn) {
+        _onmsgDesc.set.call(this, function (e) {
+          try { handleMsg(e.data); } catch (_) {}
+          if (fn) fn.call(this, e);
+        });
+      },
+      get:          _onmsgDesc.get,
+      configurable: true,
+    });
+  }
+
+  // ── PANEL ─────────────────────────────────────────────────────────────────
+
+  function buildPanel() {
+    if (document.getElementById('tc-trigger')) return;
+
+    // Create a wrapper that sits next to the h4 and anchors the dropdown
+    var wrapper = document.createElement('div');
+    wrapper.id = 'tc-panel';
+    wrapper.style.cssText = 'position:relative;display:inline-block;margin-left:12px;vertical-align:middle;';
+
+    var count = loadHands().length;
+    var btn = document.createElement('button');
+    btn.id = 'tc-trigger';
+    btn.textContent = 'TC Poker Tracker · ' + count + ' hand' + (count !== 1 ? 's' : '');
+    btn.style.cssText = [
+      'background:#0c0c0c', 'border:1px solid #242424', 'border-radius:6px',
+      'color:#c8a94a', 'font-family:Georgia,serif', 'font-size:11px',
+      'padding:6px 14px', 'cursor:pointer', 'font-weight:bold',
+      'letter-spacing:0.3px',
+    ].join(';');
+    btn.onclick = toggleDropdown;
+
+    wrapper.appendChild(btn);
+
+    // Find the Poker h4 and place wrapper next to it
+    var target = document.querySelector('h4.left');
+    if (target && target.textContent.trim().toLowerCase().indexOf('poker') !== -1) {
+      var parent = target.parentNode;
+      if (parent) {
+        var row = document.createElement('div');
+        row.style.cssText = 'display:flex;align-items:center;';
+        parent.insertBefore(row, target);
+        row.appendChild(target);
+        row.appendChild(wrapper);
+      } else {
+        target.insertAdjacentElement('afterend', wrapper);
+      }
+    } else {
+      // Fallback: fixed position
+      wrapper.style.cssText = 'position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:99999;';
+      document.body.appendChild(wrapper);
+    }
+  }
+
+  function tryBuild() {
+    if (document.getElementById('tc-trigger')) return;
+    var h4 = document.querySelector('h4.left');
+    if (h4 && h4.textContent.trim().toLowerCase().indexOf('poker') !== -1) {
+      buildPanel();
+    }
+  }
+
+  if (document.body) {
+    tryBuild();
+  }
+  document.addEventListener('DOMContentLoaded', tryBuild);
+
+  var _panelObserver = new MutationObserver(function () {
+    tryBuild();
+  });
+  _panelObserver.observe(document.documentElement, { childList: true, subtree: true });
+
+})();

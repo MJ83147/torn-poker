@@ -162,9 +162,11 @@ function analyse(hands) {
       if (a.type === 'raise' || a.type === 'bet') {
         if (a.amount > 0 && betAmts[a.street]) {
           betAmts[a.street].push(a.amount);
-          var handBB = getHandBB(h);
-          if (handBB && handBB > 0) {
-            betAmtsBB[a.street].push(a.amount / handBB);
+          if (cash) {
+            var handBB = getHandBB(h);
+            if (handBB && handBB > 0) {
+              betAmtsBB[a.street].push(a.amount / handBB);
+            }
           }
         }
       }
