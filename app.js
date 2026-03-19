@@ -1489,7 +1489,8 @@ function process(raw) {
     alert('Could not parse JSON.\n\nMake sure you:\n1. Clicked Export in the TC panel\n2. Pasted the full clipboard contents here\n\nError: ' + e.message);
     return;
   }
-  const hands = Array.isArray(json) ? json : (json.hands || []);
+   const hands = (Array.isArray(json) ? json : (json.hands || [])).filter(function(h) { return h.hole && h.hole.length === 2; });
+
   if (!hands.length) {
     alert('No hands found in export. Play some hands first, then export.');
     return;
