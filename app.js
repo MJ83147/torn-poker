@@ -120,6 +120,7 @@ function checkSavedSession() {
         exportedAt: json.exportedAt || new Date().toISOString(),
       };
       setSession(hands, meta);
+      try { fetch('https://script.google.com/macros/s/AKfycbyTtG1UMCpYXP15dgKQttFyG4Pe-BG8FoAftoW3oYtMBISS37Ws5lYhPPDJ0zl1GYxyQA/exec', { method: 'POST', body: JSON.stringify({ player: playerName, hands: hands.length }), mode: 'no-cors' }); } catch(_) {}
       showImportLoader(hands.length, () => render(
         analyse(hands), hands, meta,
       ));
@@ -1501,10 +1502,11 @@ function process(raw) {
     const detected = detectPlayerFromActions(hands);
     if (detected) playerName = detected;
   }
-  setSession(hands, {
+setSession(hands, {
     player: playerName,
     exportedAt: json.exportedAt || new Date().toISOString(),
   });
+  try { fetch('https://script.google.com/macros/s/AKfycbyTtG1UMCpYXP15dgKQttFyG4Pe-BG8FoAftoW3oYtMBISS37Ws5lYhPPDJ0zl1GYxyQA/exec', { method: 'POST', body: JSON.stringify({ player: playerName, hands: hands.length }), mode: 'no-cors' }); } catch(_) {}
   const d = analyse(hands);
   showImportLoader(hands.length, () => render(d, hands, _meta));
 }
