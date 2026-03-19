@@ -1218,56 +1218,123 @@ textarea#jin:focus {
 }
 
 /* WELCOME TAB */
+#p-welcome.panel.on {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 160px);
+  overflow: hidden;
+  padding: 24px 40px 16px;
+}
+.welcome-top {
+  display: flex;
+  gap: 32px;
+  align-items: flex-start;
+  margin-bottom: auto;
+}
+.welcome-intro {
+  flex: 1;
+  min-width: 0;
+}
+.welcome-intro-heading {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(22px, 3vw, 32px);
+  font-weight: 700;
+  color: var(--gold);
+  margin-bottom: 8px;
+}
+.welcome-intro-sub {
+  font-size: 11px;
+  color: var(--dim);
+  line-height: 1.7;
+}
+
+/* Tip carousel */
+.welcome-carousel-wrap {
+  flex: 0 0 280px;
+}
+.welcome-carousel {
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 14px 16px;
+  min-height: 80px;
+  position: relative;
+}
+.welcome-carousel-track {
+  position: relative;
+}
+.welcome-tip {
+  font-size: 11px;
+  color: var(--dim);
+  line-height: 1.7;
+  display: none;
+}
+.welcome-tip.active {
+  display: block;
+}
+.welcome-carousel-dots {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+}
+.welcome-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--muted);
+  cursor: pointer;
+  transition: background .2s;
+}
+.welcome-dot.active {
+  background: var(--gold);
+}
+.welcome-dot:hover {
+  background: var(--gold2);
+}
+
+/* Explore grid */
 .welcome-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 10px;
-  margin-top: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 8px;
+  flex: 1;
+  align-content: start;
+  overflow: hidden;
 }
 .welcome-card {
   background: var(--s1);
   border: 1px solid var(--border);
   border-radius: 6px;
-  padding: 18px 20px;
+  padding: 12px 14px;
   transition: border-color .2s;
   cursor: pointer;
 }
 .welcome-card:hover {
   border-color: var(--gold2);
 }
+.welcome-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
 .welcome-card-icon {
   font-family: 'Cormorant Garamond', serif;
-  font-size: 22px;
+  font-size: 16px;
   color: var(--gold2);
   opacity: 0.5;
-  margin-bottom: 8px;
+  line-height: 1;
 }
 .welcome-card-name {
-  font-size: 10px;
-  letter-spacing: 3px;
+  font-size: 9px;
+  letter-spacing: 2px;
   text-transform: uppercase;
   color: var(--gold);
-  margin-bottom: 6px;
 }
 .welcome-card-desc {
-  font-size: 11px;
+  font-size: 10px;
   color: var(--dim);
-  line-height: 1.6;
-}
-.welcome-intro {
-  max-width: 640px;
-}
-.welcome-intro-heading {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: clamp(24px, 4vw, 36px);
-  font-weight: 700;
-  color: var(--gold);
-  margin-bottom: 10px;
-}
-.welcome-intro-sub {
-  font-size: 12px;
-  color: var(--dim);
-  line-height: 1.7;
+  line-height: 1.5;
 }
 
 /* =============================================

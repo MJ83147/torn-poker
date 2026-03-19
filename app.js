@@ -167,25 +167,61 @@ function render(d, hands, meta) {
     'Star \u2606 a player in the <strong>Players</strong> tab to add them to your watched list.',
     'Use the <strong>table filter</strong> in the header to isolate stats to a single table.',
   ];
-  var welcomeHtml = '<div class="welcome-intro">' +
+  var welcomeHtml = '<div class="welcome-top">' +
+    '<div class="welcome-intro">' +
     '<div class="welcome-intro-heading">Welcome back, ' + meta.player + '</div>' +
     '<div class="welcome-intro-sub">TC Poker Analysis reads your exported hand history and breaks down how you play. Every stat, chart, and insight is generated from your data alone \u2014 nothing is stored externally.</div>' +
     '<div class="welcome-intro-sub" style="margin-top:6px;">' + d.n + ' hands loaded. Use the tabs above to explore, or pick a section below.</div>' +
     '</div>' +
-    '<div style="margin-top:28px;margin-bottom:8px;font-size:9px;letter-spacing:4px;color:var(--dim);text-transform:uppercase;">Tips</div>' +
-    '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px;margin-bottom:32px;">' +
-    tips.map(function(t) {
-      return '<div style="font-size:11px;color:var(--dim);line-height:1.6;padding:10px 14px;background:var(--s1);border:1px solid var(--border);border-radius:5px;">' + t + '</div>';
-    }).join('') + '</div>' +
-    '<div style="font-size:9px;letter-spacing:4px;color:var(--dim);text-transform:uppercase;margin-bottom:14px;">Explore</div>' +
+    '<div class="welcome-carousel-wrap">' +
+    '<div style="font-size:9px;letter-spacing:4px;color:var(--dim);text-transform:uppercase;margin-bottom:8px;">Tips</div>' +
+    '<div class="welcome-carousel">' +
+    '<div class="welcome-carousel-track">' +
+    tips.map(function(t, i) {
+      return '<div class="welcome-tip' + (i === 0 ? ' active' : '') + '">' + t + '</div>';
+    }).join('') +
+    '</div>' +
+    '<div class="welcome-carousel-dots">' +
+    tips.map(function(_, i) {
+      return '<span class="welcome-dot' + (i === 0 ? ' active' : '') + '" data-tip-i="' + i + '"></span>';
+    }).join('') +
+    '</div>' +
+    '</div>' +
+    '</div>' +
+    '</div>' +
+    '<div style="font-size:9px;letter-spacing:4px;color:var(--dim);text-transform:uppercase;margin-bottom:10px;margin-top:16px;">Explore</div>' +
     '<div class="welcome-grid">' + tabDescs.map(function(t) {
       return '<div class="welcome-card" data-goto="' + t.tab + '">' +
-        '<div class="welcome-card-icon">' + t.icon + '</div>' +
-        '<div class="welcome-card-name">' + t.name + '</div>' +
+        '<div class="welcome-card-header"><span class="welcome-card-icon">' + t.icon + '</span><span class="welcome-card-name">' + t.name + '</span></div>' +
         '<div class="welcome-card-desc">' + t.desc + '</div>' +
         '</div>';
     }).join('') + '</div>';
   document.getElementById('p-welcome').innerHTML = welcomeHtml;
+
+  // Tip carousel logic
+  var tipIndex = 0;
+  var tipEls = document.querySelectorAll('.welcome-tip');
+  var dotEls = document.querySelectorAll('.welcome-dot');
+  function showTip(i) {
+    tipIndex = i;
+    tipEls.forEach(function(el, j) { el.classList.toggle('active', j === i); });
+    dotEls.forEach(function(el, j) { el.classList.toggle('active', j === i); });
+  }
+  dotEls.forEach(function(dot) {
+    dot.onclick = function() { showTip(parseInt(this.getAttribute('data-tip-i'))); };
+  });
+  var tipTimer = setInterval(function() {
+    showTip((tipIndex + 1) % tips.length);
+  }, 5000);
+  // Pause on hover
+  var carouselEl = document.querySelector('.welcome-carousel');
+  if (carouselEl) {
+    carouselEl.onmouseenter = function() { clearInterval(tipTimer); };
+    carouselEl.onmouseleave = function() {
+      tipTimer = setInterval(function() { showTip((tipIndex + 1) % tips.length); }, 5000);
+    };
+  }
+
   document.querySelectorAll('.welcome-card[data-goto]').forEach(function(card) {
     card.onclick = function() {
       var tab = this.getAttribute('data-goto');
