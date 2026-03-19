@@ -145,6 +145,58 @@ function render(d, hands, meta) {
     year: 'numeric',
   }) + (_allHands.length && hands.length < _allHands.length ? ' · Filtered: ' + hands.length + '/' + _allHands.length + ' hands' : '');
 
+  // ── WELCOME ──
+  var tabDescs = [
+    { tab: 'cards',    icon: '\u2660', name: 'Cards',    desc: 'Win rates and patterns by hand type: pairs, broadway, suited connectors, and more.' },
+    { tab: 'position', icon: '\u25CE', name: 'Position', desc: 'How you perform from each seat. Find where you\'re tight, loose, or leaking chips.' },
+    { tab: 'street',   icon: '\u2192', name: 'Streets',  desc: 'Action breakdown by preflop, flop, turn, and river. See where hands end.' },
+    { tab: 'actions',  icon: '\u2191', name: 'Actions',  desc: 'Your fold, check, call, and raise frequencies. Aggression profile at a glance.' },
+    { tab: 'bets',     icon: '$', name: 'Bets',     desc: 'Bet sizing across streets. Are you betting enough when it matters?' },
+    { tab: 'combined', icon: '\u26A1', name: 'Combined', desc: 'Cross-references position, cards, and actions to surface deeper leaks.' },
+    { tab: 'range',    icon: '\u25A6', name: 'Range',    desc: 'The full 13x13 hand grid. Win rate and frequency for every combo you\'ve played.' },
+    { tab: 'tables',   icon: '\u2B21', name: 'Tables',   desc: 'Compare your stats across different stakes and table types.' },
+    { tab: 'trends',   icon: '\u2197', name: 'Trends',   desc: 'Session-over-session charts for win rate, VPIP, aggression, and P&L.' },
+    { tab: 'log',      icon: '\u2630', name: 'Hand Log', desc: 'Every hand you\'ve played. Click any row to replay the full action.' },
+    { tab: 'players',  icon: '\u265F', name: 'Players',  desc: 'Opponent tracking. See who you play most, your record against them, and watch list.' },
+  ];
+  var tips = [
+    'Most insight cards have a <strong>See example hand</strong> button that opens a real hand from your data.',
+    'Click any row in the <strong>Hand Log</strong> to replay the full action sequence.',
+    'Click any cell on the <strong>Range</strong> grid to see every hand you\'ve played with that combo.',
+    'In <strong>Players</strong>, click any opponent row to see all hands you\'ve shared with them.',
+    'Star \u2606 a player in the <strong>Players</strong> tab to add them to your watched list.',
+    'Use the <strong>table filter</strong> in the header to isolate stats to a single table.',
+  ];
+  var welcomeHtml = '<div class="welcome-intro">' +
+    '<div class="welcome-intro-heading">Welcome back, ' + meta.player + '</div>' +
+    '<div class="welcome-intro-sub">TC Poker Analysis reads your exported hand history and breaks down how you play. Every stat, chart, and insight is generated from your data alone \u2014 nothing is stored externally.</div>' +
+    '<div class="welcome-intro-sub" style="margin-top:6px;">' + d.n + ' hands loaded. Use the tabs above to explore, or pick a section below.</div>' +
+    '</div>' +
+    '<div style="margin-top:28px;margin-bottom:8px;font-size:9px;letter-spacing:4px;color:var(--dim);text-transform:uppercase;">Tips</div>' +
+    '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px;margin-bottom:32px;">' +
+    tips.map(function(t) {
+      return '<div style="font-size:11px;color:var(--dim);line-height:1.6;padding:10px 14px;background:var(--s1);border:1px solid var(--border);border-radius:5px;">' + t + '</div>';
+    }).join('') + '</div>' +
+    '<div style="font-size:9px;letter-spacing:4px;color:var(--dim);text-transform:uppercase;margin-bottom:14px;">Explore</div>' +
+    '<div class="welcome-grid">' + tabDescs.map(function(t) {
+      return '<div class="welcome-card" data-goto="' + t.tab + '">' +
+        '<div class="welcome-card-icon">' + t.icon + '</div>' +
+        '<div class="welcome-card-name">' + t.name + '</div>' +
+        '<div class="welcome-card-desc">' + t.desc + '</div>' +
+        '</div>';
+    }).join('') + '</div>';
+  document.getElementById('p-welcome').innerHTML = welcomeHtml;
+  document.querySelectorAll('.welcome-card[data-goto]').forEach(function(card) {
+    card.onclick = function() {
+      var tab = this.getAttribute('data-goto');
+      document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+      document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('on'); });
+      var tabBtn = document.querySelector('[data-tab="' + tab + '"]');
+      if (tabBtn) tabBtn.classList.add('active');
+      document.getElementById('p-' + tab).classList.add('on');
+    };
+  });
+
   // HERO
   const sampleNote = d.n < 50
     ? '<div style="padding:12px 32px;font-size:12px;color:var(--amber);background:rgba(212,132,42,0.08);border-bottom:1px solid var(--border);">⚠ Small sample: ' + d.n + ' hands. The more hands you play and track, the more accurate these stats become. Aim for 100+ hands for reliable patterns.</div>'
@@ -1294,7 +1346,7 @@ function render(d, hands, meta) {
           var wr = pct(o.won, o.won + o.lost);
           var barW = Math.round(o.hands / maxH * 100);
           html += '<tr class="player-row" data-player="' + o.name + '" style="cursor:pointer;transition:border-color .15s;" onmouseover="this.style.borderColor=\'var(--gold2)\'" onmouseout="this.style.borderColor=\'\'">';
-          html += '<td class="watch-star watched" data-watch="' + o.name + '" title="Unwatch player" style="cursor:pointer;width:24px;text-align:center;color:var(--gold);font-size:14px;">&#9733;</td>';
+          html += '<td class="watch-star watched" data-watch="' + o.name + '" title="Unwatch player" style="cursor:pointer;width:24px;text-align:center;">&#9733;</td>';
           html += '<td>' + o.name + '</td>';
           html += '<td>' + o.hands + '</td>';
           html += '<td style="width:80px;"><span class="tbl-spark" style="width:' + barW + '%;background:var(--gold2);"></span></td>';
@@ -1340,7 +1392,7 @@ function render(d, hands, meta) {
         var barW2 = Math.round(o2.hands / maxH * 100);
         var isWatched = watched.indexOf(o2.name) >= 0;
         html += '<tr class="player-row" data-player="' + o2.name + '" style="cursor:pointer;transition:border-color .15s;" onmouseover="this.style.borderColor=\'var(--gold2)\'" onmouseout="this.style.borderColor=\'\'">';
-        html += '<td class="watch-star' + (isWatched ? ' watched' : '') + '" data-watch="' + o2.name + '" title="' + (isWatched ? 'Unwatch' : 'Watch') + ' player" style="cursor:pointer;width:24px;text-align:center;font-size:14px;color:' + (isWatched ? 'var(--gold)' : 'var(--muted)') + ';">' + (isWatched ? '&#9733;' : '&#9734;') + '</td>';
+        html += '<td class="watch-star' + (isWatched ? ' watched' : '') + '" data-watch="' + o2.name + '" title="' + (isWatched ? 'Unwatch' : 'Watch') + ' player" style="cursor:pointer;width:24px;text-align:center;">' + (isWatched ? '&#9733;' : '&#9734;') + '</td>';
         html += '<td>' + o2.name + '</td>';
         html += '<td>' + o2.hands + '</td>';
         html += '<td style="width:80px;"><span class="tbl-spark" style="width:' + barW2 + '%;background:var(--gold2);"></span></td>';

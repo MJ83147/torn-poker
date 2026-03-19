@@ -1062,7 +1062,18 @@ textarea#jin:focus {
   background: var(--s1);
   z-index: 1;
 }
-.watch-star:hover { color: var(--gold) !important; }
+.watch-star {
+  font-size: 18px !important;
+  color: var(--gold2) !important;
+  transition: color .15s, transform .15s;
+}
+.watch-star:hover {
+  color: var(--gold) !important;
+  transform: scale(1.2);
+}
+.watch-star.watched {
+  color: var(--gold) !important;
+}
 
 /* Trends 2x2 grid */
 .trends-grid {
@@ -1204,6 +1215,59 @@ textarea#jin:focus {
 .example-hand-btn:hover {
   border-color: var(--gold2);
   color: var(--gold);
+}
+
+/* WELCOME TAB */
+.welcome-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+.welcome-card {
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 18px 20px;
+  transition: border-color .2s;
+  cursor: pointer;
+}
+.welcome-card:hover {
+  border-color: var(--gold2);
+}
+.welcome-card-icon {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px;
+  color: var(--gold2);
+  opacity: 0.5;
+  margin-bottom: 8px;
+}
+.welcome-card-name {
+  font-size: 10px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 6px;
+}
+.welcome-card-desc {
+  font-size: 11px;
+  color: var(--dim);
+  line-height: 1.6;
+}
+.welcome-intro {
+  max-width: 640px;
+}
+.welcome-intro-heading {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(24px, 4vw, 36px);
+  font-weight: 700;
+  color: var(--gold);
+  margin-bottom: 10px;
+}
+.welcome-intro-sub {
+  font-size: 12px;
+  color: var(--dim);
+  line-height: 1.7;
 }
 
 /* =============================================
