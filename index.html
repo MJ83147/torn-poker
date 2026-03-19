@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TC Poker Analysis</title>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=2">
+  <link rel="stylesheet" href="styles.css?v=3">
 </head>
 
 <body>
@@ -54,7 +54,7 @@
         <div class="header-inner">
           <div class="header-title">TC Poker Analysis</div>
           <div style="display:flex;align-items:center;gap:16px;">
-            <button id="bb-toggle" class="bb-toggle" title="Toggle between dollar amounts and Big Blinds">$</button>
+            <div id="bb-toggle" class="bb-toggle" title="Toggle between dollar amounts and Big Blinds"><span class="bb-opt active" data-mode="dollar">$</span><span class="bb-opt" data-mode="bb">BB</span></div>
             <select id="table-filter" style="display:none;" class="table-filter">
               <option value="all">All Tables</option>
             </select>
@@ -97,10 +97,10 @@
     </div>
   </div>
 
-  <script src="js/helpers.js?v=2"></script>
-  <script src="js/stats.js?v=2"></script>
-  <script src="js/loader.js?v=2"></script>
-  <script src="app.js?v=2"></script>
+  <script src="js/helpers.js?v=3"></script>
+  <script src="js/stats.js?v=3"></script>
+  <script src="js/loader.js?v=3"></script>
+  <script src="app.js?v=3"></script>
 </body>
 
 </html>

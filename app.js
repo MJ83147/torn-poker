@@ -24,8 +24,9 @@ document.getElementById('tabs').addEventListener('click', function(e) {
 // BB toggle handler (wired once at load, not inside render)
 document.getElementById('bb-toggle').onclick = function() {
   _displayBB = !_displayBB;
-  this.textContent = _displayBB ? 'BB' : '$';
-  this.classList.toggle('active', _displayBB);
+  this.querySelectorAll('.bb-opt').forEach(function(o) {
+    o.classList.toggle('active', _displayBB ? o.dataset.mode === 'bb' : o.dataset.mode === 'dollar');
+  });
   if (_allHands.length) {
     var currentFilter = document.getElementById('table-filter').value;
     var filtered = _allHands;
@@ -1633,8 +1634,9 @@ function render(d, hands, meta) {
   // Sync BB toggle button state after render
   var bbBtn = document.getElementById('bb-toggle');
   if (bbBtn) {
-    bbBtn.textContent = _displayBB ? 'BB' : '$';
-    bbBtn.classList.toggle('active', _displayBB);
+    bbBtn.querySelectorAll('.bb-opt').forEach(function(o) {
+      o.classList.toggle('active', _displayBB ? o.dataset.mode === 'bb' : o.dataset.mode === 'dollar');
+    });
   }
 
 }
