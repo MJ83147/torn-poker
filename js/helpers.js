@@ -101,6 +101,9 @@ const BB_TO_TABLES = (() => {
   return map;
 })();
 
+// BB display toggle state
+let _displayBB = false;
+
 // Basic formatting helpers
 function fmt(n) {
   const a = Math.abs(Number(n) || 0);
@@ -110,6 +113,14 @@ function fmt(n) {
       ? '$' + Math.round(a / 1000) + 'K'
       : '$' + a;
   return Number(n) < 0 ? '-' + s : s;
+}
+
+function fmtBB(amount, bb) {
+  if (!_displayBB || !bb || bb <= 0) return fmt(amount);
+  var bbs = amount / bb;
+  if (Math.abs(bbs) >= 100) return Math.round(bbs) + ' BB';
+  if (Math.abs(bbs) >= 10) return bbs.toFixed(1) + ' BB';
+  return bbs.toFixed(2) + ' BB';
 }
 
 function pct(a, b) {
@@ -304,6 +315,12 @@ function isCashHand(hand) {
   const tid = inferTable(hand);
   if (tid === null) return true; // legacy hands without table data, assume cash
   return CASH_TABLE_IDS.has(tid);
+}
+
+function getHandBB(hand) {
+  var tid = inferTable(hand);
+  if (tid !== null && TABLE_META[tid]) return TABLE_META[tid].bb;
+  return null;
 }
 
 function getTableLabel(tableId) {

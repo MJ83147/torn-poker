@@ -43,7 +43,7 @@ function showExampleHandModal(hand, coachingNote) {
 
   const metaHtml = '<div class="modal-hand-meta">' +
     '<span>Board: <strong>' + (hand.board && hand.board.length ? hand.board.join(' ') : 'none') + '</strong></span>' +
-    '<span>Pot: <strong>' + fmt(hand.pot || 0) + '</strong></span>' +
+    '<span>Pot: <strong>' + fmtBB(hand.pot || 0, getHandBB(hand)) + '</strong></span>' +
     '<span>Result: <strong>' + (hand.outcome ? hand.outcome.result : '?') + '</strong></span>' +
     '</div>';
 
@@ -130,6 +130,9 @@ function checkSavedSession() {
 
 // Main render function (dashboard)
 function render(d, hands, meta) {
+  var activeTab = document.querySelector('.tab.active');
+  var activeTabId = activeTab ? activeTab.dataset.tab : null;
+
   _modalHands = hands; // make available for example hand modal
   document.getElementById('paste-wrap').style.display = 'none';
   document.getElementById('dash').classList.add('on');
@@ -373,8 +376,11 @@ function render(d, hands, meta) {
     const fp2 = pct(s.foldPre, s.hands);
     const wr2 = pct(s.won, s.hands);
     const avg = Math.round(s.pot / s.hands);
+    const avgPotDisplay = _displayBB && s.potBBCount > 0
+      ? (s.potBB / s.potBBCount).toFixed(1) + ' BB'
+      : fmt(avg);
     const pnlCol = s.pnl >= 0 ? 'var(--green)' : 'var(--red)';
-    return '<tr><td>' + tipWrap(p) + '</td><td>' + s.hands + '</td><td>' + (vp2 !== null ? vp2 + '%' : '—') + '</td><td>' + (fp2 !== null ? fp2 + '%' : '—') + '</td><td>' + (wr2 !== null ? wr2 + '%' : '—') + '</td><td style="color:' + pnlCol + '">' + (s.pnl >= 0 ? '+' : '') + fmt(s.pnl) + '</td><td>' + fmt(avg) + '</td></tr>';
+    return '<tr><td>' + tipWrap(p) + '</td><td>' + s.hands + '</td><td>' + (vp2 !== null ? vp2 + '%' : '—') + '</td><td>' + (fp2 !== null ? fp2 + '%' : '—') + '</td><td>' + (wr2 !== null ? wr2 + '%' : '—') + '</td><td style="color:' + pnlCol + '">' + (s.pnl >= 0 ? '+' : '') + fmt(s.pnl) + '</td><td>' + avgPotDisplay + '</td></tr>';
   }).join('');
   posHtml += '</tbody></table></div>';
   const pIns = [];
@@ -435,16 +441,23 @@ function render(d, hands, meta) {
   stHtml += '</div>';
   // Average bet size by street
   const stAvgBets = {};
+  const stAvgBetsBB = {};
+  var stBetSource = _displayBB ? d.betAmtsBB : d.betAmts;
+  var stBetDisplay = {};
   let stMaxAvg = 1;
   streets.forEach(function(s) {
     var a = d.betAmts[s];
     stAvgBets[s] = a && a.length ? Math.round(a.reduce(function(x, y) { return x + y; }, 0) / a.length) : 0;
-    if (stAvgBets[s] > stMaxAvg) stMaxAvg = stAvgBets[s];
+    var abb = d.betAmtsBB[s];
+    stAvgBetsBB[s] = abb && abb.length ? (abb.reduce(function(x, y) { return x + y; }, 0) / abb.length) : 0;
+    var src = stBetSource[s];
+    stBetDisplay[s] = src && src.length ? (src.reduce(function(x, y) { return x + y; }, 0) / src.length) : 0;
+    if (stBetDisplay[s] > stMaxAvg) stMaxAvg = stBetDisplay[s];
   });
-  if (stAvgBets.Flop > 0 || stAvgBets.Turn > 0 || stAvgBets.River > 0) {
+  if (stBetDisplay.Flop > 0 || stBetDisplay.Turn > 0 || stBetDisplay.River > 0) {
     stHtml += '<div class="sec-subtitle">Average bet size by street</div><div class="bar-group">' +
-      streets.filter(function(s) { return stAvgBets[s] > 0; }).map(function(s) {
-        return barRow(s, stAvgBets[s], stMaxAvg, 'o', fmt(stAvgBets[s]), d.betAmts[s] ? d.betAmts[s].length + ' bets' : '');
+      streets.filter(function(s) { return stBetDisplay[s] > 0; }).map(function(s) {
+        return barRow(s, stBetDisplay[s], stMaxAvg, 'o', _displayBB ? stBetDisplay[s].toFixed(1) + ' BB' : fmt(stAvgBets[s]), d.betAmts[s] ? d.betAmts[s].length + ' bets' : '');
       }).join('') + '</div>';
   }
   const sIns = [];
@@ -574,17 +587,27 @@ function render(d, hands, meta) {
   // ── BETS ──
   const betStreets = ['Preflop', 'Flop', 'Turn', 'River'];
   const avgBets = {};
+  const avgBetsBB = {};
+  var betSource = _displayBB ? d.betAmtsBB : d.betAmts;
   betStreets.forEach(function(s) {
     var a = d.betAmts[s];
     avgBets[s] = a && a.length ? Math.round(a.reduce(function(x, y) { return x + y; }, 0) / a.length) : 0;
+    var abb = d.betAmtsBB[s];
+    avgBetsBB[s] = abb && abb.length ? (abb.reduce(function(x, y) { return x + y; }, 0) / abb.length) : 0;
   });
   d.avgBetPre = avgBets.Preflop; d.avgBetFlop = avgBets.Flop;
   d.avgBetTurn = avgBets.Turn; d.avgBetRiver = avgBets.River;
-  const maxAvg = Math.max(avgBets.Preflop, avgBets.Flop, avgBets.Turn, avgBets.River, 1);
+  d.avgBetBBFlop = avgBetsBB.Flop; d.avgBetBBTurn = avgBetsBB.Turn; d.avgBetBBRiver = avgBetsBB.River;
+  var betDisplay = {};
+  betStreets.forEach(function(s) {
+    var bSrc = betSource[s];
+    betDisplay[s] = bSrc && bSrc.length ? (bSrc.reduce(function(x, y) { return x + y; }, 0) / bSrc.length) : 0;
+  });
+  const maxAvg = Math.max(betDisplay.Preflop, betDisplay.Flop, betDisplay.Turn, betDisplay.River, 1);
   let betHtml = '<div class="two-col" style="margin-bottom:24px;">';
   betHtml += '<div><div class="sec-subtitle">Average bet size by street</div><div class="bar-group">' +
-    betStreets.filter(s => avgBets[s] > 0).map(s =>
-      barRow(s, avgBets[s], maxAvg, 'o', fmt(avgBets[s]), d.betAmts[s] ? d.betAmts[s].length + ' bets' : ''),
+    betStreets.filter(s => betDisplay[s] > 0).map(s =>
+      barRow(s, betDisplay[s], maxAvg, 'o', _displayBB ? betDisplay[s].toFixed(1) + ' BB' : fmt(avgBets[s]), d.betAmts[s] ? d.betAmts[s].length + ' bets' : ''),
     ).join('') + '</div></div>';
   betHtml += '<div><div class="sec-subtitle">Bet frequency (when you had the option)</div><div class="bar-group">' +
     betStreets.map(s => {
@@ -601,8 +624,9 @@ function render(d, hands, meta) {
       if (!h.board || h.board.length < 3) return false;
       return parseActions(h.actions).some(function(a) { return a.isMe && a.street === 'Flop' && (a.type === 'raise' || a.type === 'bet'); });
     });
-    bIns.push(insWithExample('o', 'Flop Sizing', 'Average flop bet: ' + fmt(d.avgBetFlop) + '. In TC, aim for 60–80% of pot. Everyone calls so bet for maximum value.', [{
-      v: 'Avg: ' + fmt(d.avgBetFlop),
+    var flopDisp = _displayBB && d.avgBetBBFlop > 0 ? d.avgBetBBFlop.toFixed(1) + ' BB' : fmt(d.avgBetFlop);
+    bIns.push(insWithExample('o', 'Flop Sizing', 'Average flop bet: ' + flopDisp + '. In TC, aim for 60–80% of pot. Everyone calls so bet for maximum value.', [{
+      v: 'Avg: ' + flopDisp,
       hi: true,
     }], exFlopBet, 'This hand shows your typical flop bet sizing. In TC where players call wide, sizing between 60–80% of pot extracts maximum value from weaker hands chasing draws.'));
   }
@@ -612,8 +636,10 @@ function render(d, hands, meta) {
       if (!h.board || h.board.length < 4) return false;
       return parseActions(h.actions).some(function(a) { return a.isMe && a.street === 'Turn' && (a.type === 'raise' || a.type === 'bet'); });
     });
-    bIns.push(insWithExample(bigger ? 'g' : 'a', 'Turn Sizing', bigger ? 'Turn bets (' + fmt(d.avgBetTurn) + ') larger than flop — correct as the pot grows.' : 'Turn bets (' + fmt(d.avgBetTurn) + ') smaller than flop (' + fmt(d.avgBetFlop) + '). Size up on the turn.', [{
-      v: 'Avg: ' + fmt(d.avgBetTurn),
+    var turnDisp = _displayBB && d.avgBetBBTurn > 0 ? d.avgBetBBTurn.toFixed(1) + ' BB' : fmt(d.avgBetTurn);
+    var flopDispT = _displayBB && d.avgBetBBFlop > 0 ? d.avgBetBBFlop.toFixed(1) + ' BB' : fmt(d.avgBetFlop);
+    bIns.push(insWithExample(bigger ? 'g' : 'a', 'Turn Sizing', bigger ? 'Turn bets (' + turnDisp + ') larger than flop — correct as the pot grows.' : 'Turn bets (' + turnDisp + ') smaller than flop (' + flopDispT + '). Size up on the turn.', [{
+      v: 'Avg: ' + turnDisp,
       hi: true,
     }], exTurnBet, bigger ? 'Good turn sizing here — increasing your bet as the pot grows puts maximum pressure on drawing hands and builds value.' : 'Your turn bet here was smaller than your flop bet. As the pot grows, your bets should scale up to charge opponents for chasing.'));
   }
@@ -623,8 +649,9 @@ function render(d, hands, meta) {
       if (!h.outcome || h.outcome.result !== 'won') return false;
       return parseActions(h.actions).some(function(a) { return a.isMe && a.street === 'River' && (a.type === 'raise' || a.type === 'bet'); });
     });
-    bIns.push(insWithExample('o', 'River Sizing', 'Average river bet: ' + fmt(d.avgBetRiver) + '. The river is where you get paid — bet big with the best hand.', [{
-      v: 'Avg: ' + fmt(d.avgBetRiver),
+    var riverDisp = _displayBB && d.avgBetBBRiver > 0 ? d.avgBetBBRiver.toFixed(1) + ' BB' : fmt(d.avgBetRiver);
+    bIns.push(insWithExample('o', 'River Sizing', 'Average river bet: ' + riverDisp + '. The river is where you get paid — bet big with the best hand.', [{
+      v: 'Avg: ' + riverDisp,
       hi: true,
     }], exRiverBet, 'This winning hand shows the river paying off. Size up with strong hands — TC players will call with second-best hands more often than they should.'));
   }
@@ -1098,7 +1125,10 @@ function render(d, hands, meta) {
       tablesHtml += '<td class="' + (r.net >= 0 ? 'pnl-pos' : 'pnl-neg') + '">' + (r.net >= 0 ? '+' : '') + fmt(r.net) + '</td>';
       tablesHtml += '<td>' + (r.vpipP !== null ? r.vpipP + '%' : '—') + '</td>';
       tablesHtml += '<td>' + (r.aggP !== null ? r.aggP + '%' : '—') + '</td>';
-      tablesHtml += '<td style="color:var(--dim);">' + (r.avgPot > 0 ? fmt(r.avgPot) : '—') + '</td>';
+      var tblAvgPotDisp = _displayBB && r.tid !== 'unknown' && TABLE_META[r.tid]
+        ? (r.avgPot / TABLE_META[r.tid].bb).toFixed(1) + ' BB'
+        : fmt(r.avgPot);
+      tablesHtml += '<td style="color:var(--dim);">' + (r.avgPot > 0 ? tblAvgPotDisp : '—') + '</td>';
       tablesHtml += '<td><button class="log-nav-btn exclude-table-btn" data-tid="' + r.tid + '" style="font-size:8px;padding:2px 6px;">' + (isExcluded ? 'Include' : 'Exclude') + '</button></td></tr>';
     }
     tablesHtml += '</tbody></table></div>';
@@ -1565,6 +1595,46 @@ function render(d, hands, meta) {
       p.classList.toggle('on', i === 0);
     });
     checkSavedSession();
+  };
+
+  // Restore active tab across re-renders (e.g. BB toggle, exclude table)
+  if (activeTabId && activeTabId !== 'welcome') {
+    document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+    document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('on'); });
+    var restoreTab = document.querySelector('[data-tab="' + activeTabId + '"]');
+    if (restoreTab) {
+      restoreTab.classList.add('active');
+      document.getElementById('p-' + activeTabId).classList.add('on');
+    }
+  }
+
+  // Sync BB toggle button state after render
+  var bbBtn = document.getElementById('bb-toggle');
+  if (bbBtn) {
+    bbBtn.textContent = _displayBB ? 'BB' : '$';
+    bbBtn.classList.toggle('active', _displayBB);
+  }
+
+  // BB toggle click handler
+  document.getElementById('bb-toggle').onclick = function() {
+    _displayBB = !_displayBB;
+    this.textContent = _displayBB ? 'BB' : '$';
+    this.classList.toggle('active', _displayBB);
+    if (_allHands.length) {
+      var currentFilter = document.getElementById('table-filter').value;
+      var filtered = _allHands;
+      if (currentFilter !== 'all') {
+        filtered = _allHands.filter(function(h) {
+          var tid = inferTable(h);
+          return currentFilter === 'unknown' ? tid === null : tid === Number(currentFilter);
+        });
+      }
+      filtered = filtered.filter(function(h) {
+        return !_excludedTables.has(String(inferTable(h) || 'unknown'));
+      });
+      var fd = analyse(filtered);
+      render(fd, filtered, _meta);
+    }
   };
 }
 

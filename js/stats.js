@@ -31,6 +31,13 @@ function analyse(hands) {
     River:   [],
   };
 
+  const betAmtsBB = {
+    Preflop: [],
+    Flop:    [],
+    Turn:    [],
+    River:   [],
+  };
+
   const betOpps = {
     Preflop: { b: 0, t: 0 },
     Flop:    { b: 0, t: 0 },
@@ -62,6 +69,11 @@ function analyse(hands) {
     }
     posMap[p].hands++;
     if (cash) posMap[p].pot += h.pot || 0;
+    var handBBPos = getHandBB(h);
+    if (cash && handBBPos && handBBPos > 0 && h.pot) {
+      posMap[p].potBB = (posMap[p].potBB || 0) + (h.pot / handBBPos);
+      posMap[p].potBBCount = (posMap[p].potBBCount || 0) + 1;
+    }
 
     if (h.outcome) {
       handsWithOutcome++;
@@ -150,6 +162,10 @@ function analyse(hands) {
       if (a.type === 'raise' || a.type === 'bet') {
         if (a.amount > 0 && betAmts[a.street]) {
           betAmts[a.street].push(a.amount);
+          var handBB = getHandBB(h);
+          if (handBB && handBB > 0) {
+            betAmtsBB[a.street].push(a.amount / handBB);
+          }
         }
       }
 
@@ -209,6 +225,7 @@ function analyse(hands) {
     raises,
     totalActs,
     betAmts,
+    betAmtsBB,
     betOpps,
     facedAllin,
     foldAllin,

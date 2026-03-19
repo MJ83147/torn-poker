@@ -1011,6 +1011,30 @@ textarea#jin:focus {
   background: var(--border);
 }
 
+/* BB TOGGLE */
+.bb-toggle {
+  background: var(--s2);
+  border: 1px solid var(--border);
+  color: var(--dim);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  min-width: 36px;
+  text-align: center;
+  transition: border-color .2s, color .2s;
+}
+.bb-toggle:hover {
+  border-color: var(--dim);
+  color: var(--text);
+}
+.bb-toggle.active {
+  border-color: var(--gold2);
+  color: var(--gold);
+}
+
 /* TABLE FILTER */
 .table-filter {
   background: var(--s2);
