@@ -21,6 +21,28 @@ document.getElementById('tabs').addEventListener('click', function(e) {
   document.getElementById(id).classList.add('on');
 });
 
+// BB toggle handler (wired once at load, not inside render)
+document.getElementById('bb-toggle').onclick = function() {
+  _displayBB = !_displayBB;
+  this.textContent = _displayBB ? 'BB' : '$';
+  this.classList.toggle('active', _displayBB);
+  if (_allHands.length) {
+    var currentFilter = document.getElementById('table-filter').value;
+    var filtered = _allHands;
+    if (currentFilter !== 'all') {
+      filtered = _allHands.filter(function(h) {
+        var tid = inferTable(h);
+        return currentFilter === 'unknown' ? tid === null : tid === Number(currentFilter);
+      });
+    }
+    filtered = filtered.filter(function(h) {
+      return !_excludedTables.has(String(inferTable(h) || 'unknown'));
+    });
+    var fd = analyse(filtered);
+    render(fd, filtered, _meta);
+  }
+};
+
 // Example hand modal helpers (used by insWithExample from helpers.js)
 let _modalHands = [];
 
@@ -442,13 +464,13 @@ function render(d, hands, meta) {
   // Average bet size by street
   const stAvgBets = {};
   const stAvgBetsBB = {};
-  var stBetSource = _displayBB ? d.betAmtsBB : d.betAmts;
+  var stBetSource = _displayBB && d.betAmtsBB ? d.betAmtsBB : d.betAmts;
   var stBetDisplay = {};
   let stMaxAvg = 1;
   streets.forEach(function(s) {
     var a = d.betAmts[s];
     stAvgBets[s] = a && a.length ? Math.round(a.reduce(function(x, y) { return x + y; }, 0) / a.length) : 0;
-    var abb = d.betAmtsBB[s];
+    var abb = d.betAmtsBB ? d.betAmtsBB[s] : null;
     stAvgBetsBB[s] = abb && abb.length ? (abb.reduce(function(x, y) { return x + y; }, 0) / abb.length) : 0;
     var src = stBetSource[s];
     stBetDisplay[s] = src && src.length ? (src.reduce(function(x, y) { return x + y; }, 0) / src.length) : 0;
@@ -588,11 +610,11 @@ function render(d, hands, meta) {
   const betStreets = ['Preflop', 'Flop', 'Turn', 'River'];
   const avgBets = {};
   const avgBetsBB = {};
-  var betSource = _displayBB ? d.betAmtsBB : d.betAmts;
+  var betSource = _displayBB && d.betAmtsBB ? d.betAmtsBB : d.betAmts;
   betStreets.forEach(function(s) {
     var a = d.betAmts[s];
     avgBets[s] = a && a.length ? Math.round(a.reduce(function(x, y) { return x + y; }, 0) / a.length) : 0;
-    var abb = d.betAmtsBB[s];
+    var abb = d.betAmtsBB ? d.betAmtsBB[s] : null;
     avgBetsBB[s] = abb && abb.length ? (abb.reduce(function(x, y) { return x + y; }, 0) / abb.length) : 0;
   });
   d.avgBetPre = avgBets.Preflop; d.avgBetFlop = avgBets.Flop;
@@ -1615,27 +1637,6 @@ function render(d, hands, meta) {
     bbBtn.classList.toggle('active', _displayBB);
   }
 
-  // BB toggle click handler
-  document.getElementById('bb-toggle').onclick = function() {
-    _displayBB = !_displayBB;
-    this.textContent = _displayBB ? 'BB' : '$';
-    this.classList.toggle('active', _displayBB);
-    if (_allHands.length) {
-      var currentFilter = document.getElementById('table-filter').value;
-      var filtered = _allHands;
-      if (currentFilter !== 'all') {
-        filtered = _allHands.filter(function(h) {
-          var tid = inferTable(h);
-          return currentFilter === 'unknown' ? tid === null : tid === Number(currentFilter);
-        });
-      }
-      filtered = filtered.filter(function(h) {
-        return !_excludedTables.has(String(inferTable(h) || 'unknown'));
-      });
-      var fd = analyse(filtered);
-      render(fd, filtered, _meta);
-    }
-  };
 }
 
 // ── PROCESS ─────────────────────────────────────────────────────────────────
