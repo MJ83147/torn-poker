@@ -30,25 +30,25 @@
   </div>
 
   <div id="app">
-    <div style="display:flex;justify-content:flex-end;gap:24px;padding:14px 24px 0;">
-      <span id="how-it-works-btn" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--dim);cursor:pointer;letter-spacing:1px;">How it works</span>
-      <a href="https://greasyfork.org/en/scripts/569290-tc-poker-export" target="_blank" rel="noopener" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--dim);letter-spacing:1px;text-decoration:none;">Install Script</a>
+    <div class="paste-nav">
+      <span id="how-it-works-btn" class="paste-nav-link">How it works</span>
+      <a href="https://greasyfork.org/en/scripts/569290-tc-poker-export" target="_blank" rel="noopener" class="paste-nav-link">Install Script</a>
     </div>
     <div id="paste-wrap">
       <div class="paste-box">
         <div class="paste-suit">♠</div>
         <div class="paste-title">Analyse your session</div>
         <div class="paste-sub">Click below to paste your tracked session data from the TC Poker Tracker</div>
-        <button class="go-btn" id="paste-btn" style="margin-bottom:24px;background:var(--gold);color:var(--bg);border-color:var(--gold);">Paste from Clipboard</button>
-        <div id="paste-error" style="display:none;font-size:10px;color:var(--red);margin-bottom:10px;"></div>
-        <div style="border-top:1px solid var(--border);padding-top:24px;margin-top:8px;">
-          <div style="font-size:11px;color:var(--dim);margin-bottom:14px;">Or paste manually:</div>
+        <button class="go-btn go-btn-primary" id="paste-btn">Paste from Clipboard</button>
+        <div id="paste-error" class="paste-error"></div>
+        <div class="paste-manual">
+          <div class="paste-manual-label">Or paste manually:</div>
           <textarea id="jin" placeholder="Paste JSON here..."></textarea>
-          <button class="go-btn" id="go-btn" style="border-color:var(--gold2);color:var(--gold2);">Analyse Session</button>
+          <button class="go-btn go-btn-secondary" id="go-btn">Analyse Session</button>
         </div>
-        <div id="restore-block" style="display:none;" class="restore-block">
+        <div id="restore-block" class="restore-block">
           <div class="restore-label" id="restore-label"></div>
-          <button class="go-btn" id="restore-btn" style="margin-top:0;border-color:var(--gold2);color:var(--gold2);">Restore Previous Session</button>
+          <button class="go-btn go-btn-secondary restore-btn" id="restore-btn">Restore Previous Session</button>
         </div>
       </div>
     </div>
