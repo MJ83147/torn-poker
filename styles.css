@@ -158,36 +158,36 @@ body {
 #paste-wrap {
   max-width: 640px;
   margin: 0 auto;
-  padding: 80px 24px;
+  padding: 40px 24px;
 }
 
 .paste-box {
   border: 1px solid var(--border);
   border-radius: 10px;
-  padding: 44px 32px;
+  padding: 28px 28px;
   text-align: center;
   background: var(--s1);
 }
 
 .paste-suit {
   font-family: 'Cormorant Garamond', serif;
-  font-size: 44px;
+  font-size: 32px;
   color: var(--gold2);
-  margin-bottom: 14px;
+  margin-bottom: 8px;
   opacity: .5;
 }
 
 .paste-title {
   font-family: 'Cormorant Garamond', serif;
-  font-size: 24px;
+  font-size: 20px;
   color: var(--text);
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 .paste-sub {
-  font-size: 11px;
+  font-size: 10px;
   color: var(--dim);
-  margin-bottom: 22px;
+  margin-bottom: 16px;
 }
 
 textarea#jin {
@@ -198,9 +198,9 @@ textarea#jin {
   color: var(--dim);
   font-family: 'IBM Plex Mono', monospace;
   font-size: 11px;
-  padding: 14px;
+  padding: 10px;
   resize: vertical;
-  min-height: 90px;
+  min-height: 50px;
   outline: none;
 }
 
@@ -1308,30 +1308,6 @@ textarea#jin:focus {
   padding: 6px 0;
 }
 
-/* PASTE ACTIONS */
-.paste-actions {
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-  margin-top: 16px;
-}
-.paste-action-btn {
-  padding: 9px 20px;
-  background: transparent;
-  border: 1px solid var(--border);
-  color: var(--dim);
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 10px;
-  letter-spacing: 1px;
-  border-radius: 4px;
-  cursor: pointer;
-  text-decoration: none;
-  transition: border-color .2s, color .2s;
-}
-.paste-action-btn:hover {
-  border-color: var(--gold2);
-  color: var(--gold);
-}
 
 /* HOW IT WORKS MODAL */
 .hiw-overlay {
