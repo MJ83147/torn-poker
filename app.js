@@ -1704,6 +1704,16 @@ document.getElementById('jin').addEventListener('keydown', function(e) {
   if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) process(this.value);
 });
 
+document.getElementById('how-it-works-btn').onclick = function() {
+  document.getElementById('hiw-modal').classList.add('show');
+};
+document.getElementById('hiw-close').onclick = function() {
+  document.getElementById('hiw-modal').classList.remove('show');
+};
+document.getElementById('hiw-modal').onclick = function(e) {
+  if (e.target === this) this.classList.remove('show');
+};
+
 // Position a tooltip relative to the viewport so it escapes overflow containers
 function positionTip(tooltipEl) {
   var tipBox = tooltipEl.querySelector('.tip-box');
