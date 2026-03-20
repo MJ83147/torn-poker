@@ -1248,116 +1248,68 @@ textarea#jin:focus {
   overflow: hidden;
   padding: 24px 40px 16px;
 }
-.welcome-top {
-  display: flex;
-  gap: 32px;
-  align-items: flex-start;
-  margin-bottom: auto;
+/* WELCOME TAB */
+.welcome-wrap {
+  max-width: 640px;
 }
 .welcome-intro {
-  flex: 1;
-  min-width: 0;
+  margin-bottom: 28px;
 }
 .welcome-intro-heading {
   font-family: 'Cormorant Garamond', serif;
-  font-size: clamp(22px, 3vw, 32px);
+  font-size: clamp(24px, 4vw, 32px);
   font-weight: 700;
   color: var(--gold);
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 .welcome-intro-sub {
+  font-size: 12px;
+  color: var(--dim);
+}
+.welcome-toc {
+  display: flex;
+  flex-direction: column;
+}
+.welcome-toc-row {
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  gap: 16px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background .15s;
+}
+.welcome-toc-row:first-child {
+  border-top: 1px solid var(--border);
+}
+.welcome-toc-row:hover {
+  background: var(--s1);
+}
+.welcome-toc-name {
+  font-size: 11px;
+  color: var(--gold);
+  font-weight: 600;
+}
+.welcome-toc-desc {
   font-size: 11px;
   color: var(--dim);
-  line-height: 1.7;
+  line-height: 1.5;
 }
-
-/* Tip carousel */
-.welcome-carousel-wrap {
-  flex: 0 0 280px;
+.welcome-tips {
+  margin-top: 28px;
 }
-.welcome-carousel {
-  background: var(--s1);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 14px 16px;
-  min-height: 80px;
-  position: relative;
-}
-.welcome-carousel-track {
-  position: relative;
+.welcome-tips-title {
+  font-size: 9px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: var(--dim);
+  margin-bottom: 12px;
 }
 .welcome-tip {
   font-size: 11px;
   color: var(--dim);
-  line-height: 1.7;
-  display: none;
-}
-.welcome-tip.active {
-  display: block;
-}
-.welcome-carousel-dots {
-  display: flex;
-  gap: 6px;
-  margin-top: 10px;
-}
-.welcome-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--muted);
-  cursor: pointer;
-  transition: background .2s;
-}
-.welcome-dot.active {
-  background: var(--gold);
-}
-.welcome-dot:hover {
-  background: var(--gold2);
-}
-
-/* Explore grid */
-.welcome-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 8px;
-  flex: 1;
-  align-content: start;
-  overflow: hidden;
-}
-.welcome-card {
-  background: var(--s1);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 12px 14px;
-  transition: border-color .2s;
-  cursor: pointer;
-}
-.welcome-card:hover {
-  border-color: var(--gold2);
-}
-.welcome-card-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 4px;
-}
-.welcome-card-icon {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 16px;
-  color: var(--gold2);
-  opacity: 0.5;
-  line-height: 1;
-}
-.welcome-card-name {
-  font-size: 9px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  color: var(--gold);
-}
-.welcome-card-desc {
-  font-size: 10px;
-  color: var(--dim);
-  line-height: 1.5;
+  line-height: 1.6;
+  padding: 6px 0;
 }
 
 /* PASTE ACTIONS */

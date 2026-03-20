@@ -173,83 +173,47 @@ function render(d, hands, meta) {
 
   // ── WELCOME ──
   var tabDescs = [
-    { tab: 'cards',    icon: '\u2660', name: 'Cards',    desc: 'Win rates and patterns by hand type: pairs, broadway, suited connectors, and more.' },
-    { tab: 'position', icon: '\u25CE', name: 'Position', desc: 'How you perform from each seat. Find where you\'re tight, loose, or leaking chips.' },
-    { tab: 'street',   icon: '\u2192', name: 'Streets',  desc: 'Action breakdown by preflop, flop, turn, and river. See where hands end.' },
-    { tab: 'actions',  icon: '\u2191', name: 'Actions',  desc: 'Your fold, check, call, and raise frequencies. Aggression profile at a glance.' },
-    { tab: 'bets',     icon: '$', name: 'Bets',     desc: 'Bet sizing across streets. Are you betting enough when it matters?' },
-    { tab: 'combined', icon: '\u26A1', name: 'Combined', desc: 'Cross-references position, cards, and actions to surface deeper leaks.' },
-    { tab: 'range',    icon: '\u25A6', name: 'Range',    desc: 'The full 13x13 hand grid. Win rate and frequency for every combo you\'ve played.' },
-    { tab: 'tables',   icon: '\u2B21', name: 'Tables',   desc: 'Compare your stats across different stakes and table types.' },
-    { tab: 'trends',   icon: '\u2197', name: 'Trends',   desc: 'Session-over-session charts for win rate, VPIP, aggression, and P&L.' },
-    { tab: 'log',      icon: '\u2630', name: 'Hand Log', desc: 'Every hand you\'ve played. Click any row to replay the full action.' },
-    { tab: 'players',  icon: '\u265F', name: 'Players',  desc: 'Opponent tracking. See who you play most, your record against them, and watch list.' },
+    { tab: 'cards',    name: 'Cards',    desc: 'Win rates by hand type: pairs, broadway, suited connectors, and more' },
+    { tab: 'position', name: 'Position', desc: 'How you perform from each seat at the table' },
+    { tab: 'street',   name: 'Streets',  desc: 'Action breakdown by preflop, flop, turn, and river' },
+    { tab: 'actions',  name: 'Actions',  desc: 'Fold, check, call, and raise frequencies' },
+    { tab: 'bets',     name: 'Bets',     desc: 'Average bet sizing across streets' },
+    { tab: 'combined', name: 'Combined', desc: 'Cross-references position, cards, and actions for deeper leaks' },
+    { tab: 'range',    name: 'Range',    desc: 'Full 13x13 hand grid with win rate for every combo' },
+    { tab: 'tables',   name: 'Tables',   desc: 'Compare stats across different stakes' },
+    { tab: 'trends',   name: 'Trends',   desc: 'Session-over-session charts for win rate, VPIP, and P&L' },
+    { tab: 'log',      name: 'Hand Log', desc: 'Every hand played, click any row to replay' },
+    { tab: 'players',  name: 'Players',  desc: 'Opponent records, head-to-head stats, and watch list' },
   ];
   var tips = [
-    'Most insight cards have a <strong>See example hand</strong> button that opens a real hand from your data.',
-    'Click any row in the <strong>Hand Log</strong> to replay the full action sequence.',
-    'Click any cell on the <strong>Range</strong> grid to see every hand you\'ve played with that combo.',
-    'In <strong>Players</strong>, click any opponent row to see all hands you\'ve shared with them.',
-    'Star \u2606 a player in the <strong>Players</strong> tab to add them to your watched list.',
-    'Use the <strong>table filter</strong> in the header to isolate stats to a single table.',
+    'Insight cards have a <strong>See example hand</strong> button showing a real hand from your data.',
+    'Click any cell on the <strong>Range</strong> grid to see hands with that combo.',
+    'In <strong>Players</strong>, click any row to see shared hands. Star \u2606 a player to watch them.',
+    'Use the <strong>table filter</strong> in the header to isolate stats to one table.',
   ];
-  var welcomeHtml = '<div class="welcome-top">' +
+  var welcomeHtml = '<div class="welcome-wrap">' +
     '<div class="welcome-intro">' +
     '<div class="welcome-intro-heading">Welcome back, ' + meta.player + '</div>' +
-    '<div class="welcome-intro-sub">TC Poker Analysis reads your exported hand history and breaks down how you play. Every stat, chart, and insight is generated from your data alone \u2014 nothing is stored externally.</div>' +
-    '<div class="welcome-intro-sub" style="margin-top:6px;">' + d.n + ' hands loaded. Use the tabs above to explore, or pick a section below.</div>' +
+    '<div class="welcome-intro-sub">' + d.n + ' hands loaded. Here\'s what each tab shows.</div>' +
     '</div>' +
-    '<div class="welcome-carousel-wrap">' +
-    '<div style="font-size:9px;letter-spacing:4px;color:var(--dim);text-transform:uppercase;margin-bottom:8px;">Tips</div>' +
-    '<div class="welcome-carousel">' +
-    '<div class="welcome-carousel-track">' +
-    tips.map(function(t, i) {
-      return '<div class="welcome-tip' + (i === 0 ? ' active' : '') + '">' + t + '</div>';
-    }).join('') +
-    '</div>' +
-    '<div class="welcome-carousel-dots">' +
-    tips.map(function(_, i) {
-      return '<span class="welcome-dot' + (i === 0 ? ' active' : '') + '" data-tip-i="' + i + '"></span>';
-    }).join('') +
-    '</div>' +
-    '</div>' +
-    '</div>' +
-    '</div>' +
-    '<div style="font-size:9px;letter-spacing:4px;color:var(--dim);text-transform:uppercase;margin-bottom:10px;margin-top:16px;">Explore</div>' +
-    '<div class="welcome-grid">' + tabDescs.map(function(t) {
-      return '<div class="welcome-card" data-goto="' + t.tab + '">' +
-        '<div class="welcome-card-header"><span class="welcome-card-icon">' + t.icon + '</span><span class="welcome-card-name">' + t.name + '</span></div>' +
-        '<div class="welcome-card-desc">' + t.desc + '</div>' +
+    '<div class="welcome-toc">' +
+    tabDescs.map(function(t) {
+      return '<div class="welcome-toc-row" data-goto="' + t.tab + '">' +
+        '<div class="welcome-toc-name">' + t.name + '</div>' +
+        '<div class="welcome-toc-desc">' + t.desc + '</div>' +
         '</div>';
-    }).join('') + '</div>';
+    }).join('') +
+    '</div>' +
+    '<div class="welcome-tips">' +
+    '<div class="welcome-tips-title">Tips</div>' +
+    tips.map(function(t) {
+      return '<div class="welcome-tip">' + t + '</div>';
+    }).join('') +
+    '</div>' +
+    '</div>';
   document.getElementById('p-welcome').innerHTML = welcomeHtml;
-
-  // Tip carousel logic
-  var tipIndex = 0;
-  var tipEls = document.querySelectorAll('.welcome-tip');
-  var dotEls = document.querySelectorAll('.welcome-dot');
-  function showTip(i) {
-    tipIndex = i;
-    tipEls.forEach(function(el, j) { el.classList.toggle('active', j === i); });
-    dotEls.forEach(function(el, j) { el.classList.toggle('active', j === i); });
-  }
-  dotEls.forEach(function(dot) {
-    dot.onclick = function() { showTip(parseInt(this.getAttribute('data-tip-i'))); };
-  });
-  var tipTimer = setInterval(function() {
-    showTip((tipIndex + 1) % tips.length);
-  }, 5000);
-  // Pause on hover
-  var carouselEl = document.querySelector('.welcome-carousel');
-  if (carouselEl) {
-    carouselEl.onmouseenter = function() { clearInterval(tipTimer); };
-    carouselEl.onmouseleave = function() {
-      tipTimer = setInterval(function() { showTip((tipIndex + 1) % tips.length); }, 5000);
-    };
-  }
-
-  document.querySelectorAll('.welcome-card[data-goto]').forEach(function(card) {
-    card.onclick = function() {
+  document.querySelectorAll('.welcome-toc-row[data-goto]').forEach(function(row) {
+    row.onclick = function() {
       var tab = this.getAttribute('data-goto');
       document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
       document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('on'); });
