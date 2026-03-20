@@ -1242,11 +1242,7 @@ textarea#jin:focus {
 
 /* WELCOME TAB */
 #p-welcome.panel.on {
-  display: flex;
-  flex-direction: column;
-  height: calc(100vh - 160px);
-  overflow: hidden;
-  padding: 24px 40px 16px;
+  display: block;
 }
 /* WELCOME TAB */
 .welcome-wrap {
