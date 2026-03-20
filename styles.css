@@ -164,7 +164,7 @@ body {
 .paste-box {
   border: 1px solid var(--border);
   border-radius: 10px;
-  padding: 28px 28px;
+  padding: 44px 28px;
   text-align: center;
   background: var(--s1);
 }
@@ -173,7 +173,7 @@ body {
   font-family: 'Cormorant Garamond', serif;
   font-size: 32px;
   color: var(--gold2);
-  margin-bottom: 8px;
+  margin-bottom: 16px;
   opacity: .5;
 }
 
@@ -181,13 +181,13 @@ body {
   font-family: 'Cormorant Garamond', serif;
   font-size: 20px;
   color: var(--text);
-  margin-bottom: 4px;
+  margin-bottom: 10px;
 }
 
 .paste-sub {
   font-size: 12px;
   color: var(--dim);
-  margin-bottom: 16px;
+  margin-bottom: 28px;
 }
 
 textarea#jin {
@@ -209,7 +209,7 @@ textarea#jin:focus {
 }
 
 .go-btn {
-  margin-top: 12px;
+  margin-top: 16px;
   width: 60%;
   padding: 10px;
   background: transparent;
@@ -229,8 +229,8 @@ textarea#jin:focus {
 }
 
 .restore-block {
-  margin-top: 20px;
-  padding-top: 20px;
+  margin-top: 28px;
+  padding-top: 28px;
   border-top: 1px solid var(--border);
 }
 
