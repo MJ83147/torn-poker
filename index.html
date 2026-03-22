@@ -74,7 +74,6 @@
           <button class="tab" data-tab="street">Street</button>
           <button class="tab" data-tab="actions">Actions</button>
           <button class="tab" data-tab="bets">Bets</button>
-          <button class="tab" data-tab="combined">Combined</button>
           <button class="tab" data-tab="range">Range</button>
           <button class="tab" data-tab="tables">Tables</button>
           <button class="tab" data-tab="trends">Trends</button>
@@ -91,7 +90,6 @@
       <div class="panel" id="p-street"></div>
       <div class="panel" id="p-actions"></div>
       <div class="panel" id="p-bets"></div>
-      <div class="panel" id="p-combined"></div>
       <div class="panel" id="p-range"></div>
       <div class="panel" id="p-tables"></div>
       <div class="panel" id="p-trends"></div>
@@ -158,10 +156,31 @@
     </div>
   </div>
 
-  <script src="js/helpers.js?v=5"></script>
-  <script src="js/stats.js?v=5"></script>
-  <script src="js/loader.js?v=5"></script>
-  <script src="app.js?v=5"></script>
+  <!-- Core -->
+  <script src="js/helpers.js?v=6"></script>
+  <script src="js/stats.js?v=6"></script>
+  <script src="js/loader.js?v=6"></script>
+
+  <!-- Services -->
+  <script src="js/state.js?v=6"></script>
+  <script src="js/modal.js?v=6"></script>
+
+  <!-- Panels -->
+  <script src="js/panels/welcome.js?v=6"></script>
+  <script src="js/panels/cards.js?v=6"></script>
+  <script src="js/panels/position.js?v=6"></script>
+  <script src="js/panels/street.js?v=6"></script>
+  <script src="js/panels/actions.js?v=6"></script>
+  <script src="js/panels/bets.js?v=6"></script>
+  <script src="js/panels/range.js?v=6"></script>
+  <script src="js/panels/tables.js?v=6"></script>
+  <script src="js/panels/trends.js?v=6"></script>
+  <script src="js/panels/log.js?v=6"></script>
+  <script src="js/panels/players.js?v=6"></script>
+  <script src="js/panels/profile.js?v=6"></script>
+
+  <!-- Orchestrator (last) -->
+  <script src="app.js?v=6"></script>
 </body>
 
 </html>
