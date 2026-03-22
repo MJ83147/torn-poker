@@ -1,7 +1,7 @@
 // ── HELPERS (pure utilities, no app boot) ─────────────────────────────────────
 
 // Ranks in ascending order for hand key parsing/classification
-const RANKS = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+const RANKS = ['2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A'];
 
 // Human-readable tips used in tooltips throughout the UI
 const TIPS = {
@@ -220,8 +220,10 @@ function parseActions(actions) {
 // Turn a hole card array into a condensed key like "AKs" or "TT"
 function parseHoleKey(hole) {
   if (!hole || hole.length < 2) return null;
-  const r1 = hole[0].slice(0, -1);
-  const r2 = hole[1].slice(0, -1);
+  var r1 = hole[0].slice(0, -1);
+  var r2 = hole[1].slice(0, -1);
+  if (r1 === '10') r1 = 'T';
+  if (r2 === '10') r2 = 'T';
   const s1 = hole[0].slice(-1);
   const s2 = hole[1].slice(-1);
   const v1 = RANKS.indexOf(r1);
@@ -238,15 +240,8 @@ function classifyKey(key) {
   if (!key) return 'unknown';
   if (key.length >= 2 && key[0] === key[1] && RANKS.includes(key[0])) return 'Pocket Pairs';
   const suited = key.endsWith('s');
-  let r1, r2;
-  if (key.startsWith('10')) {
-    r1 = '10';
-    r2 = key.slice(2, -1);
-  } else {
-    r1 = key[0];
-    const rest = key.endsWith('s') || key.endsWith('o') ? key.slice(1, -1) : key.slice(1);
-    r2 = rest.startsWith('10') ? '10' : rest[0];
-  }
+  const r1 = key[0];
+  const r2 = key.endsWith('s') || key.endsWith('o') ? key.slice(1, -1) : key.slice(1);
   const v1 = RANKS.indexOf(r1);
   const v2 = RANKS.indexOf(r2);
   const hi = Math.max(v1, v2);

@@ -796,7 +796,7 @@ function render(d, hands, meta) {
   document.getElementById('p-combined').innerHTML = combIns.join('');
 
   // ── RANGE ──
-  const gridR = ['A', 'K', 'Q', 'J', '10', '9', '8', '7', '6', '5', '4', '3', '2'];
+  const gridR = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2'];
   const rangePositions = ['All Positions', 'BB', 'SB', 'BTN', 'CO', 'HJ', 'LJ', 'MP', 'UTG', 'UTG+1'];
   function buildKey(ri, ci) {
     const r1 = gridR[Math.min(ri, ci)];
@@ -820,7 +820,7 @@ function render(d, hands, meta) {
     return 'rgb(50, 170, 65)';
   }
 
-  function buildRangeContent(filteredHands) {
+  function buildRangeContent(filteredHands, posLabel) {
     var rd = analyse(filteredHands);
     var rMap = rd.rangeMap;
     var maxP = 0;
@@ -905,6 +905,50 @@ function render(d, hands, meta) {
     }
     var coveragePct = Math.round(seen / totalCombos * 100);
     rangeIns.push(ins('n', 'Coverage', 'You have seen ' + seen + ' of ' + totalCombos + ' possible hand combos (' + coveragePct + '%). The more hands you play, the more complete this picture becomes.', [{ v: seen + '/' + totalCombos + ' combos' }]));
+
+    // Position-specific coaching cards
+    if (posLabel && posLabel !== 'all') {
+      var totalDealt = 0;
+      var totalPlayed = 0;
+      var totalWon = 0;
+      Object.keys(rMap).forEach(function(k) {
+        totalDealt += rMap[k].dealt;
+        totalPlayed += rMap[k].played;
+        totalWon += rMap[k].won;
+      });
+      var vpipPct = totalDealt > 0 ? Math.round(totalPlayed / totalDealt * 100) : 0;
+      var wrPct = totalPlayed > 0 ? Math.round(totalWon / totalPlayed * 100) : 0;
+
+      var posGuide = {
+        'BTN': { ideal: '40-55%', tight: 35, loose: 60, desc: 'The button is your most profitable seat. You act last post-flop, so you can play a wide range — suited connectors, broadways, and most pairs are all profitable opens here.' },
+        'CO': { ideal: '25-35%', tight: 20, loose: 40, desc: 'Cutoff is the second-best position. You can open wide but be cautious of BTN 3-bets. Strong broadways, suited aces, and pairs down to 55 are standard opens.' },
+        'HJ': { ideal: '18-25%', tight: 14, loose: 30, desc: 'Hijack is a middle-late position. Start tightening up — focus on strong broadways, suited connectors T9s+, and pairs 66+. Drop weak suited aces.' },
+        'LJ': { ideal: '15-22%', tight: 12, loose: 27, desc: 'Lojack is where your range should start getting noticeably tighter. Stick to pairs 77+, strong broadways ATo+/KJo+, and suited connectors 89s+.' },
+        'MP': { ideal: '14-20%', tight: 10, loose: 25, desc: 'Middle position requires discipline. Focus on pairs 77+, AJo+, KQo, and suited broadways. Suited connectors below T9s become marginal.' },
+        'UTG': { ideal: '10-16%', tight: 8, loose: 20, desc: 'Under the gun is the tightest position. You have the whole table behind you — stick to pairs 88+, AQo+, AJs+, and KQs. Playing too loose here is a common leak.' },
+        'UTG+1': { ideal: '12-18%', tight: 9, loose: 22, desc: 'UTG+1 is nearly as tight as UTG. You can add a few more hands like 77, AJo, KJs, but keep it disciplined. Most of the table still acts after you.' },
+        'SB': { ideal: '25-40%', tight: 20, loose: 45, desc: 'Small blind is tricky — you put in half a blind but act first post-flop. Against a single raiser, 3-bet or fold is often better than calling. Defend wide vs BTN steals but tighten up against early position opens.' },
+        'BB': { ideal: '35-55%', tight: 25, loose: 60, desc: 'Big blind gets the best pot odds to defend. You should be calling or 3-betting a wide range, especially vs late position opens. However, you are out of position post-flop, so avoid calling with hands that play poorly without initiative.' }
+      };
+
+      var guide = posGuide[posLabel];
+      if (guide && totalDealt >= 3) {
+        rangeIns.push(ins('n', posLabel + ' Guide', guide.desc, [{ v: 'Ideal VPIP: ' + guide.ideal }]));
+
+        if (vpipPct < guide.tight) {
+          rangeIns.push(ins('r', 'Too Tight from ' + posLabel, 'You are playing ' + vpipPct + '% of hands from ' + posLabel + ', which is below the typical range of ' + guide.ideal + '. You may be folding profitable hands. Consider opening wider with suited connectors and broadways.', [{ v: vpipPct + '% VPIP' }, { v: guide.ideal + ' ideal' }]));
+        } else if (vpipPct > guide.loose) {
+          rangeIns.push(ins('r', 'Too Loose from ' + posLabel, 'You are playing ' + vpipPct + '% of hands from ' + posLabel + ', above the typical range of ' + guide.ideal + '. Tighten up to avoid getting into marginal spots out of position or with weak holdings.', [{ v: vpipPct + '% VPIP' }, { v: guide.ideal + ' ideal' }]));
+        } else {
+          rangeIns.push(ins('g', posLabel + ' VPIP on Track', 'You are playing ' + vpipPct + '% of hands from ' + posLabel + ', which is within the typical range of ' + guide.ideal + '. Keep it up.', [{ v: vpipPct + '% VPIP' }, { v: guide.ideal + ' ideal' }]));
+        }
+
+        if (totalPlayed >= 5) {
+          rangeIns.push(ins(wrPct >= 50 ? 'g' : wrPct >= 35 ? 'n' : 'r', posLabel + ' Win Rate', 'You are winning ' + wrPct + '% of hands you play from ' + posLabel + ' (' + totalWon + '/' + totalPlayed + ').', [{ v: wrPct + '% win' }, { v: totalPlayed + ' played' }]));
+        }
+      }
+    }
+
     return {
       seen: seen,
       totalCombos: totalCombos,
@@ -938,7 +982,7 @@ function render(d, hands, meta) {
       rc.rangeIns.join('');
   }
 
-  var rc = buildRangeContent(hands);
+  var rc = buildRangeContent(hands, 'all');
   var posOpts = rangePositions.map(function(p) {
     return '<option value="' + (p === 'All Positions' ? 'all' : p) + '">' + p + '</option>';
   }).join('');
@@ -953,7 +997,7 @@ function render(d, hands, meta) {
   document.getElementById('range-pos-filter').onchange = function() {
     var pos = this.value;
     var filtered = (pos === 'all') ? hands : hands.filter(function(h) { return (h.position || '?') === pos; });
-    var newRc = buildRangeContent(filtered);
+    var newRc = buildRangeContent(filtered, pos);
     renderRangeGrids(newRc);
   };
 
