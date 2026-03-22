@@ -7,8 +7,6 @@ var State = {
   modalHands: [],
 
   setSession: function(hands, meta) {
-
-  // Dedup before storing
   var seen = {};
   var clean = [];
   for (var i = 0; i < hands.length; i++) {
@@ -20,10 +18,12 @@ var State = {
       clean.push(h);
     }
   }
+  if (clean.length < hands.length) {
+    this.save(JSON.stringify({ hands: clean, player: meta.player, exportedAt: meta.exportedAt }));
+  }
   this.allHands = clean.filter(function(h) { return inferTable(h) !== null; });
   this.meta = meta;
 },
- 
 
   getFilteredHands: function() {
     var self = this;
