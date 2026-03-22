@@ -7,9 +7,23 @@ var State = {
   modalHands: [],
 
   setSession: function(hands, meta) {
-    this.allHands = hands.filter(function(h) { return inferTable(h) !== null; });
-    this.meta = meta;
-  },
+
+  // Dedup before storing
+  var seen = {};
+  var clean = [];
+  for (var i = 0; i < hands.length; i++) {
+    var h = hands[i];
+    var hole = (h.hole && h.hole.length === 2) ? h.hole[0] + h.hole[1] : '??';
+    var key = h.timestamp + '|' + hole + '|' + (h.position || '');
+    if (!seen[key]) {
+      seen[key] = true;
+      clean.push(h);
+    }
+  }
+  this.allHands = clean.filter(function(h) { return inferTable(h) !== null; });
+  this.meta = meta;
+},
+ 
 
   getFilteredHands: function() {
     var self = this;
