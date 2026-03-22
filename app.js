@@ -50,9 +50,10 @@ function checkSavedSession() {
     document.getElementById('restore-btn').onclick = function() {
       var meta = {
         player: playerName,
-        exportedAt: json.exportedAt || new Date().toISOString(),
+        exportedAt: new Date().toISOString(),
       };
       State.setSession(hands, meta);
+      State.save(JSON.stringify({ hands: hands, player: playerName, exportedAt: meta.exportedAt }));
       try { fetch('https://script.google.com/macros/s/AKfycbyTtG1UMCpYXP15dgKQttFyG4Pe-BG8FoAftoW3oYtMBISS37Ws5lYhPPDJ0zl1GYxyQA/exec', { method: 'POST', body: JSON.stringify({ player: playerName, hands: hands.length }), mode: 'no-cors' }); } catch(_) {}
       showImportLoader(hands.length, function() { render(analyse(hands), hands, meta); });
     };
@@ -178,7 +179,7 @@ function process(raw) {
     alert('No hands found in export. Play some hands first, then export.');
     return;
   }
-  try { localStorage.setItem('tc_poker_analysis', raw); } catch (_) {}
+  try { localStorage.setItem('tc_poker_analysis', raw); } catch (e) { console.warn('Failed to save to localStorage:', e.message); }
   var playerName = json.player || 'Unknown';
   if (playerName === 'Unknown') {
     var detected = detectPlayerFromActions(hands);

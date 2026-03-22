@@ -1,13 +1,12 @@
 // ── SHOWDOWN PANEL (Blue Line / Red Line) ────────────────────────────────────
 
 var _showdownChart = null;
+var _potSizeChart = null;
 
 function renderShowdown(container, hands, meta) {
   // Destroy previous chart instance to prevent canvas reuse errors
-  if (_showdownChart) {
-    _showdownChart.destroy();
-    _showdownChart = null;
-  }
+  if (_showdownChart) { _showdownChart.destroy(); _showdownChart = null; }
+  if (_potSizeChart) { _potSizeChart.destroy(); _potSizeChart = null; }
 
   var sorted = hands.slice().sort(function(a, b) { return (a.timestamp || 0) - (b.timestamp || 0); });
 
@@ -27,11 +26,15 @@ function renderShowdown(container, hands, meta) {
   var sdWon = 0, sdTotal = 0, nsdWon = 0, nsdTotal = 0;
   var dataSd = [], dataNsd = [], dataTotal = [], labels = [];
 
+  // Pot size tracking per category
+  var potSdWin = [], potSdLoss = [], potNsdWin = [], potNsdLoss = [];
+
   for (var i = 0; i < cash.length; i++) {
     var h = cash[i];
     var invested = h.invested || calcInvestmentFromActions(h.actions || []);
     var delta = 0;
     var won = false;
+    var pot = h.pot || 0;
 
     if (h.outcome.result === 'won') {
       delta = (h.outcome.amount || 0) - invested;
@@ -40,14 +43,17 @@ function renderShowdown(container, hands, meta) {
       delta = -invested;
     }
 
-    if (isShowdown(h)) {
+    var sd = isShowdown(h);
+    if (sd) {
       cumSd += delta;
       sdTotal++;
-      if (won) sdWon++;
+      if (won) { sdWon++; potSdWin.push(pot); }
+      else { potSdLoss.push(pot); }
     } else {
       cumNsd += delta;
       nsdTotal++;
-      if (won) nsdWon++;
+      if (won) { nsdWon++; potNsdWin.push(pot); }
+      else { potNsdLoss.push(pot); }
     }
 
     labels.push(i + 1);
@@ -55,6 +61,13 @@ function renderShowdown(container, hands, meta) {
     dataNsd.push(cumNsd);
     dataTotal.push(cumSd + cumNsd);
   }
+
+  // Pot size averages
+  function avg(arr) { if (!arr.length) return 0; var s = 0; for (var i = 0; i < arr.length; i++) s += arr[i]; return Math.round(s / arr.length); }
+  var avgPotSdWin = avg(potSdWin);
+  var avgPotSdLoss = avg(potSdLoss);
+  var avgPotNsdWin = avg(potNsdWin);
+  var avgPotNsdLoss = avg(potNsdLoss);
 
   // Summary stats
   var sdWinRate = pct(sdWon, sdTotal);
@@ -121,11 +134,93 @@ function renderShowdown(container, hands, meta) {
 
   insHtml += '</div>';
 
+  // ── Pot Size Analysis ──
+  var potHtml = '<div class="sec-subtitle" style="margin-top:32px;">Average Pot Size by Outcome</div>';
+  potHtml += '<div style="position:relative;width:100%;max-width:720px;"><canvas id="pot-size-chart"></canvas></div>';
+
+  // Pot size stat cards
+  var avgWinPot = (potSdWin.length + potNsdWin.length) > 0 ? avg(potSdWin.concat(potNsdWin)) : 0;
+  var avgLossPot = (potSdLoss.length + potNsdLoss.length) > 0 ? avg(potSdLoss.concat(potNsdLoss)) : 0;
+  var winLossRatio = avgLossPot > 0 ? (avgWinPot / avgLossPot).toFixed(2) : null;
+
+  potHtml += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px;">';
+
+  potHtml += '<div style="padding:14px;background:var(--card);border:1px solid var(--border);border-radius:8px;">';
+  potHtml += '<div style="font-size:11px;color:var(--dim);margin-bottom:6px;">Avg Pot Won</div>';
+  potHtml += '<div style="font-size:20px;font-weight:500;color:var(--green);">' + fmt(avgWinPot) + '</div>';
+  potHtml += '<div style="font-size:11px;color:var(--dim);margin-top:4px;">' + (potSdWin.length + potNsdWin.length) + ' hands</div>';
+  potHtml += '</div>';
+
+  potHtml += '<div style="padding:14px;background:var(--card);border:1px solid var(--border);border-radius:8px;">';
+  potHtml += '<div style="font-size:11px;color:var(--dim);margin-bottom:6px;">Avg Pot Lost</div>';
+  potHtml += '<div style="font-size:20px;font-weight:500;color:var(--red);">' + fmt(avgLossPot) + '</div>';
+  potHtml += '<div style="font-size:11px;color:var(--dim);margin-top:4px;">' + (potSdLoss.length + potNsdLoss.length) + ' hands</div>';
+  potHtml += '</div>';
+
+  potHtml += '<div style="padding:14px;background:var(--card);border:1px solid var(--border);border-radius:8px;">';
+  potHtml += '<div style="font-size:11px;color:var(--dim);margin-bottom:6px;">Win/Loss Pot Ratio</div>';
+  potHtml += '<div style="font-size:20px;font-weight:500;color:' + (winLossRatio !== null && winLossRatio >= 1 ? 'var(--green)' : 'var(--red)') + ';">' + (winLossRatio !== null ? winLossRatio + 'x' : '—') + '</div>';
+  potHtml += '<div style="font-size:11px;color:var(--dim);margin-top:4px;">Target: above 1.0x</div>';
+  potHtml += '</div>';
+
+  potHtml += '</div>';
+
+  // Pot size insights
+  var potInsHtml = '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-top:20px;">';
+  var hasPotInsight = false;
+  var minSample = 5;
+
+  if (potSdLoss.length >= minSample && potSdWin.length >= minSample) {
+    if (avgPotSdLoss > avgPotSdWin * 1.3) {
+      potInsHtml += ins('r', 'Big Showdown Losses', 'Your average losing showdown pot (' + fmt(avgPotSdLoss) + ') is significantly larger than your winning pot (' + fmt(avgPotSdWin) + '). You may be calling too much in big pots with second-best hands, or not folding when the action tells you to.', [
+        { v: 'Win: ' + fmt(avgPotSdWin), hi: false },
+        { v: 'Loss: ' + fmt(avgPotSdLoss), hi: true },
+      ]);
+      hasPotInsight = true;
+    }
+    if (avgPotSdWin > avgPotSdLoss * 1.3) {
+      potInsHtml += ins('g', 'Extracting Value at Showdown', 'Your winning showdown pots (' + fmt(avgPotSdWin) + ') are larger than your losing ones (' + fmt(avgPotSdLoss) + '). You are building bigger pots when you have the best hand — strong value betting.', [
+        { v: 'Win: ' + fmt(avgPotSdWin), hi: true },
+        { v: 'Loss: ' + fmt(avgPotSdLoss), hi: false },
+      ]);
+      hasPotInsight = true;
+    }
+  }
+
+  if (potNsdLoss.length >= minSample) {
+    if (avgPotNsdLoss > avgPotNsdWin * 1.5 && avgPotNsdLoss > avgPotSdLoss * 0.6) {
+      potInsHtml += ins('a', 'Expensive Folds', 'Your average non-showdown loss pot is ' + fmt(avgPotNsdLoss) + '. You are investing heavily then folding. Consider pot-controlling more or folding earlier when you do not intend to continue.', [
+        { v: 'NSD Loss: ' + fmt(avgPotNsdLoss), hi: true },
+      ]);
+      hasPotInsight = true;
+    }
+  }
+
+  if (winLossRatio !== null && winLossRatio >= 1.2 && (potSdWin.length + potNsdWin.length) >= minSample) {
+    potInsHtml += ins('g', 'Winning Bigger Than Losing', 'Your win/loss pot ratio is ' + winLossRatio + 'x — you win more when you win than you lose when you lose. This is the hallmark of a solid strategy.', [
+      { v: winLossRatio + 'x ratio', hi: true },
+    ]);
+    hasPotInsight = true;
+  } else if (winLossRatio !== null && winLossRatio < 0.8 && (potSdLoss.length + potNsdLoss.length) >= minSample) {
+    potInsHtml += ins('r', 'Losing Bigger Than Winning', 'Your win/loss pot ratio is ' + winLossRatio + 'x — your average losing pot is bigger than your average winning pot. This means the pots you lose are more expensive than the ones you take down.', [
+      { v: winLossRatio + 'x ratio', hi: true },
+    ]);
+    hasPotInsight = true;
+  }
+
+  if (!hasPotInsight) {
+    potInsHtml += ins('n', 'Pot Size Analysis', 'Track more hands to unlock pot size insights.', []);
+  }
+
+  potInsHtml += '</div>';
+
   // Assemble HTML
   var html = '<div class="sec-subtitle" style="margin-top:0;">Showdown vs Non-Showdown P&L</div>';
   html += '<div style="position:relative;width:100%;max-width:720px;"><canvas id="showdown-chart"></canvas></div>';
   html += statsHtml;
   html += insHtml;
+  html += potHtml;
+  html += potInsHtml;
 
   container.innerHTML = html;
 
@@ -137,6 +232,78 @@ function renderShowdown(container, hands, meta) {
   var dimColor = styles.getPropertyValue('--dim').trim() || '#666';
   var borderColor = styles.getPropertyValue('--border').trim() || '#333';
   var greenColor = styles.getPropertyValue('--green').trim() || '#2ecc71';
+
+  // ── Pot Size Bar Chart ──
+  var potCanvas = document.getElementById('pot-size-chart');
+  if (potCanvas) {
+    _potSizeChart = new Chart(potCanvas, {
+      type: 'bar',
+      data: {
+        labels: ['Showdown Win', 'Showdown Loss', 'Non-SD Win', 'Non-SD Loss'],
+        datasets: [{
+          label: 'Avg Pot Size',
+          data: [avgPotSdWin, avgPotSdLoss, avgPotNsdWin, avgPotNsdLoss],
+          backgroundColor: [
+            'rgba(74, 158, 255, 0.7)',
+            'rgba(74, 158, 255, 0.25)',
+            'rgba(231, 76, 60, 0.7)',
+            'rgba(231, 76, 60, 0.25)',
+          ],
+          borderColor: [
+            '#4a9eff',
+            '#4a9eff',
+            '#e74c3c',
+            '#e74c3c',
+          ],
+          borderWidth: 1,
+          borderRadius: 4,
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        aspectRatio: 3,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: 'rgba(20,20,28,0.95)',
+            titleColor: '#aaa',
+            bodyColor: '#eee',
+            borderColor: borderColor,
+            borderWidth: 1,
+            titleFont: { family: 'IBM Plex Mono', size: 11 },
+            bodyFont: { family: 'IBM Plex Mono', size: 11 },
+            padding: 10,
+            callbacks: {
+              label: function(ctx) {
+                var counts = [potSdWin.length, potSdLoss.length, potNsdWin.length, potNsdLoss.length];
+                return ' Avg: ' + fmt(ctx.parsed.y) + ' (' + counts[ctx.dataIndex] + ' hands)';
+              },
+            },
+          },
+        },
+        scales: {
+          x: {
+            ticks: {
+              color: dimColor,
+              font: { family: 'IBM Plex Mono', size: 10 },
+            },
+            grid: { color: 'transparent' },
+            border: { color: borderColor },
+          },
+          y: {
+            ticks: {
+              color: dimColor,
+              font: { family: 'IBM Plex Mono', size: 9 },
+              callback: function(val) { return fmt(val); },
+            },
+            grid: { color: 'rgba(255,255,255,0.04)' },
+            border: { display: false },
+          },
+        },
+      },
+    });
+  }
 
   _showdownChart = new Chart(canvas, {
     type: 'line',

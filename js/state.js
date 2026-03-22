@@ -18,9 +18,7 @@ var State = {
       clean.push(h);
     }
   }
-  if (clean.length < hands.length) {
-    this.save(JSON.stringify({ hands: clean, player: meta.player, exportedAt: meta.exportedAt }));
-  }
+  this.save(JSON.stringify({ hands: clean, player: meta.player, exportedAt: meta.exportedAt }));
   this.allHands = clean.filter(function(h) { return inferTable(h) !== null; });
   this.meta = meta;
 },
@@ -42,7 +40,7 @@ var State = {
   },
 
   save: function(raw) {
-    try { localStorage.setItem('tc_poker_analysis', raw); } catch (_) {}
+    try { localStorage.setItem('tc_poker_analysis', raw); } catch (e) { console.warn('Failed to save session to localStorage:', e.message); }
   },
 
   loadSaved: function() {
