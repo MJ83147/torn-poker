@@ -418,13 +418,17 @@ function migratePositions(hands) {
   // The old TM script used this fixed array for all table sizes
   var OLD_POSITIONS = ['BTN','SB','BB','UTG','UTG+1','MP','HJ','CO','LJ'];
 
+  var stats = { total: hands.length, noPos: 0, noTs: 0, alreadyValid: 0, remapped: 0, cantRemap: 0 };
+  var remapLog = [];
+
   for (var i = 0; i < hands.length; i++) {
     var h = hands[i];
     var pos = h.position;
-    if (!pos) continue;
+    if (!pos) { stats.noPos++; continue; }
 
     // Determine table size: use tableSize field, or count players from actions
     var ts = h.tableSize;
+    var tsSource = ts ? 'field' : 'none';
     if (!ts && h.actions && h.actions.length) {
       var seen = {};
       var count = 0;
@@ -436,19 +440,38 @@ function migratePositions(hands) {
         if (author === 'Game') continue;
         if (!seen[author]) { seen[author] = true; count++; }
       }
-      if (count >= 2 && count <= 9) ts = count;
+      if (count >= 2 && count <= 9) { ts = count; tsSource = 'actions(' + count + ')'; }
     }
 
-    if (!ts || !posMap[ts]) continue;
+    if (!ts || !posMap[ts]) { stats.noTs++; continue; }
 
     // Already valid for this table size — skip
-    if (posMap[ts].indexOf(pos) >= 0) continue;
+    if (posMap[ts].indexOf(pos) >= 0) { stats.alreadyValid++; continue; }
 
     // Invalid position — remap using old array index
     var oldRel = OLD_POSITIONS.indexOf(pos);
     if (oldRel >= 0 && oldRel < ts) {
-      h.position = posMap[ts][oldRel] || pos;
+      var newPos = posMap[ts][oldRel] || pos;
+      if (remapLog.length < 20) {
+        remapLog.push(pos + ' → ' + newPos + ' (ts=' + ts + ', src=' + tsSource + ')');
+      }
+      h.position = newPos;
+      stats.remapped++;
+    } else {
+      stats.cantRemap++;
+      if (stats.cantRemap <= 5) {
+        console.log('[migratePositions] cant remap: pos=' + pos + ' oldRel=' + oldRel + ' ts=' + ts);
+      }
     }
+  }
+
+  console.log('[migratePositions] ' + JSON.stringify(stats));
+  if (remapLog.length) console.log('[migratePositions] samples: ' + remapLog.join(', '));
+
+  // Log first 3 hands for debugging data shape
+  for (var d = 0; d < Math.min(3, hands.length); d++) {
+    var dh = hands[d];
+    console.log('[migratePositions] hand[' + d + ']: pos=' + (dh.position||'?') + ' tableSize=' + (dh.tableSize||'?') + ' actionsLen=' + (dh.actions ? dh.actions.length : 0));
   }
 }
 
