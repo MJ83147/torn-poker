@@ -401,10 +401,10 @@ function detectPlayerFromActions(hands) {
   return bestName;
 }
 
-// Re-derive position for all hands from action data.
-// Fixes historical hands that were assigned positions using the old
-// fixed-array lookup which didn't account for table size.
-function migratePositions(hands, playerName) {
+// Fix positions assigned by the old fixed-array lookup that didn't
+// account for table size. Uses tableSize (or player count from actions
+// as fallback) to detect invalid positions and remap them.
+function migratePositions(hands) {
   var posMap = {
     2: ['BTN','BB'],
     3: ['BTN','SB','BB'],
@@ -415,72 +415,40 @@ function migratePositions(hands, playerName) {
     8: ['BTN','SB','BB','UTG','UTG+1','MP','HJ','CO'],
     9: ['BTN','SB','BB','UTG','UTG+1','MP','LJ','HJ','CO'],
   };
+  // The old TM script used this fixed array for all table sizes
+  var OLD_POSITIONS = ['BTN','SB','BB','UTG','UTG+1','MP','HJ','CO','LJ'];
 
   for (var i = 0; i < hands.length; i++) {
     var h = hands[i];
-    var actions = h.actions || [];
-    var sbPlayer = null;
-    var bbPlayer = null;
-    var myName = null;
-    var allPlayers = [];
+    var pos = h.position;
+    if (!pos) continue;
 
-    for (var j = 0; j < actions.length; j++) {
-      var raw = actions[j];
-      var isMe = raw.indexOf('>>') === 0;
-      var line = raw.replace(/^>>\s*/, '').replace(/^\s+/, '').trim();
-
-      var ci = line.indexOf(': ');
-      if (ci === -1) continue;
-      var author = line.slice(0, ci);
-      var msg = line.slice(ci + 2);
-
-      // Stop at the flop — we only need preflop actions
-      if (msg.startsWith('The flop') || msg.startsWith('The turn') || msg.startsWith('The river')) break;
-      if (msg.startsWith('The preflop')) continue;
-
-      // Skip non-player lines (Game announcements, etc.)
-      if (author === 'Game') continue;
-
-      if (isMe) myName = author;
-
-      if (msg.startsWith('posted small blind')) sbPlayer = author;
-      else if (msg.startsWith('posted big blind')) bbPlayer = author;
-
-      // Track unique players in order of first appearance
-      if (allPlayers.indexOf(author) === -1) allPlayers.push(author);
-    }
-
-    // Fall back to the passed-in player name if >> prefix wasn't found
-    if (!myName && playerName) myName = playerName;
-
-    // Skip hands where we can't identify blinds or ourselves
-    if (!myName || !sbPlayer || !bbPlayer) continue;
-
-    // Build the non-blind players list (in preflop action order = UTG through BTN)
-    var others = [];
-    for (var k = 0; k < allPlayers.length; k++) {
-      if (allPlayers[k] !== sbPlayer && allPlayers[k] !== bbPlayer) {
-        others.push(allPlayers[k]);
+    // Determine table size: use tableSize field, or count players from actions
+    var ts = h.tableSize;
+    if (!ts && h.actions && h.actions.length) {
+      var seen = {};
+      var count = 0;
+      for (var j = 0; j < h.actions.length; j++) {
+        var line = h.actions[j].replace(/^(>>|&gt;&gt;)\s*/, '').replace(/^\s+/, '').trim();
+        var ci = line.indexOf(': ');
+        if (ci === -1) continue;
+        var author = line.slice(0, ci);
+        if (author === 'Game') continue;
+        if (!seen[author]) { seen[author] = true; count++; }
       }
+      if (count >= 2 && count <= 9) ts = count;
     }
 
-    // Preflop action order for non-blinds is: UTG, UTG+1, ..., CO, BTN
-    // So BTN is the LAST entry in 'others'.
-    // In HU (2 players), others is empty because both players are SB and BB.
-    var btnPlayer = others.length > 0 ? others[others.length - 1] : sbPlayer;
+    if (!ts || !posMap[ts]) continue;
 
-    // Seat order from BTN clockwise: BTN, SB, BB, UTG, ..., CO
-    var seatOrder = [btnPlayer, sbPlayer, bbPlayer];
-    for (var k = 0; k < others.length - 1; k++) {
-      seatOrder.push(others[k]);
+    // Already valid for this table size — skip
+    if (posMap[ts].indexOf(pos) >= 0) continue;
+
+    // Invalid position — remap using old array index
+    var oldRel = OLD_POSITIONS.indexOf(pos);
+    if (oldRel >= 0 && oldRel < ts) {
+      h.position = posMap[ts][oldRel] || pos;
     }
-
-    var n = seatOrder.length;
-    var positions = posMap[n] || posMap[9];
-    var myIdx = seatOrder.indexOf(myName);
-    if (myIdx === -1) continue;
-
-    h.position = positions[myIdx] || h.position;
   }
 }
 
