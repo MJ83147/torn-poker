@@ -54,6 +54,14 @@ function analyse(hands) {
   let fold3bet = 0;
   let vpip = 0;
 
+  // Situational stat counters
+  let cbetOpps = 0, cbetDone = 0;
+  let delayCbetOpps = 0, delayCbetDone = 0;
+  let donkOpps = 0, donkDone = 0;
+  let foldToCbetOpps = 0, foldToCbetDone = 0;
+  let foldTo3betOpps = 0, foldTo3betDone = 0;
+  let foldTo4betOpps = 0, foldTo4betDone = 0;
+
   for (const h of hands) {
     const p = h.position || '?';
     const cash = isCashHand(h);
@@ -209,6 +217,95 @@ function analyse(hands) {
         break;
       }
     }
+
+    // ── Situational stats ──
+    // Identify PFR and bet levels
+    const preflopActs = acts.filter(a => a.street === 'Preflop');
+    let pfr = null;
+    let sitRaiseLevel = 0;
+    const raisers = [];
+    let heroOpenedPF = false;
+    let hero3betPF = false;
+
+    for (const a of preflopActs) {
+      if (a.type === 'raise') {
+        sitRaiseLevel++;
+        raisers.push({ author: a.author, isMe: a.isMe, level: sitRaiseLevel });
+        pfr = { author: a.author, isMe: a.isMe };
+        if (a.isMe && sitRaiseLevel === 1) heroOpenedPF = true;
+        if (a.isMe && sitRaiseLevel === 2) hero3betPF = true;
+      }
+    }
+
+    const flopReached = acts.some(a => a.street === 'Flop');
+    const turnReached = acts.some(a => a.street === 'Turn');
+
+    function heroFirstAction(actsList, street) {
+      return actsList.find(a => a.isMe && a.street === street && a.type !== 'sb' && a.type !== 'bb');
+    }
+    const heroFirstFlop = heroFirstAction(acts, 'Flop');
+    const heroFirstTurn = heroFirstAction(acts, 'Turn');
+
+    // C-Bet
+    if (pfr && pfr.isMe && flopReached && heroFirstFlop) {
+      cbetOpps++;
+      if (heroFirstFlop.type === 'raise') cbetDone++;
+    }
+
+    // Delayed C-Bet
+    if (pfr && pfr.isMe && flopReached && heroFirstFlop && heroFirstFlop.type === 'check' && turnReached && heroFirstTurn) {
+      delayCbetOpps++;
+      if (heroFirstTurn.type === 'raise') delayCbetDone++;
+    }
+
+    // Donk Bet
+    if (pfr && !pfr.isMe && sitRaiseLevel >= 1 && flopReached && heroFirstFlop) {
+      donkOpps++;
+      if (heroFirstFlop.type === 'raise') donkDone++;
+    }
+
+    // Fold to C-Bet
+    if (pfr && !pfr.isMe && flopReached) {
+      const flopActs = acts.filter(a => a.street === 'Flop');
+      const firstFlopBetIdx = flopActs.findIndex(a => a.type === 'raise');
+      if (firstFlopBetIdx !== -1 && flopActs[firstFlopBetIdx].author === pfr.author) {
+        const heroResponse = flopActs.find((a, i) => i > firstFlopBetIdx && a.isMe && (a.type === 'fold' || a.type === 'call' || a.type === 'raise'));
+        if (heroResponse) {
+          foldToCbetOpps++;
+          if (heroResponse.type === 'fold') foldToCbetDone++;
+        }
+      }
+    }
+
+    // Fold to 3-Bet (hero opened)
+    if (heroOpenedPF) {
+      const threeBettor = raisers.find(r => r.level === 2 && !r.isMe);
+      if (threeBettor) {
+        const threeBetIdx = preflopActs.findIndex(a => !a.isMe && a.type === 'raise' && a.author === threeBettor.author);
+        if (threeBetIdx !== -1) {
+          const heroResp = preflopActs.find((a, i) => i > threeBetIdx && a.isMe && (a.type === 'fold' || a.type === 'call' || a.type === 'raise'));
+          if (heroResp) {
+            foldTo3betOpps++;
+            if (heroResp.type === 'fold') foldTo3betDone++;
+          }
+        }
+      }
+    }
+
+    // Fold to 4-Bet (hero 3-bet)
+    if (hero3betPF) {
+      const fourBettor = raisers.find(r => r.level === 3 && !r.isMe);
+      if (fourBettor) {
+        const fourBetIdx = preflopActs.findIndex(a => !a.isMe && a.type === 'raise' && a.author === fourBettor.author);
+        if (fourBetIdx !== -1) {
+          const heroResp = preflopActs.find((a, i) => i > fourBetIdx && a.isMe && (a.type === 'fold' || a.type === 'call' || a.type === 'raise'));
+          if (heroResp) {
+            foldTo4betOpps++;
+            if (heroResp.type === 'fold') foldTo4betDone++;
+          }
+        }
+      }
+    }
   }
 
   return {
@@ -236,6 +333,12 @@ function analyse(hands) {
     faced3bet,
     fold3bet,
     vpip,
+    cbetOpps, cbetDone,
+    delayCbetOpps, delayCbetDone,
+    donkOpps, donkDone,
+    foldToCbetOpps, foldToCbetDone,
+    foldTo3betOpps, foldTo3betDone,
+    foldTo4betOpps, foldTo4betDone,
   };
 }
 

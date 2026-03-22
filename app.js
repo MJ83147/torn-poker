@@ -512,6 +512,43 @@ function render(d, hands, meta) {
     return '<tr><td>' + tipWrap(s) + '</td><td>' + ss2.f + '</td><td>' + ss2.ch + '</td><td>' + ss2.ca + '</td><td>' + ss2.ra + '</td><td>' + (ap !== null ? ap + '%' : '—') + '</td></tr>';
   }).join('');
   actHtml += '</tbody></table></div>';
+
+  // ── Situational stats ──
+  actHtml += '<div class="sec-subtitle" style="margin-top:20px;">Situational stats</div>';
+  actHtml += '<div class="bar-group">';
+
+  function sitStatColour(label, p) {
+    if (p === null) return 'o';
+    switch (label) {
+      case 'C-Bet':         return p >= 60 ? 'g' : p >= 40 ? 'o' : 'r';
+      case 'Delayed C-Bet': return p >= 30 ? 'g' : 'o';
+      case 'Donk Bet':      return p > 30 ? 'a' : 'o';
+      case 'Fold to C-Bet': return p > 70 ? 'r' : p > 50 ? 'a' : 'g';
+      case 'Fold to 3-Bet': return p > 70 ? 'r' : p > 50 ? 'a' : 'g';
+      case 'Fold to 4-Bet': return p > 80 ? 'a' : 'o';
+      default: return 'o';
+    }
+  }
+
+  const sitStats = [
+    { label: 'C-Bet',           done: d.cbetDone,        opps: d.cbetOpps },
+    { label: 'Delayed C-Bet',   done: d.delayCbetDone,   opps: d.delayCbetOpps },
+    { label: 'Donk Bet',        done: d.donkDone,        opps: d.donkOpps },
+    { label: 'Fold to C-Bet',   done: d.foldToCbetDone,  opps: d.foldToCbetOpps },
+    { label: 'Fold to 3-Bet',   done: d.foldTo3betDone,  opps: d.foldTo3betOpps },
+    { label: 'Fold to 4-Bet',   done: d.foldTo4betDone,  opps: d.foldTo4betOpps },
+  ];
+
+  for (const s of sitStats) {
+    if (s.opps === 0) continue;
+    const p = pct(s.done, s.opps);
+    const cls = sitStatColour(s.label, p);
+    const labelHtml = tipWrap(s.label);
+    actHtml += barRow(labelHtml, p || 0, 100, cls, (p !== null ? p + '%' : '—'), s.done + '/' + s.opps + ' spots');
+  }
+
+  actHtml += '</div>';
+
   const aIns = [];
   if (caPct > raPct + 20) {
     const exCallHeavy = findExampleHand(function(h) {

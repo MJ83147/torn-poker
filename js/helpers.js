@@ -23,6 +23,11 @@ const TIPS = {
   '3-Bet': 'A re-raise over an opening raise. The "third" bet in a preflop sequence (blinds, open, 3-bet).',
   'All-In': 'Betting all remaining chips on a single action. Forces a showdown if called.',
   'C-Bet': 'Continuation bet. Betting the flop after raising preflop, continuing aggression regardless of whether the flop helped.',
+  'Delayed C-Bet': 'Betting the turn after checking the flop as the preflop raiser. A delayed continuation bet.',
+  'Donk Bet': 'Betting into the preflop raiser on the flop when you were not the raiser. Usually indicates a strong hand or a blocker bet.',
+  'Fold to C-Bet': 'How often you fold when the preflop raiser bets the flop. High fold rates may indicate exploitability.',
+  'Fold to 3-Bet': 'How often you fold when your opening raise is re-raised (3-bet). Very high fold rates let opponents steal your opens cheaply.',
+  'Fold to 4-Bet': 'How often you fold when your 3-bet is re-raised (4-bet). Folding is often correct here unless you have a premium hand.',
   // Positions
   'BTN': 'Button (Dealer). Best position at the table. Acts last on every street after the flop.',
   'SB': 'Small Blind. Forced half-bet posted before cards are dealt. Acts second-to-last preflop, first post-flop.',
