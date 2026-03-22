@@ -429,14 +429,17 @@ function migratePositions(hands, playerName) {
       var isMe = raw.indexOf('>>') === 0;
       var line = raw.replace(/^>>\s*/, '').replace(/^\s+/, '').trim();
 
-      // Stop at the flop — we only need preflop actions
-      if (line.startsWith('The flop') || line.startsWith('The turn') || line.startsWith('The river')) break;
-      if (line.startsWith('The preflop')) continue;
-
       var ci = line.indexOf(': ');
       if (ci === -1) continue;
       var author = line.slice(0, ci);
       var msg = line.slice(ci + 2);
+
+      // Stop at the flop — we only need preflop actions
+      if (msg.startsWith('The flop') || msg.startsWith('The turn') || msg.startsWith('The river')) break;
+      if (msg.startsWith('The preflop')) continue;
+
+      // Skip non-player lines (Game announcements, etc.)
+      if (author === 'Game') continue;
 
       if (isMe) myName = author;
 
