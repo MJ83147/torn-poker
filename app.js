@@ -53,9 +53,8 @@ function checkSavedSession() {
         exportedAt: new Date().toISOString(),
       };
       State.setSession(hands, meta);
-      var sh = State.allHands;
-      try { fetch('https://script.google.com/macros/s/AKfycbyTtG1UMCpYXP15dgKQttFyG4Pe-BG8FoAftoW3oYtMBISS37Ws5lYhPPDJ0zl1GYxyQA/exec', { method: 'POST', body: JSON.stringify({ player: playerName, hands: sh.length }), mode: 'no-cors' }); } catch(_) {}
-      showImportLoader(sh.length, function() { render(analyse(sh), sh, meta); });
+      try { fetch('https://script.google.com/macros/s/AKfycbyTtG1UMCpYXP15dgKQttFyG4Pe-BG8FoAftoW3oYtMBISS37Ws5lYhPPDJ0zl1GYxyQA/exec', { method: 'POST', body: JSON.stringify({ player: playerName, hands: hands.length }), mode: 'no-cors' }); } catch(_) {}
+      showImportLoader(hands.length, function() { render(analyse(hands), hands, meta); });
     };
   } catch (_) {}
 }
@@ -189,10 +188,9 @@ function process(raw) {
     exportedAt: json.exportedAt || new Date().toISOString(),
   };
   State.setSession(hands, meta);
-  var sh = State.allHands;
-  try { fetch('https://script.google.com/macros/s/AKfycbyTtG1UMCpYXP15dgKQttFyG4Pe-BG8FoAftoW3oYtMBISS37Ws5lYhPPDJ0zl1GYxyQA/exec', { method: 'POST', body: JSON.stringify({ player: playerName, hands: sh.length }), mode: 'no-cors' }); } catch(_) {}
-  var d = analyse(sh);
-  showImportLoader(sh.length, function() { render(d, sh, meta); });
+  try { fetch('https://script.google.com/macros/s/AKfycbyTtG1UMCpYXP15dgKQttFyG4Pe-BG8FoAftoW3oYtMBISS37Ws5lYhPPDJ0zl1GYxyQA/exec', { method: 'POST', body: JSON.stringify({ player: playerName, hands: hands.length }), mode: 'no-cors' }); } catch(_) {}
+  var d = analyse(hands);
+  showImportLoader(hands.length, function() { render(d, hands, meta); });
 }
 
 // ── INPUT HANDLERS ──────────────────────────────────────────────────────────
