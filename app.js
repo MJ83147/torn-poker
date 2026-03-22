@@ -31,32 +31,32 @@ function renderAll() {
   return true;
 }
 
-// Saved session: check localStorage and wire restore button
+// Saved session: check IndexedDB and wire restore button
 function checkSavedSession() {
-  var saved = localStorage.getItem('tc_poker_analysis');
-  if (!saved) return;
-  try {
-    var json = JSON.parse(saved);
-    var hands = (Array.isArray(json) ? json : (json.hands || [])).filter(function(h) { return h.hole && h.hole.length === 2; });
-    if (!hands.length) return;
-    var playerName = json.player || detectPlayerFromActions(hands) || 'Unknown';
-    var rb = document.getElementById('restore-block');
-    var rl = document.getElementById('restore-label');
-    var date = json.exportedAt ? new Date(json.exportedAt).toLocaleDateString('en-GB', {
-      day: 'numeric', month: 'short', year: 'numeric',
-    }) : '';
-    rl.textContent = hands.length + ' hands from ' + playerName + (date ? ' · ' + date : '') + ' found in storage';
-    rb.style.display = 'block';
-    document.getElementById('restore-btn').onclick = function() {
-      var meta = {
-        player: playerName,
-        exportedAt: new Date().toISOString(),
+  State.loadSaved(function(json) {
+    if (!json) return;
+    try {
+      var hands = (Array.isArray(json) ? json : (json.hands || [])).filter(function(h) { return h.hole && h.hole.length === 2; });
+      if (!hands.length) return;
+      var playerName = json.player || detectPlayerFromActions(hands) || 'Unknown';
+      var rb = document.getElementById('restore-block');
+      var rl = document.getElementById('restore-label');
+      var date = json.exportedAt ? new Date(json.exportedAt).toLocaleDateString('en-GB', {
+        day: 'numeric', month: 'short', year: 'numeric',
+      }) : '';
+      rl.textContent = hands.length + ' hands from ' + playerName + (date ? ' · ' + date : '') + ' found in storage';
+      rb.style.display = 'block';
+      document.getElementById('restore-btn').onclick = function() {
+        var meta = {
+          player: playerName,
+          exportedAt: new Date().toISOString(),
+        };
+        State.setSession(hands, meta);
+        try { fetch('https://script.google.com/macros/s/AKfycbyTtG1UMCpYXP15dgKQttFyG4Pe-BG8FoAftoW3oYtMBISS37Ws5lYhPPDJ0zl1GYxyQA/exec', { method: 'POST', body: JSON.stringify({ player: playerName, hands: hands.length }), mode: 'no-cors' }); } catch(_) {}
+        showImportLoader(hands.length, function() { render(analyse(hands), hands, meta); });
       };
-      State.setSession(hands, meta);
-      try { fetch('https://script.google.com/macros/s/AKfycbyTtG1UMCpYXP15dgKQttFyG4Pe-BG8FoAftoW3oYtMBISS37Ws5lYhPPDJ0zl1GYxyQA/exec', { method: 'POST', body: JSON.stringify({ player: playerName, hands: hands.length }), mode: 'no-cors' }); } catch(_) {}
-      showImportLoader(hands.length, function() { render(analyse(hands), hands, meta); });
-    };
-  } catch (_) {}
+    } catch (_) {}
+  });
 }
 
 // ── MAIN RENDER (orchestrator) ──────────────────────────────────────────────
@@ -280,4 +280,6 @@ window.addEventListener('resize', function() {
 });
 
 // ── BOOT ────────────────────────────────────────────────────────────────────
-checkSavedSession();
+initStorage(function() {
+  checkSavedSession();
+});
