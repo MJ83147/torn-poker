@@ -131,6 +131,7 @@ var State = {
   modalHands: [],
 
   setSession: function(hands, meta) {
+    migratePositions(hands, meta.player || '');
     var seen = {};
     var clean = [];
     for (var i = 0; i < hands.length; i++) {

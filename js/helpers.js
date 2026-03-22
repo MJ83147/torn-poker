@@ -401,3 +401,83 @@ function detectPlayerFromActions(hands) {
   return bestName;
 }
 
+// Re-derive position for all hands from action data.
+// Fixes historical hands that were assigned positions using the old
+// fixed-array lookup which didn't account for table size.
+function migratePositions(hands, playerName) {
+  var posMap = {
+    2: ['BTN','BB'],
+    3: ['BTN','SB','BB'],
+    4: ['BTN','SB','BB','CO'],
+    5: ['BTN','SB','BB','UTG','CO'],
+    6: ['BTN','SB','BB','UTG','HJ','CO'],
+    7: ['BTN','SB','BB','UTG','MP','HJ','CO'],
+    8: ['BTN','SB','BB','UTG','UTG+1','MP','HJ','CO'],
+    9: ['BTN','SB','BB','UTG','UTG+1','MP','LJ','HJ','CO'],
+  };
+
+  for (var i = 0; i < hands.length; i++) {
+    var h = hands[i];
+    var actions = h.actions || [];
+    var sbPlayer = null;
+    var bbPlayer = null;
+    var myName = null;
+    var allPlayers = [];
+
+    for (var j = 0; j < actions.length; j++) {
+      var raw = actions[j];
+      var isMe = raw.indexOf('>>') === 0;
+      var line = raw.replace(/^>>\s*/, '').replace(/^\s+/, '').trim();
+
+      // Stop at the flop — we only need preflop actions
+      if (line.startsWith('The flop') || line.startsWith('The turn') || line.startsWith('The river')) break;
+      if (line.startsWith('The preflop')) continue;
+
+      var ci = line.indexOf(': ');
+      if (ci === -1) continue;
+      var author = line.slice(0, ci);
+      var msg = line.slice(ci + 2);
+
+      if (isMe) myName = author;
+
+      if (msg.startsWith('posted small blind')) sbPlayer = author;
+      else if (msg.startsWith('posted big blind')) bbPlayer = author;
+
+      // Track unique players in order of first appearance
+      if (allPlayers.indexOf(author) === -1) allPlayers.push(author);
+    }
+
+    // Fall back to the passed-in player name if >> prefix wasn't found
+    if (!myName && playerName) myName = playerName;
+
+    // Skip hands where we can't identify blinds or ourselves
+    if (!myName || !sbPlayer || !bbPlayer) continue;
+
+    // Build the non-blind players list (in preflop action order = UTG through BTN)
+    var others = [];
+    for (var k = 0; k < allPlayers.length; k++) {
+      if (allPlayers[k] !== sbPlayer && allPlayers[k] !== bbPlayer) {
+        others.push(allPlayers[k]);
+      }
+    }
+
+    // Preflop action order for non-blinds is: UTG, UTG+1, ..., CO, BTN
+    // So BTN is the LAST entry in 'others'.
+    // In HU (2 players), others is empty because both players are SB and BB.
+    var btnPlayer = others.length > 0 ? others[others.length - 1] : sbPlayer;
+
+    // Seat order from BTN clockwise: BTN, SB, BB, UTG, ..., CO
+    var seatOrder = [btnPlayer, sbPlayer, bbPlayer];
+    for (var k = 0; k < others.length - 1; k++) {
+      seatOrder.push(others[k]);
+    }
+
+    var n = seatOrder.length;
+    var positions = posMap[n] || posMap[9];
+    var myIdx = seatOrder.indexOf(myName);
+    if (myIdx === -1) continue;
+
+    h.position = positions[myIdx] || h.position;
+  }
+}
+
