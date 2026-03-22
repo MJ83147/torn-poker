@@ -797,15 +797,14 @@ function render(d, hands, meta) {
 
   // ── RANGE ──
   const gridR = ['A', 'K', 'Q', 'J', '10', '9', '8', '7', '6', '5', '4', '3', '2'];
+  const rangePositions = ['All Positions', 'BB', 'SB', 'BTN', 'CO', 'HJ', 'LJ', 'MP', 'UTG', 'UTG+1'];
   function buildKey(ri, ci) {
     const r1 = gridR[Math.min(ri, ci)];
     const r2 = gridR[Math.max(ri, ci)];
     if (ri === ci) return r1 + r1;
-    // Standard convention: above diagonal (ri < ci) = suited, below = offsuit
     return r1 + r2 + (ri < ci ? 's' : 'o');
   }
   function wrColor(w) {
-    // More distinct colour spread: deep red -> orange -> bright green
     if (w <= 30) {
       return 'rgb(190, 45, 45)';
     } else if (w <= 45) {
@@ -820,105 +819,143 @@ function render(d, hands, meta) {
     }
     return 'rgb(50, 170, 65)';
   }
-  // Find max played count across all combos for relative colouring
-  let maxPlayed = 0;
-  Object.keys(d.rangeMap).forEach(function(k) {
-    if (d.rangeMap[k].played > maxPlayed) maxPlayed = d.rangeMap[k].played;
-  });
-  function playedColor(played) {
-    if (played === 0) return '#111a12';
-    const ratio = played / maxPlayed;
-    if (ratio <= 0.15) return '#1a2e1e';
-    if (ratio <= 0.35) return '#24422a';
-    if (ratio <= 0.6) return '#2e5835';
-    if (ratio <= 0.8) return '#3a7a42';
-    return 'rgb(50, 170, 65)';
-  }
-  let wrGrid = '';
-  let freqGrid = '';
-  for (let r = 0; r < 13; r++) {
-    for (let c = 0; c < 13; c++) {
-      const key = buildKey(r, c);
-      const data = d.rangeMap[key];
-      if (data && data.dealt > 0) {
-        const wr2 = data.played > 0 ? pct(data.won, data.played) : null;
-        const wrBg = (wr2 !== null ? wrColor(wr2) : (data.played > 0 ? '#1e3020' : '#111a12'));
-        wrGrid += '<div class="rc" style="background:' + wrBg + ';cursor:pointer;" data-key="' + key + '" data-tip="' + key + ' | Win: ' + (wr2 !== null ? wr2 + '%' : 'n/a') + ' (' + data.won + '/' + data.played + ' played, ' + data.dealt + ' dealt) · click to see hands"><span>' + key + '</span></div>';
-        freqGrid += '<div class="rc" style="background:' + playedColor(data.played) + ';cursor:pointer;" data-key="' + key + '" data-tip="' + key + ' | Played ' + data.played + ' of ' + data.dealt + ' dealt · click to see hands"><span>' + key + '</span></div>';
-      } else {
-        const cellType = (r === c) ? 'pair' : (r < c) ? 'suited' : 'offsuit';
-        const cellLabel = cellType === 'pair' ? 'Pair' : cellType === 'suited' ? 'Suited' : 'Offsuit';
-        wrGrid += '<div class="rc rc-unseen" data-tip="' + key + ' | Not yet dealt (' + cellLabel + ')"><span>' + key + '</span></div>';
-        freqGrid += '<div class="rc rc-unseen" data-tip="' + key + ' | Not yet dealt (' + cellLabel + ')"><span>' + key + '</span></div>';
+
+  function buildRangeContent(filteredHands) {
+    var rd = analyse(filteredHands);
+    var rMap = rd.rangeMap;
+    var maxP = 0;
+    Object.keys(rMap).forEach(function(k) {
+      if (rMap[k].played > maxP) maxP = rMap[k].played;
+    });
+    function playedColor(played) {
+      if (played === 0) return '#111a12';
+      var ratio = played / maxP;
+      if (ratio <= 0.15) return '#1a2e1e';
+      if (ratio <= 0.35) return '#24422a';
+      if (ratio <= 0.6) return '#2e5835';
+      if (ratio <= 0.8) return '#3a7a42';
+      return 'rgb(50, 170, 65)';
+    }
+    var wrGrid = '';
+    var freqGrid = '';
+    for (var r = 0; r < 13; r++) {
+      for (var c = 0; c < 13; c++) {
+        var key = buildKey(r, c);
+        var data = rMap[key];
+        if (data && data.dealt > 0) {
+          var wr2 = data.played > 0 ? pct(data.won, data.played) : null;
+          var wrBg = (wr2 !== null ? wrColor(wr2) : (data.played > 0 ? '#1e3020' : '#111a12'));
+          wrGrid += '<div class="rc" style="background:' + wrBg + ';cursor:pointer;" data-key="' + key + '" data-tip="' + key + ' | Win: ' + (wr2 !== null ? wr2 + '%' : 'n/a') + ' (' + data.won + '/' + data.played + ' played, ' + data.dealt + ' dealt) · click to see hands"><span>' + key + '</span></div>';
+          freqGrid += '<div class="rc" style="background:' + playedColor(data.played) + ';cursor:pointer;" data-key="' + key + '" data-tip="' + key + ' | Played ' + data.played + ' of ' + data.dealt + ' dealt · click to see hands"><span>' + key + '</span></div>';
+        } else {
+          var cellType = (r === c) ? 'pair' : (r < c) ? 'suited' : 'offsuit';
+          var cellLabel = cellType === 'pair' ? 'Pair' : cellType === 'suited' ? 'Suited' : 'Offsuit';
+          wrGrid += '<div class="rc rc-unseen" data-tip="' + key + ' | Not yet dealt (' + cellLabel + ')"><span>' + key + '</span></div>';
+          freqGrid += '<div class="rc rc-unseen" data-tip="' + key + ' | Not yet dealt (' + cellLabel + ')"><span>' + key + '</span></div>';
+        }
       }
     }
-  }
-  const seen = Object.keys(d.rangeMap).length;
-  const totalCombos = 169;
-  const legend1 = '<div class="range-legend">' +
-    '<div class="leg"><div class="leg-sw rc-unseen" style="width:9px;height:9px;"></div>Not dealt</div>' +
-    '<div class="leg"><div class="leg-sw" style="background:rgb(190,45,45);"></div>&lt;30% win</div>' +
-    '<div class="leg"><div class="leg-sw" style="background:rgb(220,135,45);"></div>~50% win</div>' +
-    '<div class="leg"><div class="leg-sw" style="background:rgb(50,170,65);"></div>&gt;70% win</div>' +
-    '</div>';
-  const legend2 = '<div class="range-legend">' +
-    '<div class="leg"><div class="leg-sw rc-unseen" style="width:9px;height:9px;"></div>Not played</div>' +
-    '<div class="leg"><div class="leg-sw" style="background:#1a2e1e;"></div>Rarely</div>' +
-    '<div class="leg"><div class="leg-sw" style="background:#2e5835;"></div>Sometimes</div>' +
-    '<div class="leg"><div class="leg-sw" style="background:rgb(50,170,65);"></div>Most played</div>' +
-    '</div>';
-  const rangeIns = [];
-  let bestKey = null;
-  let bestWr = -1;
-  let worstKey = null;
-  let worstWr = 101;
-  let mostPlayed = null;
-  let mostCount = 0;
-  Object.keys(d.rangeMap).forEach(function(k) {
-    const rm = d.rangeMap[k];
-    if (rm.played >= 2) {
-      const w2 = pct(rm.won, rm.played);
-      if (w2 !== null && w2 > bestWr) { bestWr = w2; bestKey = k; }
-      if (w2 !== null && w2 < worstWr) { worstWr = w2; worstKey = k; }
+    var seen = Object.keys(rMap).length;
+    var totalCombos = 169;
+    var legend1 = '<div class="range-legend">' +
+      '<div class="leg"><div class="leg-sw rc-unseen" style="width:9px;height:9px;"></div>Not dealt</div>' +
+      '<div class="leg"><div class="leg-sw" style="background:rgb(190,45,45);"></div>&lt;30% win</div>' +
+      '<div class="leg"><div class="leg-sw" style="background:rgb(220,135,45);"></div>~50% win</div>' +
+      '<div class="leg"><div class="leg-sw" style="background:rgb(50,170,65);"></div>&gt;70% win</div>' +
+      '</div>';
+    var legend2 = '<div class="range-legend">' +
+      '<div class="leg"><div class="leg-sw rc-unseen" style="width:9px;height:9px;"></div>Not played</div>' +
+      '<div class="leg"><div class="leg-sw" style="background:#1a2e1e;"></div>Rarely</div>' +
+      '<div class="leg"><div class="leg-sw" style="background:#2e5835;"></div>Sometimes</div>' +
+      '<div class="leg"><div class="leg-sw" style="background:rgb(50,170,65);"></div>Most played</div>' +
+      '</div>';
+    var rangeIns = [];
+    var bestKey = null;
+    var bestWr = -1;
+    var worstKey = null;
+    var worstWr = 101;
+    var mostPlayed = null;
+    var mostCount = 0;
+    Object.keys(rMap).forEach(function(k) {
+      var rm = rMap[k];
+      if (rm.played >= 2) {
+        var w2 = pct(rm.won, rm.played);
+        if (w2 !== null && w2 > bestWr) { bestWr = w2; bestKey = k; }
+        if (w2 !== null && w2 < worstWr) { worstWr = w2; worstKey = k; }
+      }
+      if (rm.dealt > mostCount) { mostCount = rm.dealt; mostPlayed = k; }
+    });
+    if (bestKey) {
+      var exBest = findExampleHand(function(h) {
+        return parseHoleKey(h.hole) === bestKey && h.outcome && h.outcome.result === 'won';
+      });
+      rangeIns.push(insWithExample('g', 'Best Hand', 'Your strongest combo so far is ' + bestKey + ' at ' + bestWr + '% win rate. Sample size matters though.', [{ v: bestKey, hi: true }, { v: bestWr + '% win' }], exBest, 'Here is a hand where you won with ' + bestKey + '. This combo has been your most profitable — keep playing it confidently but watch for sample size.'));
     }
-    if (rm.dealt > mostCount) { mostCount = rm.dealt; mostPlayed = k; }
-  });
-  if (bestKey) {
-    const exBest = findExampleHand(function(h) {
-      return parseHoleKey(h.hole) === bestKey && h.outcome && h.outcome.result === 'won';
-    });
-    rangeIns.push(insWithExample('g', 'Best Hand', 'Your strongest combo so far is ' + bestKey + ' at ' + bestWr + '% win rate. Sample size matters though.', [{ v: bestKey, hi: true }, { v: bestWr + '% win' }], exBest, 'Here is a hand where you won with ' + bestKey + '. This combo has been your most profitable — keep playing it confidently but watch for sample size.'));
+    if (worstKey && worstKey !== bestKey) {
+      var exWorst = findExampleHand(function(h) {
+        return parseHoleKey(h.hole) === worstKey && h.outcome && h.outcome.result !== 'won';
+      });
+      rangeIns.push(insWithExample('r', 'Worst Hand', worstKey + ' has been your weakest at ' + worstWr + '% win rate. Consider tightening or adjusting play with this hand.', [{ v: worstKey, hi: true }, { v: worstWr + '% win' }], exWorst, 'This hand with ' + worstKey + ' did not go well. Review whether you are overplaying this combo or getting into bad spots post-flop.'));
+    }
+    if (mostPlayed) {
+      var exMost = findExampleHand(function(h) {
+        return parseHoleKey(h.hole) === mostPlayed;
+      });
+      rangeIns.push(insWithExample('n', 'Most Dealt', 'You have been dealt ' + mostPlayed + ' the most (' + mostCount + ' times). ' + (rMap[mostPlayed].played < mostCount / 2 ? 'You fold it more than half the time.' : 'You play it frequently.'), [{ v: mostPlayed, hi: true }, { v: mostCount + ' dealt' }], exMost, 'Here is a hand where you were dealt ' + mostPlayed + '. ' + (rMap[mostPlayed].played < mostCount / 2 ? 'You fold this hand often — make sure you are not being too tight with it in good positions.' : 'You play this hand frequently — make sure you are not overvaluing it from bad positions.')));
+    }
+    var coveragePct = Math.round(seen / totalCombos * 100);
+    rangeIns.push(ins('n', 'Coverage', 'You have seen ' + seen + ' of ' + totalCombos + ' possible hand combos (' + coveragePct + '%). The more hands you play, the more complete this picture becomes.', [{ v: seen + '/' + totalCombos + ' combos' }]));
+    return {
+      seen: seen,
+      totalCombos: totalCombos,
+      wrGrid: wrGrid,
+      freqGrid: freqGrid,
+      legend1: legend1,
+      legend2: legend2,
+      rangeIns: rangeIns,
+      rMap: rMap
+    };
   }
-  if (worstKey && worstKey !== bestKey) {
-    const exWorst = findExampleHand(function(h) {
-      return parseHoleKey(h.hole) === worstKey && h.outcome && h.outcome.result !== 'won';
-    });
-    rangeIns.push(insWithExample('r', 'Worst Hand', worstKey + ' has been your weakest at ' + worstWr + '% win rate. Consider tightening or adjusting play with this hand.', [{ v: worstKey, hi: true }, { v: worstWr + '% win' }], exWorst, 'This hand with ' + worstKey + ' did not go well. Review whether you are overplaying this combo or getting into bad spots post-flop.'));
+
+  function renderRangeGrids(rc) {
+    var container = document.getElementById('range-grids');
+    if (!container) return;
+    container.innerHTML =
+      '<div style="font-size:9px;color:var(--dim);margin-bottom:20px;">' + rc.seen + ' of ' + rc.totalCombos + ' hand combos seen · hover any cell for detail</div>' +
+      '<div class="two-col" style="gap:20px;align-items:start;">' +
+      '<div>' +
+      '<div class="sec-subtitle" style="margin-top:0;">Win Rate by Hand</div>' +
+      '<div class="range-grid-sm">' + rc.wrGrid + '</div>' +
+      rc.legend1 +
+      '</div>' +
+      '<div>' +
+      '<div class="sec-subtitle" style="margin-top:0;">Hands Played</div>' +
+      '<div class="range-grid-sm">' + rc.freqGrid + '</div>' +
+      rc.legend2 +
+      '</div>' +
+      '</div>' +
+      '<div class="divider"></div>' +
+      rc.rangeIns.join('');
   }
-  if (mostPlayed) {
-    const exMost = findExampleHand(function(h) {
-      return parseHoleKey(h.hole) === mostPlayed;
-    });
-    rangeIns.push(insWithExample('n', 'Most Dealt', 'You have been dealt ' + mostPlayed + ' the most (' + mostCount + ' times). ' + (d.rangeMap[mostPlayed].played < mostCount / 2 ? 'You fold it more than half the time.' : 'You play it frequently.'), [{ v: mostPlayed, hi: true }, { v: mostCount + ' dealt' }], exMost, 'Here is a hand where you were dealt ' + mostPlayed + '. ' + (d.rangeMap[mostPlayed].played < mostCount / 2 ? 'You fold this hand often — make sure you are not being too tight with it in good positions.' : 'You play this hand frequently — make sure you are not overvaluing it from bad positions.')));
-  }
-  const coveragePct = Math.round(seen / totalCombos * 100);
-  rangeIns.push(ins('n', 'Coverage', 'You have seen ' + seen + ' of ' + totalCombos + ' possible hand combos (' + coveragePct + '%). The more hands you play, the more complete this picture becomes.', [{ v: seen + '/' + totalCombos + ' combos' }]));
+
+  var rc = buildRangeContent(hands);
+  var posOpts = rangePositions.map(function(p) {
+    return '<option value="' + (p === 'All Positions' ? 'all' : p) + '">' + p + '</option>';
+  }).join('');
   document.getElementById('p-range').innerHTML =
-    '<div style="font-size:9px;color:var(--dim);margin-bottom:20px;">' + seen + ' of ' + totalCombos + ' hand combos seen · hover any cell for detail</div>' +
-    '<div class="two-col" style="gap:20px;align-items:start;">' +
-    '<div>' +
-    '<div class="sec-subtitle" style="margin-top:0;">Win Rate by Hand</div>' +
-    '<div class="range-grid-sm">' + wrGrid + '</div>' +
-    legend1 +
+    '<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">' +
+    '<select id="range-pos-filter" class="table-filter">' + posOpts + '</select>' +
     '</div>' +
-    '<div>' +
-    '<div class="sec-subtitle" style="margin-top:0;">Hands Played</div>' +
-    '<div class="range-grid-sm">' + freqGrid + '</div>' +
-    legend2 +
-    '</div>' +
-    '</div>' +
-    '<div class="divider"></div>' +
-    rangeIns.join('');
+    '<div id="range-grids"></div>';
+  renderRangeGrids(rc);
+
+  // Position filter change handler
+  document.getElementById('range-pos-filter').onchange = function() {
+    var pos = this.value;
+    var filtered = (pos === 'all') ? hands : hands.filter(function(h) { return (h.position || '?') === pos; });
+    var newRc = buildRangeContent(filtered);
+    renderRangeGrids(newRc);
+  };
 
   // Range cell click: show hand list for that combo (event delegation)
   document.getElementById('p-range').addEventListener('click', function(e) {
@@ -926,10 +963,13 @@ function render(d, hands, meta) {
     if (!cell) return;
     var key = cell.getAttribute('data-key');
     if (!key) return;
-    // Find all hands matching this combo
-    var matched = hands.filter(function(h) { return parseHoleKey(h.hole) === key; });
+    // Find all hands matching this combo, respecting position filter
+    var posFilter = document.getElementById('range-pos-filter').value;
+    var baseHands = (posFilter === 'all') ? hands : hands.filter(function(h) { return (h.position || '?') === posFilter; });
+    var matched = baseHands.filter(function(h) { return parseHoleKey(h.hole) === key; });
     if (!matched.length) return;
-    var rm = d.rangeMap[key];
+    var currentRc = buildRangeContent(baseHands);
+    var rm = currentRc.rMap[key];
     var wr2 = rm && rm.played > 0 ? pct(rm.won, rm.played) : null;
     // Build hand list modal
     var existing = document.getElementById('example-hand-modal');
