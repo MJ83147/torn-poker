@@ -842,9 +842,9 @@ function render(d, hands, meta) {
       for (var c = 0; c < 13; c++) {
         var key = buildKey(r, c);
         var data = rMap[key];
-        if (data && data.dealt > 0) {
-          var wr2 = data.played > 0 ? pct(data.won, data.played) : null;
-          var wrBg = (wr2 !== null ? wrColor(wr2) : (data.played > 0 ? '#1e3020' : '#111a12'));
+        if (data && data.played > 0) {
+          var wr2 = pct(data.won, data.played);
+          var wrBg = (wr2 !== null ? wrColor(wr2) : '#1e3020');
           wrGrid += '<div class="rc" style="background:' + wrBg + ';cursor:pointer;" data-key="' + key + '" data-tip="' + key + ' | Win: ' + (wr2 !== null ? wr2 + '%' : 'n/a') + ' (' + data.won + '/' + data.played + ' played, ' + data.dealt + ' dealt) · click to see hands"><span>' + key + '</span></div>';
           freqGrid += '<div class="rc" style="background:' + playedColor(data.played) + ';cursor:pointer;" data-key="' + key + '" data-tip="' + key + ' | Played ' + data.played + ' of ' + data.dealt + ' dealt · click to see hands"><span>' + key + '</span></div>';
         } else {
@@ -855,7 +855,7 @@ function render(d, hands, meta) {
         }
       }
     }
-    var seen = Object.keys(rMap).length;
+    var seen = Object.keys(rMap).filter(function(k) { return rMap[k].played > 0; }).length;
     var totalCombos = 169;
     var legend1 = '<div class="range-legend">' +
       '<div class="leg"><div class="leg-sw rc-unseen" style="width:9px;height:9px;"></div>Not dealt</div>' +
