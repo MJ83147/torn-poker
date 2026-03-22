@@ -112,11 +112,13 @@ let _displayBB = false;
 // Basic formatting helpers
 function fmt(n) {
   const a = Math.abs(Number(n) || 0);
-  const s = a >= 1000000
-    ? '$' + (a / 1e6).toFixed(1) + 'M'
-    : a >= 1000
-      ? '$' + Math.round(a / 1000) + 'K'
-      : '$' + a;
+  const s = a >= 1e9
+    ? '$' + (a / 1e9).toFixed(1) + 'B'
+    : a >= 1e6
+      ? '$' + (a / 1e6).toFixed(1) + 'M'
+      : a >= 1000
+        ? '$' + Math.round(a / 1000) + 'K'
+        : '$' + a;
   return Number(n) < 0 ? '-' + s : s;
 }
 
