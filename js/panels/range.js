@@ -57,7 +57,7 @@ function renderRange(container, d, hands) {
         }
       }
     }
-    var seen = Object.keys(rMap).filter(function(k) { return rMap[k].played > 0; }).length;
+    var seen = Object.keys(rMap).filter(function(k) { return rMap[k].dealt > 0; }).length;
     var totalCombos = 169;
     var legend1 = '<div class="range-legend">' +
       '<div class="leg"><div class="leg-sw rc-unseen" style="width:9px;height:9px;"></div>Not dealt</div>' +

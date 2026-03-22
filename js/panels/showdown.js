@@ -1,6 +1,14 @@
 // ── SHOWDOWN PANEL (Blue Line / Red Line) ────────────────────────────────────
 
+var _showdownChart = null;
+
 function renderShowdown(container, hands, meta) {
+  // Destroy previous chart instance to prevent canvas reuse errors
+  if (_showdownChart) {
+    _showdownChart.destroy();
+    _showdownChart = null;
+  }
+
   var sorted = hands.slice().sort(function(a, b) { return (a.timestamp || 0) - (b.timestamp || 0); });
 
   // Filter to cash hands with outcomes
@@ -17,7 +25,7 @@ function renderShowdown(container, hands, meta) {
   // Build per-hand P&L split by showdown / non-showdown
   var cumSd = 0, cumNsd = 0;
   var sdWon = 0, sdTotal = 0, nsdWon = 0, nsdTotal = 0;
-  var points = [];
+  var dataSd = [], dataNsd = [], dataTotal = [], labels = [];
 
   for (var i = 0; i < cash.length; i++) {
     var h = cash[i];
@@ -42,86 +50,11 @@ function renderShowdown(container, hands, meta) {
       if (won) nsdWon++;
     }
 
-    points.push({
-      cumSd: cumSd,
-      cumNsd: cumNsd,
-      cumTotal: cumSd + cumNsd,
-    });
+    labels.push(i + 1);
+    dataSd.push(cumSd);
+    dataNsd.push(cumNsd);
+    dataTotal.push(cumSd + cumNsd);
   }
-
-  // Downsample if too many points
-  var maxPts = 300;
-  var sampled = points;
-  if (points.length > maxPts) {
-    sampled = [];
-    var step = (points.length - 1) / (maxPts - 1);
-    for (var i = 0; i < maxPts - 1; i++) {
-      sampled.push(points[Math.round(i * step)]);
-    }
-    sampled.push(points[points.length - 1]); // always include last
-  }
-
-  // Find min/max across all three lines
-  var allVals = [];
-  for (var i = 0; i < sampled.length; i++) {
-    allVals.push(sampled[i].cumSd, sampled[i].cumNsd, sampled[i].cumTotal);
-  }
-  var minV = Math.min.apply(null, allVals);
-  var maxV = Math.max.apply(null, allVals);
-  if (minV === maxV) { minV -= 1; maxV += 1; }
-  var range = maxV - minV;
-
-  // SVG dimensions
-  var w = 700, h = 240, pad = 48, padR = 16, padTop = 14, padBot = 24;
-  var chartW = w - pad - padR;
-  var chartH = h - padTop - padBot;
-  var stepX = chartW / (sampled.length - 1 || 1);
-
-  function yPos(v) {
-    return padTop + chartH - ((v - minV) / range) * chartH;
-  }
-
-  // Build paths
-  var lines = [
-    { key: 'cumTotal', color: 'var(--green)', label: 'Total P&L' },
-    { key: 'cumSd',    color: '#4a9eff',      label: 'Showdown' },
-    { key: 'cumNsd',   color: '#e74c3c',      label: 'Non-Showdown' },
-  ];
-
-  var pathsSvg = '';
-  for (var li = 0; li < lines.length; li++) {
-    var parts = [];
-    for (var pi = 0; pi < sampled.length; pi++) {
-      var x = pad + pi * stepX;
-      var y = yPos(sampled[pi][lines[li].key]);
-      parts.push((parts.length === 0 ? 'M' : 'L') + x.toFixed(1) + ',' + y.toFixed(1));
-    }
-    pathsSvg += '<path d="' + parts.join(' ') + '" fill="none" stroke="' + lines[li].color + '" stroke-width="1.5" stroke-opacity="0.9"/>';
-  }
-
-  // $0 baseline
-  var baselineSvg = '';
-  if (0 >= minV && 0 <= maxV) {
-    var by = yPos(0);
-    baselineSvg = '<line x1="' + pad + '" y1="' + by.toFixed(1) + '" x2="' + (w - padR) + '" y2="' + by.toFixed(1) + '" stroke="var(--dim)" stroke-width="0.5" stroke-dasharray="4,4"/>';
-  }
-
-  // Y-axis labels
-  var yLabels = '<text x="' + (pad - 4) + '" y="' + (padTop + 4) + '" text-anchor="end" fill="var(--dim)" font-size="9">' + fmt(maxV) + '</text>' +
-    '<text x="' + (pad - 4) + '" y="' + (padTop + chartH) + '" text-anchor="end" fill="var(--dim)" font-size="9">' + fmt(minV) + '</text>';
-
-  // X-axis labels
-  var xLabels = '<text x="' + pad + '" y="' + (h - 2) + '" text-anchor="start" fill="var(--dim)" font-size="8">Hand 1</text>' +
-    '<text x="' + (w - padR) + '" y="' + (h - 2) + '" text-anchor="end" fill="var(--dim)" font-size="8">Hand ' + cash.length + '</text>';
-
-  // Legend
-  var legendHtml = '<div style="display:flex;gap:18px;margin-bottom:8px;font-size:12px;">';
-  for (var li = 0; li < lines.length; li++) {
-    legendHtml += '<div style="display:flex;align-items:center;gap:5px;">' +
-      '<span style="display:inline-block;width:12px;height:3px;background:' + lines[li].color + ';border-radius:1px;"></span>' +
-      '<span style="color:var(--dim);">' + lines[li].label + '</span></div>';
-  }
-  legendHtml += '</div>';
 
   // Summary stats
   var sdWinRate = pct(sdWon, sdTotal);
@@ -129,7 +62,6 @@ function renderShowdown(container, hands, meta) {
 
   var statsHtml = '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:20px;">';
 
-  // Showdown stats
   statsHtml += '<div style="padding:14px;background:var(--card);border:1px solid var(--border);border-radius:8px;">';
   statsHtml += '<div style="font-size:11px;color:var(--dim);margin-bottom:6px;display:flex;align-items:center;gap:6px;">' +
     '<span style="display:inline-block;width:10px;height:3px;background:#4a9eff;border-radius:1px;"></span>Showdown</div>';
@@ -137,7 +69,6 @@ function renderShowdown(container, hands, meta) {
   statsHtml += '<div style="font-size:11px;color:var(--dim);margin-top:4px;">' + sdTotal + ' hands · ' + (sdWinRate !== null ? sdWinRate + '% win rate' : 'no data') + '</div>';
   statsHtml += '</div>';
 
-  // Non-showdown stats
   statsHtml += '<div style="padding:14px;background:var(--card);border:1px solid var(--border);border-radius:8px;">';
   statsHtml += '<div style="font-size:11px;color:var(--dim);margin-bottom:6px;display:flex;align-items:center;gap:6px;">' +
     '<span style="display:inline-block;width:10px;height:3px;background:#e74c3c;border-radius:1px;"></span>Non-Showdown</div>';
@@ -190,14 +121,148 @@ function renderShowdown(container, hands, meta) {
 
   insHtml += '</div>';
 
-  // Assemble
+  // Assemble HTML
   var html = '<div class="sec-subtitle" style="margin-top:0;">Showdown vs Non-Showdown P&L</div>';
-  html += legendHtml;
-  html += '<svg viewBox="0 0 ' + w + ' ' + h + '" style="width:100%;max-width:' + w + 'px;height:auto;">';
-  html += baselineSvg + yLabels + xLabels + pathsSvg;
-  html += '</svg>';
+  html += '<div style="position:relative;width:100%;max-width:720px;"><canvas id="showdown-chart"></canvas></div>';
   html += statsHtml;
   html += insHtml;
 
   container.innerHTML = html;
+
+  // Render Chart.js chart
+  var canvas = document.getElementById('showdown-chart');
+  if (!canvas) return;
+
+  var styles = getComputedStyle(document.documentElement);
+  var dimColor = styles.getPropertyValue('--dim').trim() || '#666';
+  var borderColor = styles.getPropertyValue('--border').trim() || '#333';
+  var greenColor = styles.getPropertyValue('--green').trim() || '#2ecc71';
+
+  _showdownChart = new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Total P&L',
+          data: dataTotal,
+          borderColor: greenColor,
+          borderWidth: 2,
+          pointRadius: 0,
+          pointHitRadius: 6,
+          tension: 0.3,
+          order: 3,
+        },
+        {
+          label: 'Showdown',
+          data: dataSd,
+          borderColor: '#4a9eff',
+          borderWidth: 1.5,
+          pointRadius: 0,
+          pointHitRadius: 6,
+          tension: 0.3,
+          order: 2,
+        },
+        {
+          label: 'Non-Showdown',
+          data: dataNsd,
+          borderColor: '#e74c3c',
+          borderWidth: 1.5,
+          pointRadius: 0,
+          pointHitRadius: 6,
+          tension: 0.3,
+          order: 1,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      aspectRatio: 2.8,
+      interaction: {
+        mode: 'index',
+        intersect: false,
+      },
+      plugins: {
+        legend: {
+          display: true,
+          position: 'top',
+          align: 'start',
+          labels: {
+            color: dimColor,
+            font: { family: 'IBM Plex Mono', size: 11 },
+            boxWidth: 14,
+            boxHeight: 2,
+            padding: 16,
+            usePointStyle: false,
+          },
+        },
+        tooltip: {
+          backgroundColor: 'rgba(20,20,28,0.95)',
+          titleColor: '#aaa',
+          bodyColor: '#eee',
+          borderColor: borderColor,
+          borderWidth: 1,
+          titleFont: { family: 'IBM Plex Mono', size: 11 },
+          bodyFont: { family: 'IBM Plex Mono', size: 11 },
+          padding: 10,
+          callbacks: {
+            title: function(items) {
+              return 'Hand #' + items[0].label;
+            },
+            label: function(ctx) {
+              var val = ctx.parsed.y;
+              return ' ' + ctx.dataset.label + ': ' + (val >= 0 ? '+' : '') + fmt(val);
+            },
+          },
+        },
+      },
+      scales: {
+        x: {
+          display: true,
+          title: {
+            display: true,
+            text: 'Hands',
+            color: dimColor,
+            font: { family: 'IBM Plex Mono', size: 10 },
+          },
+          ticks: {
+            color: dimColor,
+            font: { family: 'IBM Plex Mono', size: 9 },
+            maxTicksLimit: 8,
+            callback: function(val, idx) {
+              return labels[idx];
+            },
+          },
+          grid: {
+            color: 'transparent',
+          },
+          border: {
+            color: borderColor,
+          },
+        },
+        y: {
+          display: true,
+          ticks: {
+            color: dimColor,
+            font: { family: 'IBM Plex Mono', size: 9 },
+            callback: function(val) {
+              return fmt(val);
+            },
+          },
+          grid: {
+            color: function(ctx) {
+              return ctx.tick.value === 0 ? dimColor : 'rgba(255,255,255,0.04)';
+            },
+            lineWidth: function(ctx) {
+              return ctx.tick.value === 0 ? 1 : 0.5;
+            },
+          },
+          border: {
+            display: false,
+          },
+        },
+      },
+    },
+  });
 }
