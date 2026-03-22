@@ -46,6 +46,9 @@ function renderRange(container, d, hands) {
           var wrBg = (wr2 !== null ? wrColor(wr2) : '#1e3020');
           wrGrid += '<div class="rc" style="background:' + wrBg + ';cursor:pointer;" data-key="' + key + '" data-tip="' + key + ' | Win: ' + (wr2 !== null ? wr2 + '%' : 'n/a') + ' (' + data.won + '/' + data.played + ' played, ' + data.dealt + ' dealt) · click to see hands"><span>' + key + '</span></div>';
           freqGrid += '<div class="rc" style="background:' + playedColor(data.played) + ';cursor:pointer;" data-key="' + key + '" data-tip="' + key + ' | Played ' + data.played + ' of ' + data.dealt + ' dealt · click to see hands"><span>' + key + '</span></div>';
+        } else if (data && data.dealt > 0) {
+          wrGrid += '<div class="rc rc-unseen" data-key="' + key + '" data-tip="' + key + ' | Dealt ' + data.dealt + ' times but never played · click to see hands"><span>' + key + '</span></div>';
+          freqGrid += '<div class="rc rc-unseen" data-key="' + key + '" data-tip="' + key + ' | Dealt ' + data.dealt + ' times but never played · click to see hands"><span>' + key + '</span></div>';
         } else {
           var cellType = (r === c) ? 'pair' : (r < c) ? 'suited' : 'offsuit';
           var cellLabel = cellType === 'pair' ? 'Pair' : cellType === 'suited' ? 'Suited' : 'Offsuit';

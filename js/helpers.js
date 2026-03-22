@@ -346,6 +346,21 @@ function calcInvestmentFromActions(actions) {
   return total;
 }
 
+// Determine if a hand went to showdown
+function isShowdown(hand) {
+  if (!hand.outcome) return false;
+  // Lost = stayed in and lost at showdown
+  if (hand.outcome.result === 'lost') return true;
+  // Won with reveals = showdown win
+  if (hand.outcome.result === 'won') {
+    var actions = hand.actions || [];
+    for (var i = 0; i < actions.length; i++) {
+      if (actions[i].indexOf(' reveals ') !== -1) return true;
+    }
+  }
+  return false;
+}
+
 // Try to detect player name from action lines (fallback for old exports)
 function detectPlayerFromActions(hands) {
   // First check if any hand has an explicit player field

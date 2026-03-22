@@ -104,6 +104,7 @@ function render(d, hands, meta) {
   renderRange(document.getElementById('p-range'), d, hands);
   renderTables(document.getElementById('p-tables'), hands, State.allHands, State.excludedTables, renderAll);
   renderTrends(document.getElementById('p-trends'), hands, meta);
+  renderShowdown(document.getElementById('p-showdown'), hands, meta);
   renderLog(document.getElementById('p-log'), hands);
   renderPlayers(document.getElementById('p-players'), d, hands);
 
@@ -113,7 +114,7 @@ function render(d, hands, meta) {
   if (filterVal && filterVal !== 'all') {
     var filterLabel = filterVal === 'unknown' ? 'Unknown Table' : getTableLabel(Number(filterVal));
     var bannerHtml = '<div class="filter-banner">Showing stats for ' + filterLabel + '</div>';
-    ['p-welcome', 'p-cards', 'p-position', 'p-street', 'p-actions', 'p-bets', 'p-range', 'p-trends', 'p-log', 'p-players'].forEach(function(id) {
+    ['p-welcome', 'p-cards', 'p-position', 'p-street', 'p-actions', 'p-bets', 'p-range', 'p-trends', 'p-showdown', 'p-log', 'p-players'].forEach(function(id) {
       var el = document.getElementById(id);
       if (el) el.innerHTML = bannerHtml + el.innerHTML;
     });
