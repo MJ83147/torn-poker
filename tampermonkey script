@@ -72,7 +72,7 @@
     var mi = sorted.findIndex(function (p) { return String(p.userID) === MY_USER_ID; });
     if (di === -1 || mi === -1) return 'Active';
     var rel = (mi - di + sorted.length) % sorted.length;
-    return ['BTN', 'SB', 'BB', 'UTG', 'UTG+1', 'MP', 'LJ', 'HJ', 'CO'][rel] || 'Active';
+    return ['BTN', 'SB', 'BB', 'UTG', 'UTG+1', 'MP', 'HJ', 'CO', 'LJ'][rel] || 'Active';
   }
 
   function tryDetectName(players) {
