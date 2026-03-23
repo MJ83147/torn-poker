@@ -21,7 +21,7 @@ function renderLog(container, hands) {
         '<button class="log-nav-btn" id="log-next" ' + (_logPage >= totalPages - 1 ? 'disabled' : '') + '>Next &raquo;</button>';
     }
     logHtml += '</div></div>';
-    logHtml += '<div class="hrow hrow-header"><div class="hrow-pos">Pos</div><div class="hrow-cards">Cards</div><div class="hrow-board">Board</div><div class="hrow-acts">Actions</div><div class="hrow-res">Result</div></div>';
+    logHtml += '<div class="hrow hrow-header hrow-with-star"><div class="hrow-star-col"></div><div class="hrow-pos">Pos</div><div class="hrow-cards">Cards</div><div class="hrow-board">Board</div><div class="hrow-acts">Actions</div><div class="hrow-res">Result</div></div>';
     logHtml += '<div class="hlog">' + pageHands.map(function(h) {
       var myActs = parseActions(h.actions).filter(function(a) { return a.isMe; }).map(function(a) { return a.type; }).join(' · ');
       var invested2 = h.invested || calcInvestmentFromActions(h.actions || []);
@@ -38,14 +38,30 @@ function renderLog(container, hands) {
       } else {
         res = '<div class="hrow-res u">?</div>';
       }
-      return '<div class="hrow" data-hand-idx="' + (start + pageHands.indexOf(h)) + '" style="cursor:pointer;transition:border-color .15s;" onmouseover="this.style.borderColor=\'var(--gold2)\'" onmouseout="this.style.borderColor=\'\'"><div class="hrow-pos">' + (h.position || '?') + '</div><div class="hrow-cards">' + (h.hole && h.hole.length ? h.hole.join(' ') : '?? ??') + '</div><div class="hrow-board">' + (h.board && h.board.length ? h.board.join(' ') : '—') + '</div><div class="hrow-acts">' + myActs + '</div>' + res + '</div>';
+      var starred = isHandStarred(h);
+      var starHtml = '<div class="hrow-star-col"><span class="hrow-star' + (starred ? ' starred' : '') + '" data-star-idx="' + (start + pageHands.indexOf(h)) + '" title="' + (starred ? 'Unsave' : 'Save') + ' hand">' + (starred ? '&#9733;' : '&#9734;') + '</span></div>';
+      return '<div class="hrow hrow-with-star" data-hand-idx="' + (start + pageHands.indexOf(h)) + '" style="cursor:pointer;transition:border-color .15s;" onmouseover="this.style.borderColor=\'var(--gold2)\'" onmouseout="this.style.borderColor=\'\'">' + starHtml + '<div class="hrow-pos">' + (h.position || '?') + '</div><div class="hrow-cards">' + (h.hole && h.hole.length ? h.hole.join(' ') : '?? ??') + '</div><div class="hrow-board">' + (h.board && h.board.length ? h.board.join(' ') : '—') + '</div><div class="hrow-acts">' + myActs + '</div>' + res + '</div>';
     }).join('') + '</div>';
     container.innerHTML = logHtml;
 
     container.querySelectorAll('.hrow[data-hand-idx]').forEach(function(row) {
-      row.onclick = function() {
+      row.onclick = function(e) {
+        if (e.target.closest('.hrow-star')) return;
         var idx = parseInt(this.getAttribute('data-hand-idx'));
         if (!isNaN(idx) && allHands[idx]) showExampleHandModal(allHands[idx]);
+      };
+    });
+    container.querySelectorAll('.hrow-star').forEach(function(star) {
+      star.onclick = function(e) {
+        e.stopPropagation();
+        var idx = parseInt(this.getAttribute('data-star-idx'));
+        if (isNaN(idx) || !allHands[idx]) return;
+        var nowStarred = toggleStarHand(allHands[idx]);
+        this.innerHTML = nowStarred ? '&#9733;' : '&#9734;';
+        this.classList.toggle('starred', nowStarred);
+        this.title = nowStarred ? 'Unsave' : 'Save hand';
+        var savedPanel = document.getElementById('p-saved');
+        if (savedPanel) renderSavedHands(savedPanel);
       };
     });
     var prevBtn = document.getElementById('log-prev');

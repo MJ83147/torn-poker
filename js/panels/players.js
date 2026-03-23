@@ -1,5 +1,269 @@
 // ── PLAYERS PANEL ─────────────────────────────────────────────────────────────
 
+// Compute opponent tendencies from their actions across all shared hands
+function computeOpponentStats(hands, playerName) {
+  var s = {
+    hands: 0,
+    vpipHands: 0,
+    pfrHands: 0,
+    limpHands: 0,
+    foldPreHands: 0,
+    totalRaises: 0,
+    totalCalls: 0,
+    totalChecks: 0,
+    totalFolds: 0,
+    totalActions: 0,
+    cbetOpps: 0,
+    cbetDone: 0,
+    facedRaise: 0,
+    foldedToRaise: 0,
+    sawFlop: 0,
+    wentToShowdown: 0,
+    wonAtShowdown: 0,
+    showdownStrong: 0,
+    showdownWeak: 0,
+    reveals: 0,
+  };
+
+  for (var i = 0; i < hands.length; i++) {
+    var h = hands[i];
+    var acts = parseActions(h.actions);
+
+    var playerActs = [];
+    for (var j = 0; j < acts.length; j++) {
+      if (acts[j].author === playerName) playerActs.push(acts[j]);
+    }
+    if (!playerActs.length) continue;
+    s.hands++;
+
+    // Preflop analysis
+    var raisedPre = false;
+    var calledPre = false;
+    var foldedPre = false;
+    for (var j = 0; j < playerActs.length; j++) {
+      var pa = playerActs[j];
+      if (pa.street !== 'Preflop') continue;
+      if (pa.type === 'raise') raisedPre = true;
+      if (pa.type === 'call') calledPre = true;
+      if (pa.type === 'fold') foldedPre = true;
+    }
+
+    if (raisedPre || calledPre) s.vpipHands++;
+    if (raisedPre) s.pfrHands++;
+    if (calledPre && !raisedPre) s.limpHands++;
+    if (foldedPre) s.foldPreHands++;
+
+    // Post-flop presence
+    var seenPostFlop = false;
+    for (var j = 0; j < playerActs.length; j++) {
+      if (playerActs[j].street !== 'Preflop') { seenPostFlop = true; break; }
+    }
+    if (seenPostFlop) s.sawFlop++;
+
+    // Aggression counts (all streets, non-blind, non-won)
+    for (var j = 0; j < playerActs.length; j++) {
+      var a = playerActs[j];
+      if (a.type === 'sb' || a.type === 'bb' || a.type === 'won') continue;
+      s.totalActions++;
+      if (a.type === 'raise') s.totalRaises++;
+      else if (a.type === 'call') s.totalCalls++;
+      else if (a.type === 'check') s.totalChecks++;
+      else if (a.type === 'fold') s.totalFolds++;
+    }
+
+    // C-bet: raised preflop, saw flop, bet/raised on flop
+    if (raisedPre && seenPostFlop) {
+      s.cbetOpps++;
+      for (var j = 0; j < playerActs.length; j++) {
+        if (playerActs[j].street === 'Flop' && playerActs[j].type === 'raise') {
+          s.cbetDone++; break;
+        }
+      }
+    }
+
+    // Fold to raise: scan full action list for raise then this player's response
+    for (var j = 0; j < acts.length; j++) {
+      if (acts[j].author !== playerName && acts[j].type === 'raise') {
+        for (var k = j + 1; k < acts.length; k++) {
+          if (acts[k].street !== acts[j].street) break;
+          if (acts[k].author === playerName) {
+            s.facedRaise++;
+            if (acts[k].type === 'fold') s.foldedToRaise++;
+            break;
+          }
+        }
+      }
+    }
+
+    // Showdown detection
+    var handHasShowdown = false;
+    for (var j = 0; j < (h.actions || []).length; j++) {
+      if ((h.actions[j] || '').indexOf(' reveals ') !== -1) {
+        handHasShowdown = true; break;
+      }
+    }
+
+    if (seenPostFlop && handHasShowdown) {
+      var foldedPostFlop = false;
+      for (var j = 0; j < playerActs.length; j++) {
+        if (playerActs[j].street !== 'Preflop' && playerActs[j].type === 'fold') {
+          foldedPostFlop = true; break;
+        }
+      }
+      if (!foldedPostFlop) {
+        s.wentToShowdown++;
+        for (var j = 0; j < acts.length; j++) {
+          if (acts[j].author === playerName && acts[j].type === 'won') {
+            s.wonAtShowdown++; break;
+          }
+        }
+      }
+    }
+
+    // Showdown strength from reveals
+    for (var j = 0; j < (h.actions || []).length; j++) {
+      var line = h.actions[j] || '';
+      if (line.indexOf(playerName) !== -1 && line.indexOf(' reveals ') !== -1) {
+        s.reveals++;
+        var strengthMatch = line.match(/\(([^)]+)\)/);
+        if (strengthMatch) {
+          var strength = strengthMatch[1].toLowerCase();
+          if (strength.indexOf('two pair') !== -1 || strength.indexOf('three of a kind') !== -1 ||
+              strength.indexOf('straight') !== -1 || strength.indexOf('flush') !== -1 ||
+              strength.indexOf('full house') !== -1 || strength.indexOf('four of a kind') !== -1 ||
+              strength.indexOf('straight flush') !== -1 || strength.indexOf('royal flush') !== -1) {
+            s.showdownStrong++;
+          } else {
+            s.showdownWeak++;
+          }
+        }
+      }
+    }
+  }
+
+  return s;
+}
+
+// Generate exploit insights based on opponent tendencies
+function generateExploitInsights(s, playerName) {
+  var insights = [];
+  var MIN_HANDS = 10;
+  var EXPLOIT_HANDS = 20;
+
+  if (s.hands < MIN_HANDS) {
+    insights.push(ins('n', 'Building Profile', 'Need ' + (MIN_HANDS - s.hands) + ' more shared hands before tendencies become reliable.', [
+      { v: s.hands + '/' + MIN_HANDS + ' hands' }
+    ]));
+    return insights;
+  }
+
+  var vpip = pct(s.vpipHands, s.hands);
+  var pfr = pct(s.pfrHands, s.hands);
+  var limp = pct(s.limpHands, s.hands);
+  var agg = pct(s.totalRaises, s.totalRaises + s.totalCalls + s.totalChecks);
+  var foldToRaise = pct(s.foldedToRaise, s.facedRaise);
+  var cbet = pct(s.cbetDone, s.cbetOpps);
+  var wtsd = pct(s.wentToShowdown, s.sawFlop);
+
+  // VPIP
+  if (vpip !== null) {
+    if (vpip >= 55) {
+      insights.push(ins('r', 'Very Loose', playerName + ' plays ' + vpip + '% of hands. They enter pots with weak holdings constantly.', [{ v: 'VPIP: ' + vpip + '%' }]));
+    } else if (vpip >= 40) {
+      insights.push(ins('a', 'Loose', playerName + ' plays ' + vpip + '% of hands. Wider than average, often with marginal cards.', [{ v: 'VPIP: ' + vpip + '%' }]));
+    } else if (vpip <= 18) {
+      insights.push(ins('a', 'Very Tight', playerName + ' only plays ' + vpip + '% of hands. When they enter, they have something.', [{ v: 'VPIP: ' + vpip + '%' }]));
+    }
+  }
+
+  // Limp
+  if (limp !== null && limp >= 30) {
+    insights.push(ins('r', 'Limps Often', playerName + ' limps ' + limp + '% of hands. They rarely open-raise, preferring cheap flops.', [{ v: 'Limp: ' + limp + '%' }]));
+  }
+
+  // Aggression
+  if (agg !== null) {
+    if (agg < 15) {
+      insights.push(ins('r', 'Passive', playerName + ' only raises ' + agg + '% of the time. Calls and checks dominate.', [{ v: 'Aggression: ' + agg + '%' }]));
+    } else if (agg >= 50) {
+      insights.push(ins('a', 'Aggressive', playerName + ' raises ' + agg + '% of the time. They apply pressure frequently.', [{ v: 'Aggression: ' + agg + '%' }]));
+    }
+  }
+
+  // Fold to raise
+  if (foldToRaise !== null && s.facedRaise >= 5) {
+    if (foldToRaise >= 65) {
+      insights.push(ins('r', 'Folds to Pressure', playerName + ' folds ' + foldToRaise + '% when raised. Aggression prints money against them.', [{ v: 'Fold to raise: ' + foldToRaise + '%' }]));
+    } else if (foldToRaise <= 25) {
+      insights.push(ins('a', 'Calls Everything', playerName + ' only folds ' + foldToRaise + '% to raises. Bluffing them is expensive.', [{ v: 'Fold to raise: ' + foldToRaise + '%' }]));
+    }
+  }
+
+  // C-bet
+  if (cbet !== null && s.cbetOpps >= 5) {
+    if (cbet >= 75) {
+      insights.push(ins('a', 'Auto C-Bets', playerName + ' continuation bets ' + cbet + '% of the time. Their flop bets often mean nothing.', [{ v: 'C-bet: ' + cbet + '%' }]));
+    } else if (cbet <= 30) {
+      insights.push(ins('o', 'Honest C-Bets', playerName + ' only c-bets ' + cbet + '%. When they bet the flop after raising pre, believe them.', [{ v: 'C-bet: ' + cbet + '%' }]));
+    }
+  }
+
+  // WTSD
+  if (wtsd !== null && s.sawFlop >= 10) {
+    if (wtsd >= 55) {
+      insights.push(ins('a', 'Showdown Bound', playerName + ' goes to showdown ' + wtsd + '% of the time. They hate folding post-flop.', [{ v: 'WTSD: ' + wtsd + '%' }]));
+    } else if (wtsd <= 25) {
+      insights.push(ins('o', 'Gives Up Easy', playerName + ' only reaches showdown ' + wtsd + '%. Pressure on later streets works well.', [{ v: 'WTSD: ' + wtsd + '%' }]));
+    }
+  }
+
+  // Showdown strength
+  if (s.reveals >= 5) {
+    var weakPct = pct(s.showdownWeak, s.reveals);
+    if (weakPct >= 60) {
+      insights.push(ins('r', 'Weak at Showdown', playerName + ' shows weak hands ' + weakPct + '% of the time. They call down light.', [{ v: weakPct + '% weak reveals' }]));
+    } else if (weakPct <= 25) {
+      insights.push(ins('o', 'Strong at Showdown', playerName + ' shows strong hands ' + (100 - weakPct) + '% of the time. Respect their river calls.', [{ v: (100 - weakPct) + '% strong reveals' }]));
+    }
+  }
+
+  // Exploit plan (needs more data)
+  if (s.hands >= EXPLOIT_HANDS && insights.length > 0) {
+    var exploits = [];
+
+    if (vpip >= 50 && foldToRaise !== null && foldToRaise >= 50) {
+      exploits.push('Raise their limps and wide entries. They play too many hands and fold too often to pressure.');
+    } else if (vpip >= 50 && foldToRaise !== null && foldToRaise < 30) {
+      exploits.push('Value bet relentlessly. They call with weak hands and rarely fold. Do not bluff.');
+    }
+    if (agg !== null && agg < 20 && cbet !== null && cbet <= 40) {
+      exploits.push('Steal pots post-flop with aggression. They check and call passively, so take initiative.');
+    }
+    if (cbet !== null && cbet >= 75 && foldToRaise !== null && foldToRaise >= 50) {
+      exploits.push('Raise their c-bets. They bet the flop automatically but fold when challenged.');
+    }
+    if (limp !== null && limp >= 30) {
+      exploits.push('Isolate their limps with raises. They see cheap flops with junk; make them pay.');
+    }
+    if (wtsd !== null && wtsd >= 55 && s.sawFlop >= 10) {
+      exploits.push('Bet for value on all streets. They will call down to showdown with marginal hands.');
+    }
+    if (wtsd !== null && wtsd <= 25 && s.sawFlop >= 10) {
+      exploits.push('Fire multiple barrels. They fold post-flop often, so sustained pressure wins pots.');
+    }
+
+    if (exploits.length) {
+      insights.push(ins('g', 'Exploit Plan', exploits.join(' '), []));
+    }
+  }
+
+  if (!insights.length) {
+    insights.push(ins('n', 'Tendencies', playerName + ' plays a balanced style with no obvious leaks from ' + s.hands + ' hands. Keep gathering data.', [{ v: s.hands + ' hands' }]));
+  }
+
+  return insights;
+}
+
 function renderPlayers(container, d, hands) {
   // Build opponent map
   var oppMap = {};
@@ -83,7 +347,6 @@ function renderPlayers(container, d, hands) {
       html += '</tbody></table></div>';
     }
 
-    // Insights
     var pIns = [];
     if (filtered.length >= 1) {
       pIns.push(ins('n', 'Most Seen', 'You have played ' + filtered[0].hands + ' hands with ' + filtered[0].name + '.', [{ v: filtered[0].name, hi: true }, { v: filtered[0].hands + ' hands' }]));
@@ -100,7 +363,6 @@ function renderPlayers(container, d, hands) {
     if (worst && worst !== best) pIns.push(ins('r', 'Toughest Opponent', 'Only ' + pct(worst.won, worst.won + worst.lost) + '% win rate against ' + worst.name + ' (' + (worst.won + worst.lost) + ' contested hands).', [{ v: worst.name, hi: true }, { v: pct(worst.won, worst.won + worst.lost) + '% win' }]));
     if (pIns.length) html += '<div style="margin-top:20px;margin-bottom:20px;">' + pIns.join('') + '</div>';
 
-    // All opponents table
     html += '<div class="sec-subtitle">All Opponents</div>';
     html += '<div style="font-size:9px;color:var(--dim);margin-bottom:8px;">' + filtered.length + ' opponents with 2+ shared hands · click star to watch · click row to view hands</div>';
     html += '<div class="players-table-scroll"><table class="tbl-compare"><thead><tr>';
@@ -136,6 +398,8 @@ function renderPlayers(container, d, hands) {
     var phPage = 0;
     var PH_SIZE = 50;
 
+    var oppStats = computeOpponentStats(hands, playerName);
+
     function renderPage() {
       var start = phPage * PH_SIZE;
       var end = Math.min(start + PH_SIZE, playerHands.length);
@@ -146,6 +410,54 @@ function renderPlayers(container, d, hands) {
       ph += '<div><button class="log-nav-btn" id="players-back" style="margin-right:12px;">&laquo; All Players</button>';
       ph += '<span style="font-size:14px;font-weight:600;color:var(--gold);">' + playerName + '</span></div>';
       ph += '<div style="font-size:10px;color:var(--dim);">' + opp.hands + ' hands · ' + (wr !== null ? wr + '% win' : '—') + ' · ' + (opp.profit >= 0 ? '+' : '') + fmt(opp.profit) + '</div></div>';
+
+      // ── Opponent tendency minis with severity ──
+      var vpip = pct(oppStats.vpipHands, oppStats.hands);
+      var pfr = pct(oppStats.pfrHands, oppStats.hands);
+      var limp = pct(oppStats.limpHands, oppStats.hands);
+      var aggPct = pct(oppStats.totalRaises, oppStats.totalRaises + oppStats.totalCalls + oppStats.totalChecks);
+      var ftr = pct(oppStats.foldedToRaise, oppStats.facedRaise);
+      var cbet = pct(oppStats.cbetDone, oppStats.cbetOpps);
+      var wtsd = pct(oppStats.wentToShowdown, oppStats.sawFlop);
+      var wsd = pct(oppStats.wonAtShowdown, oppStats.wentToShowdown);
+
+      function sev(v, rLo, rHi, aLo, aHi) {
+        if (v === null) return 'text';
+        if (v <= rLo || v >= rHi) return 'red';
+        if (v <= aLo || v >= aHi) return 'amber';
+        return 'green';
+      }
+
+      if (oppStats.hands >= 5) {
+        var minis = [
+          { l: tipWrap('VPIP'),       v: vpip !== null ? vpip + '%' : '—',     c: sev(vpip, -1, 55, 18, 40) },
+          { l: 'PFR',                 v: pfr !== null ? pfr + '%' : '—',       c: sev(pfr, 8, 999, 8, 35) },
+          { l: 'Limp',                v: limp !== null ? limp + '%' : '—',     c: sev(limp, -1, 30, -1, 20) },
+          { l: tipWrap('Aggression'), v: aggPct !== null ? aggPct + '%' : '—', c: sev(aggPct, 15, 999, 15, 50) },
+          { l: 'Fold to Raise',       v: ftr !== null ? ftr + '%' : '—',       c: sev(ftr, 25, 65, 25, 65) },
+          { l: tipWrap('C-Bet'),      v: cbet !== null ? cbet + '%' : '—',     c: sev(cbet, -1, 999, -1, 75) },
+          { l: 'WTSD',                v: wtsd !== null ? wtsd + '%' : '—',     c: sev(wtsd, 25, 55, 25, 55) },
+          { l: 'WSD',                 v: wsd !== null ? wsd + '%' : '—',       c: sev(wsd, 35, 999, 35, 60) },
+        ];
+
+        ph += '<div class="sec-subtitle" style="margin-top:0;">Tendencies</div>';
+        ph += '<div class="mini-row">';
+        ph += minis.map(function(m) {
+          return '<div class="mini"><div class="mini-l">' + m.l + '</div><div class="mini-v" style="color:var(--' + m.c + ')">' + m.v + '</div></div>';
+        }).join('');
+        ph += '</div>';
+
+        // ── Exploit insights ──
+        var exploitIns = generateExploitInsights(oppStats, playerName);
+        if (exploitIns.length) {
+          ph += '<div style="margin-top:16px;margin-bottom:16px;">' + exploitIns.join('') + '</div>';
+        }
+      } else {
+        ph += '<div style="margin-bottom:16px;">' + ins('n', 'Building Profile', 'Need ' + Math.max(0, 5 - oppStats.hands) + ' more shared hands to show tendency stats.', [{ v: oppStats.hands + '/5 hands' }]) + '</div>';
+      }
+
+      // ── Hand list ──
+      ph += '<div class="sec-subtitle">Shared Hands</div>';
       if (totalPages > 1) {
         ph += '<div style="display:flex;justify-content:flex-end;gap:6px;align-items:center;margin-bottom:8px;">';
         ph += '<button class="log-nav-btn" id="ph-prev" ' + (phPage === 0 ? 'disabled' : '') + '>&laquo; Prev</button>';

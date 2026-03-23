@@ -106,6 +106,7 @@ function render(d, hands, meta) {
   renderTrends(document.getElementById('p-trends'), hands, meta);
   renderShowdown(document.getElementById('p-showdown'), hands, meta);
   renderLog(document.getElementById('p-log'), hands);
+  renderSavedHands(document.getElementById('p-saved'));
   renderPlayers(document.getElementById('p-players'), d, hands);
 
   // Table filter banner (cross-cutting)
@@ -114,7 +115,7 @@ function render(d, hands, meta) {
   if (filterVal && filterVal !== 'all') {
     var filterLabel = filterVal === 'unknown' ? 'Unknown Table' : getTableLabel(Number(filterVal));
     var bannerHtml = '<div class="filter-banner">Showing stats for ' + filterLabel + '</div>';
-    ['p-welcome', 'p-cards', 'p-position', 'p-street', 'p-actions', 'p-bets', 'p-range', 'p-trends', 'p-showdown', 'p-log', 'p-players'].forEach(function(id) {
+    ['p-welcome', 'p-cards', 'p-position', 'p-street', 'p-actions', 'p-bets', 'p-range', 'p-trends', 'p-showdown', 'p-log', 'p-saved', 'p-players'].forEach(function(id) {
       var el = document.getElementById(id);
       if (el) el.innerHTML = bannerHtml + el.innerHTML;
     });

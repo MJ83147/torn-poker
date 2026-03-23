@@ -50,11 +50,57 @@ function showExampleHandModal(hand, coachingNote) {
     ? '<div class="modal-coaching"><div class="modal-coaching-label">What to improve</div>' + coachingNote + '</div>'
     : '';
 
-  box.innerHTML = closeBtn + title + subtitle + metaHtml + actionsHtml + coaching;
+  var starred = isHandStarred(hand);
+  var starBtn = '<button class="modal-star-btn' + (starred ? ' starred' : '') + '" id="modal-star-btn" title="' + (starred ? 'Unsave hand' : 'Save hand') + '">' + (starred ? '&#9733;' : '&#9734;') + '</button>';
+
+  var noteVal = getHandNote(hand).replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  var notesSection = '<div class="modal-notes' + (starred ? ' show' : '') + '" id="modal-notes">' +
+    '<div class="modal-notes-label">Your Notes</div>' +
+    '<textarea class="modal-notes-input" id="modal-notes-input" placeholder="Add notes about this hand...">' + noteVal + '</textarea>' +
+    '</div>';
+
+  box.innerHTML = closeBtn + starBtn + title + subtitle + metaHtml + actionsHtml + coaching + notesSection;
   overlay.appendChild(box);
   document.body.appendChild(overlay);
   requestAnimationFrame(function() { overlay.classList.add('show'); });
   document.getElementById('modal-close-btn').onclick = closeModal;
+
+  document.getElementById('modal-star-btn').onclick = function() {
+    var nowStarred = toggleStarHand(hand);
+    this.innerHTML = nowStarred ? '&#9733;' : '&#9734;';
+    this.classList.toggle('starred', nowStarred);
+    this.title = nowStarred ? 'Unsave hand' : 'Save hand';
+    var notesEl = document.getElementById('modal-notes');
+    if (notesEl) notesEl.classList.toggle('show', nowStarred);
+    // refresh saved hands panel if visible
+    var savedPanel = document.getElementById('p-saved');
+    if (savedPanel && savedPanel.classList.contains('on')) renderSavedHands(savedPanel);
+    // refresh log stars
+    document.querySelectorAll('.hrow-star').forEach(function(s) {
+      var idx = s.getAttribute('data-star-idx');
+      if (idx !== null) {
+        var row = s.closest('.hrow');
+        if (row) {
+          var isS = isHandStarred(hand);
+          // We can't easily match here, so skip - the log will refresh on tab switch
+        }
+      }
+    });
+  };
+
+  var notesInput = document.getElementById('modal-notes-input');
+  if (notesInput) {
+    var debounceTimer;
+    notesInput.oninput = function() {
+      var val = this.value;
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(function() {
+        setHandNote(hand, val);
+        var savedPanel = document.getElementById('p-saved');
+        if (savedPanel && savedPanel.classList.contains('on')) renderSavedHands(savedPanel);
+      }, 300);
+    };
+  }
 }
 
 function closeModal() {
