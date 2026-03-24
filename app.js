@@ -86,7 +86,7 @@ function render(d, hands, meta) {
     { l: 'VPIP',       v: vpipPct !== null ? vpipPct + '%' : '—', c: vpipPct > 55 ? 'a' : 'w' },
     { l: 'Aggression', v: aggPct !== null ? aggPct + '%' : '—',   c: aggPct > 25 ? 'g' : 'a' },
     { l: 'vs All-in',  v: allinFoldPct !== null ? allinFoldPct + '% fold' : '—', c: 'w' },
-  ].map(function(h) { return '<div class="hs"><div class="hs-l">' + tipWrap(h.l) + '</div><div class="hs-v ' + h.c + '">' + h.v + '</div></div>'; }).join('');
+  ].map(function(h) { return '<div class="hs"><div class="hs-l dim-label">' + tipWrap(h.l) + '</div><div class="hs-v serif-value ' + h.c + '">' + h.v + '</div></div>'; }).join('');
   var noteEl = document.getElementById('sample-note');
   if (noteEl) noteEl.innerHTML = sampleNote;
 

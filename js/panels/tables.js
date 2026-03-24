@@ -55,7 +55,7 @@ function renderTables(container, hands, allHands, excludedTables, onRerender) {
     }
     var maxHands = Math.max.apply(null, tableRows.map(function(r) { return r.n; }).concat([1]));
     tablesHtml += '<div class="sec-subtitle mt-0">Performance by Table</div>';
-    tablesHtml += '<div class="overflow-x"><table class="tbl-compare"><thead><tr>';
+    tablesHtml += '<div class="overflow-x"><table class="tbl"><thead><tr>';
     tablesHtml += '<th>Table</th><th>Blinds</th><th>Hands</th><th></th><th>' + tipWrap('Win Rate') + '</th><th>' + tipWrap('Net P&L') + '</th><th>' + tipWrap('VPIP') + '</th><th>' + tipWrap('Aggression') + '</th><th>' + tipWrap('Avg Pot') + '</th><th></th>';
     tablesHtml += '</tr></thead><tbody>';
     for (var ri = 0; ri < tableRows.length; ri++) {

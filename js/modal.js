@@ -14,8 +14,8 @@ function showExampleHandModal(hand, coachingNote) {
   box.style.position = 'relative';
 
   var closeBtn = '<button class="modal-close" id="modal-close-btn">&times;</button>';
-  var title = '<div class="modal-title">' + (hand.hole ? hand.hole.join(' ') : '??') + '</div>';
-  var subtitle = '<div class="modal-subtitle">Example hand · ' + (hand.position || '?') + ' position</div>';
+  var title = '<div class="modal-title serif-value">' + (hand.hole ? hand.hole.join(' ') : '??') + '</div>';
+  var subtitle = '<div class="modal-subtitle dim-label">Example hand · ' + (hand.position || '?') + ' position</div>';
 
   var metaHtml = '<div class="modal-hand-meta">' +
     '<span>Board: <strong>' + (hand.board && hand.board.length ? hand.board.join(' ') : 'none') + '</strong></span>' +
@@ -47,7 +47,7 @@ function showExampleHandModal(hand, coachingNote) {
   }
 
   var coaching = coachingNote
-    ? '<div class="modal-coaching"><div class="modal-coaching-label">What to improve</div>' + coachingNote + '</div>'
+    ? '<div class="modal-coaching"><div class="modal-coaching-label dim-label">What to improve</div>' + coachingNote + '</div>'
     : '';
 
   var starred = isHandStarred(hand);
@@ -56,7 +56,7 @@ function showExampleHandModal(hand, coachingNote) {
   var noteVal = getHandNote(hand).replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   var notesSection = '<div class="modal-notes' + (starred ? ' show' : '') + '" id="modal-notes">' +
     '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">' +
-      '<div class="modal-notes-label" style="margin-bottom:0;">Your Notes</div>' +
+      '<div class="modal-notes-label dim-label" style="margin-bottom:0;">Your Notes</div>' +
       '<div class="modal-notes-status" id="modal-notes-status" style="font-size:9px;color:var(--muted);transition:color .3s;">Saves automatically</div>' +
     '</div>' +
     '<textarea class="modal-notes-input" id="modal-notes-input" placeholder="Add notes about this hand...">' + noteVal + '</textarea>' +

@@ -327,7 +327,7 @@ function renderPlayers(container, d, hands) {
     if (watchedOpps.length) {
       html += '<div class="sec-subtitle mt-0">Watched Players</div>';
       html += '<div class="meta-text-mb">Click star to unwatch · click row to view hands</div>';
-      html += '<div class="overflow-x"><table class="tbl-compare"><thead><tr>';
+      html += '<div class="overflow-x"><table class="tbl"><thead><tr>';
       html += '<th></th><th>Player</th><th>Hands</th><th></th><th>' + tipWrap('Win Rate') + '</th><th>Net P&L</th>';
       html += '</tr></thead><tbody>';
       for (var w = 0; w < watchedOpps.length; w++) {
@@ -362,7 +362,7 @@ function renderPlayers(container, d, hands) {
 
     html += '<div class="sec-subtitle">All Opponents</div>';
     html += '<div class="meta-text-mb">' + filtered.length + ' opponents with 2+ shared hands · click star to watch · click row to view hands</div>';
-    html += '<div class="players-table-scroll"><table class="tbl-compare"><thead><tr>';
+    html += '<div class="players-table-scroll"><table class="tbl"><thead><tr>';
     html += '<th></th><th>Player</th><th>Hands</th><th></th><th>' + tipWrap('Win Rate') + '</th><th>Net P&L</th>';
     html += '</tr></thead><tbody>';
     for (var k = 0; k < filtered.length; k++) {

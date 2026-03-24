@@ -364,19 +364,12 @@ textarea#jin:focus {
 }
 
 .hs-l {
-  font-size: 11px;
   letter-spacing: 3px;
-  color: var(--dim);
-  text-transform: uppercase;
   margin-bottom: 5px;
   white-space: nowrap;
 }
 
 .hs-v {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 22px;
-  font-weight: 700;
-  line-height: 1;
   white-space: nowrap;
 }
 
@@ -524,10 +517,6 @@ textarea#jin:focus {
 }
 
 .ins-label {
-  font-size: 11px;
-  letter-spacing: 2px;
-  color: var(--dim);
-  text-transform: uppercase;
   margin-bottom: 5px;
   padding-right: 80px;
 }
@@ -568,13 +557,23 @@ textarea#jin:focus {
   margin-bottom: 12px;
 }
 
-.three-col {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 16px;
+/* collapsed into responsive section at bottom of file */
+
+/* ── DIM LABEL (shared pattern) ── */
+.dim-label {
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--dim);
+  text-transform: uppercase;
 }
 
-/* collapsed into responsive section at bottom of file */
+/* ── SERIF VALUE (shared pattern) ── */
+.serif-value {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1;
+}
 
 /* MINI STATS */
 .mini-row {
@@ -585,25 +584,17 @@ textarea#jin:focus {
 }
 
 .mini {
-  background: var(--s1);
+  background: var(--s2);
   border: 1px solid var(--border);
-  border-radius: 5px;
+  border-radius: 6px;
   padding: 12px 14px;
 }
 
 .mini-l {
-  font-size: 11px;
-  letter-spacing: 2px;
-  color: var(--dim);
-  text-transform: uppercase;
   margin-bottom: 6px;
 }
 
 .mini-v {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 24px;
-  font-weight: 700;
-  line-height: 1;
 }
 
 /* BAR ROWS */
@@ -1010,8 +1001,7 @@ textarea#jin:focus {
 
 .sec-subtitle:first-child,
 .panel > .sec-subtitle:first-child,
-.two-col .sec-subtitle,
-.three-col .sec-subtitle {
+.two-col .sec-subtitle {
   margin-top: 0;
   padding-top: 0;
   border-top: none;
@@ -1154,24 +1144,10 @@ textarea#jin:focus {
   margin-bottom: 16px;
 }
 
-/* TABLES COMPARISON */
-.tbl-compare { width: 100%; border-collapse: collapse; }
-.tbl-compare th {
-  font-size: 11px; letter-spacing: 2px; color: var(--dim);
-  text-transform: uppercase; text-align: left;
-  padding: 0 12px 10px 0; border-bottom: 1px solid var(--border);
-  position: relative; overflow: visible;
-}
-.tbl-compare td {
-  font-size: 13px; padding: 10px 12px 10px 0;
-  border-bottom: 1px solid var(--muted); color: var(--text); vertical-align: middle;
-}
-.tbl-compare td:first-child { color: var(--gold); font-size: 13px; }
-.tbl-compare tr:last-child td { border-bottom: none; }
-.tbl-compare .pnl-pos { color: var(--green); }
-.tbl-compare .pnl-neg { color: var(--red); }
-.tbl-compare .wr-good { color: var(--green); }
-.tbl-compare .wr-bad { color: var(--red); }
+.tbl .pnl-pos { color: var(--green); }
+.tbl .pnl-neg { color: var(--red); }
+.tbl .wr-good { color: var(--green); }
+.tbl .wr-bad { color: var(--red); }
 .tbl-spark { display: inline-block; height: 14px; border-radius: 2px; min-width: 2px; vertical-align: middle; }
 
 /* Scrollable players table */
@@ -1203,11 +1179,8 @@ textarea#jin:focus {
 
 /* ── UTILITY CLASSES ── */
 .mt-0 { margin-top: 0; padding-top: 0; border-top: none; }
-.mt-12 { margin-top: 12px; }
 .mt-20 { margin-top: 20px; }
-.mt-24 { margin-top: 24px; }
 .mt-32 { margin-top: 32px; }
-.mb-0 { margin-bottom: 0; }
 .mb-8 { margin-bottom: 8px; }
 .mb-12 { margin-bottom: 12px; }
 .mb-16 { margin-bottom: 16px; }
@@ -1229,7 +1202,6 @@ textarea#jin:focus {
   align-items: center;
 }
 
-.text-dim { color: var(--dim); }
 .text-gold { color: var(--gold); }
 
 .meta-text {
@@ -1255,49 +1227,15 @@ textarea#jin:focus {
   width: 100%;
 }
 
-/* ── STAT CARDS (showdown, etc) ── */
-.stat-grid-2 {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-  margin-top: 20px;
-}
-
-.stat-grid-3 {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  margin-top: 16px;
-}
-
-.stat-card {
-  padding: 14px;
-  background: var(--s2);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-}
-
-.stat-card-label {
-  font-size: 11px;
-  color: var(--dim);
-  margin-bottom: 6px;
-}
-
-.stat-card-label-dot {
-  font-size: 11px;
-  color: var(--dim);
+/* ── STAT CARD EXTRAS ── */
+.mini-label-dot {
   margin-bottom: 6px;
   display: flex;
   align-items: center;
   gap: 6px;
 }
 
-.stat-card-value {
-  font-size: 20px;
-  font-weight: 500;
-}
-
-.stat-card-meta {
+.mini-meta {
   font-size: 11px;
   color: var(--dim);
   margin-top: 4px;
@@ -1326,8 +1264,8 @@ textarea#jin:focus {
 .section-label {
   font-size: 9px;
   letter-spacing: 4px;
-  text-transform: uppercase;
   color: var(--dim);
+  text-transform: uppercase;
   margin-bottom: 14px;
 }
 
@@ -1361,28 +1299,6 @@ textarea#jin:focus {
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   gap: 8px;
   margin-bottom: 36px;
-}
-
-.profile-stat-card {
-  background: var(--s2);
-  border: 1px solid var(--border);
-  border-radius: 5px;
-  padding: 12px 14px;
-}
-
-.profile-stat-label {
-  font-size: 8px;
-  letter-spacing: 2px;
-  color: var(--dim);
-  text-transform: uppercase;
-  margin-bottom: 6px;
-}
-
-.profile-stat-value {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 22px;
-  font-weight: 700;
-  line-height: 1;
 }
 
 .profile-cta-card {
@@ -1443,62 +1359,6 @@ textarea#jin:focus {
   text-decoration: none;
 }
 
-/* ── EMPTY STATE ── */
-.empty-state {
-  text-align: center;
-  padding: 40px 20px;
-}
-
-.empty-state-icon {
-  font-size: 28px;
-  color: var(--gold2);
-  margin-bottom: 12px;
-}
-
-.empty-state-title {
-  font-size: 14px;
-  color: var(--dim);
-  margin-bottom: 8px;
-}
-
-.empty-state-desc {
-  font-size: 11px;
-  color: var(--muted);
-  max-width: 320px;
-  margin: 0 auto;
-  line-height: 1.6;
-}
-
-/* ── SAVED SECTION TOGGLE ── */
-.saved-toggle {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  padding: 8px 0;
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 12px;
-  user-select: none;
-}
-
-.saved-toggle-arrow {
-  font-size: 10px;
-  color: var(--dim);
-  transition: transform .2s;
-  display: inline-block;
-}
-
-.saved-toggle-title {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--gold2);
-}
-
-.saved-toggle-count {
-  font-size: 10px;
-  color: var(--dim);
-}
-
 /* ── RANGE HAND ROWS ── */
 .range-hand-row {
   display: flex;
@@ -1512,12 +1372,6 @@ textarea#jin:focus {
 
 .range-hand-row:hover {
   background: var(--s2);
-}
-
-.range-hand-row-side {
-  display: flex;
-  gap: 12px;
-  align-items: center;
 }
 
 /* ── PLAYER DETAIL ── */
@@ -1539,23 +1393,6 @@ textarea#jin:focus {
 .page-label {
   font-size: 9px;
   color: var(--dim);
-}
-
-/* ── LEGEND SWATCHES ── */
-.leg-sw-won { background: var(--green); }
-.leg-sw-played { background: var(--amber); opacity: 0.75; }
-.leg-sw-unplayed { background: #2e3e2e; }
-.leg-sw-bad { background: rgb(190, 45, 45); }
-.leg-sw-mid { background: rgb(220, 135, 45); }
-.leg-sw-good { background: rgb(50, 170, 65); }
-.leg-sw-low { background: #1a2e1e; }
-.leg-sw-med { background: #2e5835; }
-.leg-sw-high { background: rgb(50, 170, 65); }
-
-/* ── TABLE EXCLUDE BUTTON ── */
-.exclude-btn {
-  font-size: 8px;
-  padding: 2px 6px;
 }
 
 /* Trends 2x2 grid */
@@ -1602,18 +1439,11 @@ textarea#jin:focus {
 }
 
 .modal-title {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 18px;
-  font-weight: 700;
   color: var(--gold);
   margin-bottom: 4px;
 }
 
 .modal-subtitle {
-  font-size: 11px;
-  color: var(--dim);
-  letter-spacing: 2px;
-  text-transform: uppercase;
   margin-bottom: 16px;
 }
 
@@ -1680,10 +1510,7 @@ textarea#jin:focus {
 }
 
 .modal-coaching-label {
-  font-size: 11px;
-  letter-spacing: 2px;
   color: var(--amber);
-  text-transform: uppercase;
   margin-bottom: 6px;
 }
 
@@ -1771,10 +1598,6 @@ textarea#jin:focus {
   display: block;
 }
 .modal-notes-label {
-  font-size: 11px;
-  letter-spacing: 2px;
-  color: var(--dim);
-  text-transform: uppercase;
   margin-bottom: 6px;
 }
 .modal-notes-input {
@@ -1902,10 +1725,6 @@ textarea#jin:focus {
 }
 
 /* WELCOME TAB */
-#p-welcome.panel.on {
-  display: block;
-}
-/* WELCOME TAB */
 .welcome-wrap {
   max-width: 900px;
 }
@@ -1964,10 +1783,7 @@ textarea#jin:focus {
   flex-shrink: 0;
 }
 .welcome-tips-title {
-  font-size: 11px;
   letter-spacing: 4px;
-  text-transform: uppercase;
-  color: var(--dim);
   margin-bottom: 12px;
 }
 .welcome-tip {
@@ -1978,46 +1794,19 @@ textarea#jin:focus {
 }
 
 
-/* HOW IT WORKS MODAL */
+/* HOW IT WORKS MODAL (extends .modal-overlay / .modal-box) */
 .hiw-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.85);
-  z-index: 500;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
   pointer-events: none;
-  transition: opacity .2s;
 }
 .hiw-overlay.show {
-  opacity: 1;
   pointer-events: auto;
 }
 .hiw-box {
-  background: var(--s1);
-  border: 1px solid var(--border);
-  border-radius: 8px;
   max-width: 520px;
-  width: 90vw;
-  max-height: 85vh;
-  overflow-y: auto;
   padding: 32px;
-  position: relative;
-}
-.hiw-title {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--gold);
-  margin-bottom: 8px;
 }
 .hiw-section-title {
-  font-size: 11px;
   letter-spacing: 4px;
-  text-transform: uppercase;
-  color: var(--dim);
   margin-top: 28px;
   margin-bottom: 16px;
 }
@@ -2133,9 +1922,8 @@ textarea#jin:focus {
   .paste-title { font-size: 20px; }
 
   /* Grid layouts */
-  .two-col, .three-col, .ins-grid { grid-template-columns: 1fr; }
+  .two-col, .ins-grid { grid-template-columns: 1fr; }
   .two-col { gap: 16px; }
-  .three-col { gap: 12px; }
 
   /* Bar rows */
   .bw2 { grid-template-columns: 90px 1fr 45px; }
@@ -2156,9 +1944,9 @@ textarea#jin:focus {
   .rc:hover { transform: scale(1.3); }
 
   /* Tables */
-  .tbl, .tbl-compare { font-size: 11px; }
-  .tbl td, .tbl-compare td { padding: 8px 8px 8px 0; font-size: 11px; }
-  .tbl th, .tbl-compare th { font-size: 10px; padding: 0 8px 8px 0; }
+  .tbl { font-size: 11px; }
+  .tbl td { padding: 8px 8px 8px 0; font-size: 11px; }
+  .tbl th { font-size: 10px; padding: 0 8px 8px 0; }
 
   /* Modal */
   .modal-box { padding: 18px; width: 94vw; }
@@ -2282,8 +2070,8 @@ textarea#jin:focus {
   .mini-v { font-size: 18px; }
 
   /* Tables: horizontal scroll wrapper */
-  .tbl td, .tbl-compare td { padding: 7px 6px 7px 0; font-size: 11px; }
-  .tbl th, .tbl-compare th { font-size: 9px; padding: 0 6px 6px 0; letter-spacing: 1px; }
+  .tbl td { padding: 7px 6px 7px 0; font-size: 11px; }
+  .tbl th { font-size: 9px; padding: 0 6px 6px 0; letter-spacing: 1px; }
 
   /* Insight cards */
   .ins { padding: 12px; }

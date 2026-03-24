@@ -343,7 +343,7 @@ function switchTab(tabId) {
 function renderMiniRow(items) {
   return '<div class="mini-row">' + items.map(function(m) {
     var color = m.c === 'g' ? 'green' : m.c === 'r' ? 'red' : m.c === 'a' ? 'amber' : m.c || 'text';
-    return '<div class="mini"><div class="mini-l">' + m.l + '</div><div class="mini-v" style="color:var(--' + color + ')">' + m.v + '</div></div>';
+    return '<div class="mini"><div class="mini-l dim-label">' + m.l + '</div><div class="serif-value" style="color:var(--' + color + ')">' + m.v + '</div></div>';
   }).join('') + '</div>';
 }
 
@@ -360,7 +360,7 @@ function ins(sev, label, text, chips) {
       '<span class="chip' + (c.hi ? ' hi' : '') + '">' + c.v + '</span>'
     ).join('') + '</div>'
     : '';
-  return '<div class="ins"><div class="ins-badge ' + sev + '"><div class="ins-dot"></div><div class="ins-word">' + words[sev] + '</div></div><div class="ins-label">' + label + '</div><div class="ins-text">' + text + '</div>' + chipHtml + '</div>';
+  return '<div class="ins"><div class="ins-badge ' + sev + '"><div class="ins-dot"></div><div class="ins-word">' + words[sev] + '</div></div><div class="ins-label dim-label">' + label + '</div><div class="ins-text">' + text + '</div>' + chipHtml + '</div>';
 }
 
 // Insight helper that injects a "See example hand" button and wires its click

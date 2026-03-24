@@ -55,9 +55,9 @@ function renderProfile() {
       { l: 'Aggression', v: stats.aggPct !== null ? stats.aggPct + '%' : '—', c: 'var(--text)' },
     ];
     statItems.forEach(function(s) {
-      html += '<div class="profile-stat-card">';
-      html += '<div class="profile-stat-label">' + s.l + '</div>';
-      html += '<div class="profile-stat-value" style="color:' + s.c + ';">' + s.v + '</div>';
+      html += '<div class="mini">';
+      html += '<div class="mini-l dim-label">' + s.l + '</div>';
+      html += '<div class="serif-value" style="color:' + s.c + ';">' + s.v + '</div>';
       html += '</div>';
     });
     html += '</div>';

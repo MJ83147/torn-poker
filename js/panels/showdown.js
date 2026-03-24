@@ -72,20 +72,20 @@ function renderShowdown(container, hands, meta) {
   var sdWinRate = pct(sdWon, sdTotal);
   var nsdWinRate = pct(nsdWon, nsdTotal);
 
-  var statsHtml = '<div class="stat-grid-2">';
+  var statsHtml = '<div class="mini-row" style="grid-template-columns:repeat(2,1fr);">';
 
-  statsHtml += '<div class="stat-card">';
-  statsHtml += '<div class="stat-card-label-dot">' +
+  statsHtml += '<div class="mini">';
+  statsHtml += '<div class="mini-label-dot dim-label">' +
     '<span class="line-dot line-dot-blue"></span>Showdown</div>';
-  statsHtml += '<div class="stat-card-value" style="color:' + pnlColor(cumSd) + ';">' + fmtPnl(cumSd) + '</div>';
-  statsHtml += '<div class="stat-card-meta">' + sdTotal + ' hands · ' + (sdWinRate !== null ? sdWinRate + '% win rate' : 'no data') + '</div>';
+  statsHtml += '<div class="serif-value" style="color:' + pnlColor(cumSd) + ';">' + fmtPnl(cumSd) + '</div>';
+  statsHtml += '<div class="mini-meta">' + sdTotal + ' hands · ' + (sdWinRate !== null ? sdWinRate + '% win rate' : 'no data') + '</div>';
   statsHtml += '</div>';
 
-  statsHtml += '<div class="stat-card">';
-  statsHtml += '<div class="stat-card-label-dot">' +
+  statsHtml += '<div class="mini">';
+  statsHtml += '<div class="mini-label-dot dim-label">' +
     '<span class="line-dot line-dot-red"></span>Non-Showdown</div>';
-  statsHtml += '<div class="stat-card-value" style="color:' + pnlColor(cumNsd) + ';">' + fmtPnl(cumNsd) + '</div>';
-  statsHtml += '<div class="stat-card-meta">' + nsdTotal + ' hands · ' + (nsdWinRate !== null ? nsdWinRate + '% win rate' : 'no data') + '</div>';
+  statsHtml += '<div class="serif-value" style="color:' + pnlColor(cumNsd) + ';">' + fmtPnl(cumNsd) + '</div>';
+  statsHtml += '<div class="mini-meta">' + nsdTotal + ' hands · ' + (nsdWinRate !== null ? nsdWinRate + '% win rate' : 'no data') + '</div>';
   statsHtml += '</div>';
 
   statsHtml += '</div>';
@@ -141,24 +141,24 @@ function renderShowdown(container, hands, meta) {
   var avgLossPot = (potSdLoss.length + potNsdLoss.length) > 0 ? avg(potSdLoss.concat(potNsdLoss)) : 0;
   var winLossRatio = avgLossPot > 0 ? (avgWinPot / avgLossPot).toFixed(2) : null;
 
-  potHtml += '<div class="stat-grid-3">';
+  potHtml += '<div class="mini-row" style="grid-template-columns:repeat(3,1fr);">';
 
-  potHtml += '<div class="stat-card">';
-  potHtml += '<div class="stat-card-label">Avg Pot Won</div>';
-  potHtml += '<div class="stat-card-value" style="color:var(--green);">' + fmt(avgWinPot) + '</div>';
-  potHtml += '<div class="stat-card-meta">' + (potSdWin.length + potNsdWin.length) + ' hands</div>';
+  potHtml += '<div class="mini">';
+  potHtml += '<div class="mini-l dim-label">Avg Pot Won</div>';
+  potHtml += '<div class="serif-value" style="color:var(--green);">' + fmt(avgWinPot) + '</div>';
+  potHtml += '<div class="mini-meta">' + (potSdWin.length + potNsdWin.length) + ' hands</div>';
   potHtml += '</div>';
 
-  potHtml += '<div class="stat-card">';
-  potHtml += '<div class="stat-card-label">Avg Pot Lost</div>';
-  potHtml += '<div class="stat-card-value" style="color:var(--red);">' + fmt(avgLossPot) + '</div>';
-  potHtml += '<div class="stat-card-meta">' + (potSdLoss.length + potNsdLoss.length) + ' hands</div>';
+  potHtml += '<div class="mini">';
+  potHtml += '<div class="mini-l dim-label">Avg Pot Lost</div>';
+  potHtml += '<div class="serif-value" style="color:var(--red);">' + fmt(avgLossPot) + '</div>';
+  potHtml += '<div class="mini-meta">' + (potSdLoss.length + potNsdLoss.length) + ' hands</div>';
   potHtml += '</div>';
 
-  potHtml += '<div class="stat-card">';
-  potHtml += '<div class="stat-card-label">Win/Loss Pot Ratio</div>';
-  potHtml += '<div class="stat-card-value" style="color:' + (winLossRatio !== null ? pnlColor(winLossRatio - 1) : 'var(--red)') + ';">' + (winLossRatio !== null ? winLossRatio + 'x' : '—') + '</div>';
-  potHtml += '<div class="stat-card-meta">Target: above 1.0x</div>';
+  potHtml += '<div class="mini">';
+  potHtml += '<div class="mini-l dim-label">Win/Loss Pot Ratio</div>';
+  potHtml += '<div class="serif-value" style="color:' + (winLossRatio !== null ? pnlColor(winLossRatio - 1) : 'var(--red)') + ';">' + (winLossRatio !== null ? winLossRatio + 'x' : '—') + '</div>';
+  potHtml += '<div class="mini-meta">Target: above 1.0x</div>';
   potHtml += '</div>';
 
   potHtml += '</div>';

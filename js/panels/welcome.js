@@ -37,7 +37,7 @@ function renderWelcome(container, d, hands, meta) {
     }).join('') +
     '</div>' +
     '<div class="welcome-tips">' +
-    '<div class="welcome-tips-title">Tips</div>' +
+    '<div class="welcome-tips-title dim-label">Tips</div>' +
     tips.map(function(t) {
       return '<div class="welcome-tip">' + t + '</div>';
     }).join('') +
