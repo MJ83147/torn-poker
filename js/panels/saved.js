@@ -5,10 +5,10 @@ function renderSavedHands(container) {
   var keys = Object.keys(map);
 
   if (!keys.length) {
-    container.innerHTML = '<div style="text-align:center;padding:40px 20px;">' +
-      '<div style="font-size:28px;color:var(--gold2);margin-bottom:12px;">&#9734;</div>' +
-      '<div style="font-size:14px;color:var(--dim);margin-bottom:8px;">No saved hands yet</div>' +
-      '<div style="font-size:11px;color:var(--muted);max-width:320px;margin:0 auto;line-height:1.6;">Click any hand in the Hand Log to open it, then click the star to save it. Add notes to remember key decisions or situations.</div>' +
+    container.innerHTML = '<div class="empty-state">' +
+      '<div class="empty-state-icon">&#9734;</div>' +
+      '<div class="empty-state-title">No saved hands yet</div>' +
+      '<div class="empty-state-desc">Click any hand in the Hand Log to open it, then click the star to save it. Add notes to remember key decisions or situations.</div>' +
       '</div>';
     return;
   }
@@ -18,9 +18,9 @@ function renderSavedHands(container) {
     return (map[b].savedAt || '') > (map[a].savedAt || '') ? 1 : -1;
   });
 
-  var html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">' +
-    '<div class="sec-subtitle" style="margin:0;">' + keys.length + ' Saved Hand' + (keys.length !== 1 ? 's' : '') + '</div>' +
-    '<div style="font-size:9px;color:var(--dim);">Click to replay · hover note to read</div>' +
+  var html = '<div class="flex-between mb-16">' +
+    '<div class="sec-subtitle mt-0 mb-0">' + keys.length + ' Saved Hand' + (keys.length !== 1 ? 's' : '') + '</div>' +
+    '<div class="meta-text">Click to replay · hover note to read</div>' +
     '</div>';
 
   html += '<div class="saved-hands-list">';

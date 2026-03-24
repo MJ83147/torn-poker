@@ -68,7 +68,7 @@ function renderWelcome(container, d, hands, meta) {
     }
   }
   if (overviewIns.length) {
-    welcomeHtml += '<div style="margin-top:20px;">' + overviewIns.join('') + '</div>';
+    welcomeHtml += '<div class="ins-grid mt-20">' + overviewIns.join('') + '</div>';
   }
   container.innerHTML = welcomeHtml;
   container.querySelectorAll('.welcome-toc-row[data-goto]').forEach(function(row) {

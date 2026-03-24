@@ -60,16 +60,16 @@ function renderRange(container, d, hands) {
     var seen = Object.keys(rMap).filter(function(k) { return rMap[k].dealt > 0; }).length;
     var totalCombos = 169;
     var legend1 = '<div class="range-legend">' +
-      '<div class="leg"><div class="leg-sw rc-unseen" style="width:9px;height:9px;"></div>Not dealt</div>' +
-      '<div class="leg"><div class="leg-sw" style="background:rgb(190,45,45);"></div>&lt;30% win</div>' +
-      '<div class="leg"><div class="leg-sw" style="background:rgb(220,135,45);"></div>~50% win</div>' +
-      '<div class="leg"><div class="leg-sw" style="background:rgb(50,170,65);"></div>&gt;70% win</div>' +
+      '<div class="leg"><div class="leg-sw rc-unseen"></div>Not dealt</div>' +
+      '<div class="leg"><div class="leg-sw leg-sw-bad"></div>&lt;30% win</div>' +
+      '<div class="leg"><div class="leg-sw leg-sw-mid"></div>~50% win</div>' +
+      '<div class="leg"><div class="leg-sw leg-sw-good"></div>&gt;70% win</div>' +
       '</div>';
     var legend2 = '<div class="range-legend">' +
-      '<div class="leg"><div class="leg-sw rc-unseen" style="width:9px;height:9px;"></div>Not played</div>' +
-      '<div class="leg"><div class="leg-sw" style="background:#1a2e1e;"></div>Rarely</div>' +
-      '<div class="leg"><div class="leg-sw" style="background:#2e5835;"></div>Sometimes</div>' +
-      '<div class="leg"><div class="leg-sw" style="background:rgb(50,170,65);"></div>Most played</div>' +
+      '<div class="leg"><div class="leg-sw rc-unseen"></div>Not played</div>' +
+      '<div class="leg"><div class="leg-sw leg-sw-low"></div>Rarely</div>' +
+      '<div class="leg"><div class="leg-sw leg-sw-med"></div>Sometimes</div>' +
+      '<div class="leg"><div class="leg-sw leg-sw-high"></div>Most played</div>' +
       '</div>';
     var rangeIns = [];
     var bestKey = null, bestWr = -1, worstKey = null, worstWr = 101, mostPlayed = null, mostCount = 0;
@@ -137,10 +137,10 @@ function renderRange(container, d, hands) {
     var gridContainer = document.getElementById('range-grids');
     if (!gridContainer) return;
     gridContainer.innerHTML =
-      '<div style="font-size:9px;color:var(--dim);margin-bottom:20px;">' + rc.seen + ' of ' + rc.totalCombos + ' hand combos seen · hover any cell for detail</div>' +
-      '<div class="two-col" style="gap:20px;align-items:start;">' +
-      '<div><div class="sec-subtitle" style="margin-top:0;">Win Rate by Hand</div><div class="range-grid-sm">' + rc.wrGrid + '</div>' + rc.legend1 + '</div>' +
-      '<div><div class="sec-subtitle" style="margin-top:0;">Hands Played</div><div class="range-grid-sm">' + rc.freqGrid + '</div>' + rc.legend2 + '</div>' +
+      '<div class="meta-text mb-20">' + rc.seen + ' of ' + rc.totalCombos + ' hand combos seen · hover any cell for detail</div>' +
+      '<div class="two-col">' +
+      '<div><div class="sec-subtitle mt-0">Win Rate by Hand</div><div class="range-grid-sm">' + rc.wrGrid + '</div>' + rc.legend1 + '</div>' +
+      '<div><div class="sec-subtitle mt-0">Hands Played</div><div class="range-grid-sm">' + rc.freqGrid + '</div>' + rc.legend2 + '</div>' +
       '</div><div class="divider"></div>' + rc.rangeIns.join('');
   }
 
@@ -149,7 +149,7 @@ function renderRange(container, d, hands) {
     return '<option value="' + (p === 'All Positions' ? 'all' : p) + '">' + p + '</option>';
   }).join('');
   container.innerHTML =
-    '<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">' +
+    '<div class="flex-gap-6 mb-16">' +
     '<select id="range-pos-filter" class="table-filter">' + posOpts + '</select>' +
     '</div><div id="range-grids"></div>';
   renderRangeGrids(rc);
@@ -194,18 +194,18 @@ function renderRange(container, d, hands) {
     var rows = matched.map(function(h, idx) {
       var myActs = getActsSummary(h);
       var res = renderResult(h, 'span', 'saved-res');
-      return '<div class="range-hand-row" data-ridx="' + idx + '" style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s;" onmouseover="this.style.background=\'var(--s2)\'" onmouseout="this.style.background=\'\'">' +
-        '<div style="display:flex;gap:12px;align-items:center;">' +
-        '<span style="color:var(--dim);font-size:9px;">' + (h.position || '?') + '</span>' +
+      return '<div class="range-hand-row" data-ridx="' + idx + '">' +
+        '<div class="range-hand-row-side">' +
+        '<span class="meta-text">' + (h.position || '?') + '</span>' +
         '<span>' + (h.hole ? h.hole.join(' ') : '??') + '</span>' +
-        '<span style="color:var(--dim);font-size:9px;">' + (h.board && h.board.length ? h.board.join(' ') : '—') + '</span>' +
+        '<span class="meta-text">' + (h.board && h.board.length ? h.board.join(' ') : '—') + '</span>' +
         '</div>' +
-        '<div style="display:flex;gap:12px;align-items:center;">' +
-        '<span style="font-size:9px;color:var(--dim);">' + myActs + '</span>' +
+        '<div class="range-hand-row-side">' +
+        '<span class="meta-text">' + myActs + '</span>' +
         res + '</div></div>';
     }).join('');
     box.innerHTML = '<button class="modal-close" id="modal-close-btn">&times;</button>' +
-      summary + '<div style="margin-top:12px;">' + rows + '</div>';
+      summary + '<div class="mt-12">' + rows + '</div>';
     overlay.appendChild(box);
     document.body.appendChild(overlay);
     requestAnimationFrame(function() { overlay.classList.add('show'); });

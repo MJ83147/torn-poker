@@ -8,9 +8,9 @@ function renderCards(container, d, hands) {
   cardsHtml += '<div>';
   // Legend
   cardsHtml += '<div class="ht-stack-legend">' +
-    '<div class="ht-leg-item"><div class="ht-leg-sw" style="background:var(--green);"></div>Won</div>' +
-    '<div class="ht-leg-item"><div class="ht-leg-sw" style="background:var(--amber);opacity:0.75;"></div>Played, not won</div>' +
-    '<div class="ht-leg-item"><div class="ht-leg-sw" style="background:#2e3e2e;"></div>Dealt, not played</div>' +
+    '<div class="ht-leg-item"><div class="ht-leg-sw leg-sw-won"></div>Won</div>' +
+    '<div class="ht-leg-item"><div class="ht-leg-sw leg-sw-played"></div>Played, not won</div>' +
+    '<div class="ht-leg-item"><div class="ht-leg-sw leg-sw-unplayed"></div>Dealt, not played</div>' +
     '</div>';
   cardsHtml += htData.map(function(ht) {
     var s = d.htMap[ht];

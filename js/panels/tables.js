@@ -54,15 +54,15 @@ function renderTables(container, hands, allHands, excludedTables, onRerender) {
       });
     }
     var maxHands = Math.max.apply(null, tableRows.map(function(r) { return r.n; }).concat([1]));
-    tablesHtml += '<div class="sec-subtitle" style="margin-top:0;">Performance by Table</div>';
-    tablesHtml += '<div style="overflow-x:auto;"><table class="tbl-compare"><thead><tr>';
+    tablesHtml += '<div class="sec-subtitle mt-0">Performance by Table</div>';
+    tablesHtml += '<div class="overflow-x"><table class="tbl-compare"><thead><tr>';
     tablesHtml += '<th>Table</th><th>Blinds</th><th>Hands</th><th></th><th>' + tipWrap('Win Rate') + '</th><th>' + tipWrap('Net P&L') + '</th><th>' + tipWrap('VPIP') + '</th><th>' + tipWrap('Aggression') + '</th><th>' + tipWrap('Avg Pot') + '</th><th></th>';
     tablesHtml += '</tr></thead><tbody>';
     for (var ri = 0; ri < tableRows.length; ri++) {
       var r = tableRows[ri];
       var barW = Math.round(r.n / maxHands * 100);
       var isExcluded = excludedTables.has(String(r.tid));
-      tablesHtml += '<tr style="' + (isExcluded ? 'opacity:0.35;' : '') + '"><td>' + r.label + '</td><td style="color:var(--dim);font-size:10px;">' + r.blinds + '</td><td>' + r.n + '</td>';
+      tablesHtml += '<tr' + (isExcluded ? ' style="opacity:0.35;"' : '') + '><td>' + r.label + '</td><td class="text-dim" style="font-size:10px;">' + r.blinds + '</td><td>' + r.n + '</td>';
       tablesHtml += '<td style="width:80px;"><span class="tbl-spark" style="width:' + barW + '%;background:var(--gold2);"></span></td>';
       tablesHtml += '<td class="' + wrCls(r.wr) + '">' + (r.wr !== null ? r.wr + '%' : '—') + '</td>';
       tablesHtml += '<td class="' + pnlCls(r.net) + '">' + fmtPnl(r.net) + '</td>';
@@ -71,8 +71,8 @@ function renderTables(container, hands, allHands, excludedTables, onRerender) {
       var tblAvgPotDisp = r.tid !== 'unknown' && TABLE_META[r.tid]
         ? fmtBB(r.avgPot, TABLE_META[r.tid].bb)
         : fmt(r.avgPot);
-      tablesHtml += '<td style="color:var(--dim);">' + (r.avgPot > 0 ? tblAvgPotDisp : '—') + '</td>';
-      tablesHtml += '<td><button class="log-nav-btn exclude-table-btn" data-tid="' + r.tid + '" style="font-size:8px;padding:2px 6px;">' + (isExcluded ? 'Include' : 'Exclude') + '</button></td></tr>';
+      tablesHtml += '<td class="text-dim">' + (r.avgPot > 0 ? tblAvgPotDisp : '—') + '</td>';
+      tablesHtml += '<td><button class="log-nav-btn exclude-btn exclude-table-btn" data-tid="' + r.tid + '">' + (isExcluded ? 'Include' : 'Exclude') + '</button></td></tr>';
     }
     tablesHtml += '</tbody></table></div>';
 
@@ -99,7 +99,7 @@ function renderTables(container, hands, allHands, excludedTables, onRerender) {
         tIns2.push(insWithExample('a', 'Biggest Loss', bigLoss.label + ' at ' + fmtPnl(bigLoss.net) + '. Review whether leaks are table-specific or general.', [{ v: fmtPnl(bigLoss.net), hi: true }], exLossTable, 'A losing hand from ' + bigLoss.label + '. Check if you are playing too loose or calling too much at these stakes.'));
       }
     }
-    tablesHtml += '<div style="margin-top:24px;">' + renderInsights(tIns2, 'Tables', 'More data needed for table-level insights.') + '</div>';
+    tablesHtml += '<div class="mt-24">' + renderInsights(tIns2, 'Tables', 'More data needed for table-level insights.') + '</div>';
   }
   container.innerHTML = tablesHtml;
 
