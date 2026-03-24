@@ -145,7 +145,7 @@ function computeOpponentStats(hands, playerName) {
 }
 
 // Generate exploit insights based on opponent tendencies
-function generateExploitInsights(s, playerName) {
+function generateExploitInsights(s, playerName, hands) {
   var insights = [];
   var MIN_HANDS = 10;
   var EXPLOIT_HANDS = 20;
@@ -156,6 +156,9 @@ function generateExploitInsights(s, playerName) {
     ]));
     return insights;
   }
+
+  // Find example hands for each insight type
+  var examples = findInsightExamples(hands || [], playerName);
 
   var vpip = pct(s.vpipHands, s.hands);
   var pfr = pct(s.pfrHands, s.hands);
@@ -168,52 +171,52 @@ function generateExploitInsights(s, playerName) {
   // VPIP
   if (vpip !== null) {
     if (vpip >= 55) {
-      insights.push(ins('r', 'Very Loose', playerName + ' plays ' + vpip + '% of hands. They enter pots with weak holdings constantly.', [{ v: 'VPIP: ' + vpip + '%' }]));
+      insights.push(insWithExample('r', 'Very Loose', playerName + ' plays ' + vpip + '% of hands. They enter pots with weak holdings constantly.', [{ v: 'VPIP: ' + vpip + '%' }], examples.vpip, 'This hand shows ' + playerName + ' entering the pot — typical of their loose play style.'));
     } else if (vpip >= 40) {
-      insights.push(ins('a', 'Loose', playerName + ' plays ' + vpip + '% of hands. Wider than average, often with marginal cards.', [{ v: 'VPIP: ' + vpip + '%' }]));
+      insights.push(insWithExample('a', 'Loose', playerName + ' plays ' + vpip + '% of hands. Wider than average, often with marginal cards.', [{ v: 'VPIP: ' + vpip + '%' }], examples.vpip, 'Here ' + playerName + ' enters the pot with a marginal holding.'));
     } else if (vpip <= 18) {
-      insights.push(ins('a', 'Very Tight', playerName + ' only plays ' + vpip + '% of hands. When they enter, they have something.', [{ v: 'VPIP: ' + vpip + '%' }]));
+      insights.push(insWithExample('a', 'Very Tight', playerName + ' only plays ' + vpip + '% of hands. When they enter, they have something.', [{ v: 'VPIP: ' + vpip + '%' }], examples.vpip, 'One of the rare hands where ' + playerName + ' voluntarily entered the pot.'));
     }
   }
 
   // Limp
   if (limp !== null && limp >= 30) {
-    insights.push(ins('r', 'Limps Often', playerName + ' limps ' + limp + '% of hands. They rarely open-raise, preferring cheap flops.', [{ v: 'Limp: ' + limp + '%' }]));
+    insights.push(insWithExample('r', 'Limps Often', playerName + ' limps ' + limp + '% of hands. They rarely open-raise, preferring cheap flops.', [{ v: 'Limp: ' + limp + '%' }], examples.limp, playerName + ' limps in here instead of raising — a common pattern for them.'));
   }
 
   // Aggression
   if (agg !== null) {
     if (agg < 15) {
-      insights.push(ins('r', 'Passive', playerName + ' only raises ' + agg + '% of the time. Calls and checks dominate.', [{ v: 'Aggression: ' + agg + '%' }]));
+      insights.push(insWithExample('r', 'Passive', playerName + ' only raises ' + agg + '% of the time. Calls and checks dominate.', [{ v: 'Aggression: ' + agg + '%' }], examples.passive, 'Watch how ' + playerName + ' checks and calls through this hand instead of raising.'));
     } else if (agg >= 50) {
-      insights.push(ins('a', 'Aggressive', playerName + ' raises ' + agg + '% of the time. They apply pressure frequently.', [{ v: 'Aggression: ' + agg + '%' }]));
+      insights.push(insWithExample('a', 'Aggressive', playerName + ' raises ' + agg + '% of the time. They apply pressure frequently.', [{ v: 'Aggression: ' + agg + '%' }], examples.aggressive, playerName + ' applies pressure with raises throughout this hand.'));
     }
   }
 
   // Fold to raise
   if (foldToRaise !== null && s.facedRaise >= 5) {
     if (foldToRaise >= 65) {
-      insights.push(ins('r', 'Folds to Pressure', playerName + ' folds ' + foldToRaise + '% when raised. Aggression prints money against them.', [{ v: 'Fold to raise: ' + foldToRaise + '%' }]));
+      insights.push(insWithExample('r', 'Folds to Pressure', playerName + ' folds ' + foldToRaise + '% when raised. Aggression prints money against them.', [{ v: 'Fold to raise: ' + foldToRaise + '%' }], examples.foldToRaise, playerName + ' folds here when facing a raise — very exploitable.'));
     } else if (foldToRaise <= 25) {
-      insights.push(ins('a', 'Calls Everything', playerName + ' only folds ' + foldToRaise + '% to raises. Bluffing them is expensive.', [{ v: 'Fold to raise: ' + foldToRaise + '%' }]));
+      insights.push(insWithExample('a', 'Calls Everything', playerName + ' only folds ' + foldToRaise + '% to raises. Bluffing them is expensive.', [{ v: 'Fold to raise: ' + foldToRaise + '%' }], examples.callsRaise, playerName + ' calls the raise here — they almost never fold to aggression.'));
     }
   }
 
   // C-bet
   if (cbet !== null && s.cbetOpps >= 5) {
     if (cbet >= 75) {
-      insights.push(ins('a', 'Auto C-Bets', playerName + ' continuation bets ' + cbet + '% of the time. Their flop bets often mean nothing.', [{ v: 'C-bet: ' + cbet + '%' }]));
+      insights.push(insWithExample('a', 'Auto C-Bets', playerName + ' continuation bets ' + cbet + '% of the time. Their flop bets often mean nothing.', [{ v: 'C-bet: ' + cbet + '%' }], examples.cbet, playerName + ' fires a c-bet on the flop after raising preflop — they do this almost automatically.'));
     } else if (cbet <= 30) {
-      insights.push(ins('o', 'Honest C-Bets', playerName + ' only c-bets ' + cbet + '%. When they bet the flop after raising pre, believe them.', [{ v: 'C-bet: ' + cbet + '%' }]));
+      insights.push(insWithExample('o', 'Honest C-Bets', playerName + ' only c-bets ' + cbet + '%. When they bet the flop after raising pre, believe them.', [{ v: 'C-bet: ' + cbet + '%' }], examples.cbet, playerName + ' c-bets here — when they do this, they usually have a real hand.'));
     }
   }
 
   // WTSD
   if (wtsd !== null && s.sawFlop >= 10) {
     if (wtsd >= 55) {
-      insights.push(ins('a', 'Showdown Bound', playerName + ' goes to showdown ' + wtsd + '% of the time. They hate folding post-flop.', [{ v: 'WTSD: ' + wtsd + '%' }]));
+      insights.push(insWithExample('a', 'Showdown Bound', playerName + ' goes to showdown ' + wtsd + '% of the time. They hate folding post-flop.', [{ v: 'WTSD: ' + wtsd + '%' }], examples.showdown, playerName + ' hangs on all the way to showdown in this hand.'));
     } else if (wtsd <= 25) {
-      insights.push(ins('o', 'Gives Up Easy', playerName + ' only reaches showdown ' + wtsd + '%. Pressure on later streets works well.', [{ v: 'WTSD: ' + wtsd + '%' }]));
+      insights.push(insWithExample('o', 'Gives Up Easy', playerName + ' only reaches showdown ' + wtsd + '%. Pressure on later streets works well.', [{ v: 'WTSD: ' + wtsd + '%' }], examples.foldPostFlop, playerName + ' gives up post-flop here — sustained pressure works against them.'));
     }
   }
 
@@ -221,9 +224,9 @@ function generateExploitInsights(s, playerName) {
   if (s.reveals >= 5) {
     var weakPct = pct(s.showdownWeak, s.reveals);
     if (weakPct >= 60) {
-      insights.push(ins('r', 'Weak at Showdown', playerName + ' shows weak hands ' + weakPct + '% of the time. They call down light.', [{ v: weakPct + '% weak reveals' }]));
+      insights.push(insWithExample('r', 'Weak at Showdown', playerName + ' shows weak hands ' + weakPct + '% of the time. They call down light.', [{ v: weakPct + '% weak reveals' }], examples.weakReveal, playerName + ' reveals a weak hand here — they call down too light.'));
     } else if (weakPct <= 25) {
-      insights.push(ins('o', 'Strong at Showdown', playerName + ' shows strong hands ' + (100 - weakPct) + '% of the time. Respect their river calls.', [{ v: (100 - weakPct) + '% strong reveals' }]));
+      insights.push(insWithExample('o', 'Strong at Showdown', playerName + ' shows strong hands ' + (100 - weakPct) + '% of the time. Respect their river calls.', [{ v: (100 - weakPct) + '% strong reveals' }], examples.strongReveal, playerName + ' shows a strong hand — respect their showdown range.'));
     }
   }
 
@@ -262,6 +265,131 @@ function generateExploitInsights(s, playerName) {
   }
 
   return insights;
+}
+
+// Find one example hand for each insight type
+function findInsightExamples(hands, playerName) {
+  var ex = {
+    vpip: null, limp: null, passive: null, aggressive: null,
+    foldToRaise: null, callsRaise: null, cbet: null,
+    showdown: null, foldPostFlop: null, weakReveal: null, strongReveal: null
+  };
+
+  for (var i = hands.length - 1; i >= 0; i--) {
+    var h = hands[i];
+    var acts = parseActions(h.actions);
+    var playerActs = [];
+    for (var j = 0; j < acts.length; j++) {
+      if (acts[j].author === playerName) playerActs.push(acts[j]);
+    }
+    if (!playerActs.length) continue;
+
+    var raisedPre = false, calledPre = false, limpedPre = false;
+    var seenPostFlop = false, foldedPostFlop = false;
+    var raiseCount = 0, callCheckCount = 0;
+
+    for (var j = 0; j < playerActs.length; j++) {
+      var pa = playerActs[j];
+      if (pa.street === 'Preflop') {
+        if (pa.type === 'raise') raisedPre = true;
+        if (pa.type === 'call') calledPre = true;
+        if (pa.type === 'call' && !raisedPre) limpedPre = true;
+      }
+      if (pa.street !== 'Preflop') seenPostFlop = true;
+      if (pa.street !== 'Preflop' && pa.type === 'fold') foldedPostFlop = true;
+      if (pa.type === 'raise') raiseCount++;
+      if (pa.type === 'call' || pa.type === 'check') callCheckCount++;
+    }
+
+    // VPIP example: entered pot voluntarily
+    if (!ex.vpip && (raisedPre || calledPre)) ex.vpip = h;
+
+    // Limp example
+    if (!ex.limp && limpedPre) ex.limp = h;
+
+    // Passive example: mostly calls/checks, no raises
+    if (!ex.passive && callCheckCount >= 2 && raiseCount === 0) ex.passive = h;
+
+    // Aggressive example: multiple raises
+    if (!ex.aggressive && raiseCount >= 2) ex.aggressive = h;
+
+    // Fold to raise: player folded after facing a raise
+    if (!ex.foldToRaise) {
+      for (var j = 0; j < acts.length; j++) {
+        if (acts[j].author !== playerName && acts[j].type === 'raise') {
+          for (var k = j + 1; k < acts.length; k++) {
+            if (acts[k].street !== acts[j].street) break;
+            if (acts[k].author === playerName && acts[k].type === 'fold') {
+              ex.foldToRaise = h; break;
+            }
+            if (acts[k].author === playerName) break;
+          }
+          if (ex.foldToRaise) break;
+        }
+      }
+    }
+
+    // Calls raise: player called after facing a raise
+    if (!ex.callsRaise) {
+      for (var j = 0; j < acts.length; j++) {
+        if (acts[j].author !== playerName && acts[j].type === 'raise') {
+          for (var k = j + 1; k < acts.length; k++) {
+            if (acts[k].street !== acts[j].street) break;
+            if (acts[k].author === playerName && acts[k].type === 'call') {
+              ex.callsRaise = h; break;
+            }
+            if (acts[k].author === playerName) break;
+          }
+          if (ex.callsRaise) break;
+        }
+      }
+    }
+
+    // C-bet example: raised pre, bet flop
+    if (!ex.cbet && raisedPre && seenPostFlop) {
+      for (var j = 0; j < playerActs.length; j++) {
+        if (playerActs[j].street === 'Flop' && playerActs[j].type === 'raise') {
+          ex.cbet = h; break;
+        }
+      }
+    }
+
+    // Showdown example: went to showdown
+    if (!ex.showdown) {
+      var handHasShowdown = false;
+      for (var j = 0; j < (h.actions || []).length; j++) {
+        if ((h.actions[j] || '').indexOf(' reveals ') !== -1) { handHasShowdown = true; break; }
+      }
+      if (seenPostFlop && handHasShowdown && !foldedPostFlop) ex.showdown = h;
+    }
+
+    // Fold post-flop example
+    if (!ex.foldPostFlop && foldedPostFlop) ex.foldPostFlop = h;
+
+    // Reveal strength examples
+    for (var j = 0; j < (h.actions || []).length; j++) {
+      var line = h.actions[j] || '';
+      if (line.indexOf(playerName) !== -1 && line.indexOf(' reveals ') !== -1) {
+        var strengthMatch = line.match(/\(([^)]+)\)/);
+        if (strengthMatch) {
+          var strength = strengthMatch[1].toLowerCase();
+          var isStrong = strength.indexOf('two pair') !== -1 || strength.indexOf('three of a kind') !== -1 ||
+              strength.indexOf('straight') !== -1 || strength.indexOf('flush') !== -1 ||
+              strength.indexOf('full house') !== -1 || strength.indexOf('four of a kind') !== -1 ||
+              strength.indexOf('straight flush') !== -1 || strength.indexOf('royal flush') !== -1;
+          if (!ex.weakReveal && !isStrong) ex.weakReveal = h;
+          if (!ex.strongReveal && isStrong) ex.strongReveal = h;
+        }
+      }
+    }
+
+    // Early exit if we have all examples
+    if (ex.vpip && ex.limp && ex.passive && ex.aggressive && ex.foldToRaise &&
+        ex.callsRaise && ex.cbet && ex.showdown && ex.foldPostFlop &&
+        ex.weakReveal && ex.strongReveal) break;
+  }
+
+  return ex;
 }
 
 function renderPlayers(container, d, hands) {
@@ -442,7 +570,7 @@ function renderPlayers(container, d, hands) {
         ph += renderMiniRow(minis);
 
         // ── Exploit insights ──
-        var exploitIns = generateExploitInsights(oppStats, playerName);
+        var exploitIns = generateExploitInsights(oppStats, playerName, hands);
         if (exploitIns.length) {
           ph += '<div class="ins-grid mb-16">' + exploitIns.join('') + '</div>';
         }
@@ -456,10 +584,10 @@ function renderPlayers(container, d, hands) {
         ph += '<div class="flex-gap-6 mb-8" style="justify-content:flex-end;">' +
           renderPagination(phPage, playerHands.length, PH_SIZE, 'ph-prev', 'ph-next') + '</div>';
       }
-      ph += '<div class="hrow hrow-header"><div class="hrow-pos">Pos</div><div class="hrow-cards">Cards</div><div class="hrow-board">Board</div><div class="hrow-acts">Actions</div><div class="hrow-res">Result</div></div>';
-      ph += '<div class="hlog">' + page.map(function(h, pi) {
+      ph += '<div class="overflow-x"><table class="tbl hlog-tbl"><thead><tr><th>Pos</th><th>Cards</th><th>Board</th><th>Actions</th><th>Result</th></tr></thead><tbody>';
+      ph += page.map(function(h, pi) {
         return renderHandRow(h, start + pi, null).replace('data-hand-idx', 'data-ph-idx');
-      }).join('') + '</div>';
+      }).join('') + '</tbody></table></div>';
       container.innerHTML = ph;
       document.getElementById('players-back').onclick = function() { renderPlayerList(); };
       container.querySelectorAll('.hrow[data-ph-idx]').forEach(function(row) {
