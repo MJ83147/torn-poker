@@ -1,0 +1,348 @@
+/* ══════════════════════════════════════════════════════════════
+   MOBILE RESPONSIVE — Zero horizontal scroll, everything stacks
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── GLOBAL: kill horizontal overflow ── */
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+/* ── TABLET (<=768px) ── */
+@media (max-width: 768px) {
+
+  /* Welcome body stacks */
+  .welcome-body { grid-template-columns: 1fr; gap: 20px; }
+  .welcome-tips { margin-top: 0; }
+
+  /* Header */
+  .dash-header { padding: 0 14px; }
+  .header-inner {
+    flex-wrap: wrap;
+    padding: 10px 0 0;
+    gap: 8px;
+  }
+  .header-title { font-size: 17px; flex: 1 1 auto; }
+
+  /* Hero strip: 2-row wrap */
+  .hero-strip { flex-wrap: wrap; }
+  .hs { min-width: 33%; flex: 1 1 30%; padding: 10px 12px; }
+  .hs-v { font-size: 18px; }
+  .hs-l { font-size: 10px; letter-spacing: 2px; }
+
+  /* Tabs: horizontal scroll instead of wrap to avoid huge stacked block */
+  .tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab { padding: 10px 14px; font-size: 11px; letter-spacing: 1px; flex-shrink: 0; }
+
+  /* Panels */
+  .panel { padding: 24px 16px; }
+
+  /* Paste screen */
+  #paste-wrap { padding: 40px 16px; }
+  .paste-box { padding: 28px 18px; }
+  .paste-suit { font-size: 34px; }
+  .paste-title { font-size: 20px; }
+
+  /* Grid layouts */
+  .two-col, .ins-grid { grid-template-columns: 1fr; }
+  .two-col { gap: 16px; }
+
+  /* Insight grid: force single column so cards don't overflow */
+  .ins-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Bar rows */
+  .bw2 { grid-template-columns: 90px 1fr 45px; }
+  .bw3 { grid-template-columns: 90px 1fr 45px 50px; }
+  .bar-label { font-size: 11px; }
+
+  /* Hand log table */
+  .hlog-tbl { font-size: 11px; }
+  .hlog-tbl .hrow-board { display: none; }
+
+  /* Range grid */
+  .rc span { font-size: 8px; }
+  .rc:hover { transform: scale(1.3); }
+
+  /* Tables: allow horizontal scroll within panel */
+  .tbl { font-size: 11px; }
+  .tbl td { padding: 8px 8px 8px 0; font-size: 11px; }
+  .tbl th { font-size: 10px; padding: 0 8px 8px 0; }
+  .overflow-x { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  /* Modal */
+  .modal-box { padding: 18px; width: 94vw; }
+
+  /* Mini stats */
+  .mini-row { grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 8px; }
+  .mini { padding: 10px 12px; }
+  .mini-v { font-size: 20px; }
+
+  /* Insight cards: stop text being pushed off-screen by badge */
+  .ins { overflow: hidden; }
+  .ins-text { padding-right: 60px; word-break: break-word; }
+  .ins-label { padding-right: 60px; }
+
+  /* Loader */
+  .l-sub { margin-bottom: 32px; }
+  .l-count { font-size: 42px; }
+
+  /* Buttons - better touch targets */
+  .log-nav-btn { padding: 8px 14px; font-size: 11px; }
+  .example-hand-btn { padding: 6px 12px; font-size: 11px; }
+  .reset-btn { padding: 8px 14px; font-size: 11px; }
+
+  /* Trends: stack on tablet */
+  .trends-grid { grid-template-columns: 1fr; }
+
+  /* Paste nav */
+  .paste-nav { padding: 12px 14px 0; gap: 16px; }
+
+  /* Profile CTA card: stack */
+  .profile-cta-card { flex-direction: column; gap: 16px; padding: 20px; }
+
+  /* Welcome TOC rows: stack name above description */
+  .welcome-toc-row {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  /* Chart containers: contain within viewport */
+  .chart-wrap, .chart-wrap-full {
+    max-width: 100%;
+  }
+
+  /* Saved hands: single column */
+  .saved-hands-list {
+    grid-template-columns: 1fr;
+  }
+
+  /* HIW modal */
+  .hiw-box { max-width: 94vw; padding: 20px; }
+  .hiw-feat {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+}
+
+/* ── PHONE (<=480px) ── */
+@media (max-width: 480px) {
+
+  body { font-size: 13px; }
+
+  /* Header: stack title and controls vertically */
+  .dash-header { padding: 0 10px; }
+  .header-inner {
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 8px 0 0;
+  }
+  .header-title {
+    font-size: 15px;
+    width: 100%;
+  }
+  .header-controls {
+    width: 100%;
+    gap: 6px;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+  .header-meta { font-size: 11px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+
+  /* Hero strip: 2 per row */
+  .hero-strip { flex-wrap: wrap; }
+  .hs { min-width: 48%; flex: 1 1 48%; padding: 8px 10px; }
+  .hs-v { font-size: 16px; }
+  .hs-l { font-size: 9px; letter-spacing: 1.5px; margin-bottom: 3px; }
+
+  /* Tabs: horizontal scroll, compact */
+  .tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab {
+    padding: 8px 10px;
+    font-size: 10px;
+    letter-spacing: 1px;
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+
+  /* Panels */
+  .panel { padding: 16px 10px; }
+
+  /* Paste screen */
+  .paste-nav { padding: 10px 10px 0; gap: 12px; flex-wrap: wrap; }
+  #paste-wrap { padding: 24px 10px; }
+  .paste-box { padding: 20px 14px; }
+  .paste-suit { font-size: 28px; margin-bottom: 10px; }
+  .paste-title { font-size: 18px; }
+  .paste-sub { font-size: 11px; margin-bottom: 16px; }
+  .go-btn { padding: 12px; font-size: 15px; width: 100%; }
+  textarea#jin { font-size: 11px; min-height: 70px; padding: 10px; }
+
+  /* Bar rows: stack label above bar */
+  .bw2 { grid-template-columns: 1fr 45px; }
+  .bw3 { grid-template-columns: 1fr 45px 50px; }
+  .bar-label {
+    grid-column: 1 / -1;
+    font-size: 11px;
+    margin-bottom: -4px;
+  }
+
+  /* Hand log table: compact */
+  .hlog-tbl td { padding: 7px 6px 7px 0; font-size: 11px; }
+  .hlog-tbl .hrow-board { display: none; }
+  .hlog-tbl .hrow-acts { font-size: 10px; max-width: 120px; }
+  .hlog-tbl .hrow-pos { font-size: 11px; }
+
+  /* Range grid: tighter */
+  .range-grid { gap: 1px; }
+  .rc span { font-size: 7px; }
+  .range-grid-sm .rc span { font-size: 6px; }
+  .rc:hover { transform: scale(1.2); }
+  .range-legend { gap: 6px; }
+  .leg { font-size: 10px; }
+
+  /* Mini stats: tight grid that fits */
+  .mini-row {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+  .mini { padding: 8px 10px; }
+  .mini-l { font-size: 10px; letter-spacing: 1px; margin-bottom: 4px; }
+  .mini-v { font-size: 18px; }
+
+  /* Tables: horizontal scroll wrapper */
+  .tbl td { padding: 7px 6px 7px 0; font-size: 11px; }
+  .tbl th { font-size: 9px; padding: 0 6px 6px 0; letter-spacing: 1px; }
+
+  /* Insight cards: full-width, no badge overlap */
+  .ins { padding: 12px; position: relative; }
+  .ins-text { font-size: 13px; padding-right: 0; padding-top: 22px; word-break: break-word; }
+  .ins-label { font-size: 10px; padding-right: 0; padding-top: 22px; }
+  .ins-badge { top: 10px; right: 8px; font-size: 9px; }
+
+  /* Section subtitles */
+  .sec-subtitle { font-size: 11px; letter-spacing: 2px; }
+
+  /* Modal */
+  .modal-box {
+    width: 96vw;
+    padding: 14px;
+    max-height: 85vh;
+  }
+  .modal-title { font-size: 16px; }
+  .modal-hand-meta { flex-wrap: wrap; gap: 8px; }
+  .modal-close { top: 8px; right: 10px; }
+  .modal-star-btn { top: 4px; right: 36px; font-size: 18px; }
+
+  /* Buttons: 44px min touch target */
+  .log-nav-btn { padding: 10px 16px; font-size: 11px; min-height: 40px; }
+  .example-hand-btn { padding: 8px 14px; font-size: 10px; min-height: 36px; }
+  .reset-btn { padding: 10px 16px; font-size: 11px; }
+  .table-filter { font-size: 11px; padding: 8px 10px; max-width: 140px; }
+
+  /* BB toggle: compact */
+  .bb-toggle { font-size: 11px; }
+  .bb-opt { padding: 4px 7px; }
+
+  /* Loader */
+  .l-eyebrow { font-size: 10px; letter-spacing: 4px; }
+  .l-title { font-size: clamp(28px, 8vw, 40px); }
+  .l-sub { font-size: 10px; letter-spacing: 3px; margin-bottom: 28px; }
+  .l-count { font-size: 36px; min-width: 80px; }
+  .l-prog { width: 140px; }
+  .lc { width: 40px; height: 56px; font-size: 16px; }
+  .l-cards { gap: 8px; margin-bottom: 32px; }
+
+  /* Tooltip: clamp to viewport */
+  .tooltip .tip-box { max-width: 200px; min-width: 120px; font-size: 11px; }
+
+  /* Divider */
+  .divider { margin: 16px 0; }
+
+  /* Stack bar labels */
+  .stack-labels { gap: 10px; flex-wrap: wrap; }
+  .stack-li { font-size: 12px; }
+
+  /* Hand type stacks */
+  .ht-stack-name { font-size: 12px; }
+  .ht-stack-meta { font-size: 11px; }
+  .ht-stack-legend { gap: 10px; flex-wrap: wrap; }
+  .ht-leg-item { font-size: 10px; }
+
+  /* Chip tags */
+  .chip { font-size: 10px; padding: 2px 6px; }
+
+  /* Welcome: tighter on phone */
+  .welcome-body { gap: 16px; }
+  .welcome-intro-heading { font-size: 22px; }
+  .welcome-toc-row {
+    grid-template-columns: 1fr;
+    gap: 2px;
+    padding: 10px 12px;
+  }
+  .welcome-toc-name { font-size: 12px; }
+  .welcome-toc-desc { font-size: 11px; }
+
+  /* Profile */
+  .profile-cta-card { flex-direction: column; gap: 12px; padding: 16px; }
+  .profile-cta-suit { font-size: 32px; }
+  .profile-stat-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* Players table scroll */
+  .players-table-scroll {
+    max-height: 280px;
+  }
+
+  /* Saved hands: single column, smaller cards */
+  .saved-hands-list {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .saved-card { padding: 12px; }
+
+  /* HIW modal */
+  .hiw-box { max-width: 96vw; padding: 16px; }
+  .hiw-step { column-gap: 10px; }
+  .hiw-feat {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+  .hiw-feat-name { font-size: 12px; }
+  .hiw-feat-desc { font-size: 12px; }
+  .hiw-footer { font-size: 11px; }
+}
+
+/* ── WIDE DESKTOP ── */
+@media (min-width: 1200px) {
+  .mini-row {
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  }
+  .saved-hands-list {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  }
+}
+
+@media (min-width: 1600px) {
+  .panel {
+    padding: 36px 60px;
+  }
+  .dash-header {
+    padding: 0 60px;
+  }
+}
