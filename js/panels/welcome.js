@@ -27,6 +27,7 @@ function renderWelcome(container, d, hands, meta) {
     '<div class="welcome-intro-heading">Welcome back, ' + meta.player + '</div>' +
     '<div class="welcome-intro-sub">' + d.n + ' hands loaded. Here\'s what each tab shows.</div>' +
     '</div>' +
+    '<div class="welcome-body">' +
     '<div class="welcome-toc">' +
     tabDescs.map(function(t) {
       return '<div class="welcome-toc-row" data-goto="' + t.tab + '">' +
@@ -40,6 +41,7 @@ function renderWelcome(container, d, hands, meta) {
     tips.map(function(t) {
       return '<div class="welcome-tip">' + t + '</div>';
     }).join('') +
+    '</div>' +
     '</div>' +
     '</div>';
 

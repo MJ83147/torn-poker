@@ -1528,7 +1528,12 @@ textarea#jin:focus {
 }
 /* WELCOME TAB */
 .welcome-wrap {
-  max-width: 640px;
+  max-width: 900px;
+}
+.welcome-body {
+  display: flex;
+  gap: 32px;
+  align-items: flex-start;
 }
 .welcome-intro {
   margin-bottom: 28px;
@@ -1547,6 +1552,8 @@ textarea#jin:focus {
 .welcome-toc {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-width: 0;
 }
 .welcome-toc-row {
   display: grid;
@@ -1574,7 +1581,8 @@ textarea#jin:focus {
   line-height: 1.5;
 }
 .welcome-tips {
-  margin-top: 28px;
+  width: 220px;
+  flex-shrink: 0;
 }
 .welcome-tips-title {
   font-size: 11px;
@@ -1710,6 +1718,10 @@ textarea#jin:focus {
 
 /* ---------- Tablet & small desktop (<=768px) ---------- */
 @media (max-width: 768px) {
+
+  /* Welcome body stacks on mobile */
+  .welcome-body { flex-direction: column; }
+  .welcome-tips { width: 100%; margin-top: 24px; }
 
   /* Header */
   .dash-header { padding: 0 14px; }
