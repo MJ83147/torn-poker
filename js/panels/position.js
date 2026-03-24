@@ -1,9 +1,15 @@
 // ── POSITION PANEL ────────────────────────────────────────────────────────────
 
+var _positionChart = null;
+
 function renderPosition(container, d, hands) {
+  if (_positionChart) { _positionChart.destroy(); _positionChart = null; }
+
   var posOrder = ['UTG', 'UTG+1', 'MP', 'HJ', 'CO', 'BTN', 'SB', 'BB'];
+  var activePosOrder = posOrder.filter(function(p) { return d.posMap[p] && d.posMap[p].hands > 0; });
+
   var posHtml = '<div style="overflow-x:auto;margin-bottom:24px;"><table class="tbl"><thead><tr><th>Position</th><th>Hands</th><th>' + tipWrap('VPIP') + '</th><th>' + tipWrap('Fold Pre') + '</th><th>' + tipWrap('Win Rate') + '</th><th>' + tipWrap('Net P&L') + '</th><th>' + tipWrap('Avg Pot') + '</th></tr></thead><tbody>';
-  posHtml += posOrder.filter(function(p) { return d.posMap[p] && d.posMap[p].hands > 0; }).map(function(p) {
+  posHtml += activePosOrder.map(function(p) {
     var s = d.posMap[p];
     var vp2 = pct(s.vpip, s.hands);
     var fp2 = pct(s.foldPre, s.hands);
@@ -15,6 +21,12 @@ function renderPosition(container, d, hands) {
     return '<tr><td>' + tipWrap(p) + '</td><td>' + s.hands + '</td><td>' + (vp2 !== null ? vp2 + '%' : '—') + '</td><td>' + (fp2 !== null ? fp2 + '%' : '—') + '</td><td>' + (wr2 !== null ? wr2 + '%' : '—') + '</td><td style="color:' + pnlColor(s.pnl) + '">' + fmtPnl(s.pnl) + '</td><td>' + avgPotDisplay + '</td></tr>';
   }).join('');
   posHtml += '</tbody></table></div>';
+
+  // Chart: Win Rate & VPIP by Position
+  if (activePosOrder.length >= 2) {
+    posHtml += '<div class="sec-subtitle">Win Rate & VPIP by Position</div>';
+    posHtml += '<div style="position:relative;width:100%;max-width:720px;"><canvas id="position-chart"></canvas></div>';
+  }
 
   var pIns = [];
   var earlyH = ['UTG', 'UTG+1', 'MP'];
@@ -93,4 +105,96 @@ function renderPosition(container, d, hands) {
   }
   posHtml += renderInsights(pIns, 'Position', 'More hands needed for positional patterns.');
   container.innerHTML = posHtml;
+
+  // ── Render Chart.js chart ──
+  var canvas = document.getElementById('position-chart');
+  if (!canvas || activePosOrder.length < 2) return;
+
+  var styles = getComputedStyle(document.documentElement);
+  var dimColor = styles.getPropertyValue('--dim').trim() || '#666';
+  var borderColor = styles.getPropertyValue('--border').trim() || '#333';
+  var greenColor = styles.getPropertyValue('--green').trim() || '#2ecc71';
+  var goldColor = styles.getPropertyValue('--gold').trim() || '#f1c40f';
+
+  var wrData = activePosOrder.map(function(p) { return pct(d.posMap[p].won, d.posMap[p].hands) || 0; });
+  var vpipData = activePosOrder.map(function(p) { return pct(d.posMap[p].vpip, d.posMap[p].hands) || 0; });
+  var handCounts = activePosOrder.map(function(p) { return d.posMap[p].hands; });
+
+  _positionChart = new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels: activePosOrder,
+      datasets: [
+        {
+          label: 'Win Rate',
+          data: wrData,
+          backgroundColor: greenColor + '99',
+          borderColor: greenColor,
+          borderWidth: 1,
+          borderRadius: 4,
+        },
+        {
+          label: 'VPIP',
+          data: vpipData,
+          backgroundColor: goldColor + '99',
+          borderColor: goldColor,
+          borderWidth: 1,
+          borderRadius: 4,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      aspectRatio: 2.8,
+      plugins: {
+        legend: {
+          display: true,
+          position: 'top',
+          align: 'start',
+          labels: {
+            color: dimColor,
+            font: { family: 'IBM Plex Mono', size: 11 },
+            boxWidth: 14,
+            boxHeight: 2,
+            padding: 16,
+          },
+        },
+        tooltip: {
+          backgroundColor: 'rgba(20,20,28,0.95)',
+          titleColor: '#aaa',
+          bodyColor: '#eee',
+          borderColor: borderColor,
+          borderWidth: 1,
+          titleFont: { family: 'IBM Plex Mono', size: 11 },
+          bodyFont: { family: 'IBM Plex Mono', size: 11 },
+          padding: 10,
+          callbacks: {
+            label: function(ctx) {
+              return ' ' + ctx.dataset.label + ': ' + ctx.parsed.y + '% (' + handCounts[ctx.dataIndex] + ' hands)';
+            },
+          },
+        },
+      },
+      scales: {
+        x: {
+          ticks: {
+            color: dimColor,
+            font: { family: 'IBM Plex Mono', size: 10 },
+          },
+          grid: { color: 'transparent' },
+          border: { color: borderColor },
+        },
+        y: {
+          ticks: {
+            color: dimColor,
+            font: { family: 'IBM Plex Mono', size: 9 },
+            callback: function(val) { return val + '%'; },
+          },
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          border: { display: false },
+        },
+      },
+    },
+  });
 }
