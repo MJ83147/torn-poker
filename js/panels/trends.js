@@ -64,7 +64,9 @@ function renderTrends(container, hands, meta) {
     { id: 'trend-pnl', title: 'Cumulative Net P&L (Cash Only)', key: 'netPnl', color: greenColor, suffix: '', baseline: 0 },
   ];
 
-  var tHtml = '<div class="trends-grid">';
+  var tHtml = '<div class="panel-title">Trends</div>';
+  tHtml += '<div class="panel-desc">Session-over-session charts for win rate, VPIP, and P&L.</div>';
+  tHtml += '<div class="p-row"><div class="trends-grid">';
   for (var ci = 0; ci < chartConfigs.length; ci++) {
     var cfg = chartConfigs[ci];
     var vals = points.map(function(p) { return p[cfg.key]; }).filter(function(v) { return v !== null; });
@@ -72,9 +74,9 @@ function renderTrends(container, hands, meta) {
     tHtml += '<div><div class="sec-subtitle mt-0">' + cfg.title + '</div>' +
       '<div class="chart-wrap-full"><canvas id="' + cfg.id + '"></canvas></div></div>';
   }
-  tHtml += '</div>';
+  tHtml += '</div></div>';
 
-  tHtml += '<div class="sec-subtitle">Session Breakdown</div>';
+  tHtml += '<div class="p-row"><div class="sec-subtitle mt-0">Session Breakdown</div>';
   tHtml += '<div class="overflow-x"><table class="tbl"><thead><tr><th>Date</th><th>Hands</th><th>Session ' + tipWrap('Win Rate') + '</th><th>Cumulative ' + tipWrap('Win Rate') + '</th><th>' + tipWrap('VPIP') + '</th><th>' + tipWrap('Aggression') + '</th></tr></thead><tbody>';
   for (var pi = points.length - 1; pi >= 0; pi--) {
     var pt = points[pi];
@@ -85,7 +87,7 @@ function renderTrends(container, hands, meta) {
       '<td>' + (pt.vpip !== null ? pt.vpip + '%' : '—') + '</td>' +
       '<td>' + (pt.agg !== null ? pt.agg + '%' : '—') + '</td></tr>';
   }
-  tHtml += '</tbody></table></div>';
+  tHtml += '</tbody></table></div></div>';
 
   var tIns = [];
   if (points.length >= 3) {
@@ -115,7 +117,7 @@ function renderTrends(container, hands, meta) {
       }
     }
   }
-  tHtml += renderInsights(tIns, 'Trends', 'Keep tracking to build up enough data points for trend insights.');
+  tHtml += '<div class="p-row">' + renderInsights(tIns, 'Trends', 'Keep tracking to build up enough data points for trend insights.') + '</div>';
   container.innerHTML = tHtml;
 
   // ── Render Chart.js charts ──

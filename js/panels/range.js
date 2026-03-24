@@ -149,9 +149,11 @@ function renderRange(container, d, hands) {
     return '<option value="' + (p === 'All Positions' ? 'all' : p) + '">' + p + '</option>';
   }).join('');
   container.innerHTML =
-    '<div class="flex-gap-6 mb-16">' +
+    '<div class="panel-title">Range</div>' +
+    '<div class="panel-desc">Full 13x13 hand grid with win rate for every combo.</div>' +
+    '<div class="p-row"><div class="flex-gap-6 mb-16">' +
     '<select id="range-pos-filter" class="table-filter">' + posOpts + '</select>' +
-    '</div><div id="range-grids"></div>';
+    '</div><div id="range-grids"></div></div>';
   renderRangeGrids(rc);
 
   // Position filter change handler

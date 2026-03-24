@@ -133,14 +133,14 @@ function renderShowdown(container, hands, meta) {
   insHtml += '</div>';
 
   // ── Pot Size Analysis ──
-  var potHtml = '<div class="sec-subtitle mt-32">Average Pot Size by Outcome</div>';
-  potHtml += '<div class="chart-wrap-full"><canvas id="pot-size-chart"></canvas></div>';
+  var potHtml = '<div class="sec-subtitle mt-0">Average Pot Size by Outcome</div>';
 
   // Pot size stat cards
   var avgWinPot = (potSdWin.length + potNsdWin.length) > 0 ? avg(potSdWin.concat(potNsdWin)) : 0;
   var avgLossPot = (potSdLoss.length + potNsdLoss.length) > 0 ? avg(potSdLoss.concat(potNsdLoss)) : 0;
   var winLossRatio = avgLossPot > 0 ? (avgWinPot / avgLossPot).toFixed(2) : null;
 
+  potHtml += '<div class="two-col"><div><div class="chart-wrap"><canvas id="pot-size-chart"></canvas></div></div><div>';
   potHtml += '<div class="mini-row" style="grid-template-columns:repeat(3,1fr);">';
 
   potHtml += '<div class="mini">';
@@ -161,7 +161,7 @@ function renderShowdown(container, hands, meta) {
   potHtml += '<div class="mini-meta">Target: above 1.0x</div>';
   potHtml += '</div>';
 
-  potHtml += '</div>';
+  potHtml += '</div></div></div>';
 
   // Pot size insights
   var potInsHtml = '<div class="ins-grid">';
@@ -212,12 +212,14 @@ function renderShowdown(container, hands, meta) {
   potInsHtml += '</div>';
 
   // Assemble HTML
-  var html = '<div class="sec-subtitle mt-0">Showdown vs Non-Showdown P&L</div>';
+  var html = '<div class="panel-title">Showdown</div>';
+  html += '<div class="panel-desc">Showdown vs non-showdown P&L breakdown.</div>';
+  html += '<div class="p-row"><div class="sec-subtitle mt-0">Showdown vs Non-Showdown P&L</div>';
   html += '<div class="chart-wrap-full"><canvas id="showdown-chart"></canvas></div>';
-  html += statsHtml;
-  html += insHtml;
-  html += potHtml;
-  html += potInsHtml;
+  html += statsHtml + '</div>';
+  html += '<div class="p-row">' + insHtml + '</div>';
+  html += '<div class="p-row">' + potHtml + '</div>';
+  html += '<div class="p-row">' + potInsHtml + '</div>';
 
   container.innerHTML = html;
 

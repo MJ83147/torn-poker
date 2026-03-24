@@ -322,16 +322,16 @@ function renderPlayers(container, d, hands) {
     var watched = getWatchedPlayers();
     var maxH = Math.max.apply(null, filtered.map(function(o) { return o.hands; }));
     var watchedOpps = filtered.filter(function(o) { return watched.indexOf(o.name) >= 0; });
-    var html = '';
+    var html = '<div class="panel-title">Players</div>';
+    html += '<div class="panel-desc">Opponent records, head-to-head stats, and watch list.</div>';
 
     if (watchedOpps.length) {
-      html += '<div class="sec-subtitle mt-0">Watched Players</div>';
+      html += '<div class="p-row"><div class="sec-subtitle mt-0">Watched Players</div>';
       html += '<div class="meta-text-mb">Click star to unwatch · click row to view hands</div>';
       html += '<div class="overflow-x"><table class="tbl"><thead><tr>';
       html += '<th></th><th>Player</th><th>Hands</th><th></th><th>' + tipWrap('Win Rate') + '</th><th>Net P&L</th>';
       html += '</tr></thead><tbody>';
       for (var w = 0; w < watchedOpps.length; w++) {
-
         var o = watchedOpps[w];
         var wr = pct(o.won, o.won + o.lost);
         var barW = Math.round(o.hands / maxH * 100);
@@ -342,7 +342,7 @@ function renderPlayers(container, d, hands) {
         html += '<td class="' + wrCls(wr) + '">' + (wr !== null ? wr + '%' : '—') + '</td>';
         html += '<td class="' + pnlCls(o.profit) + '">' + fmtPnl(o.profit) + '</td></tr>';
       }
-      html += '</tbody></table></div><div class="mb-24"></div>';
+      html += '</tbody></table></div></div>';
     }
 
     var pIns = [];
@@ -359,9 +359,9 @@ function renderPlayers(container, d, hands) {
     }
     if (best) pIns.push(ins('g', 'Best Record', 'You win ' + pct(best.won, best.won + best.lost) + '% against ' + best.name + ' (' + (best.won + best.lost) + ' contested hands).', [{ v: best.name, hi: true }, { v: pct(best.won, best.won + best.lost) + '% win' }]));
     if (worst && worst !== best) pIns.push(ins('r', 'Toughest Opponent', 'Only ' + pct(worst.won, worst.won + worst.lost) + '% win rate against ' + worst.name + ' (' + (worst.won + worst.lost) + ' contested hands).', [{ v: worst.name, hi: true }, { v: pct(worst.won, worst.won + worst.lost) + '% win' }]));
-    if (pIns.length) html += '<div class="ins-grid mt-20 mb-20">' + pIns.join('') + '</div>';
+    if (pIns.length) html += '<div class="p-row"><div class="ins-grid">' + pIns.join('') + '</div></div>';
 
-    html += '<div class="sec-subtitle">All Opponents</div>';
+    html += '<div class="p-row"><div class="sec-subtitle mt-0">All Opponents</div>';
     html += '<div class="meta-text-mb">' + filtered.length + ' opponents with 2+ shared hands · click star to watch · click row to view hands</div>';
     html += '<div class="players-table-scroll"><table class="tbl"><thead><tr>';
     html += '<th></th><th>Player</th><th>Hands</th><th></th><th>' + tipWrap('Win Rate') + '</th><th>Net P&L</th>';
@@ -378,7 +378,7 @@ function renderPlayers(container, d, hands) {
       html += '<td class="' + wrCls(wr2) + '">' + (wr2 !== null ? wr2 + '%' : '—') + '</td>';
       html += '<td class="' + pnlCls(o2.profit) + '">' + fmtPnl(o2.profit) + '</td></tr>';
     }
-    html += '</tbody></table></div>';
+    html += '</tbody></table></div></div>';
     container.innerHTML = html;
 
     container.querySelectorAll('.watch-star').forEach(function(star) {

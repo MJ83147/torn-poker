@@ -17,9 +17,9 @@ function renderBets(container, d, hands) {
       ? avg(d.betAmtsBB[s]) : avg(d.betAmts[s]);
   });
   var maxAvg = Math.max(betDisplay.Preflop, betDisplay.Flop, betDisplay.Turn, betDisplay.River, 1);
-  var betHtml = '<div class="sec-subtitle mt-0">Bet Sizing</div>';
-  betHtml += '<div class="meta-text mb-16">Your average bet sizes and betting frequency by street.</div>';
-  betHtml += '<div class="two-col mb-24">';
+  var betHtml = '<div class="panel-title">Bets</div>';
+  betHtml += '<div class="panel-desc">Average bet sizing across streets.</div>';
+  betHtml += '<div class="p-row"><div class="two-col">';
   betHtml += '<div><div class="sec-subtitle">Average bet size by street</div><div class="bar-group">' +
     betStreets.filter(function(s) { return betDisplay[s] > 0; }).map(function(s) {
       return barRow(s, betDisplay[s], maxAvg, 'o', fmtAvgAmount(d.betAmts[s], d.betAmtsBB ? d.betAmtsBB[s] : []), d.betAmts[s] ? d.betAmts[s].length + ' bets' : '');
@@ -32,7 +32,7 @@ function renderBets(container, d, hands) {
       var cls = fp2 < 25 ? 'r' : fp2 > 65 ? 'a' : 'g';
       return barRow(s, fp2 || 0, 100, cls, (fp2 !== null ? fp2 + '%' : '—'), bo.b + '/' + bo.t + ' opps');
     }).filter(Boolean).join('') + '</div></div>';
-  betHtml += '</div>';
+  betHtml += '</div></div>';
 
   var bIns = [];
   if (d.avgBetFlop > 0) {
@@ -82,6 +82,6 @@ function renderBets(container, d, hands) {
       v: fbo.b + '/' + fbo.t + ' opportunities',
     }], exFlopPassive, 'On this flop you checked or called instead of betting. Betting puts opponents on the defensive and charges draws. In TC where players call wide, you want to be the one setting the price.'));
   }
-  betHtml += renderInsights(bIns, 'Bets', 'More hands needed for bet sizing patterns.');
+  betHtml += '<div class="p-row">' + renderInsights(bIns, 'Bets', 'More hands needed for bet sizing patterns.') + '</div>';
   container.innerHTML = betHtml;
 }

@@ -4,10 +4,9 @@ function renderCards(container, d, hands) {
   var htOrder = ['Pocket Pairs', 'Broadway', 'Ace-Rag', 'Suited Connectors', 'Suited', 'Connectors', 'Offsuit Trash'];
   var htData = htOrder.filter(function(ht) { return d.htMap[ht]; });
   var maxDealt = htData.length ? Math.max.apply(null, htData.map(function(ht) { return d.htMap[ht].dealt; })) : 1;
-  var cardsHtml = '<div>';
-  cardsHtml += '<div class="sec-subtitle mt-0">Hand Type Breakdown</div>';
-  cardsHtml += '<div class="meta-text mb-16">How often each hand category is dealt, played, and won.</div>';
-  cardsHtml += '<div>';
+  var cardsHtml = '<div class="panel-title">Cards</div>';
+  cardsHtml += '<div class="panel-desc">Win rates by hand type: pairs, broadway, suited connectors, and more.</div>';
+  cardsHtml += '<div class="p-row">';
   // Legend
   cardsHtml += '<div class="ht-stack-legend">' +
     '<div class="ht-leg-item"><div class="ht-leg-sw leg-sw-won"></div>Won</div>' +
@@ -120,7 +119,7 @@ function renderCards(container, d, hands) {
       { v: worstHT.ht + ': ' + worstHT.wr + '%' },
     ]));
   }
-  cardsHtml += renderInsights(cIns, 'Cards', 'More hands needed for card-type breakdowns.');
   cardsHtml += '</div>';
+  cardsHtml += '<div class="p-row">' + renderInsights(cIns, 'Cards', 'More hands needed for card-type breakdowns.') + '</div>';
   container.innerHTML = cardsHtml;
 }

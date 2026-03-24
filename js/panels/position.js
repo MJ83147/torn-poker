@@ -8,9 +8,9 @@ function renderPosition(container, d, hands) {
   var posOrder = ['UTG', 'UTG+1', 'MP', 'HJ', 'CO', 'BTN', 'SB', 'BB'];
   var activePosOrder = posOrder.filter(function(p) { return d.posMap[p] && d.posMap[p].hands > 0; });
 
-  var posHtml = '<div class="sec-subtitle mt-0">Position Stats</div>';
-  posHtml += '<div class="meta-text mb-16">Your performance from each seat at the table.</div>';
-  posHtml += '<div class="overflow-x mb-24"><table class="tbl"><thead><tr><th>Position</th><th>Hands</th><th>' + tipWrap('VPIP') + '</th><th>' + tipWrap('Fold Pre') + '</th><th>' + tipWrap('Win Rate') + '</th><th>' + tipWrap('Net P&L') + '</th><th>' + tipWrap('Avg Pot') + '</th></tr></thead><tbody>';
+  var posHtml = '<div class="panel-title">Position</div>';
+  posHtml += '<div class="panel-desc">How you perform from each seat at the table.</div>';
+  posHtml += '<div class="p-row"><div class="overflow-x"><table class="tbl"><thead><tr><th>Position</th><th>Hands</th><th>' + tipWrap('VPIP') + '</th><th>' + tipWrap('Fold Pre') + '</th><th>' + tipWrap('Win Rate') + '</th><th>' + tipWrap('Net P&L') + '</th><th>' + tipWrap('Avg Pot') + '</th></tr></thead><tbody>';
   posHtml += activePosOrder.map(function(p) {
     var s = d.posMap[p];
     var vp2 = pct(s.vpip, s.hands);
@@ -22,12 +22,12 @@ function renderPosition(container, d, hands) {
       : fmt(avgPot);
     return '<tr><td>' + tipWrap(p) + '</td><td>' + s.hands + '</td><td>' + (vp2 !== null ? vp2 + '%' : '—') + '</td><td>' + (fp2 !== null ? fp2 + '%' : '—') + '</td><td>' + (wr2 !== null ? wr2 + '%' : '—') + '</td><td style="color:' + pnlColor(s.pnl) + '">' + fmtPnl(s.pnl) + '</td><td>' + avgPotDisplay + '</td></tr>';
   }).join('');
-  posHtml += '</tbody></table></div>';
+  posHtml += '</tbody></table></div></div>';
 
   // Chart: Win Rate & VPIP by Position
   if (activePosOrder.length >= 2) {
-    posHtml += '<div class="sec-subtitle">Win Rate & VPIP by Position</div>';
-    posHtml += '<div class="chart-wrap-full"><canvas id="position-chart"></canvas></div>';
+    posHtml += '<div class="p-row"><div class="sec-subtitle mt-0">Win Rate & VPIP by Position</div>';
+    posHtml += '<div class="chart-wrap-full"><canvas id="position-chart"></canvas></div></div>';
   }
 
   var pIns = [];
@@ -105,7 +105,7 @@ function renderPosition(container, d, hands) {
       ]));
     }
   }
-  posHtml += renderInsights(pIns, 'Position', 'More hands needed for positional patterns.');
+  posHtml += '<div class="p-row">' + renderInsights(pIns, 'Position', 'More hands needed for positional patterns.') + '</div>';
   container.innerHTML = posHtml;
 
   // ── Render Chart.js chart ──

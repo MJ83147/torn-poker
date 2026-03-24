@@ -54,7 +54,9 @@ function renderTables(container, hands, allHands, excludedTables, onRerender) {
       });
     }
     var maxHands = Math.max.apply(null, tableRows.map(function(r) { return r.n; }).concat([1]));
-    tablesHtml += '<div class="sec-subtitle mt-0">Performance by Table</div>';
+    tablesHtml += '<div class="panel-title">Tables</div>';
+    tablesHtml += '<div class="panel-desc">Compare stats across different stakes.</div>';
+    tablesHtml += '<div class="p-row"><div class="sec-subtitle mt-0">Performance by Table</div>';
     tablesHtml += '<div class="overflow-x"><table class="tbl"><thead><tr>';
     tablesHtml += '<th>Table</th><th>Blinds</th><th>Hands</th><th></th><th>' + tipWrap('Win Rate') + '</th><th>' + tipWrap('Net P&L') + '</th><th>' + tipWrap('VPIP') + '</th><th>' + tipWrap('Aggression') + '</th><th>' + tipWrap('Avg Pot') + '</th><th></th>';
     tablesHtml += '</tr></thead><tbody>';
@@ -74,7 +76,7 @@ function renderTables(container, hands, allHands, excludedTables, onRerender) {
       tablesHtml += '<td class="text-dim">' + (r.avgPot > 0 ? tblAvgPotDisp : '—') + '</td>';
       tablesHtml += '<td><button class="log-nav-btn exclude-btn exclude-table-btn" data-tid="' + r.tid + '">' + (isExcluded ? 'Include' : 'Exclude') + '</button></td></tr>';
     }
-    tablesHtml += '</tbody></table></div>';
+    tablesHtml += '</tbody></table></div></div>';
 
     var tIns2 = [];
     if (tableRows.length >= 2) {
@@ -99,7 +101,7 @@ function renderTables(container, hands, allHands, excludedTables, onRerender) {
         tIns2.push(insWithExample('a', 'Biggest Loss', bigLoss.label + ' at ' + fmtPnl(bigLoss.net) + '. Review whether leaks are table-specific or general.', [{ v: fmtPnl(bigLoss.net), hi: true }], exLossTable, 'A losing hand from ' + bigLoss.label + '. Check if you are playing too loose or calling too much at these stakes.'));
       }
     }
-    tablesHtml += '<div class="mt-24">' + renderInsights(tIns2, 'Tables', 'More data needed for table-level insights.') + '</div>';
+    tablesHtml += '<div class="p-row">' + renderInsights(tIns2, 'Tables', 'More data needed for table-level insights.') + '</div>';
   }
   container.innerHTML = tablesHtml;
 

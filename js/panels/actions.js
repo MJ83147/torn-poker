@@ -9,15 +9,18 @@ function renderActions(container, d, hands) {
   var caPct = pct(d.calls, actTotal);
   var raPct = pct(d.raises, actTotal);
 
-  var actHtml = renderMiniRow([
+  var actHtml = '<div class="panel-title">Actions</div>';
+  actHtml += '<div class="panel-desc">Fold, check, call, and raise frequencies.</div>';
+  actHtml += '<div class="p-row">' + renderMiniRow([
     { l: 'Total Actions', v: actTotal, c: 'o' },
     { l: 'Folds',         v: d.folds,  c: 'r' },
     { l: 'Checks',        v: d.checks, c: 'w' },
     { l: 'Calls',         v: d.calls,  c: 'a' },
     { l: 'Raises',        v: d.raises, c: 'g' },
     { l: 'Aggression',    v: aggPct !== null ? aggPct + '%' : '—', c: aggPct > 25 ? 'g' : 'a' },
-  ]);
+  ]) + '</div>';
 
+  actHtml += '<div class="p-row">';
   var segs = [
     { p: fPct || 0,  c: 'var(--red)',   l: 'Fold ' + fPct + '%' },
     { p: chPct || 0, c: '#2a3a2c',      l: 'Check ' + chPct + '%' },
@@ -35,10 +38,10 @@ function renderActions(container, d, hands) {
     var ap = pct(ss2.ra, tot2);
     return '<tr><td>' + tipWrap(s) + '</td><td>' + ss2.f + '</td><td>' + ss2.ch + '</td><td>' + ss2.ca + '</td><td>' + ss2.ra + '</td><td>' + (ap !== null ? ap + '%' : '—') + '</td></tr>';
   }).join('');
-  actHtml += '</tbody></table></div>';
+  actHtml += '</tbody></table></div></div>';
 
   // Situational stats
-  actHtml += '<div class="sec-subtitle">Situational stats</div>';
+  actHtml += '<div class="p-row"><div class="sec-subtitle mt-0">Situational stats</div>';
   actHtml += '<div class="bar-group">';
 
   function sitStatColour(label, p) {
@@ -72,7 +75,7 @@ function renderActions(container, d, hands) {
     actHtml += barRow(labelHtml, p || 0, 100, cls, (p !== null ? p + '%' : '—'), s.done + '/' + s.opps + ' spots');
   }
 
-  actHtml += '</div>';
+  actHtml += '</div></div>';
 
   // Insights
   var aIns = [];
@@ -193,6 +196,6 @@ function renderActions(container, d, hands) {
       { v: 'Passive: ' + best2.passWr + '%' },
     ]));
   }
-  actHtml += renderInsights(aIns, 'Actions', 'Keep building data for action pattern insights.');
+  actHtml += '<div class="p-row">' + renderInsights(aIns, 'Actions', 'Keep building data for action pattern insights.') + '</div>';
   container.innerHTML = actHtml;
 }
