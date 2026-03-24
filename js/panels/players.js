@@ -370,8 +370,8 @@ function renderPlayers(container, d, hands) {
       var wr2 = pct(o2.won, o2.won + o2.lost);
       var barW2 = Math.round(o2.hands / maxH * 100);
       var isWatched = watched.indexOf(o2.name) >= 0;
-      html += '<tr class="player-row" data-player="' + o2.name + '" style="cursor:pointer;transition:border-color .15s;" onmouseover="this.style.borderColor=\'var(--gold2)\'" onmouseout="this.style.borderColor=\'\'">';
-      html += '<td class="watch-star' + (isWatched ? ' watched' : '') + '" data-watch="' + o2.name + '" title="' + (isWatched ? 'Unwatch' : 'Watch') + ' player" style="cursor:pointer;width:24px;text-align:center;">' + (isWatched ? '&#9733;' : '&#9734;') + '</td>';
+      html += '<tr class="player-row row-hover" data-player="' + o2.name + '">';
+      html += '<td class="watch-star' + (isWatched ? ' watched' : '') + '" data-watch="' + o2.name + '" title="' + (isWatched ? 'Unwatch' : 'Watch') + ' player">' + (isWatched ? '&#9733;' : '&#9734;') + '</td>';
       html += '<td>' + o2.name + '</td><td>' + o2.hands + '</td>';
       html += '<td style="width:80px;"><span class="tbl-spark" style="width:' + barW2 + '%;background:var(--gold2);"></span></td>';
       html += '<td class="' + wrCls(wr2) + '">' + (wr2 !== null ? wr2 + '%' : '—') + '</td>';
@@ -403,10 +403,10 @@ function renderPlayers(container, d, hands) {
       var page = playerHands.slice(start, end);
       var totalPages = Math.ceil(playerHands.length / PH_SIZE);
       var wr = pct(opp.won, opp.won + opp.lost);
-      var ph = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">';
-      ph += '<div><button class="log-nav-btn" id="players-back" style="margin-right:12px;">&laquo; All Players</button>';
-      ph += '<span style="font-size:14px;font-weight:600;color:var(--gold);">' + playerName + '</span></div>';
-      ph += '<div style="font-size:10px;color:var(--dim);">' + opp.hands + ' hands · ' + (wr !== null ? wr + '% win' : '—') + ' · ' + fmtPnl(opp.profit) + '</div></div>';
+      var ph = '<div class="flex-between mb-16">';
+      ph += '<div><button class="log-nav-btn mr-12" id="players-back">&laquo; All Players</button>';
+      ph += '<span class="player-detail-name">' + playerName + '</span></div>';
+      ph += '<div class="meta-text">' + opp.hands + ' hands · ' + (wr !== null ? wr + '% win' : '—') + ' · ' + fmtPnl(opp.profit) + '</div></div>';
 
       // ── Opponent tendency minis with severity ──
       var vpip = pct(oppStats.vpipHands, oppStats.hands);
@@ -437,7 +437,7 @@ function renderPlayers(container, d, hands) {
           { l: 'WSD',                 v: wsd !== null ? wsd + '%' : '—',       c: sev(wsd, 35, 999, 35, 60) },
         ];
 
-        ph += '<div class="sec-subtitle" style="margin-top:0;">Tendencies</div>';
+        ph += '<div class="sec-subtitle mt-0">Tendencies</div>';
         ph += renderMiniRow(minis);
 
         // ── Exploit insights ──
