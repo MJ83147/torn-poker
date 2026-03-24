@@ -192,21 +192,8 @@ function renderRange(container, d, hands) {
       (rm ? ' · played ' + rm.played + ' of ' + rm.dealt + ' dealt' : '') +
       (wr2 !== null ? ' · ' + wr2 + '% win rate' : '') + '</div>';
     var rows = matched.map(function(h, idx) {
-      var myActs = parseActions(h.actions).filter(function(a) { return a.isMe; }).map(function(a) { return a.type; }).join(' · ');
-      var invested2 = h.invested || calcInvestmentFromActions(h.actions || []);
-      var res;
-      if (h.outcome) {
-        if (h.outcome.result === 'won') {
-          var profit2 = (h.outcome.amount || 0) - invested2;
-          res = '<span style="color:var(--green);">+' + fmt(profit2 > 0 ? profit2 : h.outcome.amount || h.pot || 0) + '</span>';
-        } else if (h.outcome.result === 'folded') {
-          res = '<span style="color:var(--red);">' + (invested2 > 0 ? '-' + fmt(invested2) : 'folded') + '</span>';
-        } else {
-          res = '<span style="color:var(--red);">-' + fmt(invested2) + '</span>';
-        }
-      } else {
-        res = '<span style="color:var(--dim);">?</span>';
-      }
+      var myActs = getActsSummary(h);
+      var res = renderResult(h, 'span', 'saved-res');
       return '<div class="range-hand-row" data-ridx="' + idx + '" style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s;" onmouseover="this.style.background=\'var(--s2)\'" onmouseout="this.style.background=\'\'">' +
         '<div style="display:flex;gap:12px;align-items:center;">' +
         '<span style="color:var(--dim);font-size:9px;">' + (h.position || '?') + '</span>' +

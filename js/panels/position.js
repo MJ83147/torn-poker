@@ -92,11 +92,6 @@ function renderPosition(container, d, hands) {
       ]));
     }
   }
-  if (!pIns.length) {
-    pIns.push(ins('n', 'Position', 'More hands needed for positional patterns.', [{
-      v: 'Keep playing',
-    }]));
-  }
-  posHtml += pIns.join('');
+  posHtml += renderInsights(pIns, 'Position', 'More hands needed for positional patterns.');
   container.innerHTML = posHtml;
 }

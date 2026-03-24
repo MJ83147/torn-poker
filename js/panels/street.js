@@ -63,9 +63,6 @@ function renderStreet(container, d, hands) {
       v: d.ss.Turn.f + ' turn folds',
     }], exTurnFold, 'You folded on the turn here. If you had a made hand, betting protects it from draws. Check-folding lets opponents draw cheaply and control the pot.'));
   }
-  if (!sIns.length) {
-    sIns.push(ins('n', 'Streets', 'Keep building the sample for street-level patterns.', []));
-  }
-  stHtml += sIns.join('');
+  stHtml += renderInsights(sIns, 'Streets', 'Keep building the sample for street-level patterns.');
   container.innerHTML = stHtml;
 }

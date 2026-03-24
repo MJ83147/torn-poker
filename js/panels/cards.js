@@ -87,7 +87,7 @@ function renderCards(container, d, hands) {
       var key = parseHoleKey(h.hole);
       if (!key || classifyKey(key) !== 'Offsuit Trash') return false;
       if (!h.outcome || h.outcome.result !== 'lost') return false;
-      var ma = parseActions(h.actions).filter(function(a) { return a.isMe; });
+      var ma = getHeroActions(h);
       return ma.some(function(a) { return a.type === 'call' || a.type === 'raise'; });
     });
     cIns.push(insWithExample(ts.played > 0 ? 'r' : 'n', 'Offsuit Trash', 'Dealt ' + ts.dealt + ' offsuit trash hands, played ' + ts.played + '. These are almost always folds preflop.', [{
@@ -118,12 +118,7 @@ function renderCards(container, d, hands) {
       { v: worstHT.ht + ': ' + worstHT.wr + '%' },
     ]));
   }
-  if (!cIns.length) {
-    cIns.push(ins('n', 'Cards', 'More hands needed for card-type breakdowns.', [{
-      v: 'Keep playing',
-    }]));
-  }
-  cardsHtml += '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-top:20px;">' + cIns.join('') + '</div>';
+  cardsHtml += '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-top:20px;">' + renderInsights(cIns, 'Cards', 'More hands needed for card-type breakdowns.') + '</div>';
   cardsHtml += '</div>';
   container.innerHTML = cardsHtml;
 }

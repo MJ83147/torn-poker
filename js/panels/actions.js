@@ -78,7 +78,7 @@ function renderActions(container, d, hands) {
   var aIns = [];
   if (caPct > raPct + 20) {
     var exCallHeavy = findExampleHand(function(h) {
-      var ma = parseActions(h.actions).filter(function(a) { return a.isMe; });
+      var ma = getHeroActions(h);
       return ma.some(function(a) { return a.type === 'call'; }) && !ma.some(function(a) { return a.type === 'raise'; }) && h.outcome && h.outcome.result !== 'won';
     });
     aIns.push(insWithExample('a', 'Call-Heavy', 'You call ' + caPct + '% but raise only ' + raPct + '% of the time. In TC where everyone calls anyway, raising more extracts more value.', [{
@@ -89,7 +89,7 @@ function renderActions(container, d, hands) {
   }
   if (aggPct !== null && aggPct < 15) {
     var exLowAgg = findExampleHand(function(h) {
-      var ma = parseActions(h.actions).filter(function(a) { return a.isMe; });
+      var ma = getHeroActions(h);
       return ma.some(function(a) { return a.type === 'call'; }) && !ma.some(function(a) { return a.type === 'raise'; });
     });
     aIns.push(insWithExample('r', 'Low Aggression', 'Only ' + aggPct + '% aggression. Strong hands need to be bet, not called.', [{
@@ -104,7 +104,7 @@ function renderActions(container, d, hands) {
     }], exGoodAgg, 'A well-timed raise like this one puts opponents on the defensive. Your aggression level is in a healthy range — enough to take initiative without overbluffing.'));
   } else if (aggPct !== null) {
     var exHighAgg = findExampleHand(function(h) {
-      var ma = parseActions(h.actions).filter(function(a) { return a.isMe; });
+      var ma = getHeroActions(h);
       return ma.filter(function(a) { return a.type === 'raise'; }).length >= 2;
     });
     aIns.push(insWithExample('a', 'High Aggression', aggPct + '% is high. TC players call, so bluff raises cost real money.', [{
@@ -193,9 +193,6 @@ function renderActions(container, d, hands) {
       { v: 'Passive: ' + best2.passWr + '%' },
     ]));
   }
-  if (!aIns.length) {
-    aIns.push(ins('n', 'Actions', 'Keep building data for action pattern insights.', []));
-  }
-  actHtml += aIns.join('');
+  actHtml += renderInsights(aIns, 'Actions', 'Keep building data for action pattern insights.');
   container.innerHTML = actHtml;
 }

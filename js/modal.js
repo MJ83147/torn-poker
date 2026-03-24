@@ -55,7 +55,10 @@ function showExampleHandModal(hand, coachingNote) {
 
   var noteVal = getHandNote(hand).replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   var notesSection = '<div class="modal-notes' + (starred ? ' show' : '') + '" id="modal-notes">' +
-    '<div class="modal-notes-label">Your Notes</div>' +
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">' +
+      '<div class="modal-notes-label" style="margin-bottom:0;">Your Notes</div>' +
+      '<div class="modal-notes-status" id="modal-notes-status" style="font-size:9px;color:var(--muted);transition:color .3s;">Saves automatically</div>' +
+    '</div>' +
     '<textarea class="modal-notes-input" id="modal-notes-input" placeholder="Add notes about this hand...">' + noteVal + '</textarea>' +
     '</div>';
 
@@ -72,20 +75,9 @@ function showExampleHandModal(hand, coachingNote) {
     this.title = nowStarred ? 'Unsave hand' : 'Save hand';
     var notesEl = document.getElementById('modal-notes');
     if (notesEl) notesEl.classList.toggle('show', nowStarred);
-    // refresh saved hands panel if visible
+    // refresh saved hands panel
     var savedPanel = document.getElementById('p-saved');
-    if (savedPanel && savedPanel.classList.contains('on')) renderSavedHands(savedPanel);
-    // refresh log stars
-    document.querySelectorAll('.hrow-star').forEach(function(s) {
-      var idx = s.getAttribute('data-star-idx');
-      if (idx !== null) {
-        var row = s.closest('.hrow');
-        if (row) {
-          var isS = isHandStarred(hand);
-          // We can't easily match here, so skip - the log will refresh on tab switch
-        }
-      }
-    });
+    if (savedPanel) renderSavedHands(savedPanel);
   };
 
   var notesInput = document.getElementById('modal-notes-input');
@@ -93,11 +85,15 @@ function showExampleHandModal(hand, coachingNote) {
     var debounceTimer;
     notesInput.oninput = function() {
       var val = this.value;
+      var statusEl = document.getElementById('modal-notes-status');
+      if (statusEl) { statusEl.textContent = 'Saving...'; statusEl.style.color = 'var(--dim)'; }
       clearTimeout(debounceTimer);
       debounceTimer = setTimeout(function() {
         setHandNote(hand, val);
+        if (statusEl) { statusEl.textContent = 'Saved'; statusEl.style.color = 'var(--green)'; }
+        setTimeout(function() { if (statusEl) { statusEl.textContent = 'Saves automatically'; statusEl.style.color = 'var(--muted)'; } }, 1500);
         var savedPanel = document.getElementById('p-saved');
-        if (savedPanel && savedPanel.classList.contains('on')) renderSavedHands(savedPanel);
+        if (savedPanel) renderSavedHands(savedPanel);
       }, 300);
     };
   }

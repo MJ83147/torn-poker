@@ -281,19 +281,16 @@ function renderPlayers(container, d, hands) {
       oppMap[a.author].hands++;
       oppMap[a.author].handRefs.push(i);
       if (h.outcome) {
+        var inv = getInvested(h);
         if (h.outcome.result === 'won') {
-          var inv = h.invested || calcInvestmentFromActions(h.actions || []);
-          var pr = (h.outcome.amount || 0) - inv;
           oppMap[a.author].won++;
-          oppMap[a.author].profit += pr > 0 ? pr : (h.outcome.amount || 0);
+          oppMap[a.author].profit += (h.outcome.amount || 0) - inv;
         } else if (h.outcome.result === 'folded') {
           oppMap[a.author].folded++;
-          var inv2 = h.invested || calcInvestmentFromActions(h.actions || []);
-          oppMap[a.author].profit -= inv2;
+          oppMap[a.author].profit -= inv;
         } else {
           oppMap[a.author].lost++;
-          var inv3 = h.invested || calcInvestmentFromActions(h.actions || []);
-          oppMap[a.author].profit -= inv3;
+          oppMap[a.author].profit -= inv;
         }
       }
     }
@@ -459,29 +456,12 @@ function renderPlayers(container, d, hands) {
       // ── Hand list ──
       ph += '<div class="sec-subtitle">Shared Hands</div>';
       if (totalPages > 1) {
-        ph += '<div style="display:flex;justify-content:flex-end;gap:6px;align-items:center;margin-bottom:8px;">';
-        ph += '<button class="log-nav-btn" id="ph-prev" ' + (phPage === 0 ? 'disabled' : '') + '>&laquo; Prev</button>';
-        ph += '<span style="font-size:9px;color:var(--dim);">Page ' + (phPage + 1) + '/' + totalPages + '</span>';
-        ph += '<button class="log-nav-btn" id="ph-next" ' + (phPage >= totalPages - 1 ? 'disabled' : '') + '>Next &raquo;</button></div>';
+        ph += '<div style="display:flex;justify-content:flex-end;gap:6px;align-items:center;margin-bottom:8px;">' +
+          renderPagination(phPage, playerHands.length, PH_SIZE, 'ph-prev', 'ph-next') + '</div>';
       }
       ph += '<div class="hrow hrow-header"><div class="hrow-pos">Pos</div><div class="hrow-cards">Cards</div><div class="hrow-board">Board</div><div class="hrow-acts">Actions</div><div class="hrow-res">Result</div></div>';
       ph += '<div class="hlog">' + page.map(function(h, pi) {
-        var myActs = parseActions(h.actions).filter(function(a) { return a.isMe; }).map(function(a) { return a.type; }).join(' · ');
-        var invested = h.invested || calcInvestmentFromActions(h.actions || []);
-        var res;
-        if (h.outcome) {
-          if (h.outcome.result === 'won') {
-            var profit = (h.outcome.amount || 0) - invested;
-            res = '<div class="hrow-res w">+' + fmt(profit > 0 ? profit : h.outcome.amount || h.pot || 0) + '</div>';
-          } else if (h.outcome.result === 'folded') {
-            res = '<div class="hrow-res l">' + (invested > 0 ? '-' + fmt(invested) : 'folded') + '</div>';
-          } else {
-            res = '<div class="hrow-res l">-' + fmt(invested) + '</div>';
-          }
-        } else {
-          res = '<div class="hrow-res u">?</div>';
-        }
-        return '<div class="hrow" data-ph-idx="' + (start + pi) + '" style="cursor:pointer;transition:border-color .15s;" onmouseover="this.style.borderColor=\'var(--gold2)\'" onmouseout="this.style.borderColor=\'\'"><div class="hrow-pos">' + (h.position || '?') + '</div><div class="hrow-cards">' + (h.hole && h.hole.length ? h.hole.join(' ') : '?? ??') + '</div><div class="hrow-board">' + (h.board && h.board.length ? h.board.join(' ') : '—') + '</div><div class="hrow-acts">' + myActs + '</div>' + res + '</div>';
+        return renderHandRow(h, start + pi, null).replace('data-hand-idx', 'data-ph-idx');
       }).join('') + '</div>';
       container.innerHTML = ph;
       document.getElementById('players-back').onclick = function() { renderPlayerList(); };

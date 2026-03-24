@@ -29,21 +29,8 @@ function renderSavedHands(container) {
     var h = entry.hand;
     if (!h) continue;
 
-    var myActs = parseActions(h.actions).filter(function(a) { return a.isMe; }).map(function(a) { return a.type; }).join(' · ');
-    var invested = h.invested || calcInvestmentFromActions(h.actions || []);
-    var res;
-    if (h.outcome) {
-      if (h.outcome.result === 'won') {
-        var profit = (h.outcome.amount || 0) - invested;
-        res = '<span class="saved-res w">+' + fmt(profit > 0 ? profit : h.outcome.amount || h.pot || 0) + '</span>';
-      } else if (h.outcome.result === 'folded') {
-        res = '<span class="saved-res l">' + (invested > 0 ? '-' + fmt(invested) : 'folded') + '</span>';
-      } else {
-        res = '<span class="saved-res l">-' + fmt(invested) + '</span>';
-      }
-    } else {
-      res = '<span class="saved-res u">?</span>';
-    }
+    var myActs = getActsSummary(h);
+    var res = renderResult(h, 'span', 'saved-res');
 
     var notePreview = entry.note
       ? '<div class="saved-note-preview">' + entry.note.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, ' ') + '</div>'

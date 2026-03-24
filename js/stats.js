@@ -86,7 +86,7 @@ function analyse(hands) {
     if (h.outcome) {
       handsWithOutcome++;
       // Use stored investment if available, otherwise calculate from actions
-      const invested = h.invested || calcInvestmentFromActions(h.actions || []);
+      const invested = getInvested(h);
       if (cash) totalInvested += invested;
       const a = h.outcome.amount || 0;
       if (h.outcome.result === 'won') {
@@ -121,7 +121,7 @@ function analyse(hands) {
       }
       // Track P&L per hand combo
       if (h.outcome && cash) {
-        const inv = h.invested || calcInvestmentFromActions(h.actions || []);
+        const inv = getInvested(h);
         if (h.outcome.result === 'won') {
           rangeMap[hkey].pnl += (h.outcome.amount || 0) - inv;
         } else {

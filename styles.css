@@ -336,6 +336,13 @@ textarea#jin:focus {
   color: var(--gold);
 }
 
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
 .header-meta {
   font-size: 12px;
   color: var(--dim);
@@ -1328,17 +1335,23 @@ textarea#jin:focus {
 }
 .hrow-star {
   font-size: 14px;
-  color: var(--muted);
+  color: var(--dim);
   cursor: pointer;
   transition: color .15s, transform .15s;
   line-height: 1;
+  opacity: 0.5;
+}
+.hrow:hover .hrow-star {
+  opacity: 1;
 }
 .hrow-star:hover {
   color: var(--gold);
   transform: scale(1.2);
+  opacity: 1;
 }
 .hrow-star.starred {
   color: var(--gold);
+  opacity: 1;
 }
 
 /* MODAL STAR BUTTON */
@@ -1349,7 +1362,7 @@ textarea#jin:focus {
   background: none;
   border: none;
   font-size: 22px;
-  color: var(--muted);
+  color: var(--dim);
   cursor: pointer;
   transition: color .15s, transform .15s;
   padding: 0;
@@ -1693,8 +1706,12 @@ textarea#jin:focus {
 
   /* Header */
   .dash-header { padding: 0 14px; }
-  .header-inner { padding: 10px 0 0; gap: 10px; }
-  .header-title { font-size: 17px; }
+  .header-inner {
+    flex-wrap: wrap;
+    padding: 10px 0 0;
+    gap: 8px;
+  }
+  .header-title { font-size: 17px; flex: 1 1 auto; }
 
   /* Hero strip: 2-row wrap */
   .hero-strip { flex-wrap: wrap; }
@@ -1702,13 +1719,10 @@ textarea#jin:focus {
   .hs-v { font-size: 18px; }
   .hs-l { font-size: 10px; letter-spacing: 2px; }
 
-  /* Tabs: horizontal scroll */
+  /* Tabs: wrap into grid so all items are visible */
   .tabs {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
+    flex-wrap: wrap;
   }
-  .tabs::-webkit-scrollbar { display: none; }
   .tab { padding: 10px 14px; font-size: 11px; letter-spacing: 1px; }
 
   /* Panels */
@@ -1771,6 +1785,9 @@ textarea#jin:focus {
 
   /* Trends: stack on tablet */
   .trends-grid { grid-template-columns: 1fr; }
+
+  /* Paste nav */
+  .paste-nav { padding: 12px 14px 0; gap: 16px; }
 }
 
 /* ---------- Phone (<=480px) ---------- */
@@ -1778,14 +1795,22 @@ textarea#jin:focus {
 
   body { font-size: 13px; }
 
-  /* Header */
+  /* Header: stack title and controls vertically */
   .dash-header { padding: 0 10px; }
   .header-inner {
     flex-wrap: wrap;
     gap: 8px;
     padding: 8px 0 0;
   }
-  .header-title { font-size: 15px; }
+  .header-title {
+    font-size: 15px;
+    width: 100%;
+  }
+  .header-controls {
+    width: 100%;
+    gap: 8px;
+    justify-content: flex-start;
+  }
   .header-meta { font-size: 11px; }
 
   /* Hero strip: stack vertically on very small screens */
@@ -1794,23 +1819,28 @@ textarea#jin:focus {
   .hs-v { font-size: 16px; }
   .hs-l { font-size: 9px; letter-spacing: 1.5px; margin-bottom: 3px; }
 
-  /* Tabs: smaller, scroll */
+  /* Tabs: wrap into compact grid */
+  .tabs {
+    flex-wrap: wrap;
+  }
   .tab {
-    padding: 9px 11px;
+    padding: 8px 10px;
     font-size: 10px;
     letter-spacing: 1px;
+    flex: 0 0 auto;
   }
 
   /* Panels */
   .panel { padding: 16px 10px; }
 
   /* Paste screen */
+  .paste-nav { padding: 10px 10px 0; gap: 12px; flex-wrap: wrap; }
   #paste-wrap { padding: 24px 10px; }
   .paste-box { padding: 20px 14px; }
   .paste-suit { font-size: 28px; margin-bottom: 10px; }
   .paste-title { font-size: 18px; }
   .paste-sub { font-size: 11px; margin-bottom: 16px; }
-  .go-btn { padding: 12px; font-size: 15px; }
+  .go-btn { padding: 12px; font-size: 15px; width: 100%; }
   textarea#jin { font-size: 11px; min-height: 70px; padding: 10px; }
 
   /* Bar rows: stack label above bar */

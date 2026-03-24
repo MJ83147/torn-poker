@@ -99,8 +99,7 @@ function renderTables(container, hands, allHands, excludedTables, onRerender) {
         tIns2.push(insWithExample('a', 'Biggest Loss', bigLoss.label + ' at ' + fmt(bigLoss.net) + '. Review whether leaks are table-specific or general.', [{ v: fmt(bigLoss.net), hi: true }], exLossTable, 'A losing hand from ' + bigLoss.label + '. Check if you are playing too loose or calling too much at these stakes.'));
       }
     }
-    if (!tIns2.length) tIns2.push(ins('n', 'Tables', 'More data needed for table-level insights.', []));
-    tablesHtml += '<div style="margin-top:24px;">' + tIns2.join('') + '</div>';
+    tablesHtml += '<div style="margin-top:24px;">' + renderInsights(tIns2, 'Tables', 'More data needed for table-level insights.') + '</div>';
   }
   container.innerHTML = tablesHtml;
 

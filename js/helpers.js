@@ -126,7 +126,29 @@ function getStarredHands() {
 }
 
 function setStarredHands(map) {
-  localStorage.setItem('tc_starred_hands', JSON.stringify(map));
+  try {
+    localStorage.setItem('tc_starred_hands', JSON.stringify(map));
+  } catch(e) {
+    console.warn('[starred] localStorage write failed:', e);
+  }
+}
+
+// Store only the fields needed to display/replay a hand (skip raw actions bloat)
+function compactHand(h) {
+  return {
+    hole: h.hole,
+    board: h.board,
+    position: h.position,
+    outcome: h.outcome,
+    invested: getInvested(h),
+    pot: h.pot,
+    actions: h.actions,
+    tableId: h.tableId,
+    table: h.table,
+    bigBlind: h.bigBlind,
+    tableSize: h.tableSize,
+    player: h.player
+  };
 }
 
 function isHandStarred(h) {
@@ -139,7 +161,7 @@ function toggleStarHand(h) {
   if (map[key]) {
     delete map[key];
   } else {
-    map[key] = { hand: h, note: '', savedAt: new Date().toISOString() };
+    map[key] = { hand: compactHand(h), note: '', savedAt: new Date().toISOString() };
   }
   setStarredHands(map);
   return !!map[key];
@@ -157,6 +179,88 @@ function setHandNote(h, note) {
     map[key].note = note;
     setStarredHands(map);
   }
+}
+
+// ── SHARED HELPERS (reduce duplication across panels) ─────────────────────────
+
+// Get the amount the hero invested in a hand
+function getInvested(h) {
+  return h.invested || calcInvestmentFromActions(h.actions || []);
+}
+
+// Get hero actions from a hand (parsed + filtered)
+function getHeroActions(h) {
+  return parseActions(h.actions).filter(function(a) { return a.isMe; });
+}
+
+// Get a short summary string of hero actions ("call · raise · fold")
+function getActsSummary(h) {
+  return getHeroActions(h).map(function(a) { return a.type; }).join(' · ');
+}
+
+// Compute the real profit/loss for a hand.
+// In multi-pot scenarios, a "won" hand can have negative profit (excess returned).
+function getHandPnl(h) {
+  if (!h.outcome) return { cls: 'u', text: '?' };
+  var invested = getInvested(h);
+  if (h.outcome.result === 'won') {
+    var profit = (h.outcome.amount || 0) - invested;
+    if (profit >= 0) return { cls: 'w', text: '+' + fmt(profit) };
+    // Multi-pot: won but net negative (excess returned, lost side pot)
+    return { cls: 'l', text: '-' + fmt(Math.abs(profit)) };
+  }
+  if (h.outcome.result === 'folded') {
+    return { cls: 'l', text: invested > 0 ? '-' + fmt(invested) : 'folded' };
+  }
+  // lost
+  return { cls: 'l', text: '-' + fmt(invested) };
+}
+
+// Render a result element: <tag class="baseClass cls">text</tag>
+function renderResult(h, tag, baseClass) {
+  var pnl = getHandPnl(h);
+  return '<' + tag + ' class="' + baseClass + ' ' + pnl.cls + '">' + pnl.text + '</' + tag + '>';
+}
+
+// Render a single hand row (used in log and player hand lists)
+// opts.starHtml: optional star column HTML (for log panel)
+function renderHandRow(h, idx, opts) {
+  var myActs = getActsSummary(h);
+  var res = renderResult(h, 'div', 'hrow-res');
+  var starCol = opts && opts.starHtml ? opts.starHtml : '';
+  var extraCls = starCol ? ' hrow-with-star' : '';
+  return '<div class="hrow' + extraCls + '" data-hand-idx="' + idx + '" style="cursor:pointer;transition:border-color .15s;" onmouseover="this.style.borderColor=\'var(--gold2)\'" onmouseout="this.style.borderColor=\'\'">' +
+    starCol +
+    '<div class="hrow-pos">' + (h.position || '?') + '</div>' +
+    '<div class="hrow-cards">' + (h.hole && h.hole.length ? h.hole.join(' ') : '?? ??') + '</div>' +
+    '<div class="hrow-board">' + (h.board && h.board.length ? h.board.join(' ') : '—') + '</div>' +
+    '<div class="hrow-acts">' + myActs + '</div>' +
+    res + '</div>';
+}
+
+// Render prev/next pagination controls
+function renderPagination(page, totalItems, pageSize, prevId, nextId) {
+  var totalPages = Math.ceil(totalItems / pageSize);
+  if (totalPages <= 1) return '';
+  return '<button class="log-nav-btn" id="' + prevId + '" ' + (page === 0 ? 'disabled' : '') + '>&laquo; Prev</button>' +
+    '<span style="font-size:9px;color:var(--dim);">Page ' + (page + 1) + '/' + totalPages + '</span>' +
+    '<button class="log-nav-btn" id="' + nextId + '" ' + (page >= totalPages - 1 ? 'disabled' : '') + '>Next &raquo;</button>';
+}
+
+// Wrap insight array: join them, add a fallback "needs more data" if empty
+function renderInsights(insArr, fallbackLabel, fallbackText) {
+  if (!insArr.length) {
+    insArr.push(ins('n', fallbackLabel, fallbackText || 'More hands needed for ' + fallbackLabel.toLowerCase() + ' patterns.', []));
+  }
+  return insArr.join('');
+}
+
+// Map a win rate percentage to a CSS color variable
+function wrColor(w) {
+  if (w === null) return 'var(--dim)';
+  if (w >= 55) return 'var(--green)';
+  if (w <= 38) return 'var(--red)';
+  return 'var(--amber)';
 }
 
 // Basic formatting helpers

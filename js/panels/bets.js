@@ -83,9 +83,6 @@ function renderBets(container, d, hands) {
       v: fbo.b + '/' + fbo.t + ' opportunities',
     }], exFlopPassive, 'On this flop you checked or called instead of betting. Betting puts opponents on the defensive and charges draws. In TC where players call wide, you want to be the one setting the price.'));
   }
-  if (!bIns.length) {
-    bIns.push(ins('n', 'Bets', 'More hands needed for bet sizing patterns.', []));
-  }
-  betHtml += bIns.join('');
+  betHtml += renderInsights(bIns, 'Bets', 'More hands needed for bet sizing patterns.');
   container.innerHTML = betHtml;
 }

@@ -123,7 +123,6 @@ function renderTrends(container, hands, meta) {
       }
     }
   }
-  if (!tIns.length) tIns.push(ins('n', 'Trends', 'Keep tracking to build up enough data points for trend insights.', []));
-  tHtml += '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-top:24px;">' + tIns.join('') + '</div>';
+  tHtml += '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-top:24px;">' + renderInsights(tIns, 'Trends', 'Keep tracking to build up enough data points for trend insights.') + '</div>';
   container.innerHTML = tHtml;
 }

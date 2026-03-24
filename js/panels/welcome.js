@@ -48,7 +48,7 @@ function renderWelcome(container, d, hands, meta) {
   if (vpipPct !== null && aggPct !== null) {
     if (vpipPct > 50 && aggPct < 20) {
       var exWidePassive = findExampleHand(function(h) {
-        var ma = parseActions(h.actions).filter(function(a) { return a.isMe; });
+        var ma = getHeroActions(h);
         return ma.some(function(a) { return a.type === 'call'; }) && !ma.some(function(a) { return a.type === 'raise'; }) && h.outcome && h.outcome.result !== 'won';
       });
       overviewIns.push(insWithExample('r', 'VPIP x Aggression', 'Playing ' + vpipPct + '% of hands but raising only ' + aggPct + '% of the time. Wide and passive is the worst combination in poker.', [{

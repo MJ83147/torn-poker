@@ -31,7 +31,7 @@ function renderShowdown(container, hands, meta) {
 
   for (var i = 0; i < cash.length; i++) {
     var h = cash[i];
-    var invested = h.invested || calcInvestmentFromActions(h.actions || []);
+    var invested = getInvested(h);
     var delta = 0;
     var won = false;
     var pot = h.pot || 0;
@@ -131,7 +131,6 @@ function renderShowdown(container, hands, meta) {
       { v: nsdTotal + ' NSD hands' },
     ]);
   }
-
   insHtml += '</div>';
 
   // ── Pot Size Analysis ──
@@ -211,7 +210,6 @@ function renderShowdown(container, hands, meta) {
   if (!hasPotInsight) {
     potInsHtml += ins('n', 'Pot Size Analysis', 'Track more hands to unlock pot size insights.', []);
   }
-
   potInsHtml += '</div>';
 
   // Assemble HTML
