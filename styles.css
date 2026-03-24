@@ -451,8 +451,9 @@ textarea#jin:focus {
 .ins-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 9px;
-  margin-top: 16px;
+  gap: 12px;
+  margin-top: 28px;
+  margin-bottom: 12px;
 }
 
 /* INSIGHT CARD */
@@ -563,7 +564,8 @@ textarea#jin:focus {
 .two-col {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 24px;
+  gap: 32px;
+  margin-bottom: 12px;
 }
 
 .three-col {
@@ -579,7 +581,7 @@ textarea#jin:focus {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
   gap: 10px;
-  margin-bottom: 24px;
+  margin-bottom: 32px;
 }
 
 .mini {
@@ -609,6 +611,7 @@ textarea#jin:focus {
   display: flex;
   flex-direction: column;
   gap: 11px;
+  margin-bottom: 8px;
 }
 
 .bar-row {
@@ -749,6 +752,7 @@ textarea#jin:focus {
 .tbl {
   width: 100%;
   border-collapse: collapse;
+  margin-bottom: 12px;
 }
 
 .tbl th {
@@ -998,8 +1002,19 @@ textarea#jin:focus {
   letter-spacing: 3px;
   color: var(--dim);
   text-transform: uppercase;
-  margin-bottom: 12px;
-  margin-top: 20px;
+  margin-bottom: 14px;
+  margin-top: 36px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+}
+
+.sec-subtitle:first-child,
+.panel > .sec-subtitle:first-child,
+.two-col .sec-subtitle,
+.three-col .sec-subtitle {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
 }
 
 /* Unseen range cells */
@@ -1539,7 +1554,7 @@ textarea#jin:focus {
 }
 .welcome-body {
   display: flex;
-  gap: 32px;
+  gap: 56px;
   align-items: flex-start;
 }
 .welcome-intro {
