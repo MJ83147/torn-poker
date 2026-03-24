@@ -7,7 +7,7 @@ function renderStreet(container, d, hands) {
 
   var streets = ['Preflop', 'Flop', 'Turn', 'River'];
   var maxSeen = d.ss.Preflop.seen || 1;
-  var stHtml = '<div class="two-col" style="margin-bottom:24px;">';
+  var stHtml = '<div class="two-col mb-24">';
   stHtml += '<div><div class="sec-subtitle">Hands reaching street</div><div class="bar-group">' + streets.map(function(s) {
     var seen2 = d.ss[s].seen;
     return barRow(s, seen2, maxSeen, 'o', seen2, pct(seen2, d.n) + '%');
@@ -22,7 +22,7 @@ function renderStreet(container, d, hands) {
 
   // Chart: Action breakdown by street
   stHtml += '<div class="sec-subtitle">Action Breakdown by Street</div>';
-  stHtml += '<div style="position:relative;width:100%;max-width:720px;"><canvas id="street-action-chart"></canvas></div>';
+  stHtml += '<div class="chart-wrap"><canvas id="street-action-chart"></canvas></div>';
 
   // Average bet size by street
   var stAvgBets = {};

@@ -37,16 +37,16 @@ function renderProfile() {
     } catch (_) {}
   }
 
-  var html = '<div style="max-width:700px;">';
-  html += '<div style="margin-bottom:32px;">';
-  html += '<div style="font-size:9px;letter-spacing:5px;color:var(--dim);text-transform:uppercase;margin-bottom:10px;">TC Poker Analysis</div>';
-  html += '<div style="font-family:\'Cormorant Garamond\',serif;font-size:clamp(28px,4vw,44px);font-weight:700;color:var(--gold);margin-bottom:4px;">' + playerName + '</div>';
-  if (exportDate) html += '<div style="font-size:10px;color:var(--dim);">Last session: ' + exportDate + '</div>';
+  var html = '<div class="profile-wrap">';
+  html += '<div class="profile-header">';
+  html += '<div class="profile-eyebrow">TC Poker Analysis</div>';
+  html += '<div class="profile-name">' + playerName + '</div>';
+  if (exportDate) html += '<div class="profile-date">Last session: ' + exportDate + '</div>';
   html += '</div>';
 
   if (stats) {
-    html += '<div style="font-size:9px;letter-spacing:4px;text-transform:uppercase;color:var(--dim);margin-bottom:14px;">Your Stats</div>';
-    html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:36px;">';
+    html += '<div class="section-label">Your Stats</div>';
+    html += '<div class="profile-stat-grid">';
     var statItems = [
       { l: 'Hands',      v: stats.n,                     c: 'var(--gold)' },
       { l: 'Win Rate',   v: stats.wr !== null ? stats.wr + '%' : '—', c: stats.wr >= 50 ? 'var(--green)' : 'var(--red)' },
@@ -55,22 +55,22 @@ function renderProfile() {
       { l: 'Aggression', v: stats.aggPct !== null ? stats.aggPct + '%' : '—', c: 'var(--text)' },
     ];
     statItems.forEach(function(s) {
-      html += '<div style="background:var(--s2);border:1px solid var(--border);border-radius:5px;padding:12px 14px;">';
-      html += '<div style="font-size:8px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-bottom:6px;">' + s.l + '</div>';
-      html += '<div style="font-family:\'Cormorant Garamond\',serif;font-size:22px;font-weight:700;line-height:1;color:' + s.c + ';">' + s.v + '</div>';
+      html += '<div class="profile-stat-card">';
+      html += '<div class="profile-stat-label">' + s.l + '</div>';
+      html += '<div class="profile-stat-value" style="color:' + s.c + ';">' + s.v + '</div>';
       html += '</div>';
     });
     html += '</div>';
   }
 
-  html += '<div style="font-size:9px;letter-spacing:4px;text-transform:uppercase;color:var(--dim);margin-bottom:14px;">Custom Dashboards</div>';
-  html += '<div style="background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:24px 28px;margin-bottom:36px;display:flex;gap:24px;align-items:flex-start;">';
-  html += '<div style="font-family:\'Cormorant Garamond\',serif;font-size:44px;color:var(--gold2);opacity:0.4;line-height:1;flex-shrink:0;">♠</div>';
+  html += '<div class="section-label">Custom Dashboards</div>';
+  html += '<div class="profile-cta-card">';
+  html += '<div class="profile-cta-suit">♠</div>';
   html += '<div>';
-  html += '<div style="font-family:\'Cormorant Garamond\',serif;font-size:20px;font-weight:700;color:var(--text);margin-bottom:8px;">Want something specific?</div>';
-  html += '<div style="font-size:11px;color:var(--dim);line-height:1.7;margin-bottom:10px;">If there\'s a stat, pattern, or view the standard tool doesn\'t cover, a custom dashboard can be built to your exact requirements.</div>';
-  html += '<div style="font-size:10px;color:var(--amber);margin-bottom:14px;">Prices start from <span style="color:var(--gold);">100,000,000 chips</span></div>';
-  html += '<a href="https://discord.com" target="_blank" style="display:inline-flex;align-items:center;gap:6px;background:transparent;border:1px solid var(--gold2);color:var(--gold);font-family:\'IBM Plex Mono\',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;padding:8px 16px;border-radius:4px;cursor:pointer;text-decoration:none;">Contact on Discord</a>';
+  html += '<div class="profile-cta-title">Want something specific?</div>';
+  html += '<div class="profile-cta-desc">If there\'s a stat, pattern, or view the standard tool doesn\'t cover, a custom dashboard can be built to your exact requirements.</div>';
+  html += '<div class="profile-cta-price">Prices start from <span class="text-gold">100,000,000 chips</span></div>';
+  html += '<a href="https://discord.com" target="_blank" class="profile-cta-btn">Contact on Discord</a>';
   html += '</div></div>';
 
   html += '</div>';

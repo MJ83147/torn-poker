@@ -72,20 +72,20 @@ function renderShowdown(container, hands, meta) {
   var sdWinRate = pct(sdWon, sdTotal);
   var nsdWinRate = pct(nsdWon, nsdTotal);
 
-  var statsHtml = '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:20px;">';
+  var statsHtml = '<div class="stat-grid-2">';
 
-  statsHtml += '<div style="padding:14px;background:var(--card);border:1px solid var(--border);border-radius:8px;">';
-  statsHtml += '<div style="font-size:11px;color:var(--dim);margin-bottom:6px;display:flex;align-items:center;gap:6px;">' +
-    '<span style="display:inline-block;width:10px;height:3px;background:#4a9eff;border-radius:1px;"></span>Showdown</div>';
-  statsHtml += '<div style="font-size:20px;font-weight:500;color:' + pnlColor(cumSd) + ';">' + fmtPnl(cumSd) + '</div>';
-  statsHtml += '<div style="font-size:11px;color:var(--dim);margin-top:4px;">' + sdTotal + ' hands · ' + (sdWinRate !== null ? sdWinRate + '% win rate' : 'no data') + '</div>';
+  statsHtml += '<div class="stat-card">';
+  statsHtml += '<div class="stat-card-label-dot">' +
+    '<span class="line-dot line-dot-blue"></span>Showdown</div>';
+  statsHtml += '<div class="stat-card-value" style="color:' + pnlColor(cumSd) + ';">' + fmtPnl(cumSd) + '</div>';
+  statsHtml += '<div class="stat-card-meta">' + sdTotal + ' hands · ' + (sdWinRate !== null ? sdWinRate + '% win rate' : 'no data') + '</div>';
   statsHtml += '</div>';
 
-  statsHtml += '<div style="padding:14px;background:var(--card);border:1px solid var(--border);border-radius:8px;">';
-  statsHtml += '<div style="font-size:11px;color:var(--dim);margin-bottom:6px;display:flex;align-items:center;gap:6px;">' +
-    '<span style="display:inline-block;width:10px;height:3px;background:#e74c3c;border-radius:1px;"></span>Non-Showdown</div>';
-  statsHtml += '<div style="font-size:20px;font-weight:500;color:' + pnlColor(cumNsd) + ';">' + fmtPnl(cumNsd) + '</div>';
-  statsHtml += '<div style="font-size:11px;color:var(--dim);margin-top:4px;">' + nsdTotal + ' hands · ' + (nsdWinRate !== null ? nsdWinRate + '% win rate' : 'no data') + '</div>';
+  statsHtml += '<div class="stat-card">';
+  statsHtml += '<div class="stat-card-label-dot">' +
+    '<span class="line-dot line-dot-red"></span>Non-Showdown</div>';
+  statsHtml += '<div class="stat-card-value" style="color:' + pnlColor(cumNsd) + ';">' + fmtPnl(cumNsd) + '</div>';
+  statsHtml += '<div class="stat-card-meta">' + nsdTotal + ' hands · ' + (nsdWinRate !== null ? nsdWinRate + '% win rate' : 'no data') + '</div>';
   statsHtml += '</div>';
 
   statsHtml += '</div>';
@@ -133,32 +133,32 @@ function renderShowdown(container, hands, meta) {
   insHtml += '</div>';
 
   // ── Pot Size Analysis ──
-  var potHtml = '<div class="sec-subtitle" style="margin-top:32px;">Average Pot Size by Outcome</div>';
-  potHtml += '<div style="position:relative;width:100%;max-width:100%;"><canvas id="pot-size-chart"></canvas></div>';
+  var potHtml = '<div class="sec-subtitle mt-32">Average Pot Size by Outcome</div>';
+  potHtml += '<div class="chart-wrap-full"><canvas id="pot-size-chart"></canvas></div>';
 
   // Pot size stat cards
   var avgWinPot = (potSdWin.length + potNsdWin.length) > 0 ? avg(potSdWin.concat(potNsdWin)) : 0;
   var avgLossPot = (potSdLoss.length + potNsdLoss.length) > 0 ? avg(potSdLoss.concat(potNsdLoss)) : 0;
   var winLossRatio = avgLossPot > 0 ? (avgWinPot / avgLossPot).toFixed(2) : null;
 
-  potHtml += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px;">';
+  potHtml += '<div class="stat-grid-3">';
 
-  potHtml += '<div style="padding:14px;background:var(--card);border:1px solid var(--border);border-radius:8px;">';
-  potHtml += '<div style="font-size:11px;color:var(--dim);margin-bottom:6px;">Avg Pot Won</div>';
-  potHtml += '<div style="font-size:20px;font-weight:500;color:var(--green);">' + fmt(avgWinPot) + '</div>';
-  potHtml += '<div style="font-size:11px;color:var(--dim);margin-top:4px;">' + (potSdWin.length + potNsdWin.length) + ' hands</div>';
+  potHtml += '<div class="stat-card">';
+  potHtml += '<div class="stat-card-label">Avg Pot Won</div>';
+  potHtml += '<div class="stat-card-value" style="color:var(--green);">' + fmt(avgWinPot) + '</div>';
+  potHtml += '<div class="stat-card-meta">' + (potSdWin.length + potNsdWin.length) + ' hands</div>';
   potHtml += '</div>';
 
-  potHtml += '<div style="padding:14px;background:var(--card);border:1px solid var(--border);border-radius:8px;">';
-  potHtml += '<div style="font-size:11px;color:var(--dim);margin-bottom:6px;">Avg Pot Lost</div>';
-  potHtml += '<div style="font-size:20px;font-weight:500;color:var(--red);">' + fmt(avgLossPot) + '</div>';
-  potHtml += '<div style="font-size:11px;color:var(--dim);margin-top:4px;">' + (potSdLoss.length + potNsdLoss.length) + ' hands</div>';
+  potHtml += '<div class="stat-card">';
+  potHtml += '<div class="stat-card-label">Avg Pot Lost</div>';
+  potHtml += '<div class="stat-card-value" style="color:var(--red);">' + fmt(avgLossPot) + '</div>';
+  potHtml += '<div class="stat-card-meta">' + (potSdLoss.length + potNsdLoss.length) + ' hands</div>';
   potHtml += '</div>';
 
-  potHtml += '<div style="padding:14px;background:var(--card);border:1px solid var(--border);border-radius:8px;">';
-  potHtml += '<div style="font-size:11px;color:var(--dim);margin-bottom:6px;">Win/Loss Pot Ratio</div>';
-  potHtml += '<div style="font-size:20px;font-weight:500;color:' + (winLossRatio !== null ? pnlColor(winLossRatio - 1) : 'var(--red)') + ';">' + (winLossRatio !== null ? winLossRatio + 'x' : '—') + '</div>';
-  potHtml += '<div style="font-size:11px;color:var(--dim);margin-top:4px;">Target: above 1.0x</div>';
+  potHtml += '<div class="stat-card">';
+  potHtml += '<div class="stat-card-label">Win/Loss Pot Ratio</div>';
+  potHtml += '<div class="stat-card-value" style="color:' + (winLossRatio !== null ? pnlColor(winLossRatio - 1) : 'var(--red)') + ';">' + (winLossRatio !== null ? winLossRatio + 'x' : '—') + '</div>';
+  potHtml += '<div class="stat-card-meta">Target: above 1.0x</div>';
   potHtml += '</div>';
 
   potHtml += '</div>';
@@ -212,8 +212,8 @@ function renderShowdown(container, hands, meta) {
   potInsHtml += '</div>';
 
   // Assemble HTML
-  var html = '<div class="sec-subtitle" style="margin-top:0;">Showdown vs Non-Showdown P&L</div>';
-  html += '<div style="position:relative;width:100%;max-width:100%;"><canvas id="showdown-chart"></canvas></div>';
+  var html = '<div class="sec-subtitle mt-0">Showdown vs Non-Showdown P&L</div>';
+  html += '<div class="chart-wrap-full"><canvas id="showdown-chart"></canvas></div>';
   html += statsHtml;
   html += insHtml;
   html += potHtml;

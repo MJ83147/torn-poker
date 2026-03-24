@@ -1201,6 +1201,363 @@ textarea#jin:focus {
   color: var(--gold) !important;
 }
 
+/* ── UTILITY CLASSES ── */
+.mt-0 { margin-top: 0; padding-top: 0; border-top: none; }
+.mt-12 { margin-top: 12px; }
+.mt-20 { margin-top: 20px; }
+.mt-24 { margin-top: 24px; }
+.mt-32 { margin-top: 32px; }
+.mb-0 { margin-bottom: 0; }
+.mb-8 { margin-bottom: 8px; }
+.mb-12 { margin-bottom: 12px; }
+.mb-16 { margin-bottom: 16px; }
+.mb-20 { margin-bottom: 20px; }
+.mb-24 { margin-bottom: 24px; }
+.mr-12 { margin-right: 12px; }
+
+.overflow-x { overflow-x: auto; }
+
+.flex-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.flex-gap-6 {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.text-dim { color: var(--dim); }
+.text-gold { color: var(--gold); }
+
+.meta-text {
+  font-size: 9px;
+  color: var(--dim);
+}
+
+.meta-text-mb {
+  font-size: 9px;
+  color: var(--dim);
+  margin-bottom: 8px;
+}
+
+/* ── CHART WRAPPERS ── */
+.chart-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 720px;
+}
+
+.chart-wrap-full {
+  position: relative;
+  width: 100%;
+}
+
+/* ── STAT CARDS (showdown, etc) ── */
+.stat-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.stat-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.stat-card {
+  padding: 14px;
+  background: var(--s2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.stat-card-label {
+  font-size: 11px;
+  color: var(--dim);
+  margin-bottom: 6px;
+}
+
+.stat-card-label-dot {
+  font-size: 11px;
+  color: var(--dim);
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.stat-card-value {
+  font-size: 20px;
+  font-weight: 500;
+}
+
+.stat-card-meta {
+  font-size: 11px;
+  color: var(--dim);
+  margin-top: 4px;
+}
+
+.line-dot {
+  display: inline-block;
+  width: 10px;
+  height: 3px;
+  border-radius: 1px;
+}
+
+.line-dot-blue { background: #4a9eff; }
+.line-dot-red { background: #e74c3c; }
+
+/* ── ROW HOVER ── */
+.row-hover {
+  cursor: pointer;
+  transition: border-color .15s;
+}
+.row-hover:hover {
+  border-color: var(--gold2);
+}
+
+/* ── SECTION LABEL ── */
+.section-label {
+  font-size: 9px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: var(--dim);
+  margin-bottom: 14px;
+}
+
+/* ── PROFILE PANEL ── */
+.profile-wrap { max-width: 700px; }
+.profile-header { margin-bottom: 32px; }
+
+.profile-eyebrow {
+  font-size: 9px;
+  letter-spacing: 5px;
+  color: var(--dim);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.profile-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(28px, 4vw, 44px);
+  font-weight: 700;
+  color: var(--gold);
+  margin-bottom: 4px;
+}
+
+.profile-date {
+  font-size: 10px;
+  color: var(--dim);
+}
+
+.profile-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px;
+  margin-bottom: 36px;
+}
+
+.profile-stat-card {
+  background: var(--s2);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 12px 14px;
+}
+
+.profile-stat-label {
+  font-size: 8px;
+  letter-spacing: 2px;
+  color: var(--dim);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.profile-stat-value {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.profile-cta-card {
+  background: var(--s2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 24px 28px;
+  margin-bottom: 36px;
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+.profile-cta-suit {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 44px;
+  color: var(--gold2);
+  opacity: 0.4;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.profile-cta-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.profile-cta-desc {
+  font-size: 11px;
+  color: var(--dim);
+  line-height: 1.7;
+  margin-bottom: 10px;
+}
+
+.profile-cta-price {
+  font-size: 10px;
+  color: var(--amber);
+  margin-bottom: 14px;
+}
+
+.profile-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1px solid var(--gold2);
+  color: var(--gold);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+/* ── EMPTY STATE ── */
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.empty-state-icon {
+  font-size: 28px;
+  color: var(--gold2);
+  margin-bottom: 12px;
+}
+
+.empty-state-title {
+  font-size: 14px;
+  color: var(--dim);
+  margin-bottom: 8px;
+}
+
+.empty-state-desc {
+  font-size: 11px;
+  color: var(--muted);
+  max-width: 320px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+/* ── SAVED SECTION TOGGLE ── */
+.saved-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 12px;
+  user-select: none;
+}
+
+.saved-toggle-arrow {
+  font-size: 10px;
+  color: var(--dim);
+  transition: transform .2s;
+  display: inline-block;
+}
+
+.saved-toggle-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gold2);
+}
+
+.saved-toggle-count {
+  font-size: 10px;
+  color: var(--dim);
+}
+
+/* ── RANGE HAND ROWS ── */
+.range-hand-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background .15s;
+}
+
+.range-hand-row:hover {
+  background: var(--s2);
+}
+
+.range-hand-row-side {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+/* ── PLAYER DETAIL ── */
+.player-detail-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--gold);
+}
+
+/* ── TOOLTIP QUESTION MARK ── */
+.tip-q {
+  color: var(--dim);
+  font-size: 9px;
+  cursor: help;
+  border-bottom: 1px dashed var(--dim);
+}
+
+/* ── PAGE LABEL ── */
+.page-label {
+  font-size: 9px;
+  color: var(--dim);
+}
+
+/* ── LEGEND SWATCHES ── */
+.leg-sw-won { background: var(--green); }
+.leg-sw-played { background: var(--amber); opacity: 0.75; }
+.leg-sw-unplayed { background: #2e3e2e; }
+.leg-sw-bad { background: rgb(190, 45, 45); }
+.leg-sw-mid { background: rgb(220, 135, 45); }
+.leg-sw-good { background: rgb(50, 170, 65); }
+.leg-sw-low { background: #1a2e1e; }
+.leg-sw-med { background: #2e5835; }
+.leg-sw-high { background: rgb(50, 170, 65); }
+
+/* ── TABLE EXCLUDE BUTTON ── */
+.exclude-btn {
+  font-size: 8px;
+  padding: 2px 6px;
+}
+
 /* Trends 2x2 grid */
 .trends-grid {
   display: grid;

@@ -69,13 +69,13 @@ function renderTrends(container, hands, meta) {
     var cfg = chartConfigs[ci];
     var vals = points.map(function(p) { return p[cfg.key]; }).filter(function(v) { return v !== null; });
     if (vals.length < 2) continue;
-    tHtml += '<div><div class="sec-subtitle" style="margin-top:0;">' + cfg.title + '</div>' +
-      '<div style="position:relative;width:100%;"><canvas id="' + cfg.id + '"></canvas></div></div>';
+    tHtml += '<div><div class="sec-subtitle mt-0">' + cfg.title + '</div>' +
+      '<div class="chart-wrap-full"><canvas id="' + cfg.id + '"></canvas></div></div>';
   }
   tHtml += '</div>';
 
   tHtml += '<div class="sec-subtitle">Session Breakdown</div>';
-  tHtml += '<div style="overflow-x:auto;"><table class="tbl"><thead><tr><th>Date</th><th>Hands</th><th>Session ' + tipWrap('Win Rate') + '</th><th>Cumulative ' + tipWrap('Win Rate') + '</th><th>' + tipWrap('VPIP') + '</th><th>' + tipWrap('Aggression') + '</th></tr></thead><tbody>';
+  tHtml += '<div class="overflow-x"><table class="tbl"><thead><tr><th>Date</th><th>Hands</th><th>Session ' + tipWrap('Win Rate') + '</th><th>Cumulative ' + tipWrap('Win Rate') + '</th><th>' + tipWrap('VPIP') + '</th><th>' + tipWrap('Aggression') + '</th></tr></thead><tbody>';
   for (var pi = points.length - 1; pi >= 0; pi--) {
     var pt = points[pi];
     var wrCol2 = pt.sessionWr !== null ? pnlColor(pt.sessionWr - 50) : 'var(--dim)';

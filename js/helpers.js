@@ -229,7 +229,7 @@ function renderHandRow(h, idx, opts) {
   var res = renderResult(h, 'div', 'hrow-res');
   var starCol = opts && opts.starHtml ? opts.starHtml : '';
   var extraCls = starCol ? ' hrow-with-star' : '';
-  return '<div class="hrow' + extraCls + '" data-hand-idx="' + idx + '" style="cursor:pointer;transition:border-color .15s;" onmouseover="this.style.borderColor=\'var(--gold2)\'" onmouseout="this.style.borderColor=\'\'">' +
+  return '<div class="hrow row-hover' + extraCls + '" data-hand-idx="' + idx + '">' +
     starCol +
     '<div class="hrow-pos">' + (h.position || '?') + '</div>' +
     '<div class="hrow-cards">' + (h.hole && h.hole.length ? h.hole.join(' ') : '?? ??') + '</div>' +
@@ -243,7 +243,7 @@ function renderPagination(page, totalItems, pageSize, prevId, nextId) {
   var totalPages = Math.ceil(totalItems / pageSize);
   if (totalPages <= 1) return '';
   return '<button class="log-nav-btn" id="' + prevId + '" ' + (page === 0 ? 'disabled' : '') + '>&laquo; Prev</button>' +
-    '<span style="font-size:9px;color:var(--dim);">Page ' + (page + 1) + '/' + totalPages + '</span>' +
+    '<span class="page-label">Page ' + (page + 1) + '/' + totalPages + '</span>' +
     '<button class="log-nav-btn" id="' + nextId + '" ' + (page >= totalPages - 1 ? 'disabled' : '') + '>Next &raquo;</button>';
 }
 
@@ -350,7 +350,7 @@ function renderMiniRow(items) {
 function tipWrap(label) {
   const def = TIPS[label];
   if (!def) return label;
-  return '<span class="tooltip">' + label + ' <span style="color:var(--dim);font-size:9px;cursor:help;border-bottom:1px dashed var(--dim);">?</span><span class="tip-box">' + def + '</span></span>';
+  return '<span class="tooltip">' + label + ' <span class="tip-q">?</span><span class="tip-box">' + def + '</span></span>';
 }
 
 function ins(sev, label, text, chips) {

@@ -28,7 +28,7 @@ function renderActions(container, d, hands) {
   actHtml += '<div class="stack-bar">' + segs.map(function(s) { return '<div class="stack-seg" style="width:' + s.p + '%;background:' + s.c + ';"></div>'; }).join('') + '</div>';
   actHtml += '<div class="stack-labels">' + segs.map(function(s) { return '<div class="stack-li"><div class="stack-dot" style="background:' + s.c + ';"></div>' + s.l + '</div>'; }).join('') + '</div>';
 
-  actHtml += '<div class="sec-subtitle" style="margin-top:20px;">By street</div><div style="overflow-x:auto;"><table class="tbl"><thead><tr><th>Street</th><th>' + tipWrap('Fold') + '</th><th>' + tipWrap('Check') + '</th><th>' + tipWrap('Call') + '</th><th>' + tipWrap('Raise') + '</th><th>' + tipWrap('Aggression') + '</th></tr></thead><tbody>';
+  actHtml += '<div class="sec-subtitle">By street</div><div class="overflow-x"><table class="tbl"><thead><tr><th>Street</th><th>' + tipWrap('Fold') + '</th><th>' + tipWrap('Check') + '</th><th>' + tipWrap('Call') + '</th><th>' + tipWrap('Raise') + '</th><th>' + tipWrap('Aggression') + '</th></tr></thead><tbody>';
   actHtml += streets.map(function(s) {
     var ss2 = d.ss[s];
     var tot2 = ss2.f + ss2.ch + ss2.ca + ss2.ra;
@@ -38,7 +38,7 @@ function renderActions(container, d, hands) {
   actHtml += '</tbody></table></div>';
 
   // Situational stats
-  actHtml += '<div class="sec-subtitle" style="margin-top:20px;">Situational stats</div>';
+  actHtml += '<div class="sec-subtitle">Situational stats</div>';
   actHtml += '<div class="bar-group">';
 
   function sitStatColour(label, p) {

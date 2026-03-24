@@ -325,17 +325,17 @@ function renderPlayers(container, d, hands) {
     var html = '';
 
     if (watchedOpps.length) {
-      html += '<div class="sec-subtitle" style="margin-top:0;">Watched Players</div>';
-      html += '<div style="font-size:9px;color:var(--dim);margin-bottom:8px;">Click star to unwatch · click row to view hands</div>';
-      html += '<div style="overflow-x:auto;"><table class="tbl-compare"><thead><tr>';
+      html += '<div class="sec-subtitle mt-0">Watched Players</div>';
+      html += '<div class="meta-text-mb">Click star to unwatch · click row to view hands</div>';
+      html += '<div class="overflow-x"><table class="tbl-compare"><thead><tr>';
       html += '<th></th><th>Player</th><th>Hands</th><th></th><th>' + tipWrap('Win Rate') + '</th><th>Net P&L</th>';
       html += '</tr></thead><tbody>';
       for (var w = 0; w < watchedOpps.length; w++) {
         var o = watchedOpps[w];
         var wr = pct(o.won, o.won + o.lost);
         var barW = Math.round(o.hands / maxH * 100);
-        html += '<tr class="player-row" data-player="' + o.name + '" style="cursor:pointer;transition:border-color .15s;" onmouseover="this.style.borderColor=\'var(--gold2)\'" onmouseout="this.style.borderColor=\'\'">';
-        html += '<td class="watch-star watched" data-watch="' + o.name + '" title="Unwatch player" style="cursor:pointer;width:24px;text-align:center;">&#9733;</td>';
+        html += '<tr class="player-row row-hover" data-player="' + o.name + '">';
+        html += '<td class="watch-star watched" data-watch="' + o.name + '" title="Unwatch player">&#9733;</td>';
         html += '<td>' + o.name + '</td><td>' + o.hands + '</td>';
         html += '<td style="width:80px;"><span class="tbl-spark" style="width:' + barW + '%;background:var(--gold2);"></span></td>';
         html += '<td class="' + wrCls(wr) + '">' + (wr !== null ? wr + '%' : '—') + '</td>';
@@ -358,10 +358,10 @@ function renderPlayers(container, d, hands) {
     }
     if (best) pIns.push(ins('g', 'Best Record', 'You win ' + pct(best.won, best.won + best.lost) + '% against ' + best.name + ' (' + (best.won + best.lost) + ' contested hands).', [{ v: best.name, hi: true }, { v: pct(best.won, best.won + best.lost) + '% win' }]));
     if (worst && worst !== best) pIns.push(ins('r', 'Toughest Opponent', 'Only ' + pct(worst.won, worst.won + worst.lost) + '% win rate against ' + worst.name + ' (' + (worst.won + worst.lost) + ' contested hands).', [{ v: worst.name, hi: true }, { v: pct(worst.won, worst.won + worst.lost) + '% win' }]));
-    if (pIns.length) html += '<div class="ins-grid" style="margin-top:20px;margin-bottom:20px;">' + pIns.join('') + '</div>';
+    if (pIns.length) html += '<div class="ins-grid mt-20 mb-20">' + pIns.join('') + '</div>';
 
     html += '<div class="sec-subtitle">All Opponents</div>';
-    html += '<div style="font-size:9px;color:var(--dim);margin-bottom:8px;">' + filtered.length + ' opponents with 2+ shared hands · click star to watch · click row to view hands</div>';
+    html += '<div class="meta-text-mb">' + filtered.length + ' opponents with 2+ shared hands · click star to watch · click row to view hands</div>';
     html += '<div class="players-table-scroll"><table class="tbl-compare"><thead><tr>';
     html += '<th></th><th>Player</th><th>Hands</th><th></th><th>' + tipWrap('Win Rate') + '</th><th>Net P&L</th>';
     html += '</tr></thead><tbody>';

@@ -16,9 +16,9 @@ function renderLog(container, hands) {
     var savedHtml = renderSavedSection();
 
     var logHtml = savedHtml;
-    logHtml += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">' +
-      '<div style="font-size:9px;color:var(--dim);">' + allHands.length + ' hands total · showing ' + (start + 1) + '-' + end + '</div>' +
-      '<div style="display:flex;gap:6px;align-items:center;">' +
+    logHtml += '<div class="flex-between mb-12">' +
+      '<div class="meta-text">' + allHands.length + ' hands total · showing ' + (start + 1) + '-' + end + '</div>' +
+      '<div class="flex-gap-6">' +
       renderPagination(_logPage, allHands.length, PAGE_SIZE, 'log-prev', 'log-next') +
       '</div></div>';
     logHtml += '<div class="hrow hrow-header hrow-with-star"><div class="hrow-star-col"></div><div class="hrow-pos">Pos</div><div class="hrow-cards">Cards</div><div class="hrow-board">Board</div><div class="hrow-acts">Actions</div><div class="hrow-res">Result</div></div>';
@@ -74,13 +74,13 @@ function renderSavedSection() {
 
   var expanded = typeof window._savedExpanded !== 'undefined' ? window._savedExpanded : true;
 
-  var html = '<div class="saved-section" style="margin-bottom:20px;">' +
-    '<div class="saved-section-toggle" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 0;border-bottom:1px solid var(--border);margin-bottom:12px;user-select:none;">' +
-      '<span class="saved-section-arrow" style="font-size:10px;color:var(--dim);transition:transform .2s;display:inline-block;transform:rotate(' + (expanded ? '90' : '0') + 'deg);">&#9654;</span>' +
-      '<span style="font-size:12px;font-weight:600;color:var(--gold2);">&#9733; Saved Hands</span>' +
-      '<span style="font-size:10px;color:var(--dim);">(' + keys.length + ')</span>' +
+  var html = '<div class="saved-section mb-20">' +
+    '<div class="saved-toggle">' +
+      '<span class="saved-toggle-arrow" style="transform:rotate(' + (expanded ? '90' : '0') + 'deg);">&#9654;</span>' +
+      '<span class="saved-toggle-title">&#9733; Saved Hands</span>' +
+      '<span class="saved-toggle-count">(' + keys.length + ')</span>' +
     '</div>' +
-    '<div class="saved-section-body" style="' + (expanded ? '' : 'display:none;') + '">';
+    '<div class="saved-section-body"' + (expanded ? '' : ' style="display:none;"') + '>';
 
   html += '<div class="saved-hands-list">';
   for (var i = 0; i < keys.length; i++) {
