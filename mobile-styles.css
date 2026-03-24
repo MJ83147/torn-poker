@@ -45,6 +45,18 @@
     display: flex;
     flex-direction: column;
   }
+  /* All direct children stretch full width inside flex panel */
+  .panel.on > * {
+    width: 100%;
+    flex-shrink: 0;
+  }
+  /* Tables inside overflow wrappers need full width */
+  .panel .overflow-x {
+    width: 100%;
+  }
+  .panel .overflow-x .tbl {
+    min-width: 500px;
+  }
 
   /* Paste screen */
   #paste-wrap { padding: 40px 16px; }
