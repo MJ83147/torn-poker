@@ -935,61 +935,36 @@ textarea#jin:focus {
   opacity: 1;
 }
 
-/* HAND LOG */
-.hlog {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.hrow {
-  display: grid;
-  grid-template-columns: 52px 80px 130px 1fr 70px;
-  gap: 8px;
-  align-items: center;
-  background: var(--s1);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: 10px 14px;
-  font-size: 13px;
-}
-
-.hrow-pos {
+/* HAND LOG TABLE */
+.hlog-tbl .hrow-pos {
   color: var(--gold);
   font-weight: 500;
 }
-
-.hrow-board {
+.hlog-tbl .hrow-board {
+  color: var(--dim);
+  font-size: 11px;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.hlog-tbl .hrow-acts {
   color: var(--dim);
   font-size: 11px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-
-.hrow-acts {
-  color: var(--dim);
-  font-size: 11px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.hrow-res {
+.hlog-tbl .hrow-res {
   text-align: right;
   font-weight: 500;
 }
-
-.hrow-res.w {
-  color: var(--green);
-}
-
-.hrow-res.l {
-  color: var(--red);
-}
-
-.hrow-res.u {
-  color: var(--muted);
+.hrow-res.w { color: var(--green); }
+.hrow-res.l { color: var(--red); }
+.hrow-res.u { color: var(--muted); }
+.hlog-tbl .hrow-star-col {
+  width: 28px;
+  text-align: center;
 }
 
 /* RANGE TOOLTIP via data attr */
@@ -1045,21 +1020,6 @@ textarea#jin:focus {
   font-weight: 400;
 }
 
-/* Log header row */
-.hrow-header {
-  background: transparent !important;
-  border: none !important;
-  padding: 4px 12px !important;
-  margin-bottom: 4px;
-}
-
-.hrow-header div {
-  font-size: 9px !important;
-  letter-spacing: 2px;
-  color: var(--dim) !important;
-  text-transform: uppercase;
-  font-weight: 400;
-}
 
 /* Log pagination buttons */
 .log-nav-btn {
@@ -1403,6 +1363,12 @@ textarea#jin:focus {
   background: var(--s2);
 }
 
+.range-hand-row-side {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 /* ── PLAYER DETAIL ── */
 .player-detail-name {
   font-size: 14px;
@@ -1564,17 +1530,6 @@ textarea#jin:focus {
 }
 
 /* HAND ROW WITH STAR COLUMN */
-.hrow.hrow-with-star {
-  grid-template-columns: 24px 52px 80px 130px 1fr 70px;
-}
-.hrow-header.hrow-with-star {
-  grid-template-columns: 24px 52px 80px 130px 1fr 70px;
-}
-.hrow-star-col {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
 .hrow-star {
   font-size: 14px;
   color: var(--dim);
@@ -1584,7 +1539,7 @@ textarea#jin:focus {
   opacity: 0.5;
   padding: 6px 8px;
 }
-.hrow:hover .hrow-star {
+tr.hrow:hover .hrow-star {
   opacity: 1;
 }
 .hrow-star:hover {
@@ -1953,266 +1908,3 @@ textarea#jin:focus {
   line-height: 1.6;
 }
 
-/* =============================================
-   MOBILE RESPONSIVE
-   ============================================= */
-
-/* ---------- Tablet & small desktop (<=768px) ---------- */
-@media (max-width: 768px) {
-
-  /* Welcome body stacks on mobile */
-  .welcome-body { grid-template-columns: 1fr; }
-  .welcome-tips { margin-top: 0; }
-
-  /* Header */
-  .dash-header { padding: 0 14px; }
-  .header-inner {
-    flex-wrap: wrap;
-    padding: 10px 0 0;
-    gap: 8px;
-  }
-  .header-title { font-size: 17px; flex: 1 1 auto; }
-
-  /* Hero strip: 2-row wrap */
-  .hero-strip { flex-wrap: wrap; }
-  .hs { min-width: 33%; flex: 1 1 30%; padding: 10px 12px; }
-  .hs-v { font-size: 18px; }
-  .hs-l { font-size: 10px; letter-spacing: 2px; }
-
-  /* Tabs: wrap into grid so all items are visible */
-  .tabs {
-    flex-wrap: wrap;
-  }
-  .tab { padding: 10px 14px; font-size: 11px; letter-spacing: 1px; }
-
-  /* Panels */
-  .panel { padding: 24px 16px; }
-
-  /* Paste screen */
-  #paste-wrap { padding: 40px 16px; }
-  .paste-box { padding: 28px 18px; }
-  .paste-suit { font-size: 34px; }
-  .paste-title { font-size: 20px; }
-
-  /* Grid layouts */
-  .two-col, .ins-grid { grid-template-columns: 1fr; }
-  .two-col { gap: 16px; }
-
-  /* Bar rows */
-  .bw2 { grid-template-columns: 90px 1fr 45px; }
-  .bw3 { grid-template-columns: 90px 1fr 45px 50px; }
-  .bar-label { font-size: 11px; }
-
-  /* Hand log grid */
-  .hrow {
-    grid-template-columns: 44px 70px 1fr 60px;
-    gap: 6px;
-    padding: 8px 10px;
-    font-size: 11px;
-  }
-  .hrow-board { display: none; }
-
-  /* Range grid */
-  .rc span { font-size: 8px; }
-  .rc:hover { transform: scale(1.3); }
-
-  /* Tables */
-  .tbl { font-size: 11px; }
-  .tbl td { padding: 8px 8px 8px 0; font-size: 11px; }
-  .tbl th { font-size: 10px; padding: 0 8px 8px 0; }
-
-  /* Modal */
-  .modal-box { padding: 18px; width: 94vw; }
-
-  /* Mini stats */
-  .mini-row { grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 8px; }
-  .mini { padding: 10px 12px; }
-  .mini-v { font-size: 20px; }
-
-  /* Insight cards */
-  .ins-text { padding-right: 60px; }
-  .ins-label { padding-right: 60px; }
-
-  /* Loader */
-  .l-sub { margin-bottom: 32px; }
-  .l-count { font-size: 42px; }
-
-  /* Buttons - better touch targets */
-  .log-nav-btn { padding: 8px 14px; font-size: 11px; }
-  .example-hand-btn { padding: 6px 12px; font-size: 11px; }
-  .reset-btn { padding: 8px 14px; font-size: 11px; }
-
-  /* Trends: stack on tablet */
-  .trends-grid { grid-template-columns: 1fr; }
-
-  /* Paste nav */
-  .paste-nav { padding: 12px 14px 0; gap: 16px; }
-}
-
-/* ---------- Phone (<=480px) ---------- */
-@media (max-width: 480px) {
-
-  body { font-size: 13px; }
-
-  /* Header: stack title and controls vertically */
-  .dash-header { padding: 0 10px; }
-  .header-inner {
-    flex-wrap: wrap;
-    gap: 8px;
-    padding: 8px 0 0;
-  }
-  .header-title {
-    font-size: 15px;
-    width: 100%;
-  }
-  .header-controls {
-    width: 100%;
-    gap: 8px;
-    justify-content: flex-start;
-  }
-  .header-meta { font-size: 11px; }
-
-  /* Hero strip: stack vertically on very small screens */
-  .hero-strip { flex-wrap: wrap; }
-  .hs { min-width: 48%; flex: 1 1 48%; padding: 8px 10px; }
-  .hs-v { font-size: 16px; }
-  .hs-l { font-size: 9px; letter-spacing: 1.5px; margin-bottom: 3px; }
-
-  /* Tabs: wrap into compact grid */
-  .tabs {
-    flex-wrap: wrap;
-  }
-  .tab {
-    padding: 8px 10px;
-    font-size: 10px;
-    letter-spacing: 1px;
-    flex: 0 0 auto;
-  }
-
-  /* Panels */
-  .panel { padding: 16px 10px; }
-
-  /* Paste screen */
-  .paste-nav { padding: 10px 10px 0; gap: 12px; flex-wrap: wrap; }
-  #paste-wrap { padding: 24px 10px; }
-  .paste-box { padding: 20px 14px; }
-  .paste-suit { font-size: 28px; margin-bottom: 10px; }
-  .paste-title { font-size: 18px; }
-  .paste-sub { font-size: 11px; margin-bottom: 16px; }
-  .go-btn { padding: 12px; font-size: 15px; width: 100%; }
-  textarea#jin { font-size: 11px; min-height: 70px; padding: 10px; }
-
-  /* Bar rows: stack label above bar */
-  .bw2 { grid-template-columns: 1fr 45px; }
-  .bw3 { grid-template-columns: 1fr 45px 50px; }
-  .bar-label {
-    grid-column: 1 / -1;
-    font-size: 11px;
-    margin-bottom: -4px;
-  }
-
-  /* Hand log: compact card layout */
-  .hrow {
-    grid-template-columns: 40px 60px 1fr 55px;
-    gap: 4px;
-    padding: 7px 8px;
-    font-size: 11px;
-  }
-  .hrow-header { padding: 2px 8px !important; }
-  .hrow-header div { font-size: 8px !important; }
-  .hrow-board { display: none; }
-  .hrow-acts { font-size: 10px; }
-  .hrow-pos { font-size: 11px; }
-
-  /* Range grid: tighter */
-  .range-grid { gap: 1px; }
-  .rc span { font-size: 7px; }
-  .range-grid-sm .rc span { font-size: 6px; }
-  .rc:hover { transform: scale(1.2); }
-  .range-legend { gap: 6px; }
-  .leg { font-size: 10px; }
-
-  /* Mini stats */
-  .mini-row {
-    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
-    gap: 6px;
-    margin-bottom: 16px;
-  }
-  .mini { padding: 8px 10px; }
-  .mini-l { font-size: 10px; letter-spacing: 1px; margin-bottom: 4px; }
-  .mini-v { font-size: 18px; }
-
-  /* Tables: horizontal scroll wrapper */
-  .tbl td { padding: 7px 6px 7px 0; font-size: 11px; }
-  .tbl th { font-size: 9px; padding: 0 6px 6px 0; letter-spacing: 1px; }
-
-  /* Insight cards */
-  .ins { padding: 12px; }
-  .ins-text { font-size: 13px; padding-right: 50px; }
-  .ins-label { font-size: 10px; padding-right: 50px; }
-  .ins-badge { top: 10px; right: 8px; font-size: 9px; }
-
-  /* Section subtitles */
-  .sec-subtitle { font-size: 11px; letter-spacing: 2px; }
-
-  /* Modal */
-  .modal-box {
-    width: 96vw;
-    padding: 14px;
-    max-height: 85vh;
-  }
-  .modal-title { font-size: 16px; }
-  .modal-hand-meta { flex-wrap: wrap; gap: 8px; }
-
-  /* Buttons: 44px min touch target */
-  .log-nav-btn { padding: 10px 16px; font-size: 11px; min-height: 40px; }
-  .example-hand-btn { padding: 8px 14px; font-size: 10px; min-height: 36px; }
-  .reset-btn { padding: 10px 16px; font-size: 11px; }
-  .table-filter { font-size: 11px; padding: 8px 10px; max-width: 160px; }
-
-  /* Loader */
-  .l-eyebrow { font-size: 10px; letter-spacing: 4px; }
-  .l-sub { font-size: 10px; letter-spacing: 3px; margin-bottom: 28px; }
-  .l-count { font-size: 36px; min-width: 80px; }
-  .l-prog { width: 140px; }
-  .lc { width: 40px; height: 56px; font-size: 16px; }
-  .l-cards { gap: 8px; margin-bottom: 32px; }
-
-  /* Tooltip: clamp to viewport */
-  .tooltip .tip-box { max-width: 200px; min-width: 120px; font-size: 11px; }
-
-  /* Divider */
-  .divider { margin: 16px 0; }
-
-  /* Stack bar labels */
-  .stack-labels { gap: 10px; }
-  .stack-li { font-size: 12px; }
-
-  /* Hand type stacks */
-  .ht-stack-name { font-size: 12px; }
-  .ht-stack-meta { font-size: 11px; }
-  .ht-stack-legend { gap: 10px; }
-  .ht-leg-item { font-size: 10px; }
-
-  /* Chip tags */
-  .chip { font-size: 10px; padding: 2px 6px; }
-}
-
-/* ── WIDE DESKTOP ── */
-@media (min-width: 1200px) {
-  .mini-row {
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  }
-  .saved-hands-list {
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  }
-}
-
-@media (min-width: 1600px) {
-  .panel {
-    padding: 36px 60px;
-  }
-  .dash-header {
-    padding: 0 60px;
-  }
-}

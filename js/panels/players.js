@@ -267,15 +267,23 @@ function generateExploitInsights(s, playerName, hands) {
   return insights;
 }
 
-// Find one example hand for each insight type
+// Find example hands for each insight type (returns arrays, max MAX_EX each)
 function findInsightExamples(hands, playerName) {
+  var MAX_EX = 20;
   var ex = {
-    vpip: null, limp: null, passive: null, aggressive: null,
-    foldToRaise: null, callsRaise: null, cbet: null,
-    showdown: null, foldPostFlop: null, weakReveal: null, strongReveal: null
+    vpip: [], limp: [], passive: [], aggressive: [],
+    foldToRaise: [], callsRaise: [], cbet: [],
+    showdown: [], foldPostFlop: [], weakReveal: [], strongReveal: []
   };
 
+  function full(key) { return ex[key].length >= MAX_EX; }
+  function allFull() {
+    for (var k in ex) { if (ex[k].length < MAX_EX) return false; }
+    return true;
+  }
+
   for (var i = hands.length - 1; i >= 0; i--) {
+    if (allFull()) break;
     var h = hands[i];
     var acts = parseActions(h.actions);
     var playerActs = [];
@@ -301,72 +309,72 @@ function findInsightExamples(hands, playerName) {
       if (pa.type === 'call' || pa.type === 'check') callCheckCount++;
     }
 
-    // VPIP example: entered pot voluntarily
-    if (!ex.vpip && (raisedPre || calledPre)) ex.vpip = h;
+    // VPIP: entered pot voluntarily
+    if (!full('vpip') && (raisedPre || calledPre)) ex.vpip.push(h);
 
-    // Limp example
-    if (!ex.limp && limpedPre) ex.limp = h;
+    // Limp
+    if (!full('limp') && limpedPre) ex.limp.push(h);
 
-    // Passive example: mostly calls/checks, no raises
-    if (!ex.passive && callCheckCount >= 2 && raiseCount === 0) ex.passive = h;
+    // Passive: mostly calls/checks, no raises
+    if (!full('passive') && callCheckCount >= 2 && raiseCount === 0) ex.passive.push(h);
 
-    // Aggressive example: multiple raises
-    if (!ex.aggressive && raiseCount >= 2) ex.aggressive = h;
+    // Aggressive: multiple raises
+    if (!full('aggressive') && raiseCount >= 2) ex.aggressive.push(h);
 
-    // Fold to raise: player folded after facing a raise
-    if (!ex.foldToRaise) {
+    // Fold to raise
+    if (!full('foldToRaise')) {
       for (var j = 0; j < acts.length; j++) {
         if (acts[j].author !== playerName && acts[j].type === 'raise') {
           for (var k = j + 1; k < acts.length; k++) {
             if (acts[k].street !== acts[j].street) break;
             if (acts[k].author === playerName && acts[k].type === 'fold') {
-              ex.foldToRaise = h; break;
+              ex.foldToRaise.push(h); break;
             }
             if (acts[k].author === playerName) break;
           }
-          if (ex.foldToRaise) break;
+          if (ex.foldToRaise[ex.foldToRaise.length - 1] === h) break;
         }
       }
     }
 
-    // Calls raise: player called after facing a raise
-    if (!ex.callsRaise) {
+    // Calls raise
+    if (!full('callsRaise')) {
       for (var j = 0; j < acts.length; j++) {
         if (acts[j].author !== playerName && acts[j].type === 'raise') {
           for (var k = j + 1; k < acts.length; k++) {
             if (acts[k].street !== acts[j].street) break;
             if (acts[k].author === playerName && acts[k].type === 'call') {
-              ex.callsRaise = h; break;
+              ex.callsRaise.push(h); break;
             }
             if (acts[k].author === playerName) break;
           }
-          if (ex.callsRaise) break;
+          if (ex.callsRaise[ex.callsRaise.length - 1] === h) break;
         }
       }
     }
 
-    // C-bet example: raised pre, bet flop
-    if (!ex.cbet && raisedPre && seenPostFlop) {
+    // C-bet: raised pre, bet flop
+    if (!full('cbet') && raisedPre && seenPostFlop) {
       for (var j = 0; j < playerActs.length; j++) {
         if (playerActs[j].street === 'Flop' && playerActs[j].type === 'raise') {
-          ex.cbet = h; break;
+          ex.cbet.push(h); break;
         }
       }
     }
 
-    // Showdown example: went to showdown
-    if (!ex.showdown) {
+    // Showdown: went to showdown
+    if (!full('showdown')) {
       var handHasShowdown = false;
       for (var j = 0; j < (h.actions || []).length; j++) {
         if ((h.actions[j] || '').indexOf(' reveals ') !== -1) { handHasShowdown = true; break; }
       }
-      if (seenPostFlop && handHasShowdown && !foldedPostFlop) ex.showdown = h;
+      if (seenPostFlop && handHasShowdown && !foldedPostFlop) ex.showdown.push(h);
     }
 
-    // Fold post-flop example
-    if (!ex.foldPostFlop && foldedPostFlop) ex.foldPostFlop = h;
+    // Fold post-flop
+    if (!full('foldPostFlop') && foldedPostFlop) ex.foldPostFlop.push(h);
 
-    // Reveal strength examples
+    // Reveal strength
     for (var j = 0; j < (h.actions || []).length; j++) {
       var line = h.actions[j] || '';
       if (line.indexOf(playerName) !== -1 && line.indexOf(' reveals ') !== -1) {
@@ -377,16 +385,11 @@ function findInsightExamples(hands, playerName) {
               strength.indexOf('straight') !== -1 || strength.indexOf('flush') !== -1 ||
               strength.indexOf('full house') !== -1 || strength.indexOf('four of a kind') !== -1 ||
               strength.indexOf('straight flush') !== -1 || strength.indexOf('royal flush') !== -1;
-          if (!ex.weakReveal && !isStrong) ex.weakReveal = h;
-          if (!ex.strongReveal && isStrong) ex.strongReveal = h;
+          if (!full('weakReveal') && !isStrong) ex.weakReveal.push(h);
+          if (!full('strongReveal') && isStrong) ex.strongReveal.push(h);
         }
       }
     }
-
-    // Early exit if we have all examples
-    if (ex.vpip && ex.limp && ex.passive && ex.aggressive && ex.foldToRaise &&
-        ex.callsRaise && ex.cbet && ex.showdown && ex.foldPostFlop &&
-        ex.weakReveal && ex.strongReveal) break;
   }
 
   return ex;

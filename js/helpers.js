@@ -226,16 +226,15 @@ function renderResult(h, tag, baseClass) {
 // opts.starHtml: optional star column HTML (for log panel)
 function renderHandRow(h, idx, opts) {
   var myActs = getActsSummary(h);
-  var res = renderResult(h, 'div', 'hrow-res');
-  var starCol = opts && opts.starHtml ? opts.starHtml : '';
-  var extraCls = starCol ? ' hrow-with-star' : '';
-  return '<div class="hrow row-hover' + extraCls + '" data-hand-idx="' + idx + '">' +
+  var res = renderResult(h, 'td', 'hrow-res');
+  var starCol = opts && opts.starHtml ? '<td class="hrow-star-col">' + opts.starHtml + '</td>' : '';
+  return '<tr class="hrow row-hover" data-hand-idx="' + idx + '">' +
     starCol +
-    '<div class="hrow-pos">' + (h.position || '?') + '</div>' +
-    '<div class="hrow-cards">' + (h.hole && h.hole.length ? h.hole.join(' ') : '?? ??') + '</div>' +
-    '<div class="hrow-board">' + (h.board && h.board.length ? h.board.join(' ') : '—') + '</div>' +
-    '<div class="hrow-acts">' + myActs + '</div>' +
-    res + '</div>';
+    '<td class="hrow-pos">' + (h.position || '?') + '</td>' +
+    '<td class="hrow-cards">' + (h.hole && h.hole.length ? h.hole.join(' ') : '?? ??') + '</td>' +
+    '<td class="hrow-board">' + (h.board && h.board.length ? h.board.join(' ') : '—') + '</td>' +
+    '<td class="hrow-acts">' + myActs + '</td>' +
+    res + '</tr>';
 }
 
 // Render prev/next pagination controls
@@ -363,19 +362,85 @@ function ins(sev, label, text, chips) {
   return '<div class="ins"><div class="ins-badge ' + sev + '"><div class="ins-dot"></div><div class="ins-word">' + words[sev] + '</div></div><div class="ins-label dim-label">' + label + '</div><div class="ins-text">' + text + '</div>' + chipHtml + '</div>';
 }
 
-// Insight helper that injects a "See example hand" button and wires its click
-function insWithExample(sev, label, text, chips, exampleHand, coachingNote) {
+// Insight helper that injects a "See example hands" button and wires its click.
+// exampleHands can be a single hand or an array of hands.
+function insWithExample(sev, label, text, chips, exampleHands, coachingNote) {
   const base = ins(sev, label, text, chips);
-  if (!exampleHand) return base;
+  // Normalise to array
+  var handsList = !exampleHands ? [] : Array.isArray(exampleHands) ? exampleHands : [exampleHands];
+  if (!handsList.length) return base;
   const btnId = 'ex-' + Math.random().toString(36).slice(2, 8);
-  const btn = '<button class="example-hand-btn" id="' + btnId + '">See example hand</button>';
+  var count = handsList.length;
+  const btn = '<button class="example-hand-btn" id="' + btnId + '">' +
+    (count === 1 ? 'See example hand' : 'See ' + count + ' example hands') + '</button>';
   const insertPoint = base.lastIndexOf('</div>');
   const result = base.slice(0, insertPoint) + btn + base.slice(insertPoint);
   setTimeout(function() {
     const el = document.getElementById(btnId);
-    if (el) el.onclick = function() { showExampleHandModal(exampleHand, coachingNote); };
+    if (!el) return;
+    el.onclick = function() {
+      if (count === 1) {
+        showExampleHandModal(handsList[0], coachingNote);
+      } else {
+        showExampleHandListModal(label, handsList, coachingNote);
+      }
+    };
   }, 50);
   return result;
+}
+
+// Hand-list modal: shows a scrollable list of hands, click any to open detail.
+// Same visual pattern as the range grid cell click modal.
+function showExampleHandListModal(title, handsList, coachingNote) {
+  var existing = document.getElementById('example-hand-modal');
+  if (existing) existing.remove();
+
+  var overlay = document.createElement('div');
+  overlay.id = 'example-hand-modal';
+  overlay.className = 'modal-overlay';
+  overlay.onclick = function(e) { if (e.target === overlay) closeModal(); };
+
+  var box = document.createElement('div');
+  box.className = 'modal-box';
+  box.style.position = 'relative';
+  box.style.maxHeight = '80vh';
+  box.style.overflowY = 'auto';
+
+  var header = '<div class="modal-title">' + title + '</div>' +
+    '<div class="modal-subtitle">' + handsList.length + ' example hand' + (handsList.length !== 1 ? 's' : '') + '</div>';
+
+  if (coachingNote) {
+    header += '<div class="modal-coaching"><div class="modal-coaching-label dim-label">What to look for</div>' + coachingNote + '</div>';
+  }
+
+  var rows = handsList.map(function(h, idx) {
+    var myActs = getActsSummary(h);
+    var res = renderResult(h, 'span', 'saved-res');
+    return '<div class="range-hand-row" data-ridx="' + idx + '">' +
+      '<div class="range-hand-row-side">' +
+      '<span class="meta-text">' + (h.position || '?') + '</span>' +
+      '<span>' + (h.hole ? h.hole.join(' ') : '??') + '</span>' +
+      '<span class="meta-text">' + (h.board && h.board.length ? h.board.join(' ') : '—') + '</span>' +
+      '</div>' +
+      '<div class="range-hand-row-side">' +
+      '<span class="meta-text">' + myActs + '</span>' +
+      res + '</div></div>';
+  }).join('');
+
+  box.innerHTML = '<button class="modal-close" id="modal-close-btn">&times;</button>' +
+    header + '<div class="mt-12">' + rows + '</div>';
+
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+  requestAnimationFrame(function() { overlay.classList.add('show'); });
+  document.getElementById('modal-close-btn').onclick = closeModal;
+
+  box.querySelectorAll('.range-hand-row').forEach(function(row) {
+    row.onclick = function() {
+      var idx = parseInt(row.getAttribute('data-ridx'));
+      if (!isNaN(idx) && handsList[idx]) showExampleHandModal(handsList[idx], coachingNote);
+    };
+  });
 }
 
 function barRow(label, val, max, cls, valStr, val2Str) {
