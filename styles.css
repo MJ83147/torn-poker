@@ -1794,11 +1794,12 @@ textarea#jin:focus {
 
 /* WELCOME TAB */
 .welcome-wrap {
-  max-width: 900px;
+  max-width: none;
 }
 .welcome-body {
-  display: flex;
-  gap: 56px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
   align-items: flex-start;
 }
 .welcome-intro {
@@ -1848,8 +1849,7 @@ textarea#jin:focus {
   line-height: 1.5;
 }
 .welcome-tips {
-  width: 280px;
-  flex-shrink: 0;
+  width: 100%;
 }
 .welcome-tips-title {
   letter-spacing: 4px;
@@ -1961,8 +1961,8 @@ textarea#jin:focus {
 @media (max-width: 768px) {
 
   /* Welcome body stacks on mobile */
-  .welcome-body { flex-direction: column; }
-  .welcome-tips { width: 100%; margin-top: 24px; }
+  .welcome-body { grid-template-columns: 1fr; }
+  .welcome-tips { margin-top: 0; }
 
   /* Header */
   .dash-header { padding: 0 14px; }
