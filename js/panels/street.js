@@ -7,7 +7,9 @@ function renderStreet(container, d, hands) {
 
   var streets = ['Preflop', 'Flop', 'Turn', 'River'];
   var maxSeen = d.ss.Preflop.seen || 1;
-  var stHtml = '<div class="two-col mb-24">';
+  var stHtml = '<div class="sec-subtitle mt-0">Street Analysis</div>';
+  stHtml += '<div class="meta-text mb-16">How deep you go into hands and where you fold.</div>';
+  stHtml += '<div class="two-col mb-24">';
   stHtml += '<div><div class="sec-subtitle">Hands reaching street</div><div class="bar-group">' + streets.map(function(s) {
     var seen2 = d.ss[s].seen;
     return barRow(s, seen2, maxSeen, 'o', seen2, pct(seen2, d.n) + '%');
@@ -20,10 +22,6 @@ function renderStreet(container, d, hands) {
   }).join('') + '</div></div>';
   stHtml += '</div>';
 
-  // Chart: Action breakdown by street
-  stHtml += '<div class="sec-subtitle">Action Breakdown by Street</div>';
-  stHtml += '<div class="chart-wrap"><canvas id="street-action-chart"></canvas></div>';
-
   // Average bet size by street
   var stAvgBets = {};
   var stBetDisplay = {};
@@ -35,11 +33,15 @@ function renderStreet(container, d, hands) {
     if (stBetDisplay[s] > stMaxAvg) stMaxAvg = stBetDisplay[s];
   });
   if (stBetDisplay.Flop > 0 || stBetDisplay.Turn > 0 || stBetDisplay.River > 0) {
-    stHtml += '<div class="sec-subtitle">Average bet size by street</div><div class="bar-group">' +
+    stHtml += '<div class="two-col mb-24"><div><div class="sec-subtitle">Average bet size by street</div><div class="bar-group">' +
       streets.filter(function(s) { return stBetDisplay[s] > 0; }).map(function(s) {
         return barRow(s, stBetDisplay[s], stMaxAvg, 'o', fmtAvgAmount(d.betAmts[s], d.betAmtsBB ? d.betAmtsBB[s] : []), d.betAmts[s] ? d.betAmts[s].length + ' bets' : '');
-      }).join('') + '</div>';
+      }).join('') + '</div></div><div></div></div>';
   }
+
+  // Chart: Action breakdown by street
+  stHtml += '<div class="sec-subtitle">Action Breakdown by Street</div>';
+  stHtml += '<div class="chart-wrap-full"><canvas id="street-action-chart"></canvas></div>';
 
   var sIns = [];
   var fr = pct(d.ss.Flop.seen, d.ss.Preflop.seen);

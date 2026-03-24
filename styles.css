@@ -448,6 +448,10 @@ textarea#jin:focus {
   margin-top: 28px;
   margin-bottom: 12px;
 }
+.ins-grid-sep {
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+}
 
 /* INSIGHT CARD */
 .ins {
@@ -557,7 +561,6 @@ textarea#jin:focus {
   margin-bottom: 12px;
 }
 
-/* collapsed into responsive section at bottom of file */
 
 /* ── DIM LABEL (shared pattern) ── */
 .dim-label {
@@ -738,6 +741,15 @@ textarea#jin:focus {
   height: 9px;
   border-radius: 1px;
 }
+.leg-sw-won { background: var(--green); }
+.leg-sw-played { background: var(--amber); opacity: 0.75; }
+.leg-sw-unplayed { background: #2e3e2e; }
+.leg-sw-bad { background: rgb(190, 45, 45); }
+.leg-sw-mid { background: rgb(190, 165, 45); }
+.leg-sw-good { background: rgb(50, 170, 65); }
+.leg-sw-low { background: #1a2e1e; }
+.leg-sw-med { background: #2e5835; }
+.leg-sw-high { background: rgb(50, 170, 65); }
 
 /* STAT TABLE */
 .tbl {
@@ -761,7 +773,7 @@ textarea#jin:focus {
 .tbl td {
   font-size: 14px;
   padding: 10px 12px 10px 0;
-  border-bottom: 1px solid var(--muted);
+  border-bottom: 1px solid var(--border);
   color: var(--text);
   vertical-align: middle;
   position: relative;
@@ -1225,6 +1237,8 @@ textarea#jin:focus {
 .chart-wrap-full {
   position: relative;
   width: 100%;
+  max-width: 900px;
+  margin-bottom: 24px;
 }
 
 /* ── STAT CARD EXTRAS ── */
@@ -1553,6 +1567,7 @@ textarea#jin:focus {
   transition: color .15s, transform .15s;
   line-height: 1;
   opacity: 0.5;
+  padding: 6px 8px;
 }
 .hrow:hover .hrow-star {
   opacity: 1;
@@ -1570,15 +1585,15 @@ textarea#jin:focus {
 /* MODAL STAR BUTTON */
 .modal-star-btn {
   position: absolute;
-  top: 12px;
-  right: 48px;
+  top: 8px;
+  right: 52px;
   background: none;
   border: none;
   font-size: 22px;
   color: var(--dim);
   cursor: pointer;
   transition: color .15s, transform .15s;
-  padding: 0;
+  padding: 6px 8px;
   line-height: 1;
 }
 .modal-star-btn:hover {
@@ -1620,6 +1635,35 @@ textarea#jin:focus {
 }
 .modal-notes-input::placeholder {
   color: var(--muted);
+}
+
+/* SAVED HANDS SECTION */
+.saved-section {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--s1);
+  padding: 14px 16px;
+}
+.saved-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+.saved-toggle-arrow {
+  font-size: 10px;
+  color: var(--dim);
+  transition: transform .2s;
+}
+.saved-toggle-title {
+  font-size: 13px;
+  color: var(--gold);
+  font-weight: 600;
+}
+.saved-toggle-count {
+  font-size: 11px;
+  color: var(--dim);
 }
 
 /* SAVED HANDS PANEL */
@@ -1757,16 +1801,17 @@ textarea#jin:focus {
   display: grid;
   grid-template-columns: 100px 1fr;
   gap: 16px;
-  padding: 10px 0;
-  border-bottom: 1px solid var(--border);
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  margin-bottom: 4px;
+  background: var(--s1);
   cursor: pointer;
-  transition: background .15s;
-}
-.welcome-toc-row:first-child {
-  border-top: 1px solid var(--border);
+  transition: background .15s, border-color .15s;
 }
 .welcome-toc-row:hover {
-  background: var(--s1);
+  background: var(--s2);
+  border-color: var(--gold2);
 }
 .welcome-toc-name {
   font-size: 13px;
@@ -1779,7 +1824,7 @@ textarea#jin:focus {
   line-height: 1.5;
 }
 .welcome-tips {
-  width: 220px;
+  width: 280px;
   flex-shrink: 0;
 }
 .welcome-tips-title {
@@ -1790,7 +1835,11 @@ textarea#jin:focus {
   font-size: 13px;
   color: var(--dim);
   line-height: 1.6;
-  padding: 6px 0;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+.welcome-tip:last-child {
+  border-bottom: none;
 }
 
 

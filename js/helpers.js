@@ -252,7 +252,7 @@ function renderInsights(insArr, fallbackLabel, fallbackText) {
   if (!insArr.length) {
     insArr.push(ins('n', fallbackLabel, fallbackText || 'More hands needed for ' + fallbackLabel.toLowerCase() + ' patterns.', []));
   }
-  return '<div class="ins-grid">' + insArr.join('') + '</div>';
+  return '<div class="ins-grid ins-grid-sep">' + insArr.join('') + '</div>';
 }
 
 // Map a win rate percentage to a CSS color variable

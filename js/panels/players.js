@@ -331,6 +331,7 @@ function renderPlayers(container, d, hands) {
       html += '<th></th><th>Player</th><th>Hands</th><th></th><th>' + tipWrap('Win Rate') + '</th><th>Net P&L</th>';
       html += '</tr></thead><tbody>';
       for (var w = 0; w < watchedOpps.length; w++) {
+
         var o = watchedOpps[w];
         var wr = pct(o.won, o.won + o.lost);
         var barW = Math.round(o.hands / maxH * 100);
@@ -341,7 +342,7 @@ function renderPlayers(container, d, hands) {
         html += '<td class="' + wrCls(wr) + '">' + (wr !== null ? wr + '%' : '—') + '</td>';
         html += '<td class="' + pnlCls(o.profit) + '">' + fmtPnl(o.profit) + '</td></tr>';
       }
-      html += '</tbody></table></div>';
+      html += '</tbody></table></div><div class="mb-24"></div>';
     }
 
     var pIns = [];

@@ -5,6 +5,8 @@ function renderCards(container, d, hands) {
   var htData = htOrder.filter(function(ht) { return d.htMap[ht]; });
   var maxDealt = htData.length ? Math.max.apply(null, htData.map(function(ht) { return d.htMap[ht].dealt; })) : 1;
   var cardsHtml = '<div>';
+  cardsHtml += '<div class="sec-subtitle mt-0">Hand Type Breakdown</div>';
+  cardsHtml += '<div class="meta-text mb-16">How often each hand category is dealt, played, and won.</div>';
   cardsHtml += '<div>';
   // Legend
   cardsHtml += '<div class="ht-stack-legend">' +

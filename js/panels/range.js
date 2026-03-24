@@ -141,7 +141,7 @@ function renderRange(container, d, hands) {
       '<div class="two-col">' +
       '<div><div class="sec-subtitle mt-0">Win Rate by Hand</div><div class="range-grid-sm">' + rc.wrGrid + '</div>' + rc.legend1 + '</div>' +
       '<div><div class="sec-subtitle mt-0">Hands Played</div><div class="range-grid-sm">' + rc.freqGrid + '</div>' + rc.legend2 + '</div>' +
-      '</div><div class="divider"></div>' + rc.rangeIns.join('');
+      '</div><div class="divider"></div><div class="ins-grid">' + rc.rangeIns.join('') + '</div>';
   }
 
   var rc = buildRangeContent(hands, 'all');

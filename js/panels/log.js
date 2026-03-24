@@ -117,11 +117,11 @@ function renderSavedSection() {
 }
 
 function wireSavedSection(container) {
-  var toggle = container.querySelector('.saved-section-toggle');
+  var toggle = container.querySelector('.saved-toggle');
   if (toggle) {
     toggle.onclick = function() {
       var body = container.querySelector('.saved-section-body');
-      var arrow = container.querySelector('.saved-section-arrow');
+      var arrow = container.querySelector('.saved-toggle-arrow');
       if (!body) return;
       var isVisible = body.style.display !== 'none';
       body.style.display = isVisible ? 'none' : '';

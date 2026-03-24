@@ -8,7 +8,9 @@ function renderPosition(container, d, hands) {
   var posOrder = ['UTG', 'UTG+1', 'MP', 'HJ', 'CO', 'BTN', 'SB', 'BB'];
   var activePosOrder = posOrder.filter(function(p) { return d.posMap[p] && d.posMap[p].hands > 0; });
 
-  var posHtml = '<div class="overflow-x mb-24"><table class="tbl"><thead><tr><th>Position</th><th>Hands</th><th>' + tipWrap('VPIP') + '</th><th>' + tipWrap('Fold Pre') + '</th><th>' + tipWrap('Win Rate') + '</th><th>' + tipWrap('Net P&L') + '</th><th>' + tipWrap('Avg Pot') + '</th></tr></thead><tbody>';
+  var posHtml = '<div class="sec-subtitle mt-0">Position Stats</div>';
+  posHtml += '<div class="meta-text mb-16">Your performance from each seat at the table.</div>';
+  posHtml += '<div class="overflow-x mb-24"><table class="tbl"><thead><tr><th>Position</th><th>Hands</th><th>' + tipWrap('VPIP') + '</th><th>' + tipWrap('Fold Pre') + '</th><th>' + tipWrap('Win Rate') + '</th><th>' + tipWrap('Net P&L') + '</th><th>' + tipWrap('Avg Pot') + '</th></tr></thead><tbody>';
   posHtml += activePosOrder.map(function(p) {
     var s = d.posMap[p];
     var vp2 = pct(s.vpip, s.hands);
@@ -25,7 +27,7 @@ function renderPosition(container, d, hands) {
   // Chart: Win Rate & VPIP by Position
   if (activePosOrder.length >= 2) {
     posHtml += '<div class="sec-subtitle">Win Rate & VPIP by Position</div>';
-    posHtml += '<div class="chart-wrap"><canvas id="position-chart"></canvas></div>';
+    posHtml += '<div class="chart-wrap-full"><canvas id="position-chart"></canvas></div>';
   }
 
   var pIns = [];
