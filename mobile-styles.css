@@ -2,10 +2,9 @@
    MOBILE RESPONSIVE — Zero horizontal scroll, everything stacks
    ══════════════════════════════════════════════════════════════ */
 
-/* ── GLOBAL: kill horizontal overflow ── */
-html, body {
-  overflow-x: hidden;
-  max-width: 100vw;
+/* ── GLOBAL: constrain everything to viewport width ── */
+*, *::before, *::after {
+  min-width: 0;
 }
 
 /* ── TABLET (<=768px) ── */
@@ -26,9 +25,9 @@ html, body {
 
   /* Hero strip: 2-row wrap */
   .hero-strip { flex-wrap: wrap; }
-  .hs { min-width: 33%; flex: 1 1 30%; padding: 10px 12px; }
-  .hs-v { font-size: 18px; }
-  .hs-l { font-size: 10px; letter-spacing: 2px; }
+  .hs { min-width: 33%; flex: 1 1 30%; padding: 10px 12px; overflow: hidden; }
+  .hs-v { font-size: 18px; overflow: hidden; text-overflow: ellipsis; }
+  .hs-l { font-size: 10px; letter-spacing: 2px; overflow: hidden; text-overflow: ellipsis; }
 
   /* Tabs: horizontal scroll instead of wrap to avoid huge stacked block */
   .tabs {
