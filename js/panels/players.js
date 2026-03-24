@@ -446,13 +446,13 @@ function renderPlayers(container, d, hands) {
           ph += '<div class="ins-grid mb-16">' + exploitIns.join('') + '</div>';
         }
       } else {
-        ph += '<div style="margin-bottom:16px;">' + ins('n', 'Building Profile', 'Need ' + Math.max(0, 5 - oppStats.hands) + ' more shared hands to show tendency stats.', [{ v: oppStats.hands + '/5 hands' }]) + '</div>';
+        ph += '<div class="mb-16">' + ins('n', 'Building Profile', 'Need ' + Math.max(0, 5 - oppStats.hands) + ' more shared hands to show tendency stats.', [{ v: oppStats.hands + '/5 hands' }]) + '</div>';
       }
 
       // ── Hand list ──
       ph += '<div class="sec-subtitle">Shared Hands</div>';
       if (totalPages > 1) {
-        ph += '<div style="display:flex;justify-content:flex-end;gap:6px;align-items:center;margin-bottom:8px;">' +
+        ph += '<div class="flex-gap-6 mb-8" style="justify-content:flex-end;">' +
           renderPagination(phPage, playerHands.length, PH_SIZE, 'ph-prev', 'ph-next') + '</div>';
       }
       ph += '<div class="hrow hrow-header"><div class="hrow-pos">Pos</div><div class="hrow-cards">Cards</div><div class="hrow-board">Board</div><div class="hrow-acts">Actions</div><div class="hrow-res">Result</div></div>';
