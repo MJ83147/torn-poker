@@ -18,20 +18,18 @@ function renderStreet(container, d, hands) {
 
   // Average bet size by street
   var stAvgBets = {};
-  var stBetSource = _displayBB && d.betAmtsBB ? d.betAmtsBB : d.betAmts;
   var stBetDisplay = {};
   var stMaxAvg = 1;
   streets.forEach(function(s) {
-    var a = d.betAmts[s];
-    stAvgBets[s] = a && a.length ? Math.round(a.reduce(function(x, y) { return x + y; }, 0) / a.length) : 0;
-    var src = stBetSource[s];
-    stBetDisplay[s] = src && src.length ? (src.reduce(function(x, y) { return x + y; }, 0) / src.length) : 0;
+    stAvgBets[s] = Math.round(avg(d.betAmts[s]));
+    stBetDisplay[s] = _displayBB && d.betAmtsBB && d.betAmtsBB[s] && d.betAmtsBB[s].length
+      ? avg(d.betAmtsBB[s]) : avg(d.betAmts[s]);
     if (stBetDisplay[s] > stMaxAvg) stMaxAvg = stBetDisplay[s];
   });
   if (stBetDisplay.Flop > 0 || stBetDisplay.Turn > 0 || stBetDisplay.River > 0) {
     stHtml += '<div class="sec-subtitle">Average bet size by street</div><div class="bar-group">' +
       streets.filter(function(s) { return stBetDisplay[s] > 0; }).map(function(s) {
-        return barRow(s, stBetDisplay[s], stMaxAvg, 'o', _displayBB ? stBetDisplay[s].toFixed(1) + ' BB' : fmt(stAvgBets[s]), d.betAmts[s] ? d.betAmts[s].length + ' bets' : '');
+        return barRow(s, stBetDisplay[s], stMaxAvg, 'o', fmtAvgAmount(d.betAmts[s], d.betAmtsBB ? d.betAmtsBB[s] : []), d.betAmts[s] ? d.betAmts[s].length + ' bets' : '');
       }).join('') + '</div>';
   }
 

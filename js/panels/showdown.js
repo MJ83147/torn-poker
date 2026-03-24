@@ -91,7 +91,7 @@ function renderShowdown(container, hands, meta) {
   statsHtml += '</div>';
 
   // Insights
-  var insHtml = '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-top:20px;">';
+  var insHtml = '<div class="ins-grid">';
   var hasInsight = false;
 
   if (sdTotal >= 10 && nsdTotal >= 10) {
@@ -134,7 +134,7 @@ function renderShowdown(container, hands, meta) {
 
   // ── Pot Size Analysis ──
   var potHtml = '<div class="sec-subtitle" style="margin-top:32px;">Average Pot Size by Outcome</div>';
-  potHtml += '<div style="position:relative;width:100%;max-width:720px;"><canvas id="pot-size-chart"></canvas></div>';
+  potHtml += '<div style="position:relative;width:100%;max-width:100%;"><canvas id="pot-size-chart"></canvas></div>';
 
   // Pot size stat cards
   var avgWinPot = (potSdWin.length + potNsdWin.length) > 0 ? avg(potSdWin.concat(potNsdWin)) : 0;
@@ -164,7 +164,7 @@ function renderShowdown(container, hands, meta) {
   potHtml += '</div>';
 
   // Pot size insights
-  var potInsHtml = '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-top:20px;">';
+  var potInsHtml = '<div class="ins-grid">';
   var hasPotInsight = false;
   var minSample = 5;
 
@@ -213,7 +213,7 @@ function renderShowdown(container, hands, meta) {
 
   // Assemble HTML
   var html = '<div class="sec-subtitle" style="margin-top:0;">Showdown vs Non-Showdown P&L</div>';
-  html += '<div style="position:relative;width:100%;max-width:720px;"><canvas id="showdown-chart"></canvas></div>';
+  html += '<div style="position:relative;width:100%;max-width:100%;"><canvas id="showdown-chart"></canvas></div>';
   html += statsHtml;
   html += insHtml;
   html += potHtml;

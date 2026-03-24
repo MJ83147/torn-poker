@@ -438,7 +438,7 @@ textarea#jin:focus {
 .panel {
   display: none;
   padding: 36px 40px;
-  max-width: 1400px;
+  max-width: 1600px;
   margin: 0 auto;
 }
 
@@ -447,13 +447,20 @@ textarea#jin:focus {
   min-height: 60vh;
 }
 
+/* INSIGHT GRID */
+.ins-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 9px;
+  margin-top: 16px;
+}
+
 /* INSIGHT CARD */
 .ins {
   background: var(--s1);
   border: 1px solid var(--border);
   border-radius: 6px;
   padding: 14px 16px;
-  margin-bottom: 9px;
   position: relative;
 }
 
@@ -1735,7 +1742,7 @@ textarea#jin:focus {
   .paste-title { font-size: 20px; }
 
   /* Grid layouts */
-  .two-col, .three-col { grid-template-columns: 1fr; }
+  .two-col, .three-col, .ins-grid { grid-template-columns: 1fr; }
   .two-col { gap: 16px; }
   .three-col { gap: 12px; }
 
@@ -1937,4 +1944,32 @@ textarea#jin:focus {
 
   /* Chip tags */
   .chip { font-size: 10px; padding: 2px 6px; }
+}
+
+/* ── WIDE DESKTOP ── */
+@media (min-width: 1200px) {
+  .two-col {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+  .three-col {
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+  }
+  .mini-row {
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  }
+  .ins-grid {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  }
+  .saved-hands-list {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  }
+}
+
+@media (min-width: 1600px) {
+  .panel {
+    padding: 36px 60px;
+  }
+  .dash-header {
+    padding: 0 60px;
+  }
 }

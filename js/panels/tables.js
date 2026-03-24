@@ -64,12 +64,12 @@ function renderTables(container, hands, allHands, excludedTables, onRerender) {
       var isExcluded = excludedTables.has(String(r.tid));
       tablesHtml += '<tr style="' + (isExcluded ? 'opacity:0.35;' : '') + '"><td>' + r.label + '</td><td style="color:var(--dim);font-size:10px;">' + r.blinds + '</td><td>' + r.n + '</td>';
       tablesHtml += '<td style="width:80px;"><span class="tbl-spark" style="width:' + barW + '%;background:var(--gold2);"></span></td>';
-      tablesHtml += '<td class="' + (r.wr >= 50 ? 'wr-good' : r.wr !== null ? 'wr-bad' : '') + '">' + (r.wr !== null ? r.wr + '%' : '—') + '</td>';
-      tablesHtml += '<td class="' + (r.net >= 0 ? 'pnl-pos' : 'pnl-neg') + '">' + (r.net >= 0 ? '+' : '') + fmt(r.net) + '</td>';
+      tablesHtml += '<td class="' + wrCls(r.wr) + '">' + (r.wr !== null ? r.wr + '%' : '—') + '</td>';
+      tablesHtml += '<td class="' + pnlCls(r.net) + '">' + fmtPnl(r.net) + '</td>';
       tablesHtml += '<td>' + (r.vpipP !== null ? r.vpipP + '%' : '—') + '</td>';
       tablesHtml += '<td>' + (r.aggP !== null ? r.aggP + '%' : '—') + '</td>';
-      var tblAvgPotDisp = _displayBB && r.tid !== 'unknown' && TABLE_META[r.tid]
-        ? (r.avgPot / TABLE_META[r.tid].bb).toFixed(1) + ' BB'
+      var tblAvgPotDisp = r.tid !== 'unknown' && TABLE_META[r.tid]
+        ? fmtBB(r.avgPot, TABLE_META[r.tid].bb)
         : fmt(r.avgPot);
       tablesHtml += '<td style="color:var(--dim);">' + (r.avgPot > 0 ? tblAvgPotDisp : '—') + '</td>';
       tablesHtml += '<td><button class="log-nav-btn exclude-table-btn" data-tid="' + r.tid + '" style="font-size:8px;padding:2px 6px;">' + (isExcluded ? 'Include' : 'Exclude') + '</button></td></tr>';
@@ -91,12 +91,12 @@ function renderTables(container, hands, allHands, excludedTables, onRerender) {
       }
       if (mostProfit && mostProfit.net > 0) {
         var exProfitTable = findExampleHand(function(h) { return String(inferTable(h) || 'unknown') === String(mostProfit.tid) && h.outcome && h.outcome.result === 'won'; });
-        tIns2.push(insWithExample('g', 'Most Profitable', mostProfit.label + ' with a net of +' + fmt(mostProfit.net) + '.', [{ v: '+' + fmt(mostProfit.net), hi: true }], exProfitTable, 'A winning hand from your most profitable table. The combination of stakes, player pool, and your strategy is working well here.'));
+        tIns2.push(insWithExample('g', 'Most Profitable', mostProfit.label + ' with a net of ' + fmtPnl(mostProfit.net) + '.', [{ v: fmtPnl(mostProfit.net), hi: true }], exProfitTable, 'A winning hand from your most profitable table. The combination of stakes, player pool, and your strategy is working well here.'));
       }
       var bigLoss = tableRows.filter(function(r2) { return r2.net < 0; }).sort(function(a, b) { return a.net - b.net; })[0];
       if (bigLoss) {
         var exLossTable = findExampleHand(function(h) { return String(inferTable(h) || 'unknown') === String(bigLoss.tid) && h.outcome && h.outcome.result !== 'won'; });
-        tIns2.push(insWithExample('a', 'Biggest Loss', bigLoss.label + ' at ' + fmt(bigLoss.net) + '. Review whether leaks are table-specific or general.', [{ v: fmt(bigLoss.net), hi: true }], exLossTable, 'A losing hand from ' + bigLoss.label + '. Check if you are playing too loose or calling too much at these stakes.'));
+        tIns2.push(insWithExample('a', 'Biggest Loss', bigLoss.label + ' at ' + fmtPnl(bigLoss.net) + '. Review whether leaks are table-specific or general.', [{ v: fmtPnl(bigLoss.net), hi: true }], exLossTable, 'A losing hand from ' + bigLoss.label + '. Check if you are playing too loose or calling too much at these stakes.'));
       }
     }
     tablesHtml += '<div style="margin-top:24px;">' + renderInsights(tIns2, 'Tables', 'More data needed for table-level insights.') + '</div>';
@@ -118,10 +118,7 @@ function renderTables(container, hands, allHands, excludedTables, onRerender) {
         return;
       }
       // Switch back to tables tab
-      document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
-      document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('on'); });
-      document.querySelector('[data-tab="tables"]').classList.add('active');
-      document.getElementById('p-tables').classList.add('on');
+      switchTab('tables');
     };
   });
 }

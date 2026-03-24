@@ -338,8 +338,8 @@ function renderPlayers(container, d, hands) {
         html += '<td class="watch-star watched" data-watch="' + o.name + '" title="Unwatch player" style="cursor:pointer;width:24px;text-align:center;">&#9733;</td>';
         html += '<td>' + o.name + '</td><td>' + o.hands + '</td>';
         html += '<td style="width:80px;"><span class="tbl-spark" style="width:' + barW + '%;background:var(--gold2);"></span></td>';
-        html += '<td class="' + (wr !== null && wr >= 50 ? 'wr-good' : wr !== null ? 'wr-bad' : '') + '">' + (wr !== null ? wr + '%' : '—') + '</td>';
-        html += '<td class="' + (o.profit >= 0 ? 'pnl-pos' : 'pnl-neg') + '">' + (o.profit >= 0 ? '+' : '') + fmt(o.profit) + '</td></tr>';
+        html += '<td class="' + wrCls(wr) + '">' + (wr !== null ? wr + '%' : '—') + '</td>';
+        html += '<td class="' + pnlCls(o.profit) + '">' + fmtPnl(o.profit) + '</td></tr>';
       }
       html += '</tbody></table></div>';
     }
@@ -374,8 +374,8 @@ function renderPlayers(container, d, hands) {
       html += '<td class="watch-star' + (isWatched ? ' watched' : '') + '" data-watch="' + o2.name + '" title="' + (isWatched ? 'Unwatch' : 'Watch') + ' player" style="cursor:pointer;width:24px;text-align:center;">' + (isWatched ? '&#9733;' : '&#9734;') + '</td>';
       html += '<td>' + o2.name + '</td><td>' + o2.hands + '</td>';
       html += '<td style="width:80px;"><span class="tbl-spark" style="width:' + barW2 + '%;background:var(--gold2);"></span></td>';
-      html += '<td class="' + (wr2 !== null && wr2 >= 50 ? 'wr-good' : wr2 !== null ? 'wr-bad' : '') + '">' + (wr2 !== null ? wr2 + '%' : '—') + '</td>';
-      html += '<td class="' + (o2.profit >= 0 ? 'pnl-pos' : 'pnl-neg') + '">' + (o2.profit >= 0 ? '+' : '') + fmt(o2.profit) + '</td></tr>';
+      html += '<td class="' + wrCls(wr2) + '">' + (wr2 !== null ? wr2 + '%' : '—') + '</td>';
+      html += '<td class="' + pnlCls(o2.profit) + '">' + fmtPnl(o2.profit) + '</td></tr>';
     }
     html += '</tbody></table></div>';
     container.innerHTML = html;
@@ -406,7 +406,7 @@ function renderPlayers(container, d, hands) {
       var ph = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">';
       ph += '<div><button class="log-nav-btn" id="players-back" style="margin-right:12px;">&laquo; All Players</button>';
       ph += '<span style="font-size:14px;font-weight:600;color:var(--gold);">' + playerName + '</span></div>';
-      ph += '<div style="font-size:10px;color:var(--dim);">' + opp.hands + ' hands · ' + (wr !== null ? wr + '% win' : '—') + ' · ' + (opp.profit >= 0 ? '+' : '') + fmt(opp.profit) + '</div></div>';
+      ph += '<div style="font-size:10px;color:var(--dim);">' + opp.hands + ' hands · ' + (wr !== null ? wr + '% win' : '—') + ' · ' + fmtPnl(opp.profit) + '</div></div>';
 
       // ── Opponent tendency minis with severity ──
       var vpip = pct(oppStats.vpipHands, oppStats.hands);
@@ -438,16 +438,12 @@ function renderPlayers(container, d, hands) {
         ];
 
         ph += '<div class="sec-subtitle" style="margin-top:0;">Tendencies</div>';
-        ph += '<div class="mini-row">';
-        ph += minis.map(function(m) {
-          return '<div class="mini"><div class="mini-l">' + m.l + '</div><div class="mini-v" style="color:var(--' + m.c + ')">' + m.v + '</div></div>';
-        }).join('');
-        ph += '</div>';
+        ph += renderMiniRow(minis);
 
         // ── Exploit insights ──
         var exploitIns = generateExploitInsights(oppStats, playerName);
         if (exploitIns.length) {
-          ph += '<div style="margin-top:16px;margin-bottom:16px;">' + exploitIns.join('') + '</div>';
+          ph += '<div class="ins-grid" style="margin-bottom:16px;">' + exploitIns.join('') + '</div>';
         }
       } else {
         ph += '<div style="margin-bottom:16px;">' + ins('n', 'Building Profile', 'Need ' + Math.max(0, 5 - oppStats.hands) + ' more shared hands to show tendency stats.', [{ v: oppStats.hands + '/5 hands' }]) + '</div>';

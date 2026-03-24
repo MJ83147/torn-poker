@@ -4,11 +4,7 @@
 document.getElementById('tabs').addEventListener('click', function(e) {
   var t = e.target.closest('.tab');
   if (!t) return;
-  document.querySelectorAll('.tab').forEach(function(b) { b.classList.remove('active'); });
-  t.classList.add('active');
-  var id = 'p-' + t.dataset.tab;
-  document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('on'); });
-  document.getElementById(id).classList.add('on');
+  switchTab(t.dataset.tab);
 });
 
 // BB toggle handler
@@ -86,7 +82,7 @@ function render(d, hands, meta) {
   document.getElementById('hero-strip').innerHTML = [
     { l: 'Hands',      v: d.n,                        c: 'o' },
     { l: 'Win Rate',   v: wr !== null ? wr + '%' : '—', c: wr >= 50 ? 'g' : 'r' },
-    { l: 'Net P&L',    v: (netPnl >= 0 ? '+' : '') + fmt(netPnl), c: netPnl >= 0 ? 'g' : 'r' },
+    { l: 'Net P&L',    v: fmtPnl(netPnl), c: netPnl >= 0 ? 'g' : 'r' },
     { l: 'VPIP',       v: vpipPct !== null ? vpipPct + '%' : '—', c: vpipPct > 55 ? 'a' : 'w' },
     { l: 'Aggression', v: aggPct !== null ? aggPct + '%' : '—',   c: aggPct > 25 ? 'g' : 'a' },
     { l: 'vs All-in',  v: allinFoldPct !== null ? allinFoldPct + '% fold' : '—', c: 'w' },
@@ -147,13 +143,7 @@ function render(d, hands, meta) {
 
   // Restore active tab across re-renders
   if (activeTabId && activeTabId !== 'welcome') {
-    document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
-    document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('on'); });
-    var restoreTab = document.querySelector('[data-tab="' + activeTabId + '"]');
-    if (restoreTab) {
-      restoreTab.classList.add('active');
-      document.getElementById('p-' + activeTabId).classList.add('on');
-    }
+    switchTab(activeTabId);
   }
 
   // Sync BB toggle

@@ -1,9 +1,7 @@
 // ── PROFILE PANEL ─────────────────────────────────────────────────────────────
 
 function openProfile() {
-  document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('on'); });
-  document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
-  document.getElementById('p-profile').classList.add('on');
+  switchTab('profile');
   renderProfile();
 }
 
@@ -52,7 +50,7 @@ function renderProfile() {
     var statItems = [
       { l: 'Hands',      v: stats.n,                     c: 'var(--gold)' },
       { l: 'Win Rate',   v: stats.wr !== null ? stats.wr + '%' : '—', c: stats.wr >= 50 ? 'var(--green)' : 'var(--red)' },
-      { l: 'Net P&L',    v: (stats.netPnl >= 0 ? '+' : '') + fmt(stats.netPnl), c: stats.netPnl >= 0 ? 'var(--green)' : 'var(--red)' },
+      { l: 'Net P&L',    v: fmtPnl(stats.netPnl), c: pnlColor(stats.netPnl) },
       { l: 'VPIP',       v: stats.vpipPct !== null ? stats.vpipPct + '%' : '—', c: 'var(--text)' },
       { l: 'Aggression', v: stats.aggPct !== null ? stats.aggPct + '%' : '—', c: 'var(--text)' },
     ];

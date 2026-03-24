@@ -71,12 +71,7 @@ function renderWelcome(container, d, hands, meta) {
   container.innerHTML = welcomeHtml;
   container.querySelectorAll('.welcome-toc-row[data-goto]').forEach(function(row) {
     row.onclick = function() {
-      var tab = this.getAttribute('data-goto');
-      document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
-      document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('on'); });
-      var tabBtn = document.querySelector('[data-tab="' + tab + '"]');
-      if (tabBtn) tabBtn.classList.add('active');
-      document.getElementById('p-' + tab).classList.add('on');
+      switchTab(this.getAttribute('data-goto'));
     };
   });
 }

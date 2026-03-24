@@ -9,14 +9,14 @@ function renderActions(container, d, hands) {
   var caPct = pct(d.calls, actTotal);
   var raPct = pct(d.raises, actTotal);
 
-  var actHtml = '<div class="mini-row">' + [
+  var actHtml = renderMiniRow([
     { l: 'Total Actions', v: actTotal, c: 'o' },
     { l: 'Folds',         v: d.folds,  c: 'r' },
     { l: 'Checks',        v: d.checks, c: 'w' },
     { l: 'Calls',         v: d.calls,  c: 'a' },
     { l: 'Raises',        v: d.raises, c: 'g' },
     { l: 'Aggression',    v: aggPct !== null ? aggPct + '%' : '—', c: aggPct > 25 ? 'g' : 'a' },
-  ].map(function(m) { return '<div class="mini"><div class="mini-l">' + m.l + '</div><div class="mini-v" style="color:var(--' + (m.c === 'g' ? 'green' : m.c === 'r' ? 'red' : m.c === 'a' ? 'amber' : 'text') + ')">' + m.v + '</div></div>'; }).join('') + '</div>';
+  ]);
 
   var segs = [
     { p: fPct || 0,  c: 'var(--red)',   l: 'Fold ' + fPct + '%' },

@@ -8,12 +8,11 @@ function renderPosition(container, d, hands) {
     var vp2 = pct(s.vpip, s.hands);
     var fp2 = pct(s.foldPre, s.hands);
     var wr2 = pct(s.won, s.hands);
-    var avg = Math.round(s.pot / s.hands);
+    var avgPot = Math.round(s.pot / s.hands);
     var avgPotDisplay = _displayBB && s.potBBCount > 0
       ? (s.potBB / s.potBBCount).toFixed(1) + ' BB'
-      : fmt(avg);
-    var pnlCol = s.pnl >= 0 ? 'var(--green)' : 'var(--red)';
-    return '<tr><td>' + tipWrap(p) + '</td><td>' + s.hands + '</td><td>' + (vp2 !== null ? vp2 + '%' : '—') + '</td><td>' + (fp2 !== null ? fp2 + '%' : '—') + '</td><td>' + (wr2 !== null ? wr2 + '%' : '—') + '</td><td style="color:' + pnlCol + '">' + (s.pnl >= 0 ? '+' : '') + fmt(s.pnl) + '</td><td>' + avgPotDisplay + '</td></tr>';
+      : fmt(avgPot);
+    return '<tr><td>' + tipWrap(p) + '</td><td>' + s.hands + '</td><td>' + (vp2 !== null ? vp2 + '%' : '—') + '</td><td>' + (fp2 !== null ? fp2 + '%' : '—') + '</td><td>' + (wr2 !== null ? wr2 + '%' : '—') + '</td><td style="color:' + pnlColor(s.pnl) + '">' + fmtPnl(s.pnl) + '</td><td>' + avgPotDisplay + '</td></tr>';
   }).join('');
   posHtml += '</tbody></table></div>';
 
@@ -86,9 +85,9 @@ function renderPosition(container, d, hands) {
     var mostProfit = posPnlSorted[0];
     var mostLoss = posPnlSorted[posPnlSorted.length - 1];
     if (mostProfit.pnl > 0 && mostLoss.pnl < 0) {
-      pIns.push(ins('o', 'Position P&L', 'Most profitable: ' + mostProfit.pos + ' (+' + fmt(mostProfit.pnl) + ' over ' + mostProfit.hands + ' hands). Biggest loss: ' + mostLoss.pos + ' (' + fmt(mostLoss.pnl) + ' over ' + mostLoss.hands + ' hands).', [
-        { v: mostProfit.pos + ': +' + fmt(mostProfit.pnl), hi: true },
-        { v: mostLoss.pos + ': ' + fmt(mostLoss.pnl) },
+      pIns.push(ins('o', 'Position P&L', 'Most profitable: ' + mostProfit.pos + ' (' + fmtPnl(mostProfit.pnl) + ' over ' + mostProfit.hands + ' hands). Biggest loss: ' + mostLoss.pos + ' (' + fmtPnl(mostLoss.pnl) + ' over ' + mostLoss.hands + ' hands).', [
+        { v: mostProfit.pos + ': ' + fmtPnl(mostProfit.pnl), hi: true },
+        { v: mostLoss.pos + ': ' + fmtPnl(mostLoss.pnl) },
       ]));
     }
   }

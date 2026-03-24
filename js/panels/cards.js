@@ -118,7 +118,7 @@ function renderCards(container, d, hands) {
       { v: worstHT.ht + ': ' + worstHT.wr + '%' },
     ]));
   }
-  cardsHtml += '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-top:20px;">' + renderInsights(cIns, 'Cards', 'More hands needed for card-type breakdowns.') + '</div>';
+  cardsHtml += renderInsights(cIns, 'Cards', 'More hands needed for card-type breakdowns.');
   cardsHtml += '</div>';
   container.innerHTML = cardsHtml;
 }

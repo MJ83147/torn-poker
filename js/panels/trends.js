@@ -1,6 +1,17 @@
 // ── TRENDS PANEL ──────────────────────────────────────────────────────────────
 
+var _trendsCharts = [];
+
+function destroyTrendsCharts() {
+  for (var i = 0; i < _trendsCharts.length; i++) {
+    if (_trendsCharts[i]) _trendsCharts[i].destroy();
+  }
+  _trendsCharts = [];
+}
+
 function renderTrends(container, hands, meta) {
+  destroyTrendsCharts();
+
   var sorted = hands.slice().sort(function(a, b) { return (a.timestamp || 0) - (b.timestamp || 0); });
   if (sorted.length < 5) {
     container.innerHTML = ins('n', 'Trends', 'Need at least 5 hands to show trends. Keep playing and tracking.', []);
@@ -39,54 +50,35 @@ function renderTrends(container, hands, meta) {
     });
   }
 
-  function svgChart(title, dataKey, color, suffix, baselineVal) {
-    var vals = points.map(function(p) { return p[dataKey]; }).filter(function(v) { return v !== null; });
-    if (vals.length < 2) return '';
-    var minV = Math.min.apply(null, vals);
-    var maxV = Math.max.apply(null, vals);
-    var range = maxV - minV || 1;
-    var w = 600, h = 140, pad = 36, padR = 12;
-    var chartW = w - pad - padR;
-    var chartH = h - 30;
-    var step = chartW / (points.length - 1 || 1);
-    var pathParts = [], dotParts = [];
-    for (var pi = 0; pi < points.length; pi++) {
-      var v = points[pi][dataKey];
-      if (v === null) continue;
-      var x = pad + pi * step;
-      var y = 10 + chartH - ((v - minV) / range) * chartH;
-      pathParts.push((pathParts.length === 0 ? 'M' : 'L') + x.toFixed(1) + ',' + y.toFixed(1));
-      dotParts.push('<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="3" fill="' + color + '"/>');
-    }
-    var baseline = '';
-    if (baselineVal !== undefined && baselineVal >= minV && baselineVal <= maxV) {
-      var by = 10 + chartH - ((baselineVal - minV) / range) * chartH;
-      baseline = '<line x1="' + pad + '" y1="' + by.toFixed(1) + '" x2="' + (w - padR) + '" y2="' + by.toFixed(1) + '" stroke="var(--dim)" stroke-width="0.5" stroke-dasharray="4,4"/>';
-    }
-    var yMax = suffix ? maxV + suffix : fmt(maxV);
-    var yMin = suffix ? minV + suffix : fmt(minV);
-    var yLabels = '<text x="' + (pad - 4) + '" y="14" text-anchor="end" fill="var(--dim)" font-size="9">' + yMax + '</text>' +
-      '<text x="' + (pad - 4) + '" y="' + (10 + chartH) + '" text-anchor="end" fill="var(--dim)" font-size="9">' + yMin + '</text>';
-    var xLabels = '<text x="' + pad + '" y="' + (h - 2) + '" text-anchor="start" fill="var(--dim)" font-size="8">' + points[0].label + '</text>' +
-      '<text x="' + (w - padR) + '" y="' + (h - 2) + '" text-anchor="end" fill="var(--dim)" font-size="8">' + points[points.length - 1].label + '</text>';
-    return '<div><div class="sec-subtitle" style="margin-top:0;">' + title + '</div>' +
-      '<svg viewBox="0 0 ' + w + ' ' + h + '" style="width:100%;max-width:' + w + 'px;height:auto;">' +
-      baseline + yLabels + xLabels +
-      '<path d="' + pathParts.join(' ') + '" fill="none" stroke="' + color + '" stroke-width="1.5"/>' +
-      dotParts.join('') + '</svg></div>';
-  }
+  var styles = getComputedStyle(document.documentElement);
+  var dimColor = styles.getPropertyValue('--dim').trim() || '#666';
+  var borderColor = styles.getPropertyValue('--border').trim() || '#333';
+  var greenColor = styles.getPropertyValue('--green').trim() || '#2ecc71';
+  var goldColor = styles.getPropertyValue('--gold').trim() || '#f1c40f';
+  var amberColor = styles.getPropertyValue('--amber').trim() || '#e67e22';
+
+  var chartConfigs = [
+    { id: 'trend-wr', title: 'Cumulative Win Rate', key: 'wr', color: greenColor, suffix: '%', baseline: 50 },
+    { id: 'trend-vpip', title: 'Cumulative VPIP', key: 'vpip', color: goldColor, suffix: '%', baseline: null },
+    { id: 'trend-agg', title: 'Cumulative Aggression', key: 'agg', color: amberColor, suffix: '%', baseline: null },
+    { id: 'trend-pnl', title: 'Cumulative Net P&L (Cash Only)', key: 'netPnl', color: greenColor, suffix: '', baseline: 0 },
+  ];
 
   var tHtml = '<div class="trends-grid">';
-  tHtml += svgChart('Cumulative Win Rate', 'wr', 'var(--green)', '%', 50);
-  tHtml += svgChart('Cumulative VPIP', 'vpip', 'var(--gold)', '%');
-  tHtml += svgChart('Cumulative Aggression', 'agg', 'var(--amber)', '%');
-  tHtml += svgChart('Cumulative Net P&L (Cash Only)', 'netPnl', 'var(--green)', '', 0);
+  for (var ci = 0; ci < chartConfigs.length; ci++) {
+    var cfg = chartConfigs[ci];
+    var vals = points.map(function(p) { return p[cfg.key]; }).filter(function(v) { return v !== null; });
+    if (vals.length < 2) continue;
+    tHtml += '<div><div class="sec-subtitle" style="margin-top:0;">' + cfg.title + '</div>' +
+      '<div style="position:relative;width:100%;"><canvas id="' + cfg.id + '"></canvas></div></div>';
+  }
   tHtml += '</div>';
+
   tHtml += '<div class="sec-subtitle">Session Breakdown</div>';
   tHtml += '<div style="overflow-x:auto;"><table class="tbl"><thead><tr><th>Date</th><th>Hands</th><th>Session ' + tipWrap('Win Rate') + '</th><th>Cumulative ' + tipWrap('Win Rate') + '</th><th>' + tipWrap('VPIP') + '</th><th>' + tipWrap('Aggression') + '</th></tr></thead><tbody>';
   for (var pi = points.length - 1; pi >= 0; pi--) {
     var pt = points[pi];
-    var wrCol2 = pt.sessionWr !== null && pt.sessionWr >= 50 ? 'var(--green)' : pt.sessionWr !== null ? 'var(--red)' : 'var(--dim)';
+    var wrCol2 = pt.sessionWr !== null ? pnlColor(pt.sessionWr - 50) : 'var(--dim)';
     tHtml += '<tr><td>' + pt.label + '</td><td>' + pt.hands + '</td>' +
       '<td style="color:' + wrCol2 + '">' + (pt.sessionWr !== null ? pt.sessionWr + '%' : '—') + '</td>' +
       '<td>' + (pt.wr !== null ? pt.wr + '%' : '—') + '</td>' +
@@ -123,6 +115,123 @@ function renderTrends(container, hands, meta) {
       }
     }
   }
-  tHtml += '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-top:24px;">' + renderInsights(tIns, 'Trends', 'Keep tracking to build up enough data points for trend insights.') + '</div>';
+  tHtml += renderInsights(tIns, 'Trends', 'Keep tracking to build up enough data points for trend insights.');
   container.innerHTML = tHtml;
+
+  // ── Render Chart.js charts ──
+  var labels = points.map(function(p) { return p.label; });
+
+  for (var ci = 0; ci < chartConfigs.length; ci++) {
+    var cfg = chartConfigs[ci];
+    var canvas = document.getElementById(cfg.id);
+    if (!canvas) continue;
+
+    var data = points.map(function(p) { return p[cfg.key]; });
+    var validCount = data.filter(function(v) { return v !== null; }).length;
+    if (validCount < 2) continue;
+
+    var suffix = cfg.suffix;
+    var baselineVal = cfg.baseline;
+
+    var gridColorFn = (baselineVal !== null)
+      ? (function(bl) {
+          return function(ctx) {
+            return ctx.tick.value === bl ? dimColor : 'rgba(255,255,255,0.04)';
+          };
+        })(baselineVal)
+      : 'rgba(255,255,255,0.04)';
+
+    var gridWidthFn = (baselineVal !== null)
+      ? (function(bl) {
+          return function(ctx) {
+            return ctx.tick.value === bl ? 1 : 0.5;
+          };
+        })(baselineVal)
+      : 0.5;
+
+    var tooltipLabelFn = (function(s) {
+      return function(ctx) {
+        var v = ctx.parsed.y;
+        return s ? ' ' + v + s : ' ' + fmtPnl(v);
+      };
+    })(suffix);
+
+    var tickFn = (function(s) {
+      return function(val) { return s ? val + s : fmt(val); };
+    })(suffix);
+
+    var chart = new Chart(canvas, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          data: data,
+          borderColor: cfg.color,
+          borderWidth: 2,
+          pointRadius: points.length <= 15 ? 3 : 0,
+          pointHoverRadius: 5,
+          pointBackgroundColor: cfg.color,
+          pointHitRadius: 8,
+          tension: 0.3,
+          fill: true,
+          backgroundColor: (function(c) {
+            var ctx = canvas.getContext('2d');
+            var grad = ctx.createLinearGradient(0, 0, 0, canvas.parentElement.clientHeight || 160);
+            grad.addColorStop(0, c + '22');
+            grad.addColorStop(1, c + '02');
+            return grad;
+          })(cfg.color),
+          spanGaps: true,
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        aspectRatio: 2.8,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: 'rgba(20,20,28,0.95)',
+            titleColor: '#aaa',
+            bodyColor: '#eee',
+            borderColor: borderColor,
+            borderWidth: 1,
+            titleFont: { family: 'IBM Plex Mono', size: 11 },
+            bodyFont: { family: 'IBM Plex Mono', size: 11 },
+            padding: 10,
+            callbacks: {
+              title: function(items) { return items[0].label; },
+              label: tooltipLabelFn,
+            },
+          },
+        },
+        scales: {
+          x: {
+            ticks: {
+              color: dimColor,
+              font: { family: 'IBM Plex Mono', size: 9 },
+              maxTicksLimit: 6,
+              maxRotation: 0,
+            },
+            grid: { color: 'transparent' },
+            border: { color: borderColor },
+          },
+          y: {
+            ticks: {
+              color: dimColor,
+              font: { family: 'IBM Plex Mono', size: 9 },
+              callback: tickFn,
+            },
+            grid: {
+              color: gridColorFn,
+              lineWidth: gridWidthFn,
+            },
+            border: { display: false },
+          },
+        },
+      },
+    });
+    _trendsCharts.push(chart);
+  }
 }
