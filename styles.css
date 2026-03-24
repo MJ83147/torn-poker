@@ -1967,12 +1967,6 @@ textarea#jin:focus {
 
 /* ── WIDE DESKTOP ── */
 @media (min-width: 1200px) {
-  .two-col {
-    grid-template-columns: 1fr 1fr 1fr;
-  }
-  .three-col {
-    grid-template-columns: 1fr 1fr 1fr 1fr;
-  }
   .mini-row {
     grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   }
