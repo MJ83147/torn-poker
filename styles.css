@@ -1194,6 +1194,13 @@ textarea#jin:focus {
   margin-bottom: 24px;
 }
 
+.trends-grid > div {
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 16px;
+}
+
 /* Example Hand Modal */
 .modal-overlay {
   position: fixed;
