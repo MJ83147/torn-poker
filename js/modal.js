@@ -75,9 +75,8 @@ function showExampleHandModal(hand, coachingNote) {
     this.title = nowStarred ? 'Unsave hand' : 'Save hand';
     var notesEl = document.getElementById('modal-notes');
     if (notesEl) notesEl.classList.toggle('show', nowStarred);
-    // refresh saved hands panel
-    var savedPanel = document.getElementById('p-saved');
-    if (savedPanel) renderSavedHands(savedPanel);
+    // refresh saved hands section in log panel
+    renderSavedHands();
   };
 
   var notesInput = document.getElementById('modal-notes-input');
@@ -92,8 +91,7 @@ function showExampleHandModal(hand, coachingNote) {
         setHandNote(hand, val);
         if (statusEl) { statusEl.textContent = 'Saved'; statusEl.style.color = 'var(--green)'; }
         setTimeout(function() { if (statusEl) { statusEl.textContent = 'Saves automatically'; statusEl.style.color = 'var(--muted)'; } }, 1500);
-        var savedPanel = document.getElementById('p-saved');
-        if (savedPanel) renderSavedHands(savedPanel);
+        renderSavedHands();
       }, 300);
     };
   }

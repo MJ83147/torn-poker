@@ -20,7 +20,6 @@ var files = [
   'js/panels/trends.js',
   'js/panels/showdown.js',
   'js/panels/log.js',
-  'js/panels/saved.js',
   'js/panels/players.js',
   'js/panels/profile.js',
   'app.js',
