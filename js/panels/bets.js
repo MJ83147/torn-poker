@@ -4,26 +4,23 @@ function renderBets(container, d, hands) {
   var betStreets = ['Preflop', 'Flop', 'Turn', 'River'];
   var avgBets = {};
   var avgBetsBB = {};
-  var betSource = _displayBB && d.betAmtsBB ? d.betAmtsBB : d.betAmts;
   betStreets.forEach(function(s) {
-    var a = d.betAmts[s];
-    avgBets[s] = a && a.length ? Math.round(a.reduce(function(x, y) { return x + y; }, 0) / a.length) : 0;
-    var abb = d.betAmtsBB ? d.betAmtsBB[s] : null;
-    avgBetsBB[s] = abb && abb.length ? (abb.reduce(function(x, y) { return x + y; }, 0) / abb.length) : 0;
+    avgBets[s] = Math.round(avg(d.betAmts[s]));
+    avgBetsBB[s] = avg(d.betAmtsBB ? d.betAmtsBB[s] : []);
   });
   d.avgBetPre = avgBets.Preflop; d.avgBetFlop = avgBets.Flop;
   d.avgBetTurn = avgBets.Turn; d.avgBetRiver = avgBets.River;
   d.avgBetBBFlop = avgBetsBB.Flop; d.avgBetBBTurn = avgBetsBB.Turn; d.avgBetBBRiver = avgBetsBB.River;
   var betDisplay = {};
   betStreets.forEach(function(s) {
-    var bSrc = betSource[s];
-    betDisplay[s] = bSrc && bSrc.length ? (bSrc.reduce(function(x, y) { return x + y; }, 0) / bSrc.length) : 0;
+    betDisplay[s] = _displayBB && d.betAmtsBB && d.betAmtsBB[s] && d.betAmtsBB[s].length
+      ? avg(d.betAmtsBB[s]) : avg(d.betAmts[s]);
   });
   var maxAvg = Math.max(betDisplay.Preflop, betDisplay.Flop, betDisplay.Turn, betDisplay.River, 1);
   var betHtml = '<div class="two-col" style="margin-bottom:24px;">';
   betHtml += '<div><div class="sec-subtitle">Average bet size by street</div><div class="bar-group">' +
     betStreets.filter(function(s) { return betDisplay[s] > 0; }).map(function(s) {
-      return barRow(s, betDisplay[s], maxAvg, 'o', _displayBB ? betDisplay[s].toFixed(1) + ' BB' : fmt(avgBets[s]), d.betAmts[s] ? d.betAmts[s].length + ' bets' : '');
+      return barRow(s, betDisplay[s], maxAvg, 'o', fmtAvgAmount(d.betAmts[s], d.betAmtsBB ? d.betAmtsBB[s] : []), d.betAmts[s] ? d.betAmts[s].length + ' bets' : '');
     }).join('') + '</div></div>';
   betHtml += '<div><div class="sec-subtitle">Bet frequency (when you had the option)</div><div class="bar-group">' +
     betStreets.map(function(s) {
@@ -41,7 +38,7 @@ function renderBets(container, d, hands) {
       if (!h.board || h.board.length < 3) return false;
       return parseActions(h.actions).some(function(a) { return a.isMe && a.street === 'Flop' && (a.type === 'raise' || a.type === 'bet'); });
     });
-    var flopDisp = _displayBB && d.avgBetBBFlop > 0 ? d.avgBetBBFlop.toFixed(1) + ' BB' : fmt(d.avgBetFlop);
+    var flopDisp = fmtAvgAmount(d.betAmts.Flop, d.betAmtsBB ? d.betAmtsBB.Flop : []);
     bIns.push(insWithExample('o', 'Flop Sizing', 'Average flop bet: ' + flopDisp + '. In TC, aim for 60–80% of pot. Everyone calls so bet for maximum value.', [{
       v: 'Avg: ' + flopDisp,
       hi: true,
@@ -53,8 +50,8 @@ function renderBets(container, d, hands) {
       if (!h.board || h.board.length < 4) return false;
       return parseActions(h.actions).some(function(a) { return a.isMe && a.street === 'Turn' && (a.type === 'raise' || a.type === 'bet'); });
     });
-    var turnDisp = _displayBB && d.avgBetBBTurn > 0 ? d.avgBetBBTurn.toFixed(1) + ' BB' : fmt(d.avgBetTurn);
-    var flopDispT = _displayBB && d.avgBetBBFlop > 0 ? d.avgBetBBFlop.toFixed(1) + ' BB' : fmt(d.avgBetFlop);
+    var turnDisp = fmtAvgAmount(d.betAmts.Turn, d.betAmtsBB ? d.betAmtsBB.Turn : []);
+    var flopDispT = fmtAvgAmount(d.betAmts.Flop, d.betAmtsBB ? d.betAmtsBB.Flop : []);
     bIns.push(insWithExample(bigger ? 'g' : 'a', 'Turn Sizing', bigger ? 'Turn bets (' + turnDisp + ') larger than flop — correct as the pot grows.' : 'Turn bets (' + turnDisp + ') smaller than flop (' + flopDispT + '). Size up on the turn.', [{
       v: 'Avg: ' + turnDisp,
       hi: true,
@@ -66,7 +63,7 @@ function renderBets(container, d, hands) {
       if (!h.outcome || h.outcome.result !== 'won') return false;
       return parseActions(h.actions).some(function(a) { return a.isMe && a.street === 'River' && (a.type === 'raise' || a.type === 'bet'); });
     });
-    var riverDisp = _displayBB && d.avgBetBBRiver > 0 ? d.avgBetBBRiver.toFixed(1) + ' BB' : fmt(d.avgBetRiver);
+    var riverDisp = fmtAvgAmount(d.betAmts.River, d.betAmtsBB ? d.betAmtsBB.River : []);
     bIns.push(insWithExample('o', 'River Sizing', 'Average river bet: ' + riverDisp + '. The river is where you get paid — bet big with the best hand.', [{
       v: 'Avg: ' + riverDisp,
       hi: true,

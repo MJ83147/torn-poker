@@ -292,6 +292,61 @@ function clamp(v, lo, hi) {
   return Math.max(lo, Math.min(hi, v));
 }
 
+// ── SHARED FORMATTING HELPERS (reduce duplication across panels) ─────────
+
+// Average of numeric array (returns raw float, callers round if needed)
+function avg(arr) {
+  if (!arr || !arr.length) return 0;
+  var s = 0;
+  for (var i = 0; i < arr.length; i++) s += arr[i];
+  return s / arr.length;
+}
+
+// Format P&L with +/- prefix
+function fmtPnl(val) {
+  return (val >= 0 ? '+' : '') + fmt(val);
+}
+
+// CSS class for P&L (table cells)
+function pnlCls(val) {
+  return val >= 0 ? 'pnl-pos' : 'pnl-neg';
+}
+
+// CSS color variable for P&L (inline styles)
+function pnlColor(val) {
+  return val >= 0 ? 'var(--green)' : 'var(--red)';
+}
+
+// CSS class for win rate (table cells)
+function wrCls(wr) {
+  if (wr === null) return '';
+  return wr >= 50 ? 'wr-good' : 'wr-bad';
+}
+
+// Display amount as BB or dollar depending on toggle
+function fmtAvgAmount(chipArr, bbArr) {
+  if (_displayBB && bbArr && bbArr.length) return avg(bbArr).toFixed(1) + ' BB';
+  return fmt(Math.round(avg(chipArr)));
+}
+
+// Switch active tab and panel
+function switchTab(tabId) {
+  document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+  document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('on'); });
+  var tabBtn = document.querySelector('[data-tab="' + tabId + '"]');
+  if (tabBtn) tabBtn.classList.add('active');
+  var panel = document.getElementById('p-' + tabId);
+  if (panel) panel.classList.add('on');
+}
+
+// Render a row of mini stat boxes
+function renderMiniRow(items) {
+  return '<div class="mini-row">' + items.map(function(m) {
+    var color = m.c === 'g' ? 'green' : m.c === 'r' ? 'red' : m.c === 'a' ? 'amber' : m.c || 'text';
+    return '<div class="mini"><div class="mini-l">' + m.l + '</div><div class="mini-v" style="color:var(--' + color + ')">' + m.v + '</div></div>';
+  }).join('') + '</div>';
+}
+
 function tipWrap(label) {
   const def = TIPS[label];
   if (!def) return label;
@@ -309,7 +364,6 @@ function ins(sev, label, text, chips) {
 }
 
 // Insight helper that injects a "See example hand" button and wires its click
-// handler to open the example-hand modal.
 function insWithExample(sev, label, text, chips, exampleHand, coachingNote) {
   const base = ins(sev, label, text, chips);
   if (!exampleHand) return base;
@@ -336,6 +390,7 @@ function barRow(label, val, max, cls, valStr, val2Str) {
 
 // Parse action log lines into structured events for analysis
 function parseActions(actions) {
+  if (actions && actions._parsed) return actions._parsed;
   const out = [];
   let street = 'Preflop';
   for (const raw of (actions || [])) {
@@ -375,6 +430,7 @@ function parseActions(actions) {
       out.push({ author, isMe, street, type, amount, msg });
     }
   }
+  if (actions) actions._parsed = out;
   return out;
 }
 

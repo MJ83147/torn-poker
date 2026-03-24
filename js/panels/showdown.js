@@ -63,11 +63,10 @@ function renderShowdown(container, hands, meta) {
   }
 
   // Pot size averages
-  function avg(arr) { if (!arr.length) return 0; var s = 0; for (var i = 0; i < arr.length; i++) s += arr[i]; return Math.round(s / arr.length); }
-  var avgPotSdWin = avg(potSdWin);
-  var avgPotSdLoss = avg(potSdLoss);
-  var avgPotNsdWin = avg(potNsdWin);
-  var avgPotNsdLoss = avg(potNsdLoss);
+  var avgPotSdWin = Math.round(avg(potSdWin));
+  var avgPotSdLoss = Math.round(avg(potSdLoss));
+  var avgPotNsdWin = Math.round(avg(potNsdWin));
+  var avgPotNsdLoss = Math.round(avg(potNsdLoss));
 
   // Summary stats
   var sdWinRate = pct(sdWon, sdTotal);
@@ -78,14 +77,14 @@ function renderShowdown(container, hands, meta) {
   statsHtml += '<div style="padding:14px;background:var(--card);border:1px solid var(--border);border-radius:8px;">';
   statsHtml += '<div style="font-size:11px;color:var(--dim);margin-bottom:6px;display:flex;align-items:center;gap:6px;">' +
     '<span style="display:inline-block;width:10px;height:3px;background:#4a9eff;border-radius:1px;"></span>Showdown</div>';
-  statsHtml += '<div style="font-size:20px;font-weight:500;color:' + (cumSd >= 0 ? 'var(--green)' : 'var(--red)') + ';">' + (cumSd >= 0 ? '+' : '') + fmt(cumSd) + '</div>';
+  statsHtml += '<div style="font-size:20px;font-weight:500;color:' + pnlColor(cumSd) + ';">' + fmtPnl(cumSd) + '</div>';
   statsHtml += '<div style="font-size:11px;color:var(--dim);margin-top:4px;">' + sdTotal + ' hands · ' + (sdWinRate !== null ? sdWinRate + '% win rate' : 'no data') + '</div>';
   statsHtml += '</div>';
 
   statsHtml += '<div style="padding:14px;background:var(--card);border:1px solid var(--border);border-radius:8px;">';
   statsHtml += '<div style="font-size:11px;color:var(--dim);margin-bottom:6px;display:flex;align-items:center;gap:6px;">' +
     '<span style="display:inline-block;width:10px;height:3px;background:#e74c3c;border-radius:1px;"></span>Non-Showdown</div>';
-  statsHtml += '<div style="font-size:20px;font-weight:500;color:' + (cumNsd >= 0 ? 'var(--green)' : 'var(--red)') + ';">' + (cumNsd >= 0 ? '+' : '') + fmt(cumNsd) + '</div>';
+  statsHtml += '<div style="font-size:20px;font-weight:500;color:' + pnlColor(cumNsd) + ';">' + fmtPnl(cumNsd) + '</div>';
   statsHtml += '<div style="font-size:11px;color:var(--dim);margin-top:4px;">' + nsdTotal + ' hands · ' + (nsdWinRate !== null ? nsdWinRate + '% win rate' : 'no data') + '</div>';
   statsHtml += '</div>';
 
@@ -98,14 +97,14 @@ function renderShowdown(container, hands, meta) {
   if (sdTotal >= 10 && nsdTotal >= 10) {
     if (cumSd > 0 && cumNsd < 0 && Math.abs(cumNsd) > cumSd * 0.3) {
       insHtml += ins('a', 'Red Line Leak', 'You win at showdown but bleed chips in non-showdown pots. Opponents may be exploiting your folds — consider defending more or bluffing less.', [
-        { v: 'SD: ' + (cumSd >= 0 ? '+' : '') + fmt(cumSd), hi: true },
-        { v: 'NSD: ' + fmt(cumNsd), hi: true },
+        { v: 'SD: ' + fmtPnl(cumSd), hi: true },
+        { v: 'NSD: ' + fmtPnl(cumNsd), hi: true },
       ]);
       hasInsight = true;
     }
     if (cumNsd > 0) {
       insHtml += ins('g', 'Winning Without Showdown', 'Your non-showdown line is positive — you are taking down pots with aggression and well-timed bets.', [
-        { v: 'NSD: +' + fmt(cumNsd), hi: true },
+        { v: 'NSD: ' + fmtPnl(cumNsd), hi: true },
       ]);
       hasInsight = true;
     }
@@ -118,8 +117,8 @@ function renderShowdown(container, hands, meta) {
     }
     if (cumSd > 0 && cumNsd >= 0) {
       insHtml += ins('g', 'Solid Across the Board', 'Both your showdown and non-showdown lines are positive. You are winning with strong hands and also taking down pots without needing to show.', [
-        { v: 'SD: +' + fmt(cumSd) },
-        { v: 'NSD: +' + fmt(cumNsd) },
+        { v: 'SD: ' + fmtPnl(cumSd) },
+        { v: 'NSD: ' + fmtPnl(cumNsd) },
       ]);
       hasInsight = true;
     }
@@ -158,7 +157,7 @@ function renderShowdown(container, hands, meta) {
 
   potHtml += '<div style="padding:14px;background:var(--card);border:1px solid var(--border);border-radius:8px;">';
   potHtml += '<div style="font-size:11px;color:var(--dim);margin-bottom:6px;">Win/Loss Pot Ratio</div>';
-  potHtml += '<div style="font-size:20px;font-weight:500;color:' + (winLossRatio !== null && winLossRatio >= 1 ? 'var(--green)' : 'var(--red)') + ';">' + (winLossRatio !== null ? winLossRatio + 'x' : '—') + '</div>';
+  potHtml += '<div style="font-size:20px;font-weight:500;color:' + (winLossRatio !== null ? pnlColor(winLossRatio - 1) : 'var(--red)') + ';">' + (winLossRatio !== null ? winLossRatio + 'x' : '—') + '</div>';
   potHtml += '<div style="font-size:11px;color:var(--dim);margin-top:4px;">Target: above 1.0x</div>';
   potHtml += '</div>';
 
@@ -376,8 +375,7 @@ function renderShowdown(container, hands, meta) {
               return 'Hand #' + items[0].label;
             },
             label: function(ctx) {
-              var val = ctx.parsed.y;
-              return ' ' + ctx.dataset.label + ': ' + (val >= 0 ? '+' : '') + fmt(val);
+              return ' ' + ctx.dataset.label + ': ' + fmtPnl(ctx.parsed.y);
             },
           },
         },
