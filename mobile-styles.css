@@ -39,8 +39,12 @@
   .tabs::-webkit-scrollbar { display: none; }
   .tab { padding: 10px 14px; font-size: 11px; letter-spacing: 1px; flex-shrink: 0; }
 
-  /* Panels */
+  /* Panels: flex column so all content stacks uniformly */
   .panel { padding: 24px 16px; }
+  .panel.on {
+    display: flex;
+    flex-direction: column;
+  }
 
   /* Paste screen */
   #paste-wrap { padding: 40px 16px; }
@@ -49,12 +53,14 @@
   .paste-title { font-size: 20px; }
 
   /* Grid layouts */
-  .two-col, .ins-grid { grid-template-columns: 1fr; }
-  .two-col { gap: 16px; }
+  .two-col { grid-template-columns: 1fr; gap: 16px; }
 
-  /* Insight grid: force single column so cards don't overflow */
+  /* Insight grid: full-width stacked column */
   .ins-grid {
-    grid-template-columns: 1fr !important;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
   }
 
   /* Bar rows */
@@ -84,8 +90,8 @@
   .mini { padding: 10px 12px; }
   .mini-v { font-size: 20px; }
 
-  /* Insight cards: stop text being pushed off-screen by badge */
-  .ins { overflow: hidden; }
+  /* Insight cards: full width, stop text overlapping badge */
+  .ins { overflow: hidden; width: 100%; }
   .ins-text { padding-right: 60px; word-break: break-word; }
   .ins-label { padding-right: 60px; }
 
