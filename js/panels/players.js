@@ -358,7 +358,7 @@ function renderPlayers(container, d, hands) {
     }
     if (best) pIns.push(ins('g', 'Best Record', 'You win ' + pct(best.won, best.won + best.lost) + '% against ' + best.name + ' (' + (best.won + best.lost) + ' contested hands).', [{ v: best.name, hi: true }, { v: pct(best.won, best.won + best.lost) + '% win' }]));
     if (worst && worst !== best) pIns.push(ins('r', 'Toughest Opponent', 'Only ' + pct(worst.won, worst.won + worst.lost) + '% win rate against ' + worst.name + ' (' + (worst.won + worst.lost) + ' contested hands).', [{ v: worst.name, hi: true }, { v: pct(worst.won, worst.won + worst.lost) + '% win' }]));
-    if (pIns.length) html += '<div style="margin-top:20px;margin-bottom:20px;">' + pIns.join('') + '</div>';
+    if (pIns.length) html += '<div class="ins-grid" style="margin-top:20px;margin-bottom:20px;">' + pIns.join('') + '</div>';
 
     html += '<div class="sec-subtitle">All Opponents</div>';
     html += '<div style="font-size:9px;color:var(--dim);margin-bottom:8px;">' + filtered.length + ' opponents with 2+ shared hands · click star to watch · click row to view hands</div>';
