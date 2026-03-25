@@ -23,13 +23,13 @@ function renderLog(container, hands) {
       '<div class="flex-gap-6">' +
       renderPagination(_logPage, allHands.length, PAGE_SIZE, 'log-prev', 'log-next') +
       '</div></div>';
-    logHtml += '<div class="hrow hrow-header hrow-with-star"><div class="hrow-star-col"></div><div class="hrow-pos">Pos</div><div class="hrow-cards">Cards</div><div class="hrow-board">Board</div><div class="hrow-acts">Actions</div><div class="hrow-res">Result</div></div>';
-    logHtml += '<div class="hlog">' + pageHands.map(function(h, pi) {
+    logHtml += '<div class="overflow-x"><table class="tbl hlog-tbl"><thead><tr><th></th><th>Pos</th><th>Cards</th><th>Board</th><th>Actions</th><th>Result</th></tr></thead><tbody>';
+    logHtml += pageHands.map(function(h, pi) {
       var globalIdx = start + pi;
       var starred = isHandStarred(h);
-      var starHtml = '<div class="hrow-star-col"><span class="hrow-star' + (starred ? ' starred' : '') + '" data-star-idx="' + globalIdx + '" title="' + (starred ? 'Unsave' : 'Save') + ' hand">' + (starred ? '&#9733;' : '&#9734;') + '</span></div>';
+      var starHtml = '<span class="hrow-star' + (starred ? ' starred' : '') + '" data-star-idx="' + globalIdx + '" title="' + (starred ? 'Unsave' : 'Save') + ' hand">' + (starred ? '&#9733;' : '&#9734;') + '</span>';
       return renderHandRow(h, globalIdx, { starHtml: starHtml });
-    }).join('') + '</div>';
+    }).join('') + '</tbody></table></div>';
     container.innerHTML = logHtml;
 
     // Wire saved section
