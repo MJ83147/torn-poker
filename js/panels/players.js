@@ -560,13 +560,13 @@ function renderPlayers(container, d, hands) {
       if (oppStats.hands >= 5) {
         var minis = [
           { l: tipWrap('VPIP'),       v: vpip !== null ? vpip + '%' : '—',     c: sev(vpip, -1, 55, 18, 40) },
-          { l: 'PFR',                 v: pfr !== null ? pfr + '%' : '—',       c: sev(pfr, 8, 999, 8, 35) },
-          { l: 'Limp',                v: limp !== null ? limp + '%' : '—',     c: sev(limp, -1, 30, -1, 20) },
-          { l: tipWrap('Aggression'), v: aggPct !== null ? aggPct + '%' : '—', c: sev(aggPct, 15, 999, 15, 50) },
-          { l: 'Fold to Raise',       v: ftr !== null ? ftr + '%' : '—',       c: sev(ftr, 25, 65, 25, 65) },
-          { l: tipWrap('C-Bet'),      v: cbet !== null ? cbet + '%' : '—',     c: sev(cbet, -1, 999, -1, 75) },
-          { l: 'WTSD',                v: wtsd !== null ? wtsd + '%' : '—',     c: sev(wtsd, 25, 55, 25, 55) },
-          { l: 'WSD',                 v: wsd !== null ? wsd + '%' : '—',       c: sev(wsd, 35, 999, 35, 60) },
+          { l: tipWrap('PFR'),          v: pfr !== null ? pfr + '%' : '—',       c: sev(pfr, 8, 999, 8, 35) },
+          { l: tipWrap('Limp'),         v: limp !== null ? limp + '%' : '—',     c: sev(limp, -1, 30, -1, 20) },
+          { l: tipWrap('Aggression'),   v: aggPct !== null ? aggPct + '%' : '—', c: sev(aggPct, 15, 999, 15, 50) },
+          { l: tipWrap('Fold to Raise'),v: ftr !== null ? ftr + '%' : '—',       c: sev(ftr, 25, 65, 25, 65) },
+          { l: tipWrap('C-Bet'),        v: cbet !== null ? cbet + '%' : '—',     c: sev(cbet, -1, 999, -1, 75) },
+          { l: tipWrap('WTSD'),         v: wtsd !== null ? wtsd + '%' : '—',     c: sev(wtsd, 25, 55, 25, 55) },
+          { l: tipWrap('WSD'),          v: wsd !== null ? wsd + '%' : '—',       c: sev(wsd, 35, 999, 35, 60) },
         ];
 
         ph += '<div class="sec-subtitle mt-0">Tendencies</div>';
