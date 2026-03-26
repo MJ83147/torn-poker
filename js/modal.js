@@ -63,7 +63,7 @@ function showExampleHandModal(hand, coachingNote) {
     '</div>';
 
   var equitySlot = '<div id="equity-slot"></div>';
-  box.innerHTML = closeBtn + starBtn + title + subtitle + metaHtml + actionsHtml + coaching + equitySlot + notesSection;
+  box.innerHTML = closeBtn + starBtn + title + subtitle + metaHtml + equitySlot + actionsHtml + coaching + notesSection;
   overlay.appendChild(box);
   document.body.appendChild(overlay);
   requestAnimationFrame(function() { overlay.classList.add('show'); });
