@@ -506,19 +506,14 @@ function parseActions(actions) {
   return out;
 }
 
-// Check if a bet/raise action is truly all-in by verifying the player
-// doesn't act again on a later street (if they do, they had chips left).
+// Check if a raise action is truly all-in.
+// Only raises without " to " indicate shoves (e.g. "raised $5,000,000" vs "raised $2,500,000 to $5,000,000").
+// Regular bets ("bet $X") are never detectable as all-in from the log format alone.
 function isAllInAction(acts, idx) {
   var a = acts[idx];
   if (!a) return false;
-  if ((a.type !== 'raise' && a.type !== 'bet') || !a.msg) return false;
+  if (a.type !== 'raise' || !a.msg) return false;
   if (a.msg.indexOf(' to ') !== -1) return false;
-  for (var i = idx + 1; i < acts.length; i++) {
-    if (acts[i].author === a.author && acts[i].street !== a.street &&
-        acts[i].type !== 'won') {
-      return false;
-    }
-  }
   return true;
 }
 
