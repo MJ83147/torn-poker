@@ -26,6 +26,7 @@ function renderWelcome(container, d, hands, meta) {
     '<div class="welcome-intro">' +
     '<div class="welcome-intro-heading">Welcome back, ' + meta.player + '</div>' +
     '<div class="welcome-intro-sub">' + d.n + ' hands loaded. Here\'s what each tab shows.</div>' +
+    '<button class="take-tour-btn" onclick="startWelcomeTour()">Take a Tour</button>' +
     '</div>' +
     '<div class="welcome-body">' +
     '<div class="welcome-toc">' +

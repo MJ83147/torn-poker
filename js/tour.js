@@ -2,173 +2,52 @@
 
 (function() {
 
-  // Tour steps for the dashboard header (shown on every tab)
-  var headerSteps = [
-    {
-      element: '#hero-strip',
-      intro: '<strong>Hero Strip</strong><br>Your key stats at a glance: total hands, win rate, net P&L, VPIP (how often you voluntarily put money in), aggression, and how often you fold to all-ins.',
-      position: 'bottom'
-    },
-    {
-      element: '#bb-toggle',
-      intro: '<strong>$ / BB Toggle</strong><br>Switch between dollar amounts and Big Blind units. BB mode lets you compare performance across different stakes.',
-      position: 'bottom'
-    },
-    {
-      element: '#tabs',
-      intro: '<strong>Analysis Tabs</strong><br>Each tab breaks down a different aspect of your game. Click any tab to dive into that area.',
-      position: 'bottom'
-    }
-  ];
-
-  // Per-tab tour definitions
-  var tabTours = {
-    welcome: {
-      title: 'Overview',
-      steps: [
-        {
-          element: '#p-welcome',
-          intro: '<strong>Overview</strong><br>Your session dashboard. Shows a summary of your play, a table of contents linking to every analysis tab, and rotating tips to improve your game.',
-          position: 'top'
-        }
-      ]
-    },
-    cards: {
-      title: 'Cards',
-      steps: [
-        {
-          element: '#p-cards',
-          intro: '<strong>Hand Types</strong><br>See how each category of starting hand performs: pocket pairs, broadway, suited connectors, ace-rag, and more. The stacked bars show how many you played, won, and skipped.',
-          position: 'top'
-        }
-      ]
-    },
-    position: {
-      title: 'Position',
-      steps: [
-        {
-          element: '#p-position',
-          intro: '<strong>Position Analysis</strong><br>Your performance from each seat at the table: UTG, MP, CO, BTN, SB, BB. Shows VPIP, fold rate, win rate, P&L, and average pot by position. Position is one of the biggest edges in poker.',
-          position: 'top'
-        }
-      ]
-    },
-    street: {
-      title: 'Streets',
-      steps: [
-        {
-          element: '#p-street',
-          intro: '<strong>Street Breakdown</strong><br>How you play on each street: Preflop, Flop, Turn, and River. See what percentage of hands reach each street, your fold rates, and average bet sizing by street.',
-          position: 'top'
-        }
-      ]
-    },
-    actions: {
-      title: 'Actions',
-      steps: [
-        {
-          element: '#p-actions',
-          intro: '<strong>Action Frequencies</strong><br>Your action breakdown across all streets: how often you fold, check, call, or raise. The coloured bars show your tendencies at each decision point.',
-          position: 'top'
-        }
-      ]
-    },
-    bets: {
-      title: 'Bets',
-      steps: [
-        {
-          element: '#p-bets',
-          intro: '<strong>Bet Sizing</strong><br>Your average bet size by street, shown in dollars or BB. Helps you spot if you\'re betting too small (giving odds) or too large (risking too much).',
-          position: 'top'
-        }
-      ]
-    },
-    range: {
-      title: 'Range',
-      steps: [
-        {
-          element: '#p-range',
-          intro: '<strong>Hand Matrix</strong><br>The classic 13x13 grid showing every possible starting hand. Colour-coded by win rate and frequency. Click any cell to see example hands you played with that combo.',
-          position: 'top'
-        }
-      ]
-    },
-    tables: {
-      title: 'Tables',
-      steps: [
-        {
-          element: '#p-tables',
-          intro: '<strong>Table Comparison</strong><br>Compare your stats across different stakes and table IDs. Find which stakes you perform best at, and exclude tables from your analysis if needed.',
-          position: 'top'
-        }
-      ]
-    },
-    trends: {
-      title: 'Trends',
-      steps: [
-        {
-          element: '#p-trends',
-          intro: '<strong>Session Trends</strong><br>Charts tracking your win rate, VPIP, aggression, and cumulative P&L over time. See if your game is improving or if leaks are developing.',
-          position: 'top'
-        }
-      ]
-    },
-    showdown: {
-      title: 'Showdown',
-      steps: [
-        {
-          element: '#p-showdown',
-          intro: '<strong>Showdown Analysis</strong><br>The blue line (showdown winnings) vs red line (non-showdown winnings). This reveals whether you profit more from winning at showdown or from opponents folding to your bets.',
-          position: 'top'
-        }
-      ]
-    },
-    log: {
-      title: 'Hand Log',
-      steps: [
-        {
-          element: '#p-log',
-          intro: '<strong>Hand Log</strong><br>A paginated table of every hand in your session. Sort by position or result, star important hands, and click any row to replay the full action with coaching notes and equity analysis.',
-          position: 'top'
-        }
-      ]
-    },
-    players: {
-      title: 'Players',
-      steps: [
-        {
-          element: '#p-players',
-          intro: '<strong>Opponent Stats</strong><br>Every player you\'ve faced with their VPIP, PFR, limp rate, fold-to-raise, and showdown stats. Add opponents to your watch list and click any player to see your head-to-head record.',
-          position: 'top'
-        }
-      ]
-    }
-  };
-
-  function getActiveTab() {
-    var active = document.querySelector('.tab.active');
-    return active ? active.dataset.tab : 'welcome';
-  }
-
-  function startTour() {
+  // ── Welcome tour: header elements + point to help button ──────────────────
+  function startWelcomeTour() {
     if (typeof introJs === 'undefined') return;
 
-    var activeTab = getActiveTab();
-    var tabDef = tabTours[activeTab];
-    var steps = headerSteps.concat(tabDef ? tabDef.steps : []);
-
-    // Add insight cards if present on current panel
-    var panel = document.getElementById('p-' + activeTab);
-    if (panel) {
-      var insight = panel.querySelector('.insight-card');
-      if (insight) {
-        steps.push({
-          element: insight,
-          intro: '<strong>Insight Cards</strong><br>Automated analysis highlights: green means strength, red means a leak, amber is a warning. These help you spot patterns you might miss.',
-          position: 'top'
-        });
+    var steps = [
+      {
+        element: '#hero-strip',
+        intro: '<strong>Hero Strip</strong><br>Your key session stats at a glance: total hands played, win rate, net profit/loss, VPIP (how often you voluntarily enter pots), aggression rate, and how you handle all-in situations.',
+        position: 'bottom'
+      },
+      {
+        element: '#bb-toggle',
+        intro: '<strong>Dollar / BB Toggle</strong><br>Switch between dollar amounts and Big Blind units. BB mode normalises your stats so you can compare performance across different stakes.',
+        position: 'bottom'
+      },
+      {
+        element: '#table-filter',
+        intro: '<strong>Table Filter</strong><br>Filter your entire analysis to a single table or stake level. All tabs update to show only hands from the selected table.',
+        position: 'bottom'
+      },
+      {
+        element: '#page-meta',
+        intro: '<strong>Player Info</strong><br>Shows your name, export date, and hand count. Click it to view your player profile.',
+        position: 'bottom'
+      },
+      {
+        element: '#tabs',
+        intro: '<strong>Analysis Tabs</strong><br>Each tab dives deep into a different part of your game — hand types, position, betting patterns, opponents, and more. Click any tab to explore.',
+        position: 'bottom'
+      },
+      {
+        element: '.welcome-toc',
+        intro: '<strong>Table of Contents</strong><br>Quick links to every analysis tab with a short description of what each one covers. Click any row to jump straight there.',
+        position: 'top'
+      },
+      {
+        element: '.welcome-tips',
+        intro: '<strong>Tips</strong><br>Rotating tips to help you get the most out of the tool. Use the arrows to cycle through them.',
+        position: 'top'
+      },
+      {
+        element: '#tour-btn',
+        intro: '<strong>Page Help</strong><br>Every page has this <strong>?</strong> button. Click it on any tab to get a guided walkthrough of everything on that page.',
+        position: 'left'
       }
-    }
+    ];
 
     var intro = introJs();
     intro.setOptions({
@@ -185,11 +64,115 @@
       doneLabel: 'Got it',
       tooltipClass: 'tc-tour-tooltip'
     });
-
     intro.start();
   }
 
-  // Expose globally so the button can call it
-  window.startGuidedTour = startTour;
+  // ── Per-tab tours ─────────────────────────────────────────────────────────
+  var tabTourSteps = {
+    cards: [
+      { el: '.ht-stack-legend', intro: '<strong>Legend</strong><br>The colour key: green = hands won, blue = hands played but lost, grey = hands dealt but folded preflop.', pos: 'bottom' },
+      { el: '.ht-stack-item', intro: '<strong>Hand Type Stacks</strong><br>Each bar represents a hand category (pocket pairs, broadway, suited connectors, etc.). The wider the green segment, the better your win rate with that type.', pos: 'top' },
+      { el: '.ins-grid', intro: '<strong>Insights</strong><br>Automated analysis of your hand type performance. Green = strength, red = leak, amber = caution. Click "See example hand" to view a real hand from your session.', pos: 'top' }
+    ],
+    position: [
+      { el: '.overflow-x', intro: '<strong>Position Table</strong><br>Your stats from each seat: hands played, VPIP, fold rate preflop, win rate, P&L, and average pot size. Look for positions where you leak chips.', pos: 'top' },
+      { el: '.chart-wrap-full', intro: '<strong>Position Chart</strong><br>Win rate and VPIP plotted by position. Ideally your win rate is highest in late position (BTN, CO) where you have more information.', pos: 'top' },
+      { el: '.ins-grid', intro: '<strong>Position Insights</strong><br>Highlights your strongest and weakest seats. Pay attention to red cards flagging positions where you lose the most.', pos: 'top' }
+    ],
+    street: [
+      { el: '.two-col', intro: '<strong>Street Stats</strong><br>Left: how many hands reach each street (preflop through river). Right: your fold rate on each street. A high flop fold rate may mean you\'re entering too many pots.', pos: 'top' },
+      { el: '#street-action-chart', intro: '<strong>Action Chart</strong><br>Stacked bars showing your fold/check/call/raise split on each street. Look for streets where you\'re too passive (lots of checking/calling).', pos: 'top' },
+      { el: '.ins-grid', intro: '<strong>Street Insights</strong><br>Flags patterns like folding too often on the flop, or not being aggressive enough on the turn.', pos: 'top' }
+    ],
+    actions: [
+      { el: '.mini-row', intro: '<strong>Action Totals</strong><br>Your total action count broken down into folds, checks, calls, and raises, plus your overall aggression percentage.', pos: 'bottom' },
+      { el: '.stack-bar', intro: '<strong>Action Split</strong><br>Visual breakdown of your action frequencies. Red = fold, green = raise, amber = call, grey = check. A healthy profile has more green than red.', pos: 'top' },
+      { el: '.bar-group', intro: '<strong>Situational Stats</strong><br>Key spots like continuation bet (C-Bet) rate, donk bet frequency, fold to 3-bet, and more. These pinpoint specific leaks.', pos: 'top' },
+      { el: '.ins-grid', intro: '<strong>Action Insights</strong><br>Automated flags for action-related leaks and strengths.', pos: 'top' }
+    ],
+    bets: [
+      { el: '.two-col', intro: '<strong>Bet Sizing</strong><br>Left: your average bet size on each street. Right: how often you bet on each street. Use BB mode to compare across stakes.', pos: 'top' },
+      { el: '.ins-grid', intro: '<strong>Bet Insights</strong><br>Flags sizing issues — betting too small gives opponents odds, too large risks more than necessary.', pos: 'top' }
+    ],
+    range: [
+      { el: '#range-pos-filter', intro: '<strong>Position Filter</strong><br>Filter the grid to see which hands you play from specific positions. Great for reviewing your opening range.', pos: 'bottom' },
+      { el: '.range-grid-sm', intro: '<strong>Hand Matrix</strong><br>The classic 13x13 grid. Every starting hand combo colour-coded by win rate. Darker green = higher win rate. Click any cell to see example hands.', pos: 'top' },
+      { el: '.range-legend', intro: '<strong>Legend</strong><br>Colour scale for win rate and play frequency. Use this to read the grid quickly.', pos: 'top' }
+    ],
+    tables: [
+      { el: '.overflow-x', intro: '<strong>Table Comparison</strong><br>Compare your stats across different tables and stakes: hands, VPIP, win rate, P&L, and average pot. Use the exclude buttons to remove specific tables from your analysis.', pos: 'top' },
+      { el: '.ins-grid', intro: '<strong>Table Insights</strong><br>Highlights your most and least profitable tables.', pos: 'top' }
+    ],
+    trends: [
+      { el: '.trends-grid', intro: '<strong>Trend Charts</strong><br>Four charts tracking your game over time: cumulative win rate, VPIP, aggression, and net P&L. Look for upward or downward trends.', pos: 'top' },
+      { el: '.ins-grid', intro: '<strong>Trend Insights</strong><br>Flags improving or declining patterns in your play.', pos: 'top' }
+    ],
+    showdown: [
+      { el: '#showdown-chart', intro: '<strong>Blue/Red Line</strong><br>Blue line = showdown winnings (pots you won at showdown). Red line = non-showdown winnings (pots won when opponents folded). A healthy game has both lines trending up.', pos: 'top' },
+      { el: '.mini-row', intro: '<strong>Showdown Stats</strong><br>Total showdown and non-showdown profits side by side. If your red line is deeply negative, opponents aren\'t folding enough to your bets.', pos: 'top' }
+    ],
+    log: [
+      { el: '.hlog-tbl', intro: '<strong>Hand Table</strong><br>Every hand you played, showing position, hole cards, board, action summary, and result. Click any row to replay the full hand with coaching notes.', pos: 'top' },
+      { el: '.saved-section', intro: '<strong>Saved Hands</strong><br>Hands you\'ve starred for review. Click the star on any hand to save it. Great for building a study list of interesting spots.', pos: 'top' }
+    ],
+    players: [
+      { el: '#player-search', intro: '<strong>Search</strong><br>Type a player name to find them quickly in your opponent list.', pos: 'bottom' },
+      { el: '.players-table-scroll', intro: '<strong>Opponent Table</strong><br>Every opponent you\'ve faced with VPIP, PFR, limp rate, fold-to-raise, and showdown stats. Click any row to see your head-to-head record and shared hands.', pos: 'top' },
+      { el: '.ins-grid', intro: '<strong>Player Insights</strong><br>Your most-seen opponents, best/worst records, and players to watch.', pos: 'top' }
+    ]
+  };
+
+  function startTabTour() {
+    if (typeof introJs === 'undefined') return;
+
+    var activeTab = document.querySelector('.tab.active');
+    var tabId = activeTab ? activeTab.dataset.tab : null;
+    if (!tabId || tabId === 'welcome') {
+      startWelcomeTour();
+      return;
+    }
+
+    var defs = tabTourSteps[tabId];
+    if (!defs || !defs.length) return;
+
+    var panel = document.getElementById('p-' + tabId);
+    if (!panel) return;
+
+    // Build steps, skipping elements that don't exist on this render
+    var steps = [];
+    for (var i = 0; i < defs.length; i++) {
+      var el = panel.querySelector(defs[i].el);
+      if (el && el.offsetParent !== null) {
+        steps.push({
+          element: el,
+          intro: defs[i].intro,
+          position: defs[i].pos || 'top'
+        });
+      }
+    }
+
+    if (!steps.length) return;
+
+    var intro = introJs();
+    intro.setOptions({
+      steps: steps,
+      showProgress: true,
+      showBullets: true,
+      overlayOpacity: 0.6,
+      exitOnOverlayClick: true,
+      disableInteraction: false,
+      scrollToElement: true,
+      scrollPadding: 80,
+      nextLabel: 'Next &rarr;',
+      prevLabel: '&larr; Back',
+      doneLabel: 'Got it',
+      tooltipClass: 'tc-tour-tooltip'
+    });
+    intro.start();
+  }
+
+  // Expose globally
+  window.startWelcomeTour = startWelcomeTour;
+  window.startGuidedTour = startTabTour;
 
 })();

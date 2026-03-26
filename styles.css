@@ -2097,7 +2097,31 @@ tr.hrow:hover .hrow-star {
   line-height: 1.6;
 }
 
-/* ── Tour button ─────────────────────────────────────────────────────────── */
+/* ── Take a Tour button (welcome panel) ──────────────────────────────────── */
+.take-tour-btn {
+  display: inline-block;
+  margin-top: 16px;
+  padding: 10px 28px;
+  background: var(--gold);
+  color: #07090a;
+  border: none;
+  border-radius: 6px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background .2s, transform .15s;
+  letter-spacing: 0.02em;
+}
+.take-tour-btn:hover {
+  background: #d4b854;
+  transform: translateY(-1px);
+}
+.take-tour-btn:active {
+  transform: translateY(0);
+}
+
+/* ── Help button (header) ────────────────────────────────────────────────── */
 .tour-btn {
   width: 28px;
   height: 28px;
