@@ -119,6 +119,7 @@ function render(d, hands, meta) {
   renderShowdown(document.getElementById('p-showdown'), hands, meta);
   renderLog(document.getElementById('p-log'), hands);
   // saved hands now rendered inside log panel
+  renderAllIn(document.getElementById('p-allin'), hands, meta);
   renderPlayers(document.getElementById('p-players'), d, hands);
 
   // Filter banners (cross-cutting)
@@ -134,7 +135,7 @@ function render(d, hands, meta) {
   }
   if (bannerParts.length) {
     var bannerHtml = '<div class="filter-banner">Showing stats for ' + bannerParts.join(' · ') + '</div>';
-    ['p-welcome', 'p-cards', 'p-position', 'p-street', 'p-actions', 'p-bets', 'p-range', 'p-trends', 'p-showdown', 'p-log', 'p-players'].forEach(function(id) {
+    ['p-welcome', 'p-cards', 'p-position', 'p-street', 'p-actions', 'p-bets', 'p-range', 'p-trends', 'p-showdown', 'p-log', 'p-allin', 'p-players'].forEach(function(id) {
       var el = document.getElementById(id);
       if (el) el.innerHTML = bannerHtml + el.innerHTML;
     });

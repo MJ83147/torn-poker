@@ -2214,3 +2214,53 @@ tr.hrow:hover .hrow-star {
   color: var(--text) !important;
 }
 
+/* ── ALL-IN EV PANEL ──────────────────────────────────────────────────────── */
+.allin-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.allin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  font-family: 'IBM Plex Mono', monospace;
+}
+.allin-table th {
+  text-align: left;
+  padding: 8px 10px;
+  color: var(--dim);
+  font-weight: 400;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.allin-table td {
+  padding: 7px 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+  white-space: nowrap;
+}
+.allin-row {
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.allin-row:hover {
+  background: rgba(255,255,255,0.03);
+}
+.allin-cards {
+  font-size: 12px;
+  letter-spacing: 0.3px;
+}
+.allin-card.r { color: #e74c3c; }
+.allin-card.b { color: var(--text); }
+.allin-caveat {
+  font-size: 11px;
+  color: var(--dim);
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  background: rgba(255,255,255,0.02);
+  border-radius: 6px;
+  border: 1px solid var(--border);
+}
+
