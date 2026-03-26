@@ -41,7 +41,7 @@ function renderProfile() {
   html += '<div class="profile-header">';
   html += '<div class="dim-label mb-12">TC Poker Analysis</div>';
   html += '<div class="profile-name">' + playerName + '</div>';
-  if (exportDate) html += '<div class="profile-date">Last session: ' + exportDate + '</div>';
+  if (exportDate) html += '<div class="meta-text">Last session: ' + exportDate + '</div>';
   html += '</div>';
 
   if (stats) {

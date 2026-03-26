@@ -59,9 +59,7 @@ body {
 }
 
 .l-title {
-  font-family: 'Cormorant Garamond', serif;
   font-size: clamp(40px, 7vw, 68px);
-  font-weight: 700;
   color: var(--gold);
   margin-bottom: 4px;
 }
@@ -183,12 +181,6 @@ body {
   margin-bottom: 10px;
 }
 
-.paste-sub {
-  font-size: 12px;
-  color: var(--dim);
-  margin-bottom: 28px;
-}
-
 textarea#jin {
   width: 100%;
   background: var(--s2);
@@ -232,12 +224,6 @@ textarea#jin:focus {
   margin-top: 28px;
   padding-top: 28px;
   border-top: 1px solid var(--border);
-}
-
-.restore-label {
-  font-size: 12px;
-  color: var(--dim);
-  margin-bottom: 10px;
 }
 
 .restore-btn {
@@ -295,12 +281,6 @@ textarea#jin:focus {
   margin-top: 8px;
 }
 
-.paste-manual-label {
-  font-size: 11px;
-  color: var(--dim);
-  margin-bottom: 14px;
-}
-
 /* DASHBOARD */
 #dash {
   display: none;
@@ -328,12 +308,7 @@ textarea#jin:focus {
   padding: 14px 0 0;
 }
 
-.header-title {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--gold);
-}
+.header-title { font-size: 20px; color: var(--gold); }
 
 .header-controls {
   display: flex;
@@ -440,13 +415,7 @@ textarea#jin:focus {
 }
 
 /* ── UNIVERSAL ROW SPACING ── */
-.panel-title {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: clamp(20px, 3vw, 26px);
-  font-weight: 700;
-  color: var(--gold);
-  margin-bottom: 4px;
-}
+.panel-title { font-size: clamp(20px, 3vw, 26px); color: var(--gold); margin-bottom: 4px; }
 .panel-desc {
   font-size: 13px;
   color: var(--dim);
@@ -588,6 +557,25 @@ textarea#jin:focus {
   font-size: 13px;
   color: var(--dim);
   line-height: 1.6;
+}
+
+/* ── SERIF TITLE (shared pattern) ── */
+.l-title,
+.header-title,
+.panel-title,
+.profile-cta-title,
+.profile-name,
+.welcome-intro-heading,
+.saved-card-hole {
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 700;
+}
+
+/* ── GOLD LABEL (shared pattern) ── */
+.gold-label {
+  font-size: 13px;
+  color: var(--gold);
+  font-weight: 600;
 }
 
 /* ── SERIF VALUE (shared pattern) ── */
@@ -1038,51 +1026,30 @@ textarea#jin:focus {
 }
 
 
-/* Log pagination buttons */
-.log-nav-btn {
-  padding: 4px 10px;
-  border-radius: 3px;
-  border: 1px solid var(--border);
-  background: transparent;
-  color: var(--dim);
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 11px;
-  cursor: pointer;
-}
-
-.log-nav-btn:hover:not([disabled]) {
-  border-color: var(--gold2);
-  color: var(--gold);
-}
-
-.log-nav-btn[disabled] {
-  opacity: 0.3;
-  cursor: default;
-}
-
-.divider {
-  height: 1px;
-  background: var(--border);
-  margin: 24px 0;
-}
-
-.reset-btn {
-  margin-top: 12px;
-  display: inline-block;
-  padding: 9px 18px;
+/* ── SHARED BUTTON BASE ── */
+.log-nav-btn,
+.reset-btn,
+.example-hand-btn {
   background: transparent;
   border: 1px solid var(--border);
   color: var(--dim);
   font-family: 'IBM Plex Mono', monospace;
-  font-size: 12px;
   cursor: pointer;
   border-radius: 4px;
 }
-
-.reset-btn:hover {
-  border-color: var(--dim);
-  color: var(--text);
+.log-nav-btn:hover:not([disabled]),
+.example-hand-btn:hover {
+  border-color: var(--gold2);
+  color: var(--gold);
 }
+.log-nav-btn[disabled] { opacity: 0.3; cursor: default; }
+
+.log-nav-btn { padding: 4px 10px; border-radius: 3px; font-size: 11px; }
+
+.divider { height: 1px; background: var(--border); margin: 24px 0; }
+
+.reset-btn { margin-top: 12px; display: inline-block; padding: 9px 18px; font-size: 12px; }
+.reset-btn:hover { border-color: var(--dim); color: var(--text); }
 
 ::-webkit-scrollbar {
   width: 4px;
@@ -1119,8 +1086,10 @@ textarea#jin:focus {
   color: var(--bg);
 }
 
-/* TABLE FILTER */
-.table-filter {
+/* ── SHARED INPUT BASE ── */
+.table-filter,
+.player-search,
+.modal-notes-input {
   background: var(--s2);
   border: 1px solid var(--border);
   color: var(--text);
@@ -1129,11 +1098,15 @@ textarea#jin:focus {
   padding: 6px 10px;
   border-radius: 4px;
   outline: none;
-  cursor: pointer;
-  max-width: 220px;
 }
+.table-filter:focus,
+.player-search:focus,
+.modal-notes-input:focus {
+  border-color: var(--gold2);
+}
+
+.table-filter { cursor: pointer; max-width: 220px; }
 .table-filter:hover { border-color: var(--dim); }
-.table-filter:focus { border-color: var(--gold2); }
 .table-filter option { background: var(--s1); color: var(--text); }
 
 /* FILTER BANNER */
@@ -1154,19 +1127,7 @@ textarea#jin:focus {
 .tbl .wr-bad { color: var(--red); }
 .tbl-spark { display: inline-block; height: 14px; border-radius: 2px; min-width: 2px; vertical-align: middle; }
 
-/* Player search */
-.player-search {
-  background: var(--s2);
-  border: 1px solid var(--border);
-  color: var(--text);
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 12px;
-  padding: 6px 10px;
-  border-radius: 4px;
-  outline: none;
-  width: 180px;
-}
-.player-search:focus { border-color: var(--gold2); }
+.player-search { width: 180px; }
 .player-search::placeholder { color: var(--dim); }
 
 /* Scrollable players table */
@@ -1285,18 +1246,7 @@ textarea#jin:focus {
 .profile-wrap { max-width: 700px; }
 .profile-header { margin-bottom: 32px; }
 
-.profile-name {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: clamp(28px, 4vw, 44px);
-  font-weight: 700;
-  color: var(--gold);
-  margin-bottom: 4px;
-}
-
-.profile-date {
-  font-size: 10px;
-  color: var(--dim);
-}
+.profile-name { font-size: clamp(28px, 4vw, 44px); color: var(--gold); margin-bottom: 4px; }
 
 .profile-stat-grid {
   display: grid;
@@ -1325,13 +1275,7 @@ textarea#jin:focus {
   flex-shrink: 0;
 }
 
-.profile-cta-title {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--text);
-  margin-bottom: 8px;
-}
+.profile-cta-title { font-size: 20px; color: var(--text); margin-bottom: 8px; }
 
 .profile-cta-desc {
   font-size: 11px;
@@ -1399,12 +1343,6 @@ textarea#jin:focus {
   border-bottom: 1px dashed var(--dim);
 }
 
-/* ── PAGE LABEL ── */
-.page-label {
-  font-size: 9px;
-  color: var(--dim);
-}
-
 /* Trends 2x2 grid */
 .trends-grid {
   display: grid;
@@ -1451,10 +1389,6 @@ textarea#jin:focus {
 .modal-title {
   color: var(--gold);
   margin-bottom: 4px;
-}
-
-.modal-subtitle {
-  margin-bottom: 16px;
 }
 
 .modal-close {
@@ -1524,25 +1458,7 @@ textarea#jin:focus {
   margin-bottom: 6px;
 }
 
-.example-hand-btn {
-  display: inline-block;
-  margin-top: 8px;
-  padding: 3px 8px;
-  border: 1px solid var(--border);
-  border-radius: 3px;
-  background: transparent;
-  color: var(--dim);
-  font-size: 10px;
-  font-family: 'IBM Plex Mono', monospace;
-  letter-spacing: 1px;
-  cursor: pointer;
-  text-transform: uppercase;
-}
-
-.example-hand-btn:hover {
-  border-color: var(--gold2);
-  color: var(--gold);
-}
+.example-hand-btn { display: inline-block; margin-top: 8px; padding: 3px 8px; border-radius: 3px; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; }
 
 /* EQUITY SIMULATION */
 .eq-sim {
@@ -1706,27 +1622,8 @@ tr.hrow:hover .hrow-star {
 .modal-notes-label {
   margin-bottom: 6px;
 }
-.modal-notes-input {
-  width: 100%;
-  min-height: 60px;
-  background: var(--s2);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  color: var(--text);
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 12px;
-  padding: 8px 10px;
-  resize: vertical;
-  outline: none;
-  transition: border-color .2s;
-  box-sizing: border-box;
-}
-.modal-notes-input:focus {
-  border-color: var(--gold2);
-}
-.modal-notes-input::placeholder {
-  color: var(--muted);
-}
+.modal-notes-input { width: 100%; min-height: 60px; padding: 8px 10px; resize: vertical; transition: border-color .2s; }
+.modal-notes-input::placeholder { color: var(--muted); }
 
 /* SAVED HANDS SECTION */
 .saved-toggle {
@@ -1779,12 +1676,7 @@ tr.hrow:hover .hrow-star {
   justify-content: space-between;
   margin-bottom: 6px;
 }
-.saved-card-hole {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--gold);
-}
+.saved-card-hole { font-size: 16px; color: var(--gold); }
 .saved-card-meta {
   display: flex;
   align-items: center;
@@ -1870,13 +1762,7 @@ tr.hrow:hover .hrow-star {
 .welcome-intro {
   margin-bottom: 28px;
 }
-.welcome-intro-heading {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: clamp(24px, 4vw, 32px);
-  font-weight: 700;
-  color: var(--gold);
-  margin-bottom: 6px;
-}
+.welcome-intro-heading { font-size: clamp(24px, 4vw, 32px); color: var(--gold); margin-bottom: 6px; }
 .welcome-toc {
   display: flex;
   flex-direction: column;
@@ -1898,11 +1784,6 @@ tr.hrow:hover .hrow-star {
 .welcome-toc-row:hover {
   background: var(--s2);
   border-color: var(--gold2);
-}
-.welcome-toc-name {
-  font-size: 13px;
-  color: var(--gold);
-  font-weight: 600;
 }
 .welcome-tips {
   width: 100%;
@@ -2029,18 +1910,10 @@ tr.hrow:hover .hrow-star {
 .hiw-feat:last-child {
   border-bottom: none;
 }
-.hiw-feat-name {
-  font-size: 13px;
-  color: var(--gold);
-  font-weight: 600;
-}
 .hiw-footer {
   margin-top: 24px;
   padding-top: 16px;
   border-top: 1px solid var(--border);
-  font-size: 12px;
-  color: var(--dim);
-  line-height: 1.6;
 }
 
 /* ── Take a Tour button (welcome panel) ──────────────────────────────────── */

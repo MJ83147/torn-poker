@@ -311,7 +311,7 @@
     gap: 2px;
     padding: 10px 12px;
   }
-  .welcome-toc-name { font-size: 12px; }
+  .welcome-toc .gold-label { font-size: 12px; }
   .welcome-toc .desc-text { font-size: 11px; }
 
   /* Profile */
@@ -340,7 +340,7 @@
     grid-template-columns: 1fr;
     gap: 2px;
   }
-  .hiw-feat-name { font-size: 12px; }
+  .hiw-feat .gold-label { font-size: 12px; }
   .hiw-feat .desc-text { font-size: 12px; }
   .hiw-footer { font-size: 11px; }
 }

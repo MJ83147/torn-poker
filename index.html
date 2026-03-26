@@ -40,16 +40,16 @@
       <div class="paste-box">
         <div class="paste-suit">♠</div>
         <div class="paste-title">Analyse your session</div>
-        <div class="paste-sub">Click below to paste your tracked session data from the TC Poker Tracker</div>
+        <div class="desc-text mb-24">Click below to paste your tracked session data from the TC Poker Tracker</div>
         <button class="go-btn go-btn-primary" id="paste-btn">Paste from Clipboard</button>
         <div id="paste-error" class="paste-error"></div>
         <div class="paste-manual">
-          <div class="paste-manual-label">Or paste manually:</div>
+          <div class="dim-label mb-12">Or paste manually:</div>
           <textarea id="jin" placeholder="Paste JSON here..."></textarea>
           <button class="go-btn go-btn-secondary" id="go-btn">Analyse Session</button>
         </div>
         <div id="restore-block" class="restore-block">
-          <div class="restore-label" id="restore-label"></div>
+          <div class="desc-text mb-12" id="restore-label"></div>
           <button class="go-btn go-btn-secondary restore-btn" id="restore-btn">Restore Previous Session</button>
         </div>
       </div>
@@ -145,19 +145,19 @@
 
         <div class="dim-label mt-32 mb-16">What it analyses</div>
         <div class="hiw-features">
-          <div class="hiw-feat"><span class="hiw-feat-name">Hand types</span><span class="desc-text">Win rates for pairs, broadway, suited connectors, ace-rag, and more</span></div>
-          <div class="hiw-feat"><span class="hiw-feat-name">Position</span><span class="desc-text">VPIP, fold rate, win rate, and P&L from every seat at the table</span></div>
-          <div class="hiw-feat"><span class="hiw-feat-name">Street action</span><span class="desc-text">How you play on each street: fold rates, aggression, bet sizing</span></div>
-          <div class="hiw-feat"><span class="hiw-feat-name">Bet sizing</span><span class="desc-text">Average bets by street with BB normalization across different stakes</span></div>
-          <div class="hiw-feat"><span class="hiw-feat-name">Range grid</span><span class="desc-text">Full 13x13 hand matrix showing win rate and frequency for every combo</span></div>
-          <div class="hiw-feat"><span class="hiw-feat-name">Opponents</span><span class="desc-text">Track every player you face, your record against them, and a watch list</span></div>
-          <div class="hiw-feat"><span class="hiw-feat-name">Tables</span><span class="desc-text">Compare your stats across different stakes and table types</span></div>
-          <div class="hiw-feat"><span class="hiw-feat-name">Trends</span><span class="desc-text">Session-over-session charts for win rate, VPIP, aggression, and P&L</span></div>
-          <div class="hiw-feat"><span class="hiw-feat-name">Hand replays</span><span class="desc-text">Click any hand to see the full action sequence with coaching notes</span></div>
-          <div class="hiw-feat"><span class="hiw-feat-name">Automated insights</span><span class="desc-text">The tool flags leaks, strengths, and patterns you might not spot yourself</span></div>
+          <div class="hiw-feat"><span class="gold-label">Hand types</span><span class="desc-text">Win rates for pairs, broadway, suited connectors, ace-rag, and more</span></div>
+          <div class="hiw-feat"><span class="gold-label">Position</span><span class="desc-text">VPIP, fold rate, win rate, and P&L from every seat at the table</span></div>
+          <div class="hiw-feat"><span class="gold-label">Street action</span><span class="desc-text">How you play on each street: fold rates, aggression, bet sizing</span></div>
+          <div class="hiw-feat"><span class="gold-label">Bet sizing</span><span class="desc-text">Average bets by street with BB normalization across different stakes</span></div>
+          <div class="hiw-feat"><span class="gold-label">Range grid</span><span class="desc-text">Full 13x13 hand matrix showing win rate and frequency for every combo</span></div>
+          <div class="hiw-feat"><span class="gold-label">Opponents</span><span class="desc-text">Track every player you face, your record against them, and a watch list</span></div>
+          <div class="hiw-feat"><span class="gold-label">Tables</span><span class="desc-text">Compare your stats across different stakes and table types</span></div>
+          <div class="hiw-feat"><span class="gold-label">Trends</span><span class="desc-text">Session-over-session charts for win rate, VPIP, aggression, and P&L</span></div>
+          <div class="hiw-feat"><span class="gold-label">Hand replays</span><span class="desc-text">Click any hand to see the full action sequence with coaching notes</span></div>
+          <div class="hiw-feat"><span class="gold-label">Automated insights</span><span class="desc-text">The tool flags leaks, strengths, and patterns you might not spot yourself</span></div>
         </div>
 
-        <div class="hiw-footer">
+        <div class="hiw-footer desc-text">
           <div style="margin-bottom:8px;"><strong style="color:var(--text);">Same device, same browser.</strong> Hand data is stored locally in the browser you play on. If you switch devices or browsers, your data won't carry over.</div>
           <div style="margin-bottom:8px;"><strong style="color:var(--text);">Nothing is stored externally.</strong> No accounts, no servers, no data collection. Everything lives in your browser.</div>
           <div><strong style="color:var(--text);">Minimum hands.</strong> The tool works with any number, but aim for 100+ for reliable patterns. Under 50, stats will be noisy.</div>

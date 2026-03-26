@@ -190,7 +190,7 @@ function renderRange(container, d, hands) {
     box.style.maxHeight = '80vh';
     box.style.overflowY = 'auto';
     var summary = '<div class="modal-title">' + key + '</div>' +
-      '<div class="modal-subtitle">' + matched.length + ' hands' +
+      '<div class="mb-16">' + matched.length + ' hands' +
       (rm ? ' · played ' + rm.played + ' of ' + rm.dealt + ' dealt' : '') +
       (wr2 !== null ? ' · ' + wr2 + '% win rate' : '') + '</div>';
     var rows = matched.map(function(h, idx) {

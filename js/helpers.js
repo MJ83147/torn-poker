@@ -248,7 +248,7 @@ function renderPagination(page, totalItems, pageSize, prevId, nextId) {
   var totalPages = Math.ceil(totalItems / pageSize);
   if (totalPages <= 1) return '';
   return '<button class="log-nav-btn" id="' + prevId + '" ' + (page === 0 ? 'disabled' : '') + '>&laquo; Prev</button>' +
-    '<span class="page-label">Page ' + (page + 1) + '/' + totalPages + '</span>' +
+    '<span class="meta-text">Page ' + (page + 1) + '/' + totalPages + '</span>' +
     '<button class="log-nav-btn" id="' + nextId + '" ' + (page >= totalPages - 1 ? 'disabled' : '') + '>Next &raquo;</button>';
 }
 
@@ -413,7 +413,7 @@ function showExampleHandListModal(title, handsList, coachingNote) {
   box.style.overflowY = 'auto';
 
   var header = '<div class="modal-title">' + title + '</div>' +
-    '<div class="modal-subtitle">' + handsList.length + ' example hand' + (handsList.length !== 1 ? 's' : '') + '</div>';
+    '<div class="mb-16">' + handsList.length + ' example hand' + (handsList.length !== 1 ? 's' : '') + '</div>';
 
   if (coachingNote) {
     header += '<div class="modal-coaching"><div class="modal-coaching-label dim-label">What to look for</div>' + coachingNote + '</div>';

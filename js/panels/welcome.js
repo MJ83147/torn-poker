@@ -33,7 +33,7 @@ function renderWelcome(container, d, hands, meta) {
     '<div class="welcome-toc">' +
     tabDescs.map(function(t) {
       return '<div class="welcome-toc-row" data-goto="' + t.tab + '">' +
-        '<div class="welcome-toc-name">' + t.name + '</div>' +
+        '<div class="gold-label">' + t.name + '</div>' +
         '<div class="desc-text">' + t.desc + '</div>' +
         '</div>';
     }).join('') +

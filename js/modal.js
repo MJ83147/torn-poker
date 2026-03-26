@@ -15,7 +15,7 @@ function showExampleHandModal(hand, coachingNote) {
 
   var closeBtn = '<button class="modal-close" id="modal-close-btn">&times;</button>';
   var title = '<div class="modal-title serif-value">' + (hand.hole ? hand.hole.join(' ') : '??') + '</div>';
-  var subtitle = '<div class="modal-subtitle dim-label">Example hand · ' + (hand.position || '?') + ' position</div>';
+  var subtitle = '<div class="dim-label mb-16">Example hand · ' + (hand.position || '?') + ' position</div>';
 
   var metaHtml = '<div class="modal-hand-meta">' +
     '<span>Board: <strong>' + (hand.board && hand.board.length ? hand.board.join(' ') : 'none') + '</strong></span>' +
