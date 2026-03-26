@@ -39,13 +39,13 @@ function renderProfile() {
 
   var html = '<div class="profile-wrap">';
   html += '<div class="profile-header">';
-  html += '<div class="profile-eyebrow">TC Poker Analysis</div>';
+  html += '<div class="dim-label mb-12">TC Poker Analysis</div>';
   html += '<div class="profile-name">' + playerName + '</div>';
   if (exportDate) html += '<div class="profile-date">Last session: ' + exportDate + '</div>';
   html += '</div>';
 
   if (stats) {
-    html += '<div class="section-label">Your Stats</div>';
+    html += '<div class="dim-label mb-12">Your Stats</div>';
     html += '<div class="profile-stat-grid">';
     var statItems = [
       { l: 'Hands',      v: stats.n,                     c: 'var(--gold)' },
@@ -63,7 +63,7 @@ function renderProfile() {
     html += '</div>';
   }
 
-  html += '<div class="section-label">Custom Dashboards</div>';
+  html += '<div class="dim-label mb-12">Custom Dashboards</div>';
   html += '<div class="profile-cta-card">';
   html += '<div class="profile-cta-suit">♠</div>';
   html += '<div>';

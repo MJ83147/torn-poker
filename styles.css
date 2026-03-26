@@ -583,6 +583,13 @@ textarea#jin:focus {
   text-transform: uppercase;
 }
 
+/* ── DESC TEXT (shared pattern) ── */
+.desc-text {
+  font-size: 13px;
+  color: var(--dim);
+  line-height: 1.6;
+}
+
 /* ── SERIF VALUE (shared pattern) ── */
 .serif-value {
   font-family: 'Cormorant Garamond', serif;
@@ -1274,26 +1281,9 @@ textarea#jin:focus {
   border-color: var(--gold2);
 }
 
-/* ── SECTION LABEL ── */
-.section-label {
-  font-size: 9px;
-  letter-spacing: 4px;
-  color: var(--dim);
-  text-transform: uppercase;
-  margin-bottom: 14px;
-}
-
 /* ── PROFILE PANEL ── */
 .profile-wrap { max-width: 700px; }
 .profile-header { margin-bottom: 32px; }
-
-.profile-eyebrow {
-  font-size: 9px;
-  letter-spacing: 5px;
-  color: var(--dim);
-  text-transform: uppercase;
-  margin-bottom: 10px;
-}
 
 .profile-name {
   font-family: 'Cormorant Garamond', serif;
@@ -1739,10 +1729,6 @@ tr.hrow:hover .hrow-star {
 }
 
 /* SAVED HANDS SECTION */
-.saved-section {
-  border-bottom: 1px solid var(--border);
-  padding-bottom: 16px;
-}
 .saved-toggle {
   display: flex;
   align-items: center;
@@ -1751,20 +1737,13 @@ tr.hrow:hover .hrow-star {
   user-select: none;
   padding: 8px 0;
 }
-.saved-toggle:hover .saved-toggle-title {
+.saved-toggle:hover .dim-label {
   color: var(--text);
 }
 .saved-toggle-arrow {
   font-size: 10px;
   color: var(--dim);
   transition: transform .2s;
-}
-.saved-toggle-title {
-  font-size: 12px;
-  letter-spacing: 2px;
-  color: var(--dim);
-  text-transform: uppercase;
-  transition: color .15s;
 }
 .saved-toggle-count {
   font-size: 11px;
@@ -1898,10 +1877,6 @@ tr.hrow:hover .hrow-star {
   color: var(--gold);
   margin-bottom: 6px;
 }
-.welcome-intro-sub {
-  font-size: 13px;
-  color: var(--dim);
-}
 .welcome-toc {
   display: flex;
   flex-direction: column;
@@ -1929,17 +1904,8 @@ tr.hrow:hover .hrow-star {
   color: var(--gold);
   font-weight: 600;
 }
-.welcome-toc-desc {
-  font-size: 13px;
-  color: var(--dim);
-  line-height: 1.5;
-}
 .welcome-tips {
   width: 100%;
-}
-.welcome-tips-title {
-  letter-spacing: 4px;
-  margin-bottom: 12px;
 }
 .welcome-tip {
   font-size: 13px;
@@ -2022,11 +1988,6 @@ tr.hrow:hover .hrow-star {
   max-width: 520px;
   padding: 32px;
 }
-.hiw-section-title {
-  letter-spacing: 4px;
-  margin-top: 28px;
-  margin-bottom: 16px;
-}
 .hiw-steps {
   display: flex;
   flex-direction: column;
@@ -2053,16 +2014,6 @@ tr.hrow:hover .hrow-star {
   align-items: center;
   justify-content: center;
 }
-.hiw-step-title {
-  font-size: 14px;
-  color: var(--text);
-  font-weight: 600;
-}
-.hiw-step-desc {
-  font-size: 13px;
-  color: var(--dim);
-  line-height: 1.6;
-}
 .hiw-features {
   display: flex;
   flex-direction: column;
@@ -2082,11 +2033,6 @@ tr.hrow:hover .hrow-star {
   font-size: 13px;
   color: var(--gold);
   font-weight: 600;
-}
-.hiw-feat-desc {
-  font-size: 13px;
-  color: var(--dim);
-  line-height: 1.5;
 }
 .hiw-footer {
   margin-top: 24px;
