@@ -698,6 +698,98 @@ function detectPlayerFromActions(hands) {
   return bestName;
 }
 
+// Backfill missing board, pot, and outcome from action lines.
+// Some TC Poker exports omit these structured fields even though the
+// full hand history is present in the actions array.
+function backfillHandData(hands) {
+  var SUIT_MAP = {
+    'diamonds': '♦', 'hearts': '♥', 'spades': '♠', 'clubs': '♣',
+    'diamond': '♦', 'heart': '♥', 'spade': '♠', 'club': '♣'
+  };
+  var CARD_RE = /(\d{1,2}|[AKQJT])([a-z]+)/gi;
+
+  function parseCardsFromStreet(line) {
+    var cards = [];
+    var m;
+    while ((m = CARD_RE.exec(line)) !== null) {
+      var rank = m[1];
+      if (rank === '10') rank = 'T';
+      var suit = SUIT_MAP[(m[2] || '').toLowerCase()];
+      if (suit) cards.push(rank + suit);
+    }
+    CARD_RE.lastIndex = 0;
+    return cards;
+  }
+
+  for (var i = 0; i < hands.length; i++) {
+    var h = hands[i];
+    var actions = h.actions || [];
+    if (!actions.length) continue;
+
+    var needBoard = !h.board || !h.board.length;
+    var needPot = !h.pot;
+    var needOutcome = !h.outcome;
+
+    if (!needBoard && !needPot && !needOutcome) continue;
+
+    var board = [];
+    var totalPot = 0;
+    var wonAmount = 0;
+    var heroWon = false;
+    var heroFolded = false;
+    var heroLost = false;
+
+    for (var j = 0; j < actions.length; j++) {
+      var raw = (actions[j] || '').replace(/&gt;/g, '>').replace(/&lt;/g, '<').replace(/&amp;/g, '&');
+      var isMe = raw.indexOf('>>') === 0;
+      var line = raw.replace(/^>>\s*/, '').replace(/^\s+/, '').trim();
+
+      // Extract board cards from street headers
+      if (needBoard) {
+        if (line.indexOf('The flop') === 0 || line.indexOf('The turn') === 0 || line.indexOf('The river') === 0) {
+          var streetCards = parseCardsFromStreet(line);
+          for (var k = 0; k < streetCards.length; k++) board.push(streetCards[k]);
+        }
+      }
+
+      // Track pot from all dollar amounts in betting actions
+      if (needPot) {
+        var wonMatch = line.match(/won \$([0-9,]+)/);
+        if (wonMatch) {
+          var amt = parseInt(wonMatch[1].replace(/,/g, ''), 10);
+          if (amt > totalPot) totalPot = amt;
+          if (isMe) { heroWon = true; wonAmount = amt; }
+        }
+      }
+
+      // Track hero outcome
+      if (needOutcome && isMe) {
+        if (line.indexOf('folded') !== -1) heroFolded = true;
+        if (line.match(/won \$([0-9,]+)/)) { heroWon = true; wonAmount = parseInt(line.match(/\$([0-9,]+)/)[1].replace(/,/g, ''), 10); }
+        if (line.indexOf('lost') !== -1) heroLost = true;
+      }
+    }
+
+    if (needBoard && board.length) {
+      h.board = board;
+    }
+
+    if (needPot && totalPot > 0) {
+      h.pot = totalPot;
+    }
+
+    if (needOutcome && (heroWon || heroFolded || heroLost)) {
+      if (heroWon) {
+        h.outcome = { result: 'won', amount: wonAmount };
+      } else if (heroFolded) {
+        h.outcome = { result: 'folded' };
+      } else if (heroLost) {
+        h.outcome = { result: 'lost' };
+      }
+    }
+  }
+}
+
 // Fix positions assigned by the old fixed-array lookup that didn't
 // account for table size. Uses tableSize (or player count from actions
 // as fallback) to detect invalid positions and remap them.

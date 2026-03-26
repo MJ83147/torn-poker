@@ -131,6 +131,7 @@ var State = {
   modalHands: [],
 
   setSession: function(hands, meta) {
+    backfillHandData(hands);
     migratePositions(hands);
     var seen = {};
     var clean = [];
