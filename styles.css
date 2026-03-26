@@ -427,7 +427,7 @@ textarea#jin:focus {
   margin-bottom: 28px;
 }
 .p-row {
-  margin-bottom: 32px;
+  margin-bottom: 40px;
 }
 .p-row:last-child {
   margin-bottom: 0;
@@ -437,15 +437,15 @@ textarea#jin:focus {
 .ins-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-  gap: 12px;
+  gap: 16px;
 }
 
 /* INSIGHT CARD */
 .ins {
-  background: transparent;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 14px 16px;
+  background: var(--s2);
+  border: none;
+  border-radius: 8px;
+  padding: 18px 20px;
   position: relative;
 }
 
@@ -514,7 +514,7 @@ textarea#jin:focus {
 
 .ins-text {
   font-size: 14px;
-  color: var(--text);
+  color: var(--dim);
   line-height: 1.7;
   padding-right: 80px;
 }
@@ -527,7 +527,7 @@ textarea#jin:focus {
 }
 
 .chip {
-  background: var(--s2);
+  background: var(--s1);
   border: 1px solid var(--border);
   border-radius: 3px;
   padding: 2px 8px;
@@ -777,7 +777,7 @@ textarea#jin:focus {
   color: var(--dim);
   text-transform: uppercase;
   text-align: left;
-  padding: 0 12px 10px 0;
+  padding: 0 16px 12px 0;
   border-bottom: 1px solid var(--border);
   position: relative;
   overflow: visible;
@@ -785,7 +785,7 @@ textarea#jin:focus {
 
 .tbl td {
   font-size: 14px;
-  padding: 10px 12px 10px 0;
+  padding: 14px 16px 14px 0;
   border-bottom: 1px solid var(--border);
   color: var(--text);
   vertical-align: middle;
@@ -1130,14 +1130,14 @@ textarea#jin:focus {
 .tbl .pnl-neg { color: var(--red); }
 .tbl .wr-good { color: var(--green); }
 .tbl .wr-bad { color: var(--red); }
-.tbl-spark { display: inline-block; height: 14px; border-radius: 2px; min-width: 2px; vertical-align: middle; }
+.tbl-spark { display: inline-block; height: 10px; border-radius: 2px; min-width: 2px; vertical-align: middle; opacity: 0.5; }
 
 .player-search { width: 180px; }
 .player-search::placeholder { color: var(--dim); }
 
 /* Scrollable players table */
 .players-table-scroll {
-  max-height: 340px;
+  max-height: 520px;
   overflow-y: auto;
   overflow-x: auto;
   border: 1px solid var(--border);

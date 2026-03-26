@@ -515,7 +515,7 @@ function renderPlayers(container, d, hands) {
     }
     if (best) pIns.push(ins('g', 'Best Record', 'You win ' + pct(best.won, best.won + best.lost) + '% against ' + best.name + ' (' + (best.won + best.lost) + ' contested hands).', [{ v: best.name, hi: true }, { v: pct(best.won, best.won + best.lost) + '% win' }]));
     if (worst && worst !== best) pIns.push(ins('r', 'Toughest Opponent', 'Only ' + pct(worst.won, worst.won + worst.lost) + '% win rate against ' + worst.name + ' (' + (worst.won + worst.lost) + ' contested hands).', [{ v: worst.name, hi: true }, { v: pct(worst.won, worst.won + worst.lost) + '% win' }]));
-    if (pIns.length) html += '<div class="p-row"><div class="ins-grid">' + pIns.join('') + '</div></div>';
+    if (pIns.length) html += '<div class="p-row" style="margin-top:8px;"><div class="ins-grid">' + pIns.join('') + '</div></div>';
 
     html += '<div class="p-row"><div class="flex-between"><div class="sec-subtitle mt-0">All Opponents</div>';
     html += '<input type="text" id="player-search" class="player-search" placeholder="Search players\u2026" value="' + (_playerSearch || '').replace(/"/g, '&quot;') + '"></div>';
