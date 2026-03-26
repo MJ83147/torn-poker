@@ -152,6 +152,19 @@
         fallback: '<strong>Saved Hands</strong><br>When you star hands using the star button, they appear in a saved section at the top of this page for easy review.' },
       { el: null, intro: '<strong>Equity Simulation</strong><br>Inside any hand replay, look for the <strong>Run Equity Simulation</strong> button. It runs a Monte Carlo simulation calculating your equity (chance of winning) on each street against a random hand. It compares your actual calls, raises, and folds against the mathematical pot odds — showing whether each decision was profitable.' }
     ],
+    allin: [
+      { el: '.panel-title', intro: '<strong>All-In EV</strong><br>This tab finds every hand where you went all-in at showdown and calculates whether you ran lucky or unlucky. It compares your actual results against your mathematical expected value.', pos: 'bottom' },
+      { el: '#allin-run-btn', intro: '<strong>Run Equity Simulation</strong><br>Click this to calculate your equity (win probability) for each all-in hand using Monte Carlo simulation. The panel detects all-in hands automatically — this button runs the math.', pos: 'bottom',
+        fallback: '<strong>Run Equity Simulation</strong><br>Once all-in hands are detected, a button appears to run equity calculations. After simulation, you\'ll see EV diff, fair share, and a cumulative graph.' },
+      { el: '.allin-table-wrap', intro: '<strong>All-In Hands Table</strong><br>Every detected all-in showdown with your hole cards, opponent cards, board, street, pot size, and result. <strong>Click any row</strong> to replay the full hand.', pos: 'top',
+        fallback: '<strong>All-In Hands Table</strong><br>A table listing every all-in showdown appears here when all-in hands are found in your data.' },
+      { el: '.mini-row', intro: '<strong>Summary Stats</strong><br>Total all-in hands, cumulative EV difference (how much above or below expectation you\'re running), equity win rate (how often you were the favourite), and actual win rate.', pos: 'top',
+        fallback: '<strong>Summary Stats</strong><br>After running the simulation, summary stats appear showing your EV diff, equity win rate, and actual win rate across all all-in hands.' },
+      { el: '#allin-ev-chart', intro: '<strong>EV Graph</strong><br>Gold line = your actual cumulative results. Dashed line = expected value based on equity. If gold is above the dashed line, you\'re running hot. Below means you\'re running cold.', pos: 'top',
+        fallback: '<strong>EV Graph</strong><br>After simulation, a cumulative graph shows your actual results vs expected value over time. The gap between the lines is your variance.' },
+      { el: '.ins-grid', intro: '<strong>EV Insights</strong><br>Flags whether you\'re running hot or cold, if you\'re frequently all-in as an underdog, or if negative variance is masking good play.', pos: 'top',
+        fallback: '<strong>EV Insights</strong><br>Insight cards appear after simulation when patterns are found — running hot/cold, underdog frequency, or variance masking good decisions.' }
+    ],
     players: [
       { el: '.panel-title', intro: '<strong>Players</strong><br>Stats on every opponent you\'ve faced, with watch lists and head-to-head records.', pos: 'bottom' },
       { el: '#player-search', intro: '<strong>Search</strong><br>Type a player name to find them quickly in your opponent list.', pos: 'bottom' },
