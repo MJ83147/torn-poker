@@ -144,7 +144,8 @@ function analyse(hands) {
     const acts = parseActions(h.actions);
     const heroSeenStreets = new Set();
     let allinCountedThisHand = false;
-    for (const a of acts) {
+    for (var ai = 0; ai < acts.length; ai++) {
+      var a = acts[ai];
       // Only count hero actions for aggregate action stats
       if (a.isMe) {
         totalActs++;
@@ -185,8 +186,8 @@ function analyse(hands) {
         if (a.type === 'raise' || a.type === 'bet') betOpps[a.street].b++;
       }
 
-      // All-in detection: opponent raise with no "to $X" in the message indicates a shove
-      if (!allinCountedThisHand && !a.isMe && (a.type === 'raise' || a.type === 'bet') && a.msg && a.msg.indexOf(' to ') === -1) {
+      // All-in detection: uses shared helper that also verifies player doesn't act on later streets
+      if (!allinCountedThisHand && !a.isMe && isAllInAction(acts, ai)) {
         const heroResp = acts.filter(b => b.isMe && b.street === a.street);
         const foldResp = heroResp.find(b => b.type === 'fold');
         const callResp = heroResp.find(b => b.type === 'call' || b.type === 'raise');

@@ -506,6 +506,22 @@ function parseActions(actions) {
   return out;
 }
 
+// Check if a bet/raise action is truly all-in by verifying the player
+// doesn't act again on a later street (if they do, they had chips left).
+function isAllInAction(acts, idx) {
+  var a = acts[idx];
+  if (!a) return false;
+  if ((a.type !== 'raise' && a.type !== 'bet') || !a.msg) return false;
+  if (a.msg.indexOf(' to ') !== -1) return false;
+  for (var i = idx + 1; i < acts.length; i++) {
+    if (acts[i].author === a.author && acts[i].street !== a.street &&
+        acts[i].type !== 'won') {
+      return false;
+    }
+  }
+  return true;
+}
+
 // Turn a hole card array into a condensed key like "AKs" or "TT"
 function parseHoleKey(hole) {
   if (!hole || hole.length < 2) return null;
