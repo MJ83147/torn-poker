@@ -110,7 +110,7 @@ function analyse(hands) {
 
       const acts = parseActions(h.actions);
       const myActs = acts.filter(a => a.isMe);
-      const didPlay = myActs.some(a => a.type === 'call' || a.type === 'raise');
+      const didPlay = myActs.some(a => a.type === 'call' || a.type === 'raise' || a.type === 'bet');
       if (didPlay) {
         rangeMap[hkey].played++;
         vpip++;
@@ -151,7 +151,7 @@ function analyse(hands) {
         if (a.type === 'fold') folds++;
         else if (a.type === 'check') checks++;
         else if (a.type === 'call') calls++;
-        else if (a.type === 'raise') raises++;
+        else if (a.type === 'raise' || a.type === 'bet') raises++;
       }
 
       // Track which streets the hero reached (exclude blind posts — they don't indicate voluntary street play)
@@ -164,7 +164,7 @@ function analyse(hands) {
         if (a.type === 'fold') ss[a.street].f++;
         else if (a.type === 'check') ss[a.street].ch++;
         else if (a.type === 'call') ss[a.street].ca++;
-        else if (a.type === 'raise') ss[a.street].ra++;
+        else if (a.type === 'raise' || a.type === 'bet') ss[a.street].ra++;
       }
 
       if (a.type === 'raise' || a.type === 'bet') {
@@ -182,11 +182,11 @@ function analyse(hands) {
       // Bet opportunity tracking: when hero acts post-flop, count as opportunity; raises/bets count as betting
       if (a.isMe && a.street !== 'Preflop' && betOpps[a.street] && a.type !== 'sb' && a.type !== 'bb' && a.type !== 'won') {
         betOpps[a.street].t++;
-        if (a.type === 'raise') betOpps[a.street].b++;
+        if (a.type === 'raise' || a.type === 'bet') betOpps[a.street].b++;
       }
 
       // All-in detection: opponent raise with no "to $X" in the message indicates a shove
-      if (!allinCountedThisHand && !a.isMe && a.type === 'raise' && a.msg && a.msg.indexOf(' to ') === -1) {
+      if (!allinCountedThisHand && !a.isMe && (a.type === 'raise' || a.type === 'bet') && a.msg && a.msg.indexOf(' to ') === -1) {
         const heroResp = acts.filter(b => b.isMe && b.street === a.street);
         const foldResp = heroResp.find(b => b.type === 'fold');
         const callResp = heroResp.find(b => b.type === 'call' || b.type === 'raise');
@@ -249,25 +249,25 @@ function analyse(hands) {
     // C-Bet
     if (pfr && pfr.isMe && flopReached && heroFirstFlop) {
       cbetOpps++;
-      if (heroFirstFlop.type === 'raise') cbetDone++;
+      if (heroFirstFlop.type === 'raise' || heroFirstFlop.type === 'bet') cbetDone++;
     }
 
     // Delayed C-Bet
     if (pfr && pfr.isMe && flopReached && heroFirstFlop && heroFirstFlop.type === 'check' && turnReached && heroFirstTurn) {
       delayCbetOpps++;
-      if (heroFirstTurn.type === 'raise') delayCbetDone++;
+      if (heroFirstTurn.type === 'raise' || heroFirstTurn.type === 'bet') delayCbetDone++;
     }
 
     // Donk Bet
     if (pfr && !pfr.isMe && sitRaiseLevel >= 1 && flopReached && heroFirstFlop) {
       donkOpps++;
-      if (heroFirstFlop.type === 'raise') donkDone++;
+      if (heroFirstFlop.type === 'raise' || heroFirstFlop.type === 'bet') donkDone++;
     }
 
     // Fold to C-Bet
     if (pfr && !pfr.isMe && flopReached) {
       const flopActs = acts.filter(a => a.street === 'Flop');
-      const firstFlopBetIdx = flopActs.findIndex(a => a.type === 'raise');
+      const firstFlopBetIdx = flopActs.findIndex(a => a.type === 'raise' || a.type === 'bet');
       if (firstFlopBetIdx !== -1 && flopActs[firstFlopBetIdx].author === pfr.author) {
         const heroResponse = flopActs.find((a, i) => i > firstFlopBetIdx && a.isMe && (a.type === 'fold' || a.type === 'call' || a.type === 'raise'));
         if (heroResponse) {

@@ -493,7 +493,8 @@ function parseActions(actions) {
     if (msg.startsWith('folded')) type = 'fold';
     else if (msg.startsWith('checked')) type = 'check';
     else if (msg.startsWith('called')) type = 'call';
-    else if (msg.startsWith('raised') || msg.startsWith('bet')) type = 'raise';
+    else if (msg.startsWith('raised')) type = 'raise';
+    else if (msg.startsWith('bet')) type = 'bet';
     else if (msg.startsWith('posted small blind')) type = 'sb';
     else if (msg.startsWith('posted big blind')) type = 'bb';
     else if (msg.includes('won')) type = 'won';

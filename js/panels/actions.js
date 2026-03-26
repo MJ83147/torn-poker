@@ -82,7 +82,7 @@ function renderActions(container, d, hands) {
   if (caPct > raPct + 20) {
     var exCallHeavy = findExampleHand(function(h) {
       var ma = getHeroActions(h);
-      return ma.some(function(a) { return a.type === 'call'; }) && !ma.some(function(a) { return a.type === 'raise'; }) && h.outcome && h.outcome.result !== 'won';
+      return ma.some(function(a) { return a.type === 'call'; }) && !ma.some(function(a) { return a.type === 'raise' || a.type === 'bet'; }) && h.outcome && h.outcome.result !== 'won';
     });
     aIns.push(insWithExample('a', 'Call-Heavy', 'You call ' + caPct + '% but raise only ' + raPct + '% of the time. In TC where everyone calls anyway, raising more extracts more value.', [{
       v: 'Call: ' + caPct + '%',
@@ -93,14 +93,14 @@ function renderActions(container, d, hands) {
   if (aggPct !== null && aggPct < 15) {
     var exLowAgg = findExampleHand(function(h) {
       var ma = getHeroActions(h);
-      return ma.some(function(a) { return a.type === 'call'; }) && !ma.some(function(a) { return a.type === 'raise'; });
+      return ma.some(function(a) { return a.type === 'call'; }) && !ma.some(function(a) { return a.type === 'raise' || a.type === 'bet'; });
     });
     aIns.push(insWithExample('r', 'Low Aggression', 'Only ' + aggPct + '% aggression. Strong hands need to be bet, not called.', [{
       v: d.raises + ' raises from ' + actTotal + ' actions',
     }], exLowAgg, 'Only ' + aggPct + '% of actions are raises. Strong hands need to be bet for value. Checking and calling lets opponents draw cheaply and control the pot size.'));
   } else if (aggPct !== null && aggPct <= 40) {
     var exGoodAgg = findExampleHand(function(h) {
-      return parseActions(h.actions).some(function(a) { return a.isMe && a.type === 'raise'; });
+      return parseActions(h.actions).some(function(a) { return a.isMe && (a.type === 'raise' || a.type === 'bet'); });
     });
     aIns.push(insWithExample('g', 'Aggression', aggPct + '% raise frequency is solid. Taking initiative without overdoing it.', [{
       v: d.raises + ' raises',
@@ -108,7 +108,7 @@ function renderActions(container, d, hands) {
   } else if (aggPct !== null) {
     var exHighAgg = findExampleHand(function(h) {
       var ma = getHeroActions(h);
-      return ma.filter(function(a) { return a.type === 'raise'; }).length >= 2;
+      return ma.filter(function(a) { return a.type === 'raise' || a.type === 'bet'; }).length >= 2;
     });
     aIns.push(insWithExample('a', 'High Aggression', aggPct + '% is high. TC players call, so bluff raises cost real money.', [{
       v: d.raises + ' raises',
@@ -139,7 +139,7 @@ function renderActions(container, d, hands) {
     if (afp > 75 && awp !== null && awp > 60) {
       var exAllinFold = findExampleHand(function(h) {
         var acts2 = parseActions(h.actions);
-        return acts2.some(function(a) { return !a.isMe && a.type === 'raise' && a.msg && a.msg.indexOf(' to ') === -1; }) && acts2.some(function(a) { return a.isMe && a.type === 'fold'; });
+        return acts2.some(function(a) { return !a.isMe && (a.type === 'raise' || a.type === 'bet') && a.msg && a.msg.indexOf(' to ') === -1; }) && acts2.some(function(a) { return a.isMe && a.type === 'fold'; });
       });
       aIns.push(insWithExample('r', 'All-in Folds x Win Rate', 'Folding all-ins ' + afp + '% of the time but winning ' + awp + '% when you do call. You\'re folding good equity.', [{
         v: d.callAllin + ' calls, ' + d.wonAllin + ' won',
@@ -164,7 +164,7 @@ function renderActions(container, d, hands) {
     var acts2 = parseActions(h2.actions);
     var heroActs = acts2.filter(function(a) { return a.isMe; });
     var didRaise = {};
-    heroActs.forEach(function(a) { if (a.type === 'raise') didRaise[a.street] = true; });
+    heroActs.forEach(function(a) { if (a.type === 'raise' || a.type === 'bet') didRaise[a.street] = true; });
     var won2 = h2.outcome && h2.outcome.result === 'won';
     for (var sti = 0; sti < streets.length; sti++) {
       var st = streets[sti];

@@ -65,7 +65,7 @@ function computeOpponentStats(hands, playerName) {
       var a = playerActs[j];
       if (a.type === 'sb' || a.type === 'bb' || a.type === 'won') continue;
       s.totalActions++;
-      if (a.type === 'raise') s.totalRaises++;
+      if (a.type === 'raise' || a.type === 'bet') s.totalRaises++;
       else if (a.type === 'call') s.totalCalls++;
       else if (a.type === 'check') s.totalChecks++;
       else if (a.type === 'fold') s.totalFolds++;
@@ -75,7 +75,7 @@ function computeOpponentStats(hands, playerName) {
     if (raisedPre && seenPostFlop) {
       s.cbetOpps++;
       for (var j = 0; j < playerActs.length; j++) {
-        if (playerActs[j].street === 'Flop' && playerActs[j].type === 'raise') {
+        if (playerActs[j].street === 'Flop' && (playerActs[j].type === 'raise' || playerActs[j].type === 'bet')) {
           s.cbetDone++; break;
         }
       }
@@ -83,7 +83,7 @@ function computeOpponentStats(hands, playerName) {
 
     // Fold to raise: scan full action list for raise then this player's response
     for (var j = 0; j < acts.length; j++) {
-      if (acts[j].author !== playerName && acts[j].type === 'raise') {
+      if (acts[j].author !== playerName && (acts[j].type === 'raise' || acts[j].type === 'bet')) {
         for (var k = j + 1; k < acts.length; k++) {
           if (acts[k].street !== acts[j].street) break;
           if (acts[k].author === playerName) {
@@ -305,7 +305,7 @@ function findInsightExamples(hands, playerName) {
       }
       if (pa.street !== 'Preflop') seenPostFlop = true;
       if (pa.street !== 'Preflop' && pa.type === 'fold') foldedPostFlop = true;
-      if (pa.type === 'raise') raiseCount++;
+      if (pa.type === 'raise' || pa.type === 'bet') raiseCount++;
       if (pa.type === 'call' || pa.type === 'check') callCheckCount++;
     }
 
@@ -324,7 +324,7 @@ function findInsightExamples(hands, playerName) {
     // Fold to raise
     if (!full('foldToRaise')) {
       for (var j = 0; j < acts.length; j++) {
-        if (acts[j].author !== playerName && acts[j].type === 'raise') {
+        if (acts[j].author !== playerName && (acts[j].type === 'raise' || acts[j].type === 'bet')) {
           for (var k = j + 1; k < acts.length; k++) {
             if (acts[k].street !== acts[j].street) break;
             if (acts[k].author === playerName && acts[k].type === 'fold') {
@@ -340,7 +340,7 @@ function findInsightExamples(hands, playerName) {
     // Calls raise
     if (!full('callsRaise')) {
       for (var j = 0; j < acts.length; j++) {
-        if (acts[j].author !== playerName && acts[j].type === 'raise') {
+        if (acts[j].author !== playerName && (acts[j].type === 'raise' || acts[j].type === 'bet')) {
           for (var k = j + 1; k < acts.length; k++) {
             if (acts[k].street !== acts[j].street) break;
             if (acts[k].author === playerName && acts[k].type === 'call') {
@@ -356,7 +356,7 @@ function findInsightExamples(hands, playerName) {
     // C-bet: raised pre, bet flop
     if (!full('cbet') && raisedPre && seenPostFlop) {
       for (var j = 0; j < playerActs.length; j++) {
-        if (playerActs[j].street === 'Flop' && playerActs[j].type === 'raise') {
+        if (playerActs[j].street === 'Flop' && (playerActs[j].type === 'raise' || playerActs[j].type === 'bet')) {
           ex.cbet.push(h); break;
         }
       }

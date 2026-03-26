@@ -71,6 +71,7 @@ function detectAllInCandidates(hands) {
     if (!h.hole || h.hole.length !== 2) continue;
     if (!h.actions || !h.actions.length) continue;
     if (!h.outcome) continue;
+    if (h.outcome.result === 'folded') continue;
 
     var acts = parseActions(h.actions);
     var allInStreet = null;
@@ -80,7 +81,7 @@ function detectAllInCandidates(hands) {
     var heroInAllIn = false;
     for (var ai = 0; ai < acts.length; ai++) {
       var a = acts[ai];
-      if (a.type === 'raise' && a.msg && a.msg.indexOf(' to ') === -1) {
+      if ((a.type === 'raise' || a.type === 'bet') && a.msg && a.msg.indexOf(' to ') === -1) {
         allInFound = true;
         allInStreet = a.street;
         // Hero shoved
@@ -120,7 +121,7 @@ function detectAllInCandidates(hands) {
       if (pa.type === 'won') continue;
       if (pa.amount) potAtAllIn += pa.amount;
       if (pastAllIn && (pa.type === 'call' || pa.type === 'raise')) break;
-      if (pa.type === 'raise' && pa.msg && pa.msg.indexOf(' to ') === -1) pastAllIn = true;
+      if ((pa.type === 'raise' || pa.type === 'bet') && pa.msg && pa.msg.indexOf(' to ') === -1) pastAllIn = true;
     }
     if (potAtAllIn === 0) potAtAllIn = h.pot || 0;
 

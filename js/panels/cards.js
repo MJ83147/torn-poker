@@ -89,7 +89,7 @@ function renderCards(container, d, hands) {
       if (!key || classifyKey(key) !== 'Offsuit Trash') return false;
       if (!h.outcome || h.outcome.result !== 'lost') return false;
       var ma = getHeroActions(h);
-      return ma.some(function(a) { return a.type === 'call' || a.type === 'raise'; });
+      return ma.some(function(a) { return a.type === 'call' || a.type === 'raise' || a.type === 'bet'; });
     });
     cIns.push(insWithExample(ts.played > 0 ? 'r' : 'n', 'Offsuit Trash', 'Dealt ' + ts.dealt + ' offsuit trash hands, played ' + ts.played + '. These are almost always folds preflop.', [{
       v: ts.dealt + ' dealt',

@@ -76,7 +76,7 @@ function renderBets(container, d, hands) {
     var exFlopPassive = findExampleHand(function(h) {
       if (!h.board || h.board.length < 3) return false;
       var ma = parseActions(h.actions).filter(function(a) { return a.isMe && a.street === 'Flop'; });
-      return ma.some(function(a) { return a.type === 'check' || a.type === 'call'; }) && !ma.some(function(a) { return a.type === 'raise'; });
+      return ma.some(function(a) { return a.type === 'check' || a.type === 'call'; }) && !ma.some(function(a) { return a.type === 'raise' || a.type === 'bet'; });
     });
     bIns.push(insWithExample('r', 'Flop Passivity', 'Only betting the flop ' + pct(fbo.b, fbo.t) + '% of the time. Checking strong hands gives free cards to draws.', [{
       v: fbo.b + '/' + fbo.t + ' opportunities',

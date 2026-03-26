@@ -219,13 +219,11 @@ function getHeroStreetActions(hand) {
     var amountToCall = 0;
     var potAtHeroAction = potRunning;
 
+    var allHeroActions = [];
     for (var ai = 0; ai < acts.length; ai++) {
       var a = acts[ai];
-      if (a.isMe && !heroAction && a.type !== 'won') {
-        if (a.type !== 'sb' && a.type !== 'bb') {
-          heroAction = a;
-          potAtHeroAction = potRunning;
-        }
+      if (a.isMe && a.type !== 'won' && a.type !== 'sb' && a.type !== 'bb') {
+        allHeroActions.push({ action: a, potAtAction: potRunning });
       }
       if (a.amount && a.type !== 'won') {
         potRunning += a.amount;
@@ -233,6 +231,19 @@ function getHeroStreetActions(hand) {
       if (a.isMe && a.type === 'fold') {
         heroFoldedOn = st;
       }
+    }
+
+    // Pick the most significant action: fold > call/raise/bet > check
+    if (allHeroActions.length > 0) {
+      var picked = allHeroActions[allHeroActions.length - 1];
+      for (var hi = 0; hi < allHeroActions.length; hi++) {
+        if (allHeroActions[hi].action.type === 'fold') {
+          picked = allHeroActions[hi];
+          break;
+        }
+      }
+      heroAction = picked.action;
+      potAtHeroAction = picked.potAtAction;
     }
 
     if (!heroAction) {
@@ -248,8 +259,16 @@ function getHeroStreetActions(hand) {
     if (heroAction) {
       if (heroAction.type === 'call') {
         amountToCall = heroAction.amount;
-      } else if (heroAction.type === 'raise') {
+      } else if (heroAction.type === 'raise' || heroAction.type === 'bet') {
         amountToCall = heroAction.amount;
+      } else if (heroAction.type === 'fold') {
+        // Find the bet/raise the hero was facing when they folded
+        for (var fi = acts.length - 1; fi >= 0; fi--) {
+          if (!acts[fi].isMe && (acts[fi].type === 'raise' || acts[fi].type === 'bet') && acts[fi].amount) {
+            amountToCall = acts[fi].amount;
+            break;
+          }
+        }
       }
 
       var potOdds = amountToCall > 0 ? amountToCall / (potAtHeroAction + amountToCall) : 0;
@@ -289,6 +308,10 @@ function generateGuidance(equity, streetInfo) {
     if (eq > 55) { text = 'Value raise. You had a strong hand and built the pot.'; quality = 'good'; }
     else if (eq >= 35) { text = 'Semi-bluff or thin value raise.'; quality = 'neutral'; }
     else { text = 'Bluff raise. Your hand was weak but raising applies pressure.'; quality = 'neutral'; }
+  } else if (act.type === 'bet') {
+    if (eq > 55) { text = 'Value bet. Strong hand, extracting value.'; quality = 'good'; }
+    else if (eq >= 35) { text = 'Thin value or semi-bluff. Reasonable with this equity.'; quality = 'neutral'; }
+    else { text = 'Bluff bet. Weak hand, but betting puts pressure on opponents.'; quality = 'neutral'; }
   } else if (act.type === 'fold') {
     if (eq > 40) { text = 'You folded with significant equity. This may have been too tight unless the opponent\'s range was very strong.'; quality = 'bad'; }
     else if (eq >= 25) { text = 'Marginal fold. Defensible depending on opponent tendencies.'; quality = 'neutral'; }
@@ -338,6 +361,7 @@ function runEquitySimulation(hand) {
       else if (a.type === 'check') actionDesc = 'You checked.';
       else if (a.type === 'call') actionDesc = 'You called ' + fmtDollar(a.amount) + '.';
       else if (a.type === 'raise') actionDesc = 'You raised ' + fmtDollar(a.amount) + '.';
+      else if (a.type === 'bet') actionDesc = 'You bet ' + fmtDollar(a.amount) + '.';
       else if (a.type === 'sb') actionDesc = 'Small blind.';
       else if (a.type === 'bb') actionDesc = 'Big blind.';
     }
