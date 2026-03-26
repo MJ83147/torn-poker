@@ -62,10 +62,15 @@ function showExampleHandModal(hand, coachingNote) {
     '<textarea class="modal-notes-input" id="modal-notes-input" placeholder="Add notes about this hand...">' + noteVal + '</textarea>' +
     '</div>';
 
-  box.innerHTML = closeBtn + starBtn + title + subtitle + metaHtml + actionsHtml + coaching + notesSection;
+  var equitySlot = '<div id="equity-slot"></div>';
+  box.innerHTML = closeBtn + starBtn + title + subtitle + metaHtml + actionsHtml + coaching + equitySlot + notesSection;
   overlay.appendChild(box);
   document.body.appendChild(overlay);
   requestAnimationFrame(function() { overlay.classList.add('show'); });
+
+  if (typeof injectEquityButton === 'function') {
+    injectEquityButton(box, hand);
+  }
   document.getElementById('modal-close-btn').onclick = closeModal;
 
   document.getElementById('modal-star-btn').onclick = function() {
