@@ -119,7 +119,7 @@ function render(d, hands, meta) {
   renderShowdown(document.getElementById('p-showdown'), hands, meta);
   renderLog(document.getElementById('p-log'), hands);
   // saved hands now rendered inside log panel
-  renderAllIn(document.getElementById('p-allin'), hands, meta);
+  renderAllIn(document.getElementById('p-allin'), hands);
   renderPlayers(document.getElementById('p-players'), d, hands);
 
   // Filter banners (cross-cutting)
