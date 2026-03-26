@@ -2,6 +2,7 @@
 
 // Ranks in ascending order for hand key parsing/classification
 const RANKS = ['2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A'];
+const SUITS = ['\u2660', '\u2665', '\u2666', '\u2663'];
 
 // Human-readable tips used in tooltips throughout the UI
 const TIPS = {
