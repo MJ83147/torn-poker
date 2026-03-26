@@ -1,6 +1,29 @@
 // ── LOG PANEL ─────────────────────────────────────────────────────────────────
 
 var _logPage = 0;
+var _logSort = { col: null, dir: 'desc' };
+
+function getResultValue(h) {
+  if (!h.outcome) return 0;
+  if (h.outcome.result === 'won') return (h.outcome.amount || 0) - getInvested(h);
+  return -getInvested(h);
+}
+
+function sortHands(list, col, dir) {
+  if (!col) return list;
+  return list.slice().sort(function(a, b) {
+    var va, vb;
+    if (col === 'pos') { va = a.position || ''; vb = b.position || ''; return dir === 'asc' ? (va < vb ? -1 : va > vb ? 1 : 0) : (va > vb ? -1 : va < vb ? 1 : 0); }
+    if (col === 'result') { va = getResultValue(a); vb = getResultValue(b); }
+    else return 0;
+    return dir === 'asc' ? va - vb : vb - va;
+  });
+}
+
+function logSortArrow(col) {
+  if (_logSort.col !== col) return '';
+  return _logSort.dir === 'asc' ? ' &#9650;' : ' &#9660;';
+}
 
 function renderLog(container, hands) {
   var PAGE_SIZE = 50;
@@ -8,9 +31,10 @@ function renderLog(container, hands) {
   var allHands = hands.slice().reverse();
 
   function renderLogPage() {
+    var sortedHands = sortHands(allHands, _logSort.col, _logSort.dir);
     var start = _logPage * PAGE_SIZE;
-    var end = Math.min(start + PAGE_SIZE, allHands.length);
-    var pageHands = allHands.slice(start, end);
+    var end = Math.min(start + PAGE_SIZE, sortedHands.length);
+    var pageHands = sortedHands.slice(start, end);
 
     // ── Saved hands section ──
     var savedHtml = renderSavedSection();
@@ -19,11 +43,11 @@ function renderLog(container, hands) {
     logHtml += '<div class="panel-desc">Every hand played — click any row to replay.</div>';
     logHtml += savedHtml;
     logHtml += '<div class="flex-between mb-12">' +
-      '<div class="meta-text">' + allHands.length + ' hands total · showing ' + (start + 1) + '-' + end + '</div>' +
+      '<div class="meta-text">' + sortedHands.length + ' hands total · showing ' + (start + 1) + '-' + end + '</div>' +
       '<div class="flex-gap-6">' +
-      renderPagination(_logPage, allHands.length, PAGE_SIZE, 'log-prev', 'log-next') +
+      renderPagination(_logPage, sortedHands.length, PAGE_SIZE, 'log-prev', 'log-next') +
       '</div></div>';
-    logHtml += '<div class="overflow-x"><table class="tbl hlog-tbl"><thead><tr><th></th><th>Pos</th><th>Cards</th><th>Board</th><th>Actions</th><th>Result</th></tr></thead><tbody>';
+    logHtml += '<div class="overflow-x"><table class="tbl hlog-tbl"><thead><tr><th></th><th class="sortable" data-log-sort="pos">Pos' + logSortArrow('pos') + '</th><th>Cards</th><th>Board</th><th>Actions</th><th class="sortable" data-log-sort="result">Result' + logSortArrow('result') + '</th></tr></thead><tbody>';
     logHtml += pageHands.map(function(h, pi) {
       var globalIdx = start + pi;
       var starred = isHandStarred(h);
@@ -39,19 +63,32 @@ function renderLog(container, hands) {
       row.onclick = function(e) {
         if (e.target.closest('.hrow-star')) return;
         var idx = parseInt(this.getAttribute('data-hand-idx'));
-        if (!isNaN(idx) && allHands[idx]) showExampleHandModal(allHands[idx]);
+        if (!isNaN(idx) && sortedHands[idx]) showExampleHandModal(sortedHands[idx]);
       };
     });
     container.querySelectorAll('.hrow-star').forEach(function(star) {
       star.onclick = function(e) {
         e.stopPropagation();
         var idx = parseInt(this.getAttribute('data-star-idx'));
-        if (isNaN(idx) || !allHands[idx]) return;
-        var nowStarred = toggleStarHand(allHands[idx]);
+        if (isNaN(idx) || !sortedHands[idx]) return;
+        var nowStarred = toggleStarHand(sortedHands[idx]);
         this.innerHTML = nowStarred ? '&#9733;' : '&#9734;';
         this.classList.toggle('starred', nowStarred);
         this.title = nowStarred ? 'Unsave' : 'Save hand';
         refreshSavedSection(container);
+      };
+    });
+    container.querySelectorAll('.sortable[data-log-sort]').forEach(function(th) {
+      th.onclick = function() {
+        var col = this.getAttribute('data-log-sort');
+        if (_logSort.col === col) {
+          _logSort.dir = _logSort.dir === 'asc' ? 'desc' : 'asc';
+        } else {
+          _logSort.col = col;
+          _logSort.dir = col === 'pos' ? 'asc' : 'desc';
+        }
+        _logPage = 0;
+        renderLogPage();
       };
     });
     var prevBtn = document.getElementById('log-prev');

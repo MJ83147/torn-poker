@@ -90,6 +90,22 @@ function render(d, hands, meta) {
   var noteEl = document.getElementById('sample-note');
   if (noteEl) noteEl.innerHTML = sampleNote;
 
+  // Populate players-filter dropdown
+  var pfEl = document.getElementById('players-filter');
+  var pfVal = pfEl.value;
+  var sizeCounts = {};
+  for (var si = 0; si < State.allHands.length; si++) {
+    var sc = countHandPlayers(State.allHands[si]);
+    if (sc >= 2) sizeCounts[sc] = (sizeCounts[sc] || 0) + 1;
+  }
+  var sizeKeys = Object.keys(sizeCounts).map(Number).sort(function(a, b) { return a - b; });
+  pfEl.innerHTML = '<option value="all">All Sizes</option>';
+  for (var ski = 0; ski < sizeKeys.length; ski++) {
+    var sk = sizeKeys[ski];
+    pfEl.innerHTML += '<option value="' + sk + '"' + (pfVal == sk ? ' selected' : '') + '>' + sk + ' Players (' + sizeCounts[sk] + ')</option>';
+  }
+  pfEl.style.display = sizeKeys.length > 1 ? '' : 'none';
+
   // Render all panels
   renderWelcome(document.getElementById('p-welcome'), d, hands, meta);
   renderCards(document.getElementById('p-cards'), d, hands);
@@ -105,12 +121,19 @@ function render(d, hands, meta) {
   // saved hands now rendered inside log panel
   renderPlayers(document.getElementById('p-players'), d, hands);
 
-  // Table filter banner (cross-cutting)
+  // Filter banners (cross-cutting)
   var filterEl = document.getElementById('table-filter');
   var filterVal = filterEl.value;
+  var pfFilterVal = pfEl.value;
+  var bannerParts = [];
   if (filterVal && filterVal !== 'all') {
-    var filterLabel = filterVal === 'unknown' ? 'Unknown Table' : getTableLabel(Number(filterVal));
-    var bannerHtml = '<div class="filter-banner">Showing stats for ' + filterLabel + '</div>';
+    bannerParts.push(filterVal === 'unknown' ? 'Unknown Table' : getTableLabel(Number(filterVal)));
+  }
+  if (pfFilterVal && pfFilterVal !== 'all') {
+    bannerParts.push(pfFilterVal + '-player hands');
+  }
+  if (bannerParts.length) {
+    var bannerHtml = '<div class="filter-banner">Showing stats for ' + bannerParts.join(' · ') + '</div>';
     ['p-welcome', 'p-cards', 'p-position', 'p-street', 'p-actions', 'p-bets', 'p-range', 'p-trends', 'p-showdown', 'p-log', 'p-players'].forEach(function(id) {
       var el = document.getElementById(id);
       if (el) el.innerHTML = bannerHtml + el.innerHTML;
@@ -121,11 +144,22 @@ function render(d, hands, meta) {
   filterEl.onchange = function() {
     var v = this.value;
     if (!renderAll()) {
-      alert('No hands for this table.');
+      alert('No hands for this filter.');
       this.value = 'all';
       return;
     }
     document.getElementById('table-filter').value = v;
+  };
+
+  // Players count filter handler
+  pfEl.onchange = function() {
+    var v = this.value;
+    if (!renderAll()) {
+      alert('No hands for this filter.');
+      this.value = 'all';
+      return;
+    }
+    document.getElementById('players-filter').value = v;
   };
 
   // Reset button
@@ -135,6 +169,8 @@ function render(d, hands, meta) {
     document.getElementById('dash').classList.remove('on');
     document.getElementById('table-filter').value = 'all';
     document.getElementById('table-filter').style.display = 'none';
+    document.getElementById('players-filter').value = 'all';
+    document.getElementById('players-filter').style.display = 'none';
     State.clear();
     document.querySelectorAll('.tab').forEach(function(b, i) { b.classList.toggle('active', i === 0); });
     document.querySelectorAll('.panel').forEach(function(p, i) { p.classList.toggle('on', i === 0); });

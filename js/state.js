@@ -151,11 +151,18 @@ var State = {
   getFilteredHands: function() {
     var self = this;
     var currentFilter = document.getElementById('table-filter').value;
+    var playersFilter = document.getElementById('players-filter').value;
     var filtered = self.allHands;
     if (currentFilter !== 'all') {
-      filtered = self.allHands.filter(function(h) {
+      filtered = filtered.filter(function(h) {
         var tid = inferTable(h);
         return currentFilter === 'unknown' ? tid === null : tid === Number(currentFilter);
+      });
+    }
+    if (playersFilter !== 'all') {
+      var pf = Number(playersFilter);
+      filtered = filtered.filter(function(h) {
+        return countHandPlayers(h) === pf;
       });
     }
     filtered = filtered.filter(function(h) {

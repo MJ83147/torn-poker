@@ -445,12 +445,37 @@ function renderPlayers(container, d, hands) {
     renderPlayerList();
   }
 
+  var _playerSearch = '';
+  var _playerSort = { col: 'hands', dir: 'desc' };
+
+  function sortOpponents(list, col, dir) {
+    return list.slice().sort(function(a, b) {
+      var va, vb;
+      if (col === 'name') { va = a.name.toLowerCase(); vb = b.name.toLowerCase(); return dir === 'asc' ? (va < vb ? -1 : va > vb ? 1 : 0) : (va > vb ? -1 : va < vb ? 1 : 0); }
+      if (col === 'hands') { va = a.hands; vb = b.hands; }
+      else if (col === 'wr') { va = pct(a.won, a.won + a.lost) || 0; vb = pct(b.won, b.won + b.lost) || 0; }
+      else if (col === 'pnl') { va = a.profit; vb = b.profit; }
+      else { va = a.hands; vb = b.hands; }
+      return dir === 'asc' ? va - vb : vb - va;
+    });
+  }
+
+  function sortArrow(col) {
+    if (_playerSort.col !== col) return '';
+    return _playerSort.dir === 'asc' ? ' &#9650;' : ' &#9660;';
+  }
+
   function renderPlayerList() {
     if (!filtered.length) {
       container.innerHTML = ins('n', 'Players', 'Not enough shared hands to show opponent stats. Keep playing to build data.', []);
       return;
     }
     var watched = getWatchedPlayers();
+    var searchFiltered = filtered;
+    if (_playerSearch) {
+      var q = _playerSearch.toLowerCase();
+      searchFiltered = filtered.filter(function(o) { return o.name.toLowerCase().indexOf(q) !== -1; });
+    }
     var maxH = Math.max.apply(null, filtered.map(function(o) { return o.hands; }));
     var watchedOpps = filtered.filter(function(o) { return watched.indexOf(o.name) >= 0; });
     var html = '<div class="panel-title">Players</div>';
@@ -492,13 +517,15 @@ function renderPlayers(container, d, hands) {
     if (worst && worst !== best) pIns.push(ins('r', 'Toughest Opponent', 'Only ' + pct(worst.won, worst.won + worst.lost) + '% win rate against ' + worst.name + ' (' + (worst.won + worst.lost) + ' contested hands).', [{ v: worst.name, hi: true }, { v: pct(worst.won, worst.won + worst.lost) + '% win' }]));
     if (pIns.length) html += '<div class="p-row"><div class="ins-grid">' + pIns.join('') + '</div></div>';
 
-    html += '<div class="p-row"><div class="sec-subtitle mt-0">All Opponents</div>';
-    html += '<div class="meta-text-mb">' + filtered.length + ' opponents with 2+ shared hands · click star to watch · click row to view hands</div>';
+    html += '<div class="p-row"><div class="flex-between"><div class="sec-subtitle mt-0">All Opponents</div>';
+    html += '<input type="text" id="player-search" class="player-search" placeholder="Search players\u2026" value="' + (_playerSearch || '').replace(/"/g, '&quot;') + '"></div>';
+    html += '<div class="meta-text-mb">' + searchFiltered.length + ' opponents' + (_playerSearch ? ' matching "' + _playerSearch.replace(/</g, '&lt;') + '"' : ' with 2+ shared hands') + ' · click star to watch · click row to view hands</div>';
+    var sortedOpps = sortOpponents(searchFiltered, _playerSort.col, _playerSort.dir);
     html += '<div class="players-table-scroll"><table class="tbl"><thead><tr>';
-    html += '<th></th><th>Player</th><th>Hands</th><th></th><th>' + tipWrap('Win Rate') + '</th><th>Net P&L</th>';
+    html += '<th></th><th class="sortable" data-sort-col="name">Player' + sortArrow('name') + '</th><th class="sortable" data-sort-col="hands">Hands' + sortArrow('hands') + '</th><th></th><th class="sortable" data-sort-col="wr">' + tipWrap('Win Rate') + sortArrow('wr') + '</th><th class="sortable" data-sort-col="pnl">Net P&L' + sortArrow('pnl') + '</th>';
     html += '</tr></thead><tbody>';
-    for (var k = 0; k < filtered.length; k++) {
-      var o2 = filtered[k];
+    for (var k = 0; k < sortedOpps.length; k++) {
+      var o2 = sortedOpps[k];
       var wr2 = pct(o2.won, o2.won + o2.lost);
       var barW2 = Math.round(o2.hands / maxH * 100);
       var isWatched = watched.indexOf(o2.name) >= 0;
@@ -517,6 +544,27 @@ function renderPlayers(container, d, hands) {
     });
     container.querySelectorAll('.player-row').forEach(function(row) {
       row.onclick = function() { renderPlayerHands(this.getAttribute('data-player')); };
+    });
+    var searchInput = document.getElementById('player-search');
+    if (searchInput) {
+      searchInput.oninput = function() {
+        _playerSearch = this.value;
+        renderPlayerList();
+        var si = document.getElementById('player-search');
+        if (si) { si.focus(); si.selectionStart = si.selectionEnd = si.value.length; }
+      };
+    }
+    container.querySelectorAll('.sortable[data-sort-col]').forEach(function(th) {
+      th.onclick = function() {
+        var col = this.getAttribute('data-sort-col');
+        if (_playerSort.col === col) {
+          _playerSort.dir = _playerSort.dir === 'asc' ? 'desc' : 'asc';
+        } else {
+          _playerSort.col = col;
+          _playerSort.dir = col === 'name' ? 'asc' : 'desc';
+        }
+        renderPlayerList();
+      };
     });
   }
 

@@ -592,6 +592,23 @@ function inferTable(hand) {
   return null;
 }
 
+// Count unique players in a hand from action lines
+function countHandPlayers(hand) {
+  if (hand.tableSize) return hand.tableSize;
+  if (!hand.actions || !hand.actions.length) return 0;
+  var seen = {};
+  var count = 0;
+  for (var i = 0; i < hand.actions.length; i++) {
+    var line = hand.actions[i].replace(/^(>>|&gt;&gt;)\s*/, '').replace(/^\s+/, '').trim();
+    var ci = line.indexOf(': ');
+    if (ci === -1) continue;
+    var author = line.slice(0, ci);
+    if (author === 'Game') continue;
+    if (!seen[author]) { seen[author] = true; count++; }
+  }
+  return count;
+}
+
 // True if a hand should be treated as cash game rather than tournament
 function isCashHand(hand) {
   const tid = inferTable(hand);

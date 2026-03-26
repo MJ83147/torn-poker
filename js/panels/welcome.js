@@ -38,9 +38,20 @@ function renderWelcome(container, d, hands, meta) {
     '</div>' +
     '<div class="welcome-tips">' +
     '<div class="welcome-tips-title dim-label">Tips</div>' +
-    tips.map(function(t) {
-      return '<div class="welcome-tip">' + t + '</div>';
+    '<div class="tips-carousel">' +
+    '<button class="tips-arrow tips-arrow-left" id="tip-prev">&#8249;</button>' +
+    '<div class="tips-track">' +
+    tips.map(function(t, i) {
+      return '<div class="welcome-tip' + (i === 0 ? ' active' : '') + '">' + t + '</div>';
     }).join('') +
+    '</div>' +
+    '<button class="tips-arrow tips-arrow-right" id="tip-next">&#8250;</button>' +
+    '</div>' +
+    '<div class="tips-dots">' +
+    tips.map(function(_, i) {
+      return '<span class="tips-dot' + (i === 0 ? ' active' : '') + '" data-tip="' + i + '"></span>';
+    }).join('') +
+    '</div>' +
     '</div>' +
     '</div>' +
     '</div>';
@@ -75,5 +86,22 @@ function renderWelcome(container, d, hands, meta) {
     row.onclick = function() {
       switchTab(this.getAttribute('data-goto'));
     };
+  });
+
+  // Tips carousel
+  var tipSlides = container.querySelectorAll('.welcome-tip');
+  var tipDots = container.querySelectorAll('.tips-dot');
+  var tipIdx = 0;
+  function showTip(i) {
+    tipIdx = (i + tips.length) % tips.length;
+    tipSlides.forEach(function(s, j) { s.classList.toggle('active', j === tipIdx); });
+    tipDots.forEach(function(d, j) { d.classList.toggle('active', j === tipIdx); });
+  }
+  var prevBtn = container.querySelector('#tip-prev');
+  var nextBtn = container.querySelector('#tip-next');
+  if (prevBtn) prevBtn.onclick = function() { showTip(tipIdx - 1); };
+  if (nextBtn) nextBtn.onclick = function() { showTip(tipIdx + 1); };
+  tipDots.forEach(function(dot) {
+    dot.onclick = function() { showTip(parseInt(this.getAttribute('data-tip'))); };
   });
 }
