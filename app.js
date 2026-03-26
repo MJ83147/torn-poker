@@ -5,6 +5,12 @@ document.getElementById('tabs').addEventListener('click', function(e) {
   var t = e.target.closest('.tab');
   if (!t) return;
   switchTab(t.dataset.tab);
+  document.getElementById('tab-dropdown').value = t.dataset.tab;
+});
+
+// Tab dropdown (responsive)
+document.getElementById('tab-dropdown').addEventListener('change', function() {
+  switchTab(this.value);
 });
 
 // BB toggle handler

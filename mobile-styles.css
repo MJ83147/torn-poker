@@ -7,6 +7,38 @@
   min-width: 0;
 }
 
+/* ── MID-WIDTH: swap tab bar for dropdown ── */
+@media (max-width: 1100px) {
+  .tabs { display: none; }
+  .tab-dropdown {
+    display: block;
+    width: 100%;
+    padding: 12px 16px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gold);
+    background: var(--bg);
+    border: none;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23d4842a' fill='none' stroke-width='1.5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 16px center;
+  }
+  .tab-dropdown:focus {
+    outline: 1px solid var(--gold);
+    outline-offset: -1px;
+  }
+  .tab-dropdown option {
+    background: var(--card);
+    color: var(--text);
+  }
+}
+
 /* ── TABLET (<=768px) ── */
 @media (max-width: 768px) {
 
@@ -29,15 +61,7 @@
   .hs-v { font-size: 18px; overflow: hidden; text-overflow: ellipsis; }
   .hs-l { font-size: 10px; letter-spacing: 2px; overflow: hidden; text-overflow: ellipsis; }
 
-  /* Tabs: horizontal scroll instead of wrap to avoid huge stacked block */
-  .tabs {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-  }
-  .tabs::-webkit-scrollbar { display: none; }
-  .tab { padding: 10px 14px; font-size: 11px; letter-spacing: 1px; flex-shrink: 0; }
+  /* Tabs hidden at this width — dropdown is used instead */
 
   /* Panels: flex column so all content stacks uniformly */
   .panel { padding: 24px 16px; }
@@ -179,20 +203,10 @@
   .hs-v { font-size: 16px; }
   .hs-l { font-size: 9px; letter-spacing: 1.5px; margin-bottom: 3px; }
 
-  /* Tabs: horizontal scroll, compact */
-  .tabs {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-  }
-  .tabs::-webkit-scrollbar { display: none; }
-  .tab {
-    padding: 8px 10px;
-    font-size: 10px;
-    letter-spacing: 1px;
-    flex: 0 0 auto;
-    white-space: nowrap;
+  /* Tabs hidden — dropdown used instead */
+  .tab-dropdown {
+    padding: 10px 12px;
+    font-size: 11px;
   }
 
   /* Panels */

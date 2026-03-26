@@ -342,6 +342,8 @@ function switchTab(tabId) {
   if (tabBtn) tabBtn.classList.add('active');
   var panel = document.getElementById('p-' + tabId);
   if (panel) panel.classList.add('on');
+  var dd = document.getElementById('tab-dropdown');
+  if (dd) dd.value = tabId;
 }
 
 // Render a row of mini stat boxes
