@@ -77,21 +77,29 @@ function detectAllInCandidates(hands) {
     var allInFound = false;
     var allInCalled = false;
 
+    var heroInAllIn = false;
     for (var ai = 0; ai < acts.length; ai++) {
       var a = acts[ai];
       if (a.type === 'raise' && a.msg && a.msg.indexOf(' to ') === -1) {
         allInFound = true;
         allInStreet = a.street;
+        // Hero shoved
+        if (a.isMe) heroInAllIn = true;
         for (var bi = ai + 1; bi < acts.length; bi++) {
           var b = acts[bi];
           if (b.street !== a.street) break;
-          if (b.type === 'call' || b.type === 'raise') { allInCalled = true; break; }
+          if (b.type === 'call' || b.type === 'raise') {
+            allInCalled = true;
+            // Hero called/raised the shove
+            if (b.isMe) heroInAllIn = true;
+            break;
+          }
         }
         if (allInCalled) break;
       }
     }
 
-    if (!allInFound || !allInCalled) continue;
+    if (!allInFound || !allInCalled || !heroInAllIn) continue;
 
     var reveals = parseReveals(h.actions);
     if (!reveals.length) continue;
