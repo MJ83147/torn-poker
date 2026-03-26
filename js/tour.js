@@ -112,13 +112,16 @@
       { el: '.mini-row', intro: '<strong>Showdown Stats</strong><br>Total showdown and non-showdown profits side by side. If your red line is deeply negative, opponents aren\'t folding enough to your bets.', pos: 'top' }
     ],
     log: [
-      { el: '.hlog-tbl', intro: '<strong>Hand Table</strong><br>Every hand you played, showing position, hole cards, board, action summary, and result. Click any row to replay the full hand with coaching notes.', pos: 'top' },
-      { el: '.saved-section', intro: '<strong>Saved Hands</strong><br>Hands you\'ve starred for review. Click the star on any hand to save it. Great for building a study list of interesting spots.', pos: 'top' }
+      { el: '.hlog-tbl', intro: '<strong>Hand Table</strong><br>Every hand you played, showing position, hole cards, board, action summary, and result. <strong>Click any row</strong> to open a detailed hand replay showing every action, pot sizes, and coaching notes.', pos: 'top' },
+      { el: '.hrow-star', intro: '<strong>Star Hands</strong><br>Click the star on any hand to save it for later review. Starred hands appear in the Saved Hands section at the top.', pos: 'left' },
+      { el: '.saved-section', intro: '<strong>Saved Hands</strong><br>Your starred hands for study. Each card shows the hole cards, board, and result. Click any saved hand to replay it. Add notes to remember what you were thinking.', pos: 'top' },
+      { el: '#mc-sim-btn', intro: '<strong>Equity Simulation</strong><br>When you open a hand replay, look for the <strong>Run Equity Simulation</strong> button. It runs a Monte Carlo simulation calculating your equity (chance of winning) on each street against a random hand. Compares your actual decisions against the mathematical odds — shows whether your calls, raises, and folds were profitable.', pos: 'top' }
     ],
     players: [
       { el: '#player-search', intro: '<strong>Search</strong><br>Type a player name to find them quickly in your opponent list.', pos: 'bottom' },
-      { el: '.players-table-scroll', intro: '<strong>Opponent Table</strong><br>Every opponent you\'ve faced with VPIP, PFR, limp rate, fold-to-raise, and showdown stats. Click any row to see your head-to-head record and shared hands.', pos: 'top' },
-      { el: '.ins-grid', intro: '<strong>Player Insights</strong><br>Your most-seen opponents, best/worst records, and players to watch.', pos: 'top' }
+      { el: '.players-table-scroll', intro: '<strong>Opponent Table</strong><br>Every opponent you\'ve faced with VPIP, PFR, limp rate, fold-to-raise, and showdown stats. <strong>Click any player row</strong> to open their profile showing your full head-to-head record, their tendencies, exploit suggestions, and every hand you\'ve played together.', pos: 'top' },
+      { el: '.watch-star', intro: '<strong>Watch List</strong><br>Click the star next to any player to add them to your watch list. Watched players appear in a dedicated section at the top so you can track key opponents across sessions.', pos: 'left' },
+      { el: '.ins-grid', intro: '<strong>Player Insights</strong><br>Your most-seen opponents, best/worst records against specific players, and flags for exploitable tendencies.', pos: 'top' }
     ]
   };
 
