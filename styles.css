@@ -1554,6 +1554,112 @@ textarea#jin:focus {
   color: var(--gold);
 }
 
+/* EQUITY SIMULATION */
+.eq-sim {
+  margin-top: 16px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px 14px;
+  background: var(--s1);
+}
+.eq-sim-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.eq-sim-title {
+  color: var(--gold);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.eq-sim-note {
+  color: var(--dim);
+  font-size: 9px;
+  font-family: 'IBM Plex Mono', monospace;
+}
+.eq-row {
+  display: grid;
+  grid-template-columns: 58px 48px 80px 1fr;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 0;
+}
+.eq-street {
+  color: var(--gold);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+}
+.eq-pct {
+  color: var(--text);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  text-align: right;
+}
+.eq-bar-track {
+  height: 8px;
+  background: var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.eq-bar-fill {
+  height: 100%;
+  background: var(--green);
+  border-radius: 4px;
+  transition: width .3s;
+}
+.eq-detail {
+  font-size: 10px;
+  font-family: 'IBM Plex Mono', monospace;
+  line-height: 1.4;
+}
+.eq-good { color: var(--green); }
+.eq-neutral { color: var(--gold); }
+.eq-bad { color: var(--red); }
+.eq-curve {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+.eq-caveats {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  font-size: 9px;
+  color: var(--dim);
+  font-family: 'IBM Plex Mono', monospace;
+  line-height: 1.5;
+}
+.eq-spinner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 0;
+}
+.eq-spinner-ring {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--border);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: eq-spin .8s linear infinite;
+}
+.eq-spinner-text {
+  color: var(--dim);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+}
+@keyframes eq-spin {
+  to { transform: rotate(360deg); }
+}
+
 /* HAND ROW WITH STAR COLUMN */
 .hrow-star {
   font-size: 14px;
@@ -1989,5 +2095,152 @@ tr.hrow:hover .hrow-star {
   font-size: 12px;
   color: var(--dim);
   line-height: 1.6;
+}
+
+/* ── Tour button ─────────────────────────────────────────────────────────── */
+.tour-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--dim);
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color .2s, color .2s, background .2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+.tour-btn:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+  background: rgba(200,169,74,0.08);
+}
+
+/* ── Intro.js dark theme overrides ───────────────────────────────────────── */
+.introjs-overlay {
+  background: rgba(0,0,0,0.6) !important;
+}
+.introjs-helperLayer {
+  background: transparent !important;
+  border: 1px solid var(--gold) !important;
+  border-radius: 6px !important;
+  box-shadow: 0 0 0 9999px rgba(0,0,0,0.6) !important;
+}
+.introjs-tooltip, .tc-tour-tooltip {
+  background: #0d1210 !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 8px !important;
+  color: var(--text) !important;
+  font-family: 'IBM Plex Mono', monospace !important;
+  font-size: 13px !important;
+  line-height: 1.6 !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5) !important;
+  max-width: 360px !important;
+  padding: 18px 20px !important;
+}
+.introjs-tooltip-header {
+  padding: 0 0 8px 0 !important;
+}
+.introjs-tooltip-title {
+  color: var(--gold) !important;
+  font-family: 'Cormorant Garamond', serif !important;
+  font-weight: 600 !important;
+  font-size: 16px !important;
+}
+.introjs-tooltiptext {
+  color: var(--text) !important;
+  padding: 0 !important;
+}
+.introjs-tooltiptext strong {
+  color: var(--gold);
+  font-weight: 600;
+}
+.introjs-arrow {
+  border-color: transparent !important;
+}
+.introjs-arrow.top {
+  border-bottom-color: #0d1210 !important;
+}
+.introjs-arrow.bottom {
+  border-top-color: #0d1210 !important;
+}
+.introjs-arrow.left {
+  border-right-color: #0d1210 !important;
+}
+.introjs-arrow.right {
+  border-left-color: #0d1210 !important;
+}
+.introjs-tooltipbuttons {
+  border-top: 1px solid var(--border) !important;
+  padding: 10px 0 0 0 !important;
+  margin-top: 12px !important;
+}
+.introjs-button {
+  background: transparent !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 4px !important;
+  color: var(--text) !important;
+  font-family: 'IBM Plex Mono', monospace !important;
+  font-size: 12px !important;
+  padding: 5px 14px !important;
+  text-shadow: none !important;
+  transition: border-color .2s, color .2s !important;
+}
+.introjs-button:hover {
+  border-color: var(--gold) !important;
+  color: var(--gold) !important;
+  background: rgba(200,169,74,0.08) !important;
+}
+.introjs-button:focus {
+  box-shadow: none !important;
+}
+.introjs-disabled {
+  opacity: 0.3 !important;
+  pointer-events: none !important;
+}
+.introjs-donebutton {
+  background: var(--gold) !important;
+  border-color: var(--gold) !important;
+  color: #07090a !important;
+  font-weight: 500 !important;
+}
+.introjs-donebutton:hover {
+  background: #d4b854 !important;
+  border-color: #d4b854 !important;
+  color: #07090a !important;
+}
+.introjs-progressbar {
+  background: var(--border) !important;
+}
+.introjs-progress {
+  background: var(--border) !important;
+  height: 3px !important;
+  margin: 10px 0 0 0 !important;
+}
+.introjs-progressbar {
+  background: var(--gold) !important;
+}
+.introjs-bullets ul li a {
+  background: var(--border) !important;
+  width: 8px !important;
+  height: 8px !important;
+}
+.introjs-bullets ul li a.active {
+  background: var(--gold) !important;
+}
+.introjs-helperNumberLayer {
+  display: none !important;
+}
+.introjs-skipbutton {
+  color: var(--dim) !important;
+  font-size: 18px !important;
+}
+.introjs-skipbutton:hover {
+  color: var(--text) !important;
 }
 
