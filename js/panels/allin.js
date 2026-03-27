@@ -3,27 +3,9 @@
 var _allinChart = null;
 var _allinHands = null;
 
-// ── Card normalisation for action log formats ────────────────────────────────
-var SUIT_LONG = { hearts: 'h', diamonds: 'd', clubs: 'c', spades: 's' };
-var SUIT_UNICODE = { '\u2665': 'h', '\u2666': 'd', '\u2663': 'c', '\u2660': 's' };
-
+// ── Card normalisation — uses shared normCardCode from helpers.js ─────────────
 function normCardAllIn(c) {
-  if (!c) return c;
-  for (var name in SUIT_LONG) {
-    if (c.indexOf(name) !== -1) {
-      var rank = c.replace(name, '');
-      if (rank === '10') rank = 'T';
-      return rank + SUIT_LONG[name];
-    }
-  }
-  for (var sym in SUIT_UNICODE) {
-    if (c.indexOf(sym) !== -1) {
-      var rank2 = c.replace(sym, '');
-      if (rank2 === '10') rank2 = 'T';
-      return rank2 + SUIT_UNICODE[sym];
-    }
-  }
-  return normCard(c);
+  return normCardCode(c);
 }
 
 // ── Parse reveals from action log ────────────────────────────────────────────
@@ -228,21 +210,7 @@ function calcMultiwayEquity(heroHole, opponentHoles, boardAtAllIn) {
   }
 }
 
-// ── Card display ─────────────────────────────────────────────────────────────
-var SUIT_DISPLAY = { h: '\u2665', d: '\u2666', c: '\u2663', s: '\u2660' };
-var SUIT_CLASS = { h: 'r', d: 'r', c: 'b', s: 'b' };
-
-function displayCard(c) {
-  if (!c || c.length < 2) return c;
-  var rank = c.slice(0, -1);
-  var suit = c.slice(-1);
-  if (rank === 'T') rank = '10';
-  return '<span class="allin-card ' + (SUIT_CLASS[suit] || 'b') + '">' + rank + (SUIT_DISPLAY[suit] || suit) + '</span>';
-}
-
-function displayCards(cards) {
-  return cards.map(displayCard).join(' ');
-}
+// ── Card display — uses shared displayCard/displayCards from helpers.js ───────
 
 // ── Render panel (instant — no simulation) ───────────────────────────────────
 function renderAllIn(container, hands) {

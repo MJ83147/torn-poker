@@ -4,6 +4,52 @@
 const RANKS = ['2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A'];
 const SUITS = ['\u2660', '\u2665', '\u2666', '\u2663'];
 
+// Suit mappings — single source of truth for all card formatting
+var SUIT_WORD = {
+  'diamonds': '♦', 'hearts': '♥', 'spades': '♠', 'clubs': '♣',
+  'diamond': '♦', 'heart': '♥', 'spade': '♠', 'club': '♣'
+};
+var SUIT_LETTER  = { h: '\u2665', d: '\u2666', c: '\u2663', s: '\u2660' };
+var SUIT_TO_CODE = { '\u2665': 'h', '\u2666': 'd', '\u2663': 'c', '\u2660': 's' };
+var SUIT_CLASS   = { h: 'r', d: 'r', c: 'b', s: 'b' };
+
+// Normalise any card format ("3hearts", "10♥", "Ts") → "T♠" style
+function normCard(c) {
+  if (!c || typeof c !== 'string') return c;
+  // Word format: "3hearts" → "3♥"
+  var m = c.match(/^(\d{1,2}|[AKQJT])([a-z]+)$/i);
+  if (m) {
+    var rank = m[1]; if (rank === '10') rank = 'T';
+    var suit = SUIT_WORD[m[2].toLowerCase()];
+    return suit ? rank + suit : c;
+  }
+  // "10x" → "Tx"
+  if (c.length > 2 && c.slice(0, 2) === '10') return 'T' + c.slice(2);
+  return c;
+}
+
+// Normalise card to short code format ("3hearts", "3♥") → "3h"
+function normCardCode(c) {
+  if (!c) return c;
+  var n = normCard(c);
+  var sym = n.slice(-1);
+  var code = SUIT_TO_CODE[sym];
+  return code ? n.slice(0, -1) + code : n;
+}
+
+// Render a card as styled HTML
+function displayCard(c) {
+  if (!c || c.length < 2) return c;
+  var rank = c.slice(0, -1);
+  var suit = c.slice(-1);
+  if (rank === 'T') rank = '10';
+  return '<span class="allin-card ' + (SUIT_CLASS[SUIT_TO_CODE[suit] || suit] || 'b') + '">' + rank + (SUIT_LETTER[SUIT_TO_CODE[suit] || suit] || suit) + '</span>';
+}
+
+function displayCards(cards) {
+  return cards.map(displayCard).join(' ');
+}
+
 // Human-readable tips used in tooltips throughout the UI
 const TIPS = {
   // Hand type categories
@@ -41,6 +87,7 @@ const TIPS = {
   'UTG': 'Under The Gun. First to act preflop. Worst position, play tight here.',
   'UTG+1': 'One seat after UTG. Still early position with poor information.',
   'MP': 'Middle Position. Moderate positional advantage, can widen range slightly.',
+  'LJ': 'Lojack. Three seats before the button. Early-middle position, start of the steal zone.',
   'HJ': 'Hijack. Two seats before the button. Late-middle position with decent steal opportunity.',
   'CO': 'Cutoff. One seat before the button. Strong stealing position, second best seat.',
   // Streets
@@ -51,8 +98,18 @@ const TIPS = {
   // Actions
   'Fold': 'Discard your hand and forfeit any chips already in the pot.',
   'Check': 'Pass the action without betting, only available if nobody has bet in the current round.',
+  'Bet': 'Place the first wager in a betting round. Distinct from a raise, which increases an existing bet.',
   'Call': 'Match the current bet to stay in the hand.',
   'Raise': 'Increase the current bet, forcing others to put in more to continue.',
+  // Betting concepts
+  'Bluff': 'Betting or raising with a weak hand to make opponents fold better hands.',
+  'Semi-Bluff': 'Betting with a drawing hand that could improve. You win if they fold now or if you hit your draw.',
+  'Value Bet': 'Betting a strong hand to extract chips from weaker hands that will call.',
+  // Showdown & equity
+  'Showdown': 'When remaining players reveal their cards after the final betting round to determine the winner.',
+  'Equity': 'Your share of the pot based on the probability of winning. 50% equity in a $100 pot means $50 expected value.',
+  'EV Diff': 'The difference between your actual result and your expected value. Positive means you ran above expectation.',
+  'Fair Share': 'The portion of the pot you "deserve" based on your equity at the time of an all-in.',
 };
 
 // Table metadata (blind levels, max seats, tournament flag)
@@ -717,10 +774,6 @@ function detectPlayerFromActions(hands) {
 // Some TC Poker exports omit these structured fields even though the
 // full hand history is present in the actions array.
 function backfillHandData(hands) {
-  var SUIT_MAP = {
-    'diamonds': '♦', 'hearts': '♥', 'spades': '♠', 'clubs': '♣',
-    'diamond': '♦', 'heart': '♥', 'spade': '♠', 'club': '♣'
-  };
   var CARD_RE = /(\d{1,2}|[AKQJT])([a-z]+)/gi;
 
   function parseCardsFromStreet(line) {
@@ -729,7 +782,7 @@ function backfillHandData(hands) {
     while ((m = CARD_RE.exec(line)) !== null) {
       var rank = m[1];
       if (rank === '10') rank = 'T';
-      var suit = SUIT_MAP[(m[2] || '').toLowerCase()];
+      var suit = SUIT_WORD[(m[2] || '').toLowerCase()];
       if (suit) cards.push(rank + suit);
     }
     CARD_RE.lastIndex = 0;
@@ -738,6 +791,15 @@ function backfillHandData(hands) {
 
   for (var i = 0; i < hands.length; i++) {
     var h = hands[i];
+
+    // Normalize existing hole/board cards (API may send "3hearts" format)
+    if (h.hole && h.hole.length) {
+      for (var n = 0; n < h.hole.length; n++) h.hole[n] = normCard(h.hole[n]);
+    }
+    if (h.board && h.board.length) {
+      for (var n = 0; n < h.board.length; n++) h.board[n] = normCard(h.board[n]);
+    }
+
     var actions = h.actions || [];
     if (!actions.length) continue;
 

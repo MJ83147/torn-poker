@@ -11,11 +11,7 @@ function buildDeck() {
   return deck;
 }
 
-// Normalise card: "10x" -> "Tx"
-function normCard(c) {
-  if (c.length > 2 && c.slice(0, 2) === '10') return 'T' + c.slice(2);
-  return c;
-}
+// normCard is now shared from helpers.js
 
 function rankIndex(card) {
   var r = card.slice(0, -1);
