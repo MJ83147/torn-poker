@@ -22,7 +22,7 @@ var files = [
   'js/panels/log.js',
   'js/panels/allin.js',
   'js/panels/players.js',
-  'js/panels/profile.js',
+  'js/panels/mygame.js',
   'js/equity.js',
   'js/tour.js',
   'app.js',

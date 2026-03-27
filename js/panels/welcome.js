@@ -5,6 +5,7 @@ function renderWelcome(container, d, hands, meta) {
   var aggPct = pct(d.raises, d.totalActs);
 
   var tabDescs = [
+    { tab: 'mygame',   name: 'My Game',  desc: 'Personal scouting report: your stats, strengths, leaks, and what to work on' },
     { tab: 'cards',    name: 'Cards',    desc: 'Win rates by hand type: pairs, broadway, suited connectors, and more' },
     { tab: 'position', name: 'Position', desc: 'How you perform from each seat at the table' },
     { tab: 'street',   name: 'Streets',  desc: 'Action breakdown by preflop, flop, turn, and river' },

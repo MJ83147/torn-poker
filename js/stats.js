@@ -45,6 +45,13 @@ function analyse(hands) {
     River:   { b: 0, t: 0 },
   };
 
+  let pfrHands = 0;
+  let limpHands = 0;
+  let sawFlop = 0;
+  let wentToShowdown = 0;
+  let facedRaise = 0;
+  let foldedToRaise = 0;
+
   let facedAllin = 0;
   let foldAllin = 0;
   let callAllin = 0;
@@ -128,6 +135,26 @@ function analyse(hands) {
           rangeMap[hkey].pnl -= inv;
         }
       }
+      // PFR: hero raised preflop
+      const heroRaisedPre = myActs.some(a => a.street === 'Preflop' && (a.type === 'raise' || a.type === 'bet'));
+      if (heroRaisedPre) pfrHands++;
+
+      // Limp: hero called preflop without raising, and no prior raise existed
+      if (!heroRaisedPre) {
+        const heroCalledPre = myActs.some(a => a.street === 'Preflop' && a.type === 'call');
+        if (heroCalledPre) {
+          const preflopActsLimp = acts.filter(a => a.street === 'Preflop');
+          var raiseBeforeHeroCall = false;
+          for (var li = 0; li < preflopActsLimp.length; li++) {
+            if (preflopActsLimp[li].isMe && preflopActsLimp[li].type === 'call') break;
+            if (!preflopActsLimp[li].isMe && (preflopActsLimp[li].type === 'raise' || preflopActsLimp[li].type === 'bet')) {
+              raiseBeforeHeroCall = true; break;
+            }
+          }
+          if (!raiseBeforeHeroCall) limpHands++;
+        }
+      }
+
       const pfFold = myActs.find(a => a.street === 'Preflop' && a.type === 'fold');
       if (pfFold) posMap[p].foldPre++;
 
@@ -198,6 +225,25 @@ function analyse(hands) {
           if (callResp) {
             callAllin++;
             if (h.outcome && h.outcome.result === 'won') wonAllin++;
+          }
+        }
+      }
+    }
+
+    // sawFlop / wentToShowdown
+    if (heroSeenStreets.has('Flop')) sawFlop++;
+    if (isShowdown(h)) wentToShowdown++;
+
+    // facedRaise / foldedToRaise (post-flop only)
+    for (var fri = 0; fri < acts.length; fri++) {
+      var fa = acts[fri];
+      if (!fa.isMe && (fa.type === 'raise' || fa.type === 'bet') && fa.street !== 'Preflop') {
+        for (var fk = fri + 1; fk < acts.length; fk++) {
+          if (acts[fk].street !== fa.street) break;
+          if (acts[fk].isMe) {
+            facedRaise++;
+            if (acts[fk].type === 'fold') foldedToRaise++;
+            break;
           }
         }
       }
@@ -340,6 +386,12 @@ function analyse(hands) {
     foldToCbetOpps, foldToCbetDone,
     foldTo3betOpps, foldTo3betDone,
     foldTo4betOpps, foldTo4betDone,
+    pfrHands,
+    limpHands,
+    sawFlop,
+    wentToShowdown,
+    facedRaise,
+    foldedToRaise,
   };
 }
 
