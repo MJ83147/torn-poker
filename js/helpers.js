@@ -800,7 +800,15 @@ function backfillHandData(hands) {
       for (var n = 0; n < h.board.length; n++) h.board[n] = normCard(h.board[n]);
     }
 
+    // Normalize card names in action strings: "10spades" → "T♠"
     var actions = h.actions || [];
+    for (var a = 0; a < actions.length; a++) {
+      actions[a] = actions[a].replace(/(\d{1,2}|[AKQJT])([a-z]{4,8})/gi, function(_, r, s) {
+        var rank = (r === '10') ? 'T' : r;
+        var suit = SUIT_WORD[s.toLowerCase()];
+        return suit ? rank + suit : r + s;
+      });
+    }
     if (!actions.length) continue;
 
     var needBoard = !h.board || !h.board.length;
