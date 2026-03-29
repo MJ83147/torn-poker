@@ -11,7 +11,8 @@ function normCardAllIn(c) {
 // ── Parse reveals from action log ────────────────────────────────────────────
 function parseReveals(actions) {
   var results = [];
-  var CARD_RE = /(\d{1,2}|[AKQJTakqjt])([a-z]+)/g;
+  // Match both normalized (T♠) and raw (10spades) card formats
+  var CARD_RE = /(\d{1,2}|[AKQJTakqjt])([♠♥♦♣]|[a-z]+)/g;
 
   for (var i = 0; i < (actions || []).length; i++) {
     var raw = (actions[i] || '').replace(/&gt;/g, '>').replace(/&lt;/g, '<').replace(/&amp;/g, '&');
@@ -26,10 +27,16 @@ function parseReveals(actions) {
     var m;
     while ((m = CARD_RE.exec(cardsStr)) !== null) {
       var rank = m[1];
-      var suitName = m[2].toLowerCase();
+      var suitPart = m[2];
       if (rank === '10') rank = 'T';
-      var suit = SUIT_LONG[suitName];
-      if (suit) cards.push(rank + suit);
+      // Already a Unicode suit symbol — use directly
+      if (suitPart.length === 1 && '♠♥♦♣'.indexOf(suitPart) !== -1) {
+        cards.push(rank + suitPart);
+      } else {
+        // Raw suit word — convert via SUIT_WORD
+        var suit = SUIT_WORD[suitPart.toLowerCase()];
+        if (suit) cards.push(rank + suit);
+      }
     }
     CARD_RE.lastIndex = 0;
 
