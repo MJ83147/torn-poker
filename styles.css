@@ -488,7 +488,7 @@ textarea#jin:focus {
 }
 
 .p-row {
-  margin-bottom: 40px;
+  margin-bottom: 24px;
 }
 
 .p-row:last-child {
@@ -588,8 +588,10 @@ textarea#jin:focus {
 .ins-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px 14px;
-  margin-top: 8px;
+  gap: 4px 12px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
 }
 
 .chip {
@@ -597,7 +599,8 @@ textarea#jin:focus {
   border: none;
   border-radius: 0;
   padding: 0;
-  font-size: 12px;
+  font-size: 13px;
+  font-weight: 600;
   color: var(--dim);
 }
 
@@ -1174,7 +1177,6 @@ textarea#jin:focus {
 
 .log-nav-btn {
   padding: 4px 10px;
-  border-radius: 3px;
   font-size: 11px;
 }
 
@@ -1699,11 +1701,11 @@ textarea#jin:focus {
   display: inline-block;
   margin-top: 10px;
   padding: 4px 10px;
-  border-radius: 3px;
   font-size: 10px;
   letter-spacing: 1px;
   text-transform: uppercase;
-  border: 1px solid var(--border);
+  border: 1px solid var(--dim);
+  color: var(--dim);
 }
 
 /* EQUITY SIMULATION */
