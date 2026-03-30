@@ -436,11 +436,13 @@ function tipWrap(label) {
 function ins(sev, label, text, chips) {
   const words = { g: 'Good', r: 'Leak', a: 'Warning', n: 'Note', o: 'Info' };
   const chipHtml = chips && chips.length
-    ? '<div class="ins-chips">' + chips.map(c =>
-      '<span class="chip' + (c.hi ? ' hi' : '') + '">' + c.v + '</span>'
-    ).join('') + '</div>'
+    ? '<div class="ins-chips">' + chips.map(c => {
+      var cls = 'chip';
+      if (c.hi) cls += ' chip-' + sev;
+      return '<span class="' + cls + '">' + c.v + '</span>';
+    }).join('') + '</div>'
     : '';
-  return '<div class="ins"><div class="ins-badge ' + sev + '"><div class="ins-dot"></div><div class="ins-word">' + words[sev] + '</div></div><div class="ins-label dim-label">' + label + '</div><div class="ins-text">' + text + '</div>' + chipHtml + '</div>';
+  return '<div class="ins"><div class="ins-badge ' + sev + '"><div class="ins-dot"></div><div class="ins-word">' + words[sev] + '</div></div><div class="ins-label">' + label + '</div><div class="ins-text">' + text + '</div>' + chipHtml + '</div>';
 }
 
 // Insight helper that injects a "See example hands" button and wires its click.

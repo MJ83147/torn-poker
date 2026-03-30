@@ -369,48 +369,96 @@ textarea#jin:focus {
   color: var(--text);
 }
 
-/* TAB BAR — row of per-category dropdowns on wide screens */
-.tab-bar {
+/* TAB NAV — custom dropdown menus per category */
+.tab-nav {
   display: flex;
   border-bottom: 1px solid var(--border);
 }
 
-.tab-dd {
+.tab-menu {
   flex: 1;
-  padding: 11px 16px;
+  position: relative;
+}
+
+.tab-menu + .tab-menu {
+  border-left: 1px solid var(--border);
+}
+
+.tab-menu-btn {
+  width: 100%;
+  padding: 12px 20px;
   font-family: 'IBM Plex Mono', monospace;
   font-size: 11px;
   letter-spacing: 1.5px;
   text-transform: uppercase;
   color: var(--dim);
-  background: transparent;
+  background: none;
   border: none;
-  border-right: 1px solid var(--border);
   cursor: pointer;
-  -webkit-appearance: none;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23888' fill='none' stroke-width='1.2'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 12px center;
-  padding-right: 32px;
-  transition: color .2s;
-}
-.tab-dd:last-child { border-right: none; }
-.tab-dd:hover { color: var(--text); }
-.tab-dd.active {
-  color: var(--gold);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23d4842a' fill='none' stroke-width='1.2'/%3E%3C/svg%3E");
-}
-.tab-dd option {
-  background: var(--card);
-  color: var(--text);
-  text-transform: none;
-  letter-spacing: 0;
+  text-align: left;
+  transition: color .2s, background .2s;
 }
 
-/* Single combined dropdown — mobile only */
-.tab-dropdown {
+.tab-menu-btn:hover {
+  color: var(--text);
+  background: rgba(255,255,255,0.03);
+}
+
+.tab-menu-btn.active {
+  color: var(--gold);
+}
+
+.tab-arrow {
+  font-size: 10px;
+  opacity: 0.5;
+  margin-left: 4px;
+}
+
+.tab-menu-btn.active .tab-arrow {
+  opacity: 1;
+}
+
+/* Dropdown panel */
+.tab-menu-items {
   display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 100%;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-top: none;
+  z-index: 100;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+
+.tab-menu.open .tab-menu-items {
+  display: block;
+}
+
+.tab-item {
+  display: block;
+  width: 100%;
+  padding: 10px 20px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--dim);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: color .15s, background .15s;
+}
+
+.tab-item:hover {
+  color: var(--text);
+  background: rgba(255,255,255,0.05);
+}
+
+.tab-item.active {
+  color: var(--gold);
 }
 
 /* PANELS */
@@ -524,6 +572,10 @@ textarea#jin:focus {
 .ins-label {
   margin-bottom: 5px;
   padding-right: 80px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--fg);
+  letter-spacing: 0.3px;
 }
 
 .ins-text {
@@ -536,22 +588,33 @@ textarea#jin:focus {
 .ins-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px 14px;
   margin-top: 8px;
 }
 
 .chip {
-  background: var(--s1);
-  border: 1px solid var(--border);
-  border-radius: 3px;
-  padding: 2px 8px;
-  font-size: 11px;
+  background: none;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  font-size: 12px;
   color: var(--dim);
 }
 
 .chip.hi {
   color: var(--gold);
-  border-color: var(--gold2);
+}
+
+.chip.chip-g {
+  color: var(--green);
+}
+
+.chip.chip-r {
+  color: var(--red);
+}
+
+.chip.chip-a {
+  color: var(--amber);
 }
 
 /* LAYOUT HELPERS */
@@ -1634,12 +1697,13 @@ textarea#jin:focus {
 
 .example-hand-btn {
   display: inline-block;
-  margin-top: 8px;
-  padding: 3px 8px;
+  margin-top: 10px;
+  padding: 4px 10px;
   border-radius: 3px;
   font-size: 10px;
   letter-spacing: 1px;
   text-transform: uppercase;
+  border: 1px solid var(--border);
 }
 
 /* EQUITY SIMULATION */
