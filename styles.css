@@ -408,6 +408,32 @@ textarea#jin:focus {
   flex-shrink: 0;
 }
 
+.tab-group {
+  display: flex;
+  align-items: stretch;
+  position: relative;
+  padding-top: 16px;
+}
+
+.tab-group + .tab-group {
+  margin-left: 4px;
+  border-left: 1px solid var(--border);
+}
+
+.tab-group-label {
+  position: absolute;
+  top: 2px;
+  left: 8px;
+  font-size: 8px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--dim);
+  opacity: 0.5;
+  pointer-events: none;
+  white-space: nowrap;
+  font-family: 'IBM Plex Mono', monospace;
+}
+
 /* Tab dropdown — hidden on wide screens, shown when tabs overflow */
 .tab-dropdown {
   display: none;

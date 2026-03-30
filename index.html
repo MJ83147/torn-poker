@@ -74,23 +74,32 @@
         </div>
         <div class="hero-strip" id="hero-strip"></div>
         <div class="tabs" id="tabs">
-          <button class="tab active" data-tab="welcome">Overview</button>
-          <button class="tab" data-tab="mygame">My Game</button>
-          <button class="tab" data-tab="trends">Trends</button>
-          <span class="tab-sep"></span>
-          <button class="tab" data-tab="cards">Cards</button>
-          <button class="tab" data-tab="range">Range</button>
-          <button class="tab" data-tab="position">Position</button>
-          <button class="tab" data-tab="street">Street</button>
-          <span class="tab-sep"></span>
-          <button class="tab" data-tab="actions">Actions</button>
-          <button class="tab" data-tab="bets">Bets</button>
-          <button class="tab" data-tab="showdown">Showdown</button>
-          <button class="tab" data-tab="allin">All-In EV</button>
-          <span class="tab-sep"></span>
-          <button class="tab" data-tab="tables">Tables</button>
-          <button class="tab" data-tab="log">Hand Log</button>
-          <button class="tab" data-tab="players">Players</button>
+          <div class="tab-group">
+            <span class="tab-group-label">Overview</span>
+            <button class="tab active" data-tab="welcome">Overview</button>
+            <button class="tab" data-tab="mygame">My Game</button>
+            <button class="tab" data-tab="trends">Trends</button>
+          </div>
+          <div class="tab-group">
+            <span class="tab-group-label">Hand Analysis</span>
+            <button class="tab" data-tab="cards">Cards</button>
+            <button class="tab" data-tab="range">Range</button>
+            <button class="tab" data-tab="position">Position</button>
+            <button class="tab" data-tab="street">Street</button>
+          </div>
+          <div class="tab-group">
+            <span class="tab-group-label">Betting</span>
+            <button class="tab" data-tab="actions">Actions</button>
+            <button class="tab" data-tab="bets">Bets</button>
+            <button class="tab" data-tab="showdown">Showdown</button>
+            <button class="tab" data-tab="allin">All-In EV</button>
+          </div>
+          <div class="tab-group">
+            <span class="tab-group-label">Session</span>
+            <button class="tab" data-tab="tables">Tables</button>
+            <button class="tab" data-tab="log">Hand Log</button>
+            <button class="tab" data-tab="players">Players</button>
+          </div>
         </div>
         <select class="tab-dropdown" id="tab-dropdown">
           <optgroup label="Overview">
