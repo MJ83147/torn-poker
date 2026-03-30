@@ -19,8 +19,9 @@ function renderMyGame(container, d, hands) {
   html += '<div class="profile-header">';
   html += '<div class="dim-label mb-12">MY GAME</div>';
   html += '<div class="profile-name">' + playerName + '</div>';
-  if (exportDate) html += '<div class="meta-text">Last session: ' + exportDate + '</div>';
-  html += '<div class="meta-text" style="margin-top:4px;">' + d.n + ' hands</div>';
+  html += '<div class="meta-text">';
+  if (exportDate) html += 'Last session: ' + exportDate + ' &middot; ';
+  html += d.n + ' hands</div>';
   html += '</div>';
 
   // ── Section 2: Stat line ──
@@ -73,11 +74,13 @@ function renderMyGame(container, d, hands) {
       typeLabel = 'Station';
       typeDesc = 'Loose and passive. Calls too much, folds too little, rarely raises.';
     }
-    html += '<div style="margin:12px 0 16px;">';
-    html += '<div style="font-family:\'Cormorant Garamond\',serif;font-size:28px;font-weight:700;color:var(--gold);">' + typeLabel + '</div>';
-    html += '<div class="meta-text" style="margin-bottom:8px;">' + typeDesc + '</div>';
+    html += '<div style="margin:8px 0 12px;display:flex;align-items:baseline;flex-wrap:wrap;gap:6px 12px;">';
+    html += '<div style="font-family:\'Cormorant Garamond\',serif;font-size:28px;font-weight:700;color:var(--gold);line-height:1;">' + typeLabel + '</div>';
+    html += '<div class="meta-text" style="flex:1;min-width:180px;">' + typeDesc + '</div>';
+    html += '<div>';
     html += '<span class="chip">VPIP: ' + (vpipVal !== null ? vpipVal + '%' : '—') + '</span> ';
     html += '<span class="chip">Agg: ' + (aggVal !== null ? aggVal + '%' : '—') + '</span>';
+    html += '</div>';
     html += '</div>';
   }
 
@@ -280,16 +283,18 @@ function renderMyGame(container, d, hands) {
           }
           html += '</ul>';
         } else if (sess.frame === 'wrong') {
-          var seeHandsBtnId = 'see-worst-' + Math.random().toString(36).slice(2, 8);
           html += '<div class="meta-text" style="margin-top:8px;">No clear pattern detected. Review the hands below for specific spots.</div>';
-          html += '<button class="example-hand-btn" id="' + seeHandsBtnId + '" style="margin-top:8px;">See hands</button>';
-          setTimeout((function(id, h2) {
-            return function() {
-              var el = document.getElementById(id);
-              if (el) el.onclick = function() { showExampleHandListModal('Worst Session Hands', h2); };
-            };
-          })(seeHandsBtnId, s.hands), 50);
         }
+
+        var seeHandsBtnId = 'see-sess-' + Math.random().toString(36).slice(2, 8);
+        var sessTitle = sess.label + ' Hands';
+        html += '<button class="example-hand-btn" id="' + seeHandsBtnId + '" style="margin-top:8px;">Show hands played</button>';
+        setTimeout((function(id, title, h2) {
+          return function() {
+            var el = document.getElementById(id);
+            if (el) el.onclick = function() { showExampleHandListModal(title, h2); };
+          };
+        })(seeHandsBtnId, sessTitle, s.hands), 50);
 
         html += '</div>';
       }
@@ -308,16 +313,29 @@ function renderMyGame(container, d, hands) {
 
 function buildSessions(hands) {
   if (!hands.length) return [];
-  var sessions = [];
-  var current = { tableId: inferTable(hands[0]), hands: [hands[0]] };
 
-  for (var i = 1; i < hands.length; i++) {
-    var tid = inferTable(hands[i]);
-    if (tid === current.tableId) {
-      current.hands.push(hands[i]);
-    } else {
+  var sorted = hands.slice().sort(function(a, b) {
+    return (a.timestamp || 0) - (b.timestamp || 0);
+  });
+
+  var TWO_HOURS = 2 * 60 * 60 * 1000;
+  var TWO_DAYS  = 2 * 24 * 60 * 60 * 1000;
+
+  var sessions = [];
+  var current = { tableId: inferTable(sorted[0]), hands: [sorted[0]], startTs: sorted[0].timestamp || 0 };
+
+  for (var i = 1; i < sorted.length; i++) {
+    var tid = inferTable(sorted[i]);
+    var ts  = sorted[i].timestamp || 0;
+    var prevTs = sorted[i - 1].timestamp || 0;
+    var gap = ts - prevTs;
+    var span = ts - current.startTs;
+
+    if (tid !== current.tableId || gap > TWO_HOURS || span > TWO_DAYS) {
       sessions.push(current);
-      current = { tableId: tid, hands: [hands[i]] };
+      current = { tableId: tid, hands: [sorted[i]], startTs: ts };
+    } else {
+      current.hands.push(sorted[i]);
     }
   }
   sessions.push(current);

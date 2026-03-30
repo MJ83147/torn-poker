@@ -1256,7 +1256,7 @@ textarea#jin:focus {
 
 /* ── PROFILE PANEL ── */
 .profile-wrap { max-width: 700px; }
-.profile-header { margin-bottom: 32px; }
+.profile-header { margin-bottom: 20px; }
 
 .profile-name { font-size: clamp(28px, 4vw, 44px); color: var(--gold); margin-bottom: 4px; }
 
