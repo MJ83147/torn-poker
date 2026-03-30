@@ -15,16 +15,7 @@ function renderMyGame(container, d, hands) {
 
   var html = '<div class="mygame-wrap">';
 
-  // ── Section 1: Header ──
-  html += '<div class="profile-header">';
-  html += '<div class="dim-label mb-12">MY GAME</div>';
-  html += '<div class="profile-name">' + playerName + '</div>';
-  html += '<div class="meta-text">';
-  if (exportDate) html += 'Last session: ' + exportDate + ' &middot; ';
-  html += d.n + ' hands</div>';
-  html += '</div>';
-
-  // ── Section 2: Stat line ──
+  // ── Section 1: Header + Player Type (single row) ──
   var vpipVal   = pct(d.vpip, d.n);
   var pfrVal    = pct(d.pfrHands, d.n);
   var limpVal   = pct(d.limpHands, d.n);
@@ -33,34 +24,10 @@ function renderMyGame(container, d, hands) {
   var cbetVal   = pct(d.cbetDone, d.cbetOpps);
   var wtsdVal   = pct(d.wentToShowdown, d.sawFlop);
 
-  var statItems = [
-    { l: tipWrap('VPIP'),          v: vpipVal !== null ? vpipVal + '%' : '—',  c: sev(vpipVal, 15, 60, 20, 50) },
-    { l: tipWrap('PFR'),           v: pfrVal !== null ? pfrVal + '%' : '—',    c: sev(pfrVal, 5, 50, 10, 40) },
-    { l: 'Limp',                   v: limpVal !== null ? limpVal + '%' : '—',  c: sev(limpVal, -1, 25, -1, 15) },
-    { l: tipWrap('Aggression'),    v: aggVal !== null ? aggVal + '%' : '—',    c: sev(aggVal, 12, 60, 15, 45) },
-    { l: 'Fold to Raise',         v: ftrVal !== null ? ftrVal + '%' : '—',    c: sev(ftrVal, 20, 70, 25, 60) },
-    { l: tipWrap('C-Bet'),         v: cbetVal !== null ? cbetVal + '%' : '—',  c: sev(cbetVal, 30, 90, 40, 75) },
-    { l: 'WTSD',                   v: wtsdVal !== null ? wtsdVal + '%' : '—',  c: sev(wtsdVal, 20, 50, 25, 40) },
-  ];
-
   var smallSample = d.n < 30;
-  var dimStyle = smallSample ? ' style="opacity:0.45"' : '';
 
-  html += '<div class="sec-subtitle mt-20">Stat Line</div>';
-  if (smallSample) {
-    html += '<div class="meta-text mb-12">Stats from ' + d.n + ' hands. These become reliable around 100+ hands.</div>';
-  }
-  html += '<div class="mini-row"' + dimStyle + '>' + statItems.map(function(m) {
-    var color = m.c;
-    return '<div class="mini"><div class="mini-l dim-label">' + m.l + '</div><div class="serif-value" style="color:var(--' + color + ')">' + m.v + '</div></div>';
-  }).join('') + '</div>';
-
-  // ── Section 3: Player type badge ──
-  html += '<div class="sec-subtitle mt-20">Player Type</div>';
-  if (d.n < 30) {
-    html += '<div class="meta-text">Not enough data</div>';
-  } else {
-    var typeLabel, typeDesc;
+  var typeLabel = '', typeDesc = '';
+  if (!smallSample) {
     if (vpipVal <= 30 && aggVal >= 25) {
       typeLabel = 'Shark';
       typeDesc = 'Tight and aggressive. Picks spots well and applies pressure.';
@@ -74,15 +41,42 @@ function renderMyGame(container, d, hands) {
       typeLabel = 'Station';
       typeDesc = 'Loose and passive. Calls too much, folds too little, rarely raises.';
     }
-    html += '<div style="margin:8px 0 12px;display:flex;align-items:baseline;flex-wrap:wrap;gap:6px 12px;">';
-    html += '<div style="font-family:\'Cormorant Garamond\',serif;font-size:28px;font-weight:700;color:var(--gold);line-height:1;">' + typeLabel + '</div>';
-    html += '<div class="meta-text" style="flex:1;min-width:180px;">' + typeDesc + '</div>';
-    html += '<div>';
-    html += '<span class="chip">VPIP: ' + (vpipVal !== null ? vpipVal + '%' : '—') + '</span> ';
-    html += '<span class="chip">Agg: ' + (aggVal !== null ? aggVal + '%' : '—') + '</span>';
-    html += '</div>';
-    html += '</div>';
   }
+
+  html += '<div class="profile-header">';
+  html += '<div class="dim-label mb-12">MY GAME</div>';
+  html += '<div style="display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 20px;">';
+  html += '<div class="profile-name" style="margin:0;">' + playerName + '</div>';
+  html += '<div style="font-size:14px;color:var(--dim);">';
+  if (exportDate) html += exportDate + ' &middot; ';
+  html += d.n + ' hands';
+  if (typeLabel) html += ' &middot; <span style="color:var(--gold);font-weight:600;">' + typeLabel + '</span>';
+  html += '</div>';
+  html += '</div>';
+  if (typeDesc) html += '<div style="font-size:13px;color:var(--dim);margin-top:4px;">' + typeDesc + '</div>';
+  html += '</div>';
+
+  // ── Section 2: Stat line ──
+  var statItems = [
+    { l: tipWrap('VPIP'),          v: vpipVal !== null ? vpipVal + '%' : '—',  c: sev(vpipVal, 15, 60, 20, 50) },
+    { l: tipWrap('PFR'),           v: pfrVal !== null ? pfrVal + '%' : '—',    c: sev(pfrVal, 5, 50, 10, 40) },
+    { l: 'Limp',                   v: limpVal !== null ? limpVal + '%' : '—',  c: sev(limpVal, -1, 25, -1, 15) },
+    { l: tipWrap('Aggression'),    v: aggVal !== null ? aggVal + '%' : '—',    c: sev(aggVal, 12, 60, 15, 45) },
+    { l: 'Fold to Raise',         v: ftrVal !== null ? ftrVal + '%' : '—',    c: sev(ftrVal, 20, 70, 25, 60) },
+    { l: tipWrap('C-Bet'),         v: cbetVal !== null ? cbetVal + '%' : '—',  c: sev(cbetVal, 30, 90, 40, 75) },
+    { l: 'WTSD',                   v: wtsdVal !== null ? wtsdVal + '%' : '—',  c: sev(wtsdVal, 20, 50, 25, 40) },
+  ];
+
+  var dimStyle = smallSample ? ' style="opacity:0.45"' : '';
+
+  html += '<div class="sec-subtitle mt-20">Stat Line</div>';
+  if (smallSample) {
+    html += '<div style="font-size:13px;color:var(--dim);margin-bottom:12px;">Stats from ' + d.n + ' hands. These become reliable around 100+ hands.</div>';
+  }
+  html += '<div class="mini-row"' + dimStyle + '>' + statItems.map(function(m) {
+    var color = m.c;
+    return '<div class="mini"><div class="mini-l dim-label">' + m.l + '</div><div class="serif-value" style="color:var(--' + color + ')">' + m.v + '</div></div>';
+  }).join('') + '</div>';
 
   // Skip strengths/leaks/sessions for small samples
   if (!smallSample) {
@@ -262,8 +256,14 @@ function renderMyGame(container, d, hands) {
         var pnlDisplay = isTourney ? 'Tournament' : fmtPnl(s.pnl);
         var pnlCol = isTourney ? 'var(--text)' : pnlColor(s.pnl);
 
+        var sessStart = s.startTs ? new Date(s.startTs).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+        var lastHand = s.hands[s.hands.length - 1];
+        var sessEnd = (lastHand && lastHand.timestamp) ? new Date(lastHand.timestamp).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+        var dateLabel = sessStart ? (sessStart === sessEnd ? sessStart : sessStart + ' – ' + sessEnd) : '';
+
         html += '<div style="margin:12px 0;padding:12px 16px;border:1px solid var(--border);border-radius:8px;">';
         html += '<div class="dim-label mb-12">' + sess.label + '</div>';
+        if (dateLabel) html += '<div class="meta-text" style="margin-bottom:4px;">' + dateLabel + '</div>';
         html += '<div style="display:flex;gap:12px;align-items:baseline;flex-wrap:wrap;">';
         html += '<span class="meta-text">' + tableName + '</span>';
         html += '<span class="meta-text">' + s.hands.length + ' hands</span>';
@@ -318,7 +318,7 @@ function buildSessions(hands) {
     return (a.timestamp || 0) - (b.timestamp || 0);
   });
 
-  var TWO_HOURS = 2 * 60 * 60 * 1000;
+  var GAP_LIMIT = 15 * 60 * 1000;       // 15 min gap → new session
   var TWO_DAYS  = 2 * 24 * 60 * 60 * 1000;
 
   var sessions = [];
@@ -331,7 +331,7 @@ function buildSessions(hands) {
     var gap = ts - prevTs;
     var span = ts - current.startTs;
 
-    if (tid !== current.tableId || gap > TWO_HOURS || span > TWO_DAYS) {
+    if (tid !== current.tableId || gap > GAP_LIMIT || span > TWO_DAYS) {
       sessions.push(current);
       current = { tableId: tid, hands: [sorted[i]], startTs: ts };
     } else {
