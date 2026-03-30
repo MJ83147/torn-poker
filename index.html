@@ -76,34 +76,45 @@
         <div class="tabs" id="tabs">
           <button class="tab active" data-tab="welcome">Overview</button>
           <button class="tab" data-tab="mygame">My Game</button>
+          <button class="tab" data-tab="trends">Trends</button>
+          <span class="tab-sep"></span>
           <button class="tab" data-tab="cards">Cards</button>
+          <button class="tab" data-tab="range">Range</button>
           <button class="tab" data-tab="position">Position</button>
           <button class="tab" data-tab="street">Street</button>
+          <span class="tab-sep"></span>
           <button class="tab" data-tab="actions">Actions</button>
           <button class="tab" data-tab="bets">Bets</button>
-          <button class="tab" data-tab="range">Range</button>
-          <button class="tab" data-tab="tables">Tables</button>
-          <button class="tab" data-tab="trends">Trends</button>
           <button class="tab" data-tab="showdown">Showdown</button>
-          <button class="tab" data-tab="log">Hand Log</button>
           <button class="tab" data-tab="allin">All-In EV</button>
+          <span class="tab-sep"></span>
+          <button class="tab" data-tab="tables">Tables</button>
+          <button class="tab" data-tab="log">Hand Log</button>
           <button class="tab" data-tab="players">Players</button>
         </div>
         <select class="tab-dropdown" id="tab-dropdown">
-          <option value="welcome">Overview</option>
-          <option value="mygame">My Game</option>
-          <option value="cards">Cards</option>
-          <option value="position">Position</option>
-          <option value="street">Street</option>
-          <option value="actions">Actions</option>
-          <option value="bets">Bets</option>
-          <option value="range">Range</option>
-          <option value="tables">Tables</option>
-          <option value="trends">Trends</option>
-          <option value="showdown">Showdown</option>
-          <option value="log">Hand Log</option>
-          <option value="allin">All-In EV</option>
-          <option value="players">Players</option>
+          <optgroup label="Overview">
+            <option value="welcome">Overview</option>
+            <option value="mygame">My Game</option>
+            <option value="trends">Trends</option>
+          </optgroup>
+          <optgroup label="Hand Analysis">
+            <option value="cards">Cards</option>
+            <option value="range">Range</option>
+            <option value="position">Position</option>
+            <option value="street">Street</option>
+          </optgroup>
+          <optgroup label="Betting">
+            <option value="actions">Actions</option>
+            <option value="bets">Bets</option>
+            <option value="showdown">Showdown</option>
+            <option value="allin">All-In EV</option>
+          </optgroup>
+          <optgroup label="Data">
+            <option value="tables">Tables</option>
+            <option value="log">Hand Log</option>
+            <option value="players">Players</option>
+          </optgroup>
         </select>
       </div>
 

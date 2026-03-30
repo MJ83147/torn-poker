@@ -401,6 +401,13 @@ textarea#jin:focus {
   border-bottom-color: var(--gold);
 }
 
+.tab-sep {
+  width: 1px;
+  background: var(--border);
+  margin: 8px 4px;
+  flex-shrink: 0;
+}
+
 /* Tab dropdown — hidden on wide screens, shown when tabs overflow */
 .tab-dropdown {
   display: none;
