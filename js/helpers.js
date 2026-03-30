@@ -675,7 +675,7 @@ function countHandPlayers(hand) {
     var ci = line.indexOf(': ');
     if (ci === -1) continue;
     var author = line.slice(0, ci);
-    if (author === 'Game') continue;
+    if (author === 'Game' || author === 'The preflop' || author === 'The flop' || author === 'The turn' || author === 'The river') continue;
     if (!seen[author]) { seen[author] = true; count++; }
   }
   return count;
@@ -911,7 +911,7 @@ function migratePositions(hands) {
         var ci = line.indexOf(': ');
         if (ci === -1) continue;
         var author = line.slice(0, ci);
-        if (author === 'Game') continue;
+        if (author === 'Game' || author === 'The preflop' || author === 'The flop' || author === 'The turn' || author === 'The river') continue;
         if (!seen[author]) { seen[author] = true; count++; }
       }
       if (count >= 2 && count <= 9) { ts = count; tsSource = 'actions(' + count + ')'; }
