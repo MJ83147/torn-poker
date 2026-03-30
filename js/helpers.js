@@ -393,31 +393,46 @@ function fmtAvgAmount(chipArr, bbArr) {
 
 // Switch active tab and panel
 function switchTab(tabId) {
-  document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+  // Switch panel
   document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('on'); });
-  var tabBtn = document.querySelector('[data-tab="' + tabId + '"]');
-  if (tabBtn) tabBtn.classList.add('active');
   var panel = document.getElementById('p-' + tabId);
   if (panel) panel.classList.add('on');
-  // Sync single mobile dropdown
-  var dd = document.getElementById('tab-dropdown');
-  if (dd) dd.value = tabId;
-  // Sync per-category dropdowns — highlight the active one, reset others
-  document.querySelectorAll('.tab-dd').forEach(function(sel) {
-    var opts = sel.querySelectorAll('option[value]');
-    var match = false;
-    for (var i = 0; i < opts.length; i++) {
-      if (opts[i].value === tabId) { sel.value = tabId; match = true; break; }
-    }
-    if (match) {
-      sel.classList.add('active');
-    } else {
-      sel.classList.remove('active');
-      // Reset to the disabled label option
-      sel.selectedIndex = 0;
-    }
-  });
+  // Highlight active item and active group button
+  document.querySelectorAll('.tab-item').forEach(function(t) { t.classList.remove('active'); });
+  document.querySelectorAll('.tab-menu-btn').forEach(function(b) { b.classList.remove('active'); });
+  var item = document.querySelector('.tab-item[data-tab="' + tabId + '"]');
+  if (item) {
+    item.classList.add('active');
+    var menu = item.closest('.tab-menu');
+    if (menu) menu.querySelector('.tab-menu-btn').classList.add('active');
+  }
+  // Close any open menus
+  document.querySelectorAll('.tab-menu').forEach(function(m) { m.classList.remove('open'); });
 }
+
+// Tab menu open/close logic
+(function() {
+  document.addEventListener('click', function(e) {
+    var btn = e.target.closest('.tab-menu-btn');
+    if (btn) {
+      e.stopPropagation();
+      var menu = btn.closest('.tab-menu');
+      var wasOpen = menu.classList.contains('open');
+      // Close all menus first
+      document.querySelectorAll('.tab-menu').forEach(function(m) { m.classList.remove('open'); });
+      if (!wasOpen) menu.classList.add('open');
+      return;
+    }
+    var item = e.target.closest('.tab-item');
+    if (item) {
+      e.stopPropagation();
+      switchTab(item.getAttribute('data-tab'));
+      return;
+    }
+    // Click outside closes all menus
+    document.querySelectorAll('.tab-menu').forEach(function(m) { m.classList.remove('open'); });
+  });
+})();
 
 // Render a row of mini stat boxes
 function renderMiniRow(items) {

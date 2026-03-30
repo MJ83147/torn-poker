@@ -73,58 +73,42 @@
           </div>
         </div>
         <div class="hero-strip" id="hero-strip"></div>
-        <div class="tab-bar" id="tab-bar">
-          <select class="tab-dd active" data-group="overview" onchange="switchTab(this.value)">
-            <option value="" disabled>— Overview —</option>
-            <option value="welcome" selected>Overview</option>
-            <option value="mygame">My Game</option>
-            <option value="trends">Trends</option>
-          </select>
-          <select class="tab-dd" data-group="analysis" onchange="switchTab(this.value)">
-            <option value="" disabled selected>— Hand Analysis —</option>
-            <option value="cards">Cards</option>
-            <option value="range">Range</option>
-            <option value="position">Position</option>
-            <option value="street">Street</option>
-          </select>
-          <select class="tab-dd" data-group="betting" onchange="switchTab(this.value)">
-            <option value="" disabled selected>— Betting —</option>
-            <option value="actions">Actions</option>
-            <option value="bets">Bets</option>
-            <option value="showdown">Showdown</option>
-            <option value="allin">All-In EV</option>
-          </select>
-          <select class="tab-dd" data-group="session" onchange="switchTab(this.value)">
-            <option value="" disabled selected>— Session —</option>
-            <option value="tables">Tables</option>
-            <option value="log">Hand Log</option>
-            <option value="players">Players</option>
-          </select>
+        <div class="tab-nav" id="tab-nav">
+          <div class="tab-menu">
+            <button class="tab-menu-btn active" data-group="overview">Overview <span class="tab-arrow">&#9662;</span></button>
+            <div class="tab-menu-items">
+              <button class="tab-item active" data-tab="welcome">Overview</button>
+              <button class="tab-item" data-tab="mygame">My Game</button>
+              <button class="tab-item" data-tab="trends">Trends</button>
+            </div>
+          </div>
+          <div class="tab-menu">
+            <button class="tab-menu-btn" data-group="analysis">Hand Analysis <span class="tab-arrow">&#9662;</span></button>
+            <div class="tab-menu-items">
+              <button class="tab-item" data-tab="cards">Cards</button>
+              <button class="tab-item" data-tab="range">Range</button>
+              <button class="tab-item" data-tab="position">Position</button>
+              <button class="tab-item" data-tab="street">Street</button>
+            </div>
+          </div>
+          <div class="tab-menu">
+            <button class="tab-menu-btn" data-group="betting">Betting <span class="tab-arrow">&#9662;</span></button>
+            <div class="tab-menu-items">
+              <button class="tab-item" data-tab="actions">Actions</button>
+              <button class="tab-item" data-tab="bets">Bets</button>
+              <button class="tab-item" data-tab="showdown">Showdown</button>
+              <button class="tab-item" data-tab="allin">All-In EV</button>
+            </div>
+          </div>
+          <div class="tab-menu">
+            <button class="tab-menu-btn" data-group="session">Session <span class="tab-arrow">&#9662;</span></button>
+            <div class="tab-menu-items">
+              <button class="tab-item" data-tab="tables">Tables</button>
+              <button class="tab-item" data-tab="log">Hand Log</button>
+              <button class="tab-item" data-tab="players">Players</button>
+            </div>
+          </div>
         </div>
-        <select class="tab-dropdown" id="tab-dropdown" onchange="switchTab(this.value)">
-          <optgroup label="Overview">
-            <option value="welcome">Overview</option>
-            <option value="mygame">My Game</option>
-            <option value="trends">Trends</option>
-          </optgroup>
-          <optgroup label="Hand Analysis">
-            <option value="cards">Cards</option>
-            <option value="range">Range</option>
-            <option value="position">Position</option>
-            <option value="street">Street</option>
-          </optgroup>
-          <optgroup label="Betting">
-            <option value="actions">Actions</option>
-            <option value="bets">Bets</option>
-            <option value="showdown">Showdown</option>
-            <option value="allin">All-In EV</option>
-          </optgroup>
-          <optgroup label="Session">
-            <option value="tables">Tables</option>
-            <option value="log">Hand Log</option>
-            <option value="players">Players</option>
-          </optgroup>
-        </select>
       </div>
 
       <div id="sample-note"></div>
