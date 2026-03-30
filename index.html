@@ -73,35 +73,35 @@
           </div>
         </div>
         <div class="hero-strip" id="hero-strip"></div>
-        <div class="tabs" id="tabs">
-          <div class="tab-group">
-            <span class="tab-group-label">Overview</span>
-            <button class="tab active" data-tab="welcome">Overview</button>
-            <button class="tab" data-tab="mygame">My Game</button>
-            <button class="tab" data-tab="trends">Trends</button>
-          </div>
-          <div class="tab-group">
-            <span class="tab-group-label">Hand Analysis</span>
-            <button class="tab" data-tab="cards">Cards</button>
-            <button class="tab" data-tab="range">Range</button>
-            <button class="tab" data-tab="position">Position</button>
-            <button class="tab" data-tab="street">Street</button>
-          </div>
-          <div class="tab-group">
-            <span class="tab-group-label">Betting</span>
-            <button class="tab" data-tab="actions">Actions</button>
-            <button class="tab" data-tab="bets">Bets</button>
-            <button class="tab" data-tab="showdown">Showdown</button>
-            <button class="tab" data-tab="allin">All-In EV</button>
-          </div>
-          <div class="tab-group">
-            <span class="tab-group-label">Session</span>
-            <button class="tab" data-tab="tables">Tables</button>
-            <button class="tab" data-tab="log">Hand Log</button>
-            <button class="tab" data-tab="players">Players</button>
-          </div>
+        <div class="tab-bar" id="tab-bar">
+          <select class="tab-dd active" data-group="overview" onchange="switchTab(this.value)">
+            <option value="" disabled>— Overview —</option>
+            <option value="welcome" selected>Overview</option>
+            <option value="mygame">My Game</option>
+            <option value="trends">Trends</option>
+          </select>
+          <select class="tab-dd" data-group="analysis" onchange="switchTab(this.value)">
+            <option value="" disabled selected>— Hand Analysis —</option>
+            <option value="cards">Cards</option>
+            <option value="range">Range</option>
+            <option value="position">Position</option>
+            <option value="street">Street</option>
+          </select>
+          <select class="tab-dd" data-group="betting" onchange="switchTab(this.value)">
+            <option value="" disabled selected>— Betting —</option>
+            <option value="actions">Actions</option>
+            <option value="bets">Bets</option>
+            <option value="showdown">Showdown</option>
+            <option value="allin">All-In EV</option>
+          </select>
+          <select class="tab-dd" data-group="session" onchange="switchTab(this.value)">
+            <option value="" disabled selected>— Session —</option>
+            <option value="tables">Tables</option>
+            <option value="log">Hand Log</option>
+            <option value="players">Players</option>
+          </select>
         </div>
-        <select class="tab-dropdown" id="tab-dropdown">
+        <select class="tab-dropdown" id="tab-dropdown" onchange="switchTab(this.value)">
           <optgroup label="Overview">
             <option value="welcome">Overview</option>
             <option value="mygame">My Game</option>
@@ -119,7 +119,7 @@
             <option value="showdown">Showdown</option>
             <option value="allin">All-In EV</option>
           </optgroup>
-          <optgroup label="Data">
+          <optgroup label="Session">
             <option value="tables">Tables</option>
             <option value="log">Hand Log</option>
             <option value="players">Players</option>

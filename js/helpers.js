@@ -399,8 +399,24 @@ function switchTab(tabId) {
   if (tabBtn) tabBtn.classList.add('active');
   var panel = document.getElementById('p-' + tabId);
   if (panel) panel.classList.add('on');
+  // Sync single mobile dropdown
   var dd = document.getElementById('tab-dropdown');
   if (dd) dd.value = tabId;
+  // Sync per-category dropdowns — highlight the active one, reset others
+  document.querySelectorAll('.tab-dd').forEach(function(sel) {
+    var opts = sel.querySelectorAll('option[value]');
+    var match = false;
+    for (var i = 0; i < opts.length; i++) {
+      if (opts[i].value === tabId) { sel.value = tabId; match = true; break; }
+    }
+    if (match) {
+      sel.classList.add('active');
+    } else {
+      sel.classList.remove('active');
+      // Reset to the disabled label option
+      sel.selectedIndex = 0;
+    }
+  });
 }
 
 // Render a row of mini stat boxes

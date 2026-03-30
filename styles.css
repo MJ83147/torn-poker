@@ -369,38 +369,48 @@ textarea#jin:focus {
   color: var(--text);
 }
 
-/* TABS — hidden, dropdown used on all sizes */
-.tabs {
-  display: none;
+/* TAB BAR — row of per-category dropdowns on wide screens */
+.tab-bar {
+  display: flex;
+  border-bottom: 1px solid var(--border);
 }
 
-/* Tab dropdown — always visible */
-.tab-dropdown {
-  display: block;
-  width: 100%;
-  padding: 12px 20px;
+.tab-dd {
+  flex: 1;
+  padding: 11px 16px;
   font-family: 'IBM Plex Mono', monospace;
-  font-size: 12px;
-  letter-spacing: 2px;
+  font-size: 11px;
+  letter-spacing: 1.5px;
   text-transform: uppercase;
-  color: var(--gold);
-  background: var(--card);
+  color: var(--dim);
+  background: transparent;
   border: none;
-  border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border);
   cursor: pointer;
   -webkit-appearance: none;
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23d4842a' fill='none' stroke-width='1.5'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23888' fill='none' stroke-width='1.2'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 20px center;
+  background-position: right 12px center;
+  padding-right: 32px;
+  transition: color .2s;
 }
-.tab-dropdown:focus {
-  outline: 1px solid var(--gold);
-  outline-offset: -1px;
+.tab-dd:last-child { border-right: none; }
+.tab-dd:hover { color: var(--text); }
+.tab-dd.active {
+  color: var(--gold);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23d4842a' fill='none' stroke-width='1.2'/%3E%3C/svg%3E");
 }
-.tab-dropdown option {
+.tab-dd option {
   background: var(--card);
   color: var(--text);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* Single combined dropdown — mobile only */
+.tab-dropdown {
+  display: none;
 }
 
 /* PANELS */
