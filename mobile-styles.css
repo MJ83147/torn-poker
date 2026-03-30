@@ -255,13 +255,23 @@
   /* Modal */
   .modal-box {
     width: 96vw;
-    padding: 14px;
-    max-height: 85vh;
+    padding: 16px 14px 20px;
+    max-height: 88vh;
   }
-  .modal-title { font-size: 16px; }
-  .modal-hand-meta { flex-wrap: wrap; gap: 8px; }
-  .modal-close { top: 8px; right: 10px; }
-  .modal-star-btn { top: 4px; right: 36px; font-size: 18px; }
+  .modal-title { font-size: 18px; padding-right: 60px; }
+  .modal-hand-meta {
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 12px;
+    font-size: 13px;
+  }
+  .modal-close { top: 10px; right: 10px; font-size: 22px; padding: 8px; }
+  .modal-star-btn { top: 6px; right: 38px; font-size: 20px; }
+  .modal-action-line { font-size: 13px; padding: 5px 0; }
+  .modal-action-line.street-label { font-size: 11px; padding-top: 12px; }
+  .modal-coaching { padding: 10px; font-size: 13px; margin-top: 12px; }
+  .modal-notes-input { min-height: 50px; font-size: 13px; }
+  .modal-notes-status { font-size: 10px !important; }
 
   /* Buttons: 44px min touch target */
   .log-nav-btn { padding: 10px 16px; font-size: 11px; min-height: 40px; }
