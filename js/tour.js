@@ -172,6 +172,14 @@
       { el: '.watch-star', intro: '<strong>Watch List</strong><br>Click the star next to any player to add them to your watch list. Watched players appear in a section at the top so you can track key opponents across sessions.', pos: 'left' },
       { el: '.ins-grid', intro: '<strong>Player Insights</strong><br>Your most-seen opponents, best/worst records, and flags for exploitable tendencies.', pos: 'top',
         fallback: '<strong>Player Insights</strong><br>Insight cards appear here highlighting your most-seen opponents, best/worst records, and exploitable tendencies.' }
+    ],
+    compare: [
+      { el: '.panel-title', intro: '<strong>Head to Head</strong><br>Compare any two players side by side — stats, shared hands, and exploit tips.', pos: 'bottom' },
+      { el: '.compare-selectors', intro: '<strong>Player Selection</strong><br>Pick two players to compare. Hero is selected by default in the first dropdown.', pos: 'bottom' },
+      { el: '.compare-table', intro: '<strong>Stat Comparison</strong><br>Key stats side by side with edge indicators showing who has the advantage.', pos: 'top',
+        fallback: '<strong>Stat Comparison</strong><br>Select two different players to see their stats compared in a table.' },
+      { el: '.compare-exploits', intro: '<strong>Exploit Tips</strong><br>Auto-generated tips based on the stat differentials between the two players.', pos: 'top',
+        fallback: '<strong>Exploit Tips</strong><br>Exploit suggestions appear here when stat differences reveal exploitable tendencies.' }
     ]
   };
 

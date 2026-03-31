@@ -17,6 +17,7 @@ function renderWelcome(container, d, hands, meta) {
     { tab: 'log',      name: 'Hand Log', desc: 'Every hand played, click any row to replay' },
     { tab: 'allin',    name: 'All-In EV', desc: 'Luck tracker: equity at all-in vs actual results' },
     { tab: 'players',  name: 'Players',  desc: 'Opponent records, head-to-head stats, and watch list' },
+    { tab: 'compare',  name: 'Head to Head', desc: 'Compare two players side by side with exploit tips' },
   ];
   var tips = [
     'Insight cards have a <strong>See example hand</strong> button showing a real hand from your data.',

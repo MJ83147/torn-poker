@@ -1,8 +1,22 @@
 // ── RANGE PANEL ───────────────────────────────────────────────────────────────
 
+// Recommended TAG opening ranges per position
+var RECOMMENDED_RANGES = {
+  'UTG': new Set(['AA','KK','QQ','JJ','TT','99','88','AKs','AQs','AJs','ATs','KQs','KJs','AKo','AQo']),
+  'UTG+1': new Set(['AA','KK','QQ','JJ','TT','99','88','77','AKs','AQs','AJs','ATs','KQs','KJs','KTs','QJs','AKo','AQo','AJo']),
+  'MP': new Set(['AA','KK','QQ','JJ','TT','99','88','77','66','AKs','AQs','AJs','ATs','A9s','KQs','KJs','KTs','QJs','QTs','JTs','T9s','AKo','AQo','AJo','KQo']),
+  'LJ': new Set(['AA','KK','QQ','JJ','TT','99','88','77','66','55','AKs','AQs','AJs','ATs','A9s','A8s','A7s','A6s','A5s','KQs','KJs','KTs','K9s','QJs','QTs','Q9s','JTs','J9s','T9s','98s','AKo','AQo','AJo','KQo']),
+  'HJ': new Set(['AA','KK','QQ','JJ','TT','99','88','77','66','55','44','AKs','AQs','AJs','ATs','A9s','A8s','A7s','A6s','A5s','A4s','A3s','A2s','KQs','KJs','KTs','K9s','K8s','QJs','QTs','Q9s','Q8s','JTs','J9s','T9s','T8s','98s','87s','AKo','AQo','AJo','KQo','KJo']),
+  'CO': new Set(['AA','KK','QQ','JJ','TT','99','88','77','66','55','44','33','22','AKs','AQs','AJs','ATs','A9s','A8s','A7s','A6s','A5s','A4s','A3s','A2s','KQs','KJs','KTs','K9s','K8s','K7s','K6s','K5s','K4s','K3s','K2s','QJs','QTs','Q9s','Q8s','JTs','J9s','J8s','T9s','T8s','98s','97s','87s','86s','76s','75s','65s','AKo','AQo','AJo','ATo','KQo','KJo','QJo','JTo']),
+  'BTN': new Set(['AA','KK','QQ','JJ','TT','99','88','77','66','55','44','33','22','AKs','AQs','AJs','ATs','A9s','A8s','A7s','A6s','A5s','A4s','A3s','A2s','KQs','KJs','KTs','K9s','K8s','K7s','K6s','K5s','K4s','K3s','K2s','QJs','QTs','Q9s','Q8s','Q7s','Q6s','Q5s','JTs','J9s','J8s','J7s','T9s','T8s','T7s','98s','97s','96s','87s','86s','76s','75s','65s','64s','54s','53s','43s','AKo','AQo','AJo','ATo','A9o','A8o','A7o','KQo','KJo','KTo','QJo','QTo','JTo','T9o']),
+  'SB': new Set(['AA','KK','QQ','JJ','TT','99','88','77','66','55','AKs','AQs','AJs','ATs','A9s','A8s','A5s','A4s','KQs','KJs','KTs','K9s','QJs','QTs','JTs','T9s','98s','87s','76s','AKo','AQo','AJo','ATo','KQo','KJo']),
+  'BB': new Set(['AA','KK','QQ','JJ','TT','99','88','77','66','55','44','33','22','AKs','AQs','AJs','ATs','A9s','A8s','A7s','A6s','A5s','A4s','A3s','A2s','KQs','KJs','KTs','K9s','K8s','K7s','K6s','K5s','K4s','QJs','QTs','Q9s','Q8s','Q7s','Q6s','Q5s','JTs','J9s','J8s','J7s','T9s','T8s','T7s','98s','97s','96s','87s','86s','76s','75s','65s','64s','54s','53s','43s','AKo','AQo','AJo','ATo','A9o','A8o','A7o','A6o','A5o','KQo','KJo','KTo','K9o','QJo','QTo','Q9o','JTo','J9o','T9o','98o','87o']),
+};
+
 function renderRange(container, d, hands) {
   var gridR = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2'];
   var rangePositions = ['All Positions', 'BB', 'SB', 'BTN', 'CO', 'HJ', 'LJ', 'MP', 'UTG', 'UTG+1'];
+  var advisorOn = false;
 
   function buildKey(ri, ci) {
     var r1 = gridR[Math.min(ri, ci)];
@@ -35,25 +49,39 @@ function renderRange(container, d, hands) {
       if (ratio <= 0.8) return '#3a7a42';
       return 'rgb(50, 170, 65)';
     }
+    // Advisor: determine recommended set for this position
+    var recSet = (advisorOn && posLabel && posLabel !== 'all') ? RECOMMENDED_RANGES[posLabel] : null;
+    var overplayed = [];
+    var underplayed = [];
+    var matchCount = 0;
+
     var wrGrid = '';
     var freqGrid = '';
     for (var r = 0; r < 13; r++) {
       for (var c = 0; c < 13; c++) {
         var key = buildKey(r, c);
         var data = rMap[key];
+        var advCls = '';
+        if (recSet) {
+          var played = data && data.played > 0;
+          var inRec = recSet.has(key);
+          if (played && !inRec) { advCls = ' rc-over'; overplayed.push(key); }
+          else if (!played && inRec) { advCls = ' rc-under'; underplayed.push(key); }
+          else if (played && inRec) { advCls = ' rc-match'; matchCount++; }
+        }
         if (data && data.played > 0) {
           var wr2 = pct(data.won, data.played);
           var wrBg = (wr2 !== null ? wrColor(wr2) : '#1e3020');
-          wrGrid += '<div class="rc" style="background:' + wrBg + ';cursor:pointer;" data-key="' + key + '" data-tip="' + key + ' | Win: ' + (wr2 !== null ? wr2 + '%' : 'n/a') + ' (' + data.won + '/' + data.played + ' played, ' + data.dealt + ' dealt) · click to see hands"><span>' + key + '</span></div>';
-          freqGrid += '<div class="rc" style="background:' + playedColor(data.played) + ';cursor:pointer;" data-key="' + key + '" data-tip="' + key + ' | Played ' + data.played + ' of ' + data.dealt + ' dealt · click to see hands"><span>' + key + '</span></div>';
+          wrGrid += '<div class="rc' + advCls + '" style="background:' + wrBg + ';cursor:pointer;" data-key="' + key + '" data-tip="' + key + ' | Win: ' + (wr2 !== null ? wr2 + '%' : 'n/a') + ' (' + data.won + '/' + data.played + ' played, ' + data.dealt + ' dealt) · click to see hands"><span>' + key + '</span></div>';
+          freqGrid += '<div class="rc' + advCls + '" style="background:' + playedColor(data.played) + ';cursor:pointer;" data-key="' + key + '" data-tip="' + key + ' | Played ' + data.played + ' of ' + data.dealt + ' dealt · click to see hands"><span>' + key + '</span></div>';
         } else if (data && data.dealt > 0) {
-          wrGrid += '<div class="rc rc-unseen" data-key="' + key + '" data-tip="' + key + ' | Dealt ' + data.dealt + ' times but never played · click to see hands"><span>' + key + '</span></div>';
-          freqGrid += '<div class="rc rc-unseen" data-key="' + key + '" data-tip="' + key + ' | Dealt ' + data.dealt + ' times but never played · click to see hands"><span>' + key + '</span></div>';
+          wrGrid += '<div class="rc rc-unseen' + advCls + '" data-key="' + key + '" data-tip="' + key + ' | Dealt ' + data.dealt + ' times but never played · click to see hands"><span>' + key + '</span></div>';
+          freqGrid += '<div class="rc rc-unseen' + advCls + '" data-key="' + key + '" data-tip="' + key + ' | Dealt ' + data.dealt + ' times but never played · click to see hands"><span>' + key + '</span></div>';
         } else {
           var cellType = (r === c) ? 'pair' : (r < c) ? 'suited' : 'offsuit';
           var cellLabel = cellType === 'pair' ? 'Pair' : cellType === 'suited' ? 'Suited' : 'Offsuit';
-          wrGrid += '<div class="rc rc-unseen" data-tip="' + key + ' | Not yet dealt (' + cellLabel + ')"><span>' + key + '</span></div>';
-          freqGrid += '<div class="rc rc-unseen" data-tip="' + key + ' | Not yet dealt (' + cellLabel + ')"><span>' + key + '</span></div>';
+          wrGrid += '<div class="rc rc-unseen' + advCls + '" data-tip="' + key + ' | Not yet dealt (' + cellLabel + ')"><span>' + key + '</span></div>';
+          freqGrid += '<div class="rc rc-unseen' + advCls + '" data-tip="' + key + ' | Not yet dealt (' + cellLabel + ')"><span>' + key + '</span></div>';
         }
       }
     }
@@ -130,18 +158,56 @@ function renderRange(container, d, hands) {
       }
     }
 
+    // Advisor deviation insights
+    if (recSet) {
+      var totalInRange = recSet.size;
+      var fitPct = totalInRange > 0 ? Math.round(matchCount / totalInRange * 100) : 0;
+      rangeIns.push(ins(fitPct >= 70 ? 'g' : fitPct >= 40 ? 'a' : 'r', 'Range Fit: ' + fitPct + '%', 'You play ' + matchCount + ' of ' + totalInRange + ' recommended hands for ' + posLabel + '. ' + overplayed.length + ' overplayed, ' + underplayed.length + ' underplayed.', [{ v: matchCount + '/' + totalInRange + ' match', hi: true }, { v: overplayed.length + ' over' }, { v: underplayed.length + ' under' }]));
+      if (overplayed.length > 0) {
+        var overList = overplayed.slice(0, 8).join(', ') + (overplayed.length > 8 ? ' +' + (overplayed.length - 8) + ' more' : '');
+        rangeIns.push(ins('r', 'Overplayed Hands', 'You play these hands from ' + posLabel + ' but they are not in the standard TAG range: ' + overList + '. Consider folding these to tighten up.', [{ v: overplayed.length + ' hands', hi: true }]));
+      }
+      if (underplayed.length > 0) {
+        var underList = underplayed.slice(0, 8).join(', ') + (underplayed.length > 8 ? ' +' + (underplayed.length - 8) + ' more' : '');
+        rangeIns.push(ins('a', 'Underplayed Hands', 'These are in the recommended range for ' + posLabel + ' but you are folding them: ' + underList + '. Consider opening these.', [{ v: underplayed.length + ' hands', hi: true }]));
+      }
+    }
+
     return { seen: seen, totalCombos: totalCombos, wrGrid: wrGrid, freqGrid: freqGrid, legend1: legend1, legend2: legend2, rangeIns: rangeIns, rMap: rMap };
   }
 
   function renderRangeGrids(rc) {
     var gridContainer = document.getElementById('range-grids');
     if (!gridContainer) return;
+    var advLegend = advisorOn ? '<div class="range-legend range-legend-adv">' +
+      '<div class="leg"><div class="leg-sw leg-sw-match"></div>Match</div>' +
+      '<div class="leg"><div class="leg-sw leg-sw-over"></div>Overplayed</div>' +
+      '<div class="leg"><div class="leg-sw leg-sw-under"></div>Underplayed</div>' +
+      '</div>' : '';
     gridContainer.innerHTML =
       '<div class="meta-text mb-20">' + rc.seen + ' of ' + rc.totalCombos + ' hand combos seen · hover any cell for detail</div>' +
       '<div class="two-col">' +
-      '<div><div class="sec-subtitle mt-0">Win Rate by Hand</div><div class="range-grid-sm">' + rc.wrGrid + '</div>' + rc.legend1 + '</div>' +
-      '<div><div class="sec-subtitle mt-0">Hands Played</div><div class="range-grid-sm">' + rc.freqGrid + '</div>' + rc.legend2 + '</div>' +
+      '<div><div class="sec-subtitle mt-0">Win Rate by Hand</div><div class="range-grid-sm">' + rc.wrGrid + '</div>' + rc.legend1 + advLegend + '</div>' +
+      '<div><div class="sec-subtitle mt-0">Hands Played</div><div class="range-grid-sm">' + rc.freqGrid + '</div>' + rc.legend2 + advLegend + '</div>' +
       '</div><div class="divider"></div><div class="ins-grid">' + rc.rangeIns.join('') + '</div>';
+  }
+
+  function refreshRange() {
+    var pos = document.getElementById('range-pos-filter').value;
+    var filtered = (pos === 'all') ? hands : hands.filter(function(h) { return (h.position || '?') === pos; });
+    var newRc = buildRangeContent(filtered, pos);
+    renderRangeGrids(newRc);
+    // Update advisor toggle state
+    var advBtn = document.getElementById('range-advisor-btn');
+    if (advBtn) {
+      advBtn.classList.toggle('active', advisorOn);
+      advBtn.textContent = advisorOn ? 'Advisor On' : 'Advisor Off';
+    }
+    // Disable advisor when All Positions selected
+    if (advBtn) {
+      advBtn.disabled = (pos === 'all');
+      if (pos === 'all') advBtn.classList.remove('active');
+    }
   }
 
   var rc = buildRangeContent(hands, 'all');
@@ -153,15 +219,21 @@ function renderRange(container, d, hands) {
     '<div class="panel-desc">Full 13x13 hand grid with win rate for every combo.</div>' +
     '<div class="p-row"><div class="flex-gap-6 mb-16">' +
     '<select id="range-pos-filter" class="table-filter">' + posOpts + '</select>' +
+    '<button id="range-advisor-btn" class="advisor-btn" disabled>Advisor Off</button>' +
     '</div><div id="range-grids"></div></div>';
   renderRangeGrids(rc);
 
+  // Advisor toggle
+  document.getElementById('range-advisor-btn').onclick = function() {
+    var pos = document.getElementById('range-pos-filter').value;
+    if (pos === 'all') return;
+    advisorOn = !advisorOn;
+    refreshRange();
+  };
+
   // Position filter change handler
   document.getElementById('range-pos-filter').onchange = function() {
-    var pos = this.value;
-    var filtered = (pos === 'all') ? hands : hands.filter(function(h) { return (h.position || '?') === pos; });
-    var newRc = buildRangeContent(filtered, pos);
-    renderRangeGrids(newRc);
+    refreshRange();
   };
 
   // Range cell click: show hand list for that combo
