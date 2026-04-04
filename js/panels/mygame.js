@@ -43,17 +43,24 @@ function renderMyGame(container, d, hands) {
     }
   }
 
-  html += '<div class="profile-header">';
+  html += '<div style="display:flex;flex-wrap:wrap;gap:16px 40px;margin-bottom:20px;align-items:flex-start;">';
+  // Left: identity
+  html += '<div>';
   html += '<div class="dim-label mb-12">MY GAME</div>';
-  html += '<div style="display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 20px;">';
   html += '<div class="profile-name" style="margin:0;">' + playerName + '</div>';
-  html += '<div style="font-size:14px;color:var(--dim);">';
+  html += '<div style="font-size:14px;color:var(--dim);margin-top:4px;">';
   if (exportDate) html += exportDate + ' &middot; ';
   html += d.n + ' hands';
-  if (typeLabel) html += ' &middot; <span style="color:var(--gold);font-weight:600;">' + typeLabel + '</span>';
   html += '</div>';
   html += '</div>';
-  if (typeDesc) html += '<div style="font-size:13px;color:var(--dim);margin-top:4px;">' + typeDesc + '</div>';
+  // Right: player type
+  if (typeLabel) {
+    html += '<div style="flex:1;min-width:220px;">';
+    html += '<div class="dim-label mb-12">PLAYER TYPE</div>';
+    html += '<div style="font-family:\'Cormorant Garamond\',serif;font-size:28px;font-weight:700;color:var(--gold);line-height:1;">' + typeLabel + '</div>';
+    html += '<div style="font-size:13px;color:var(--dim);margin-top:6px;">' + typeDesc + '</div>';
+    html += '</div>';
+  }
   html += '</div>';
 
   // ── Section 2: Stat line ──
@@ -242,6 +249,7 @@ function renderMyGame(container, d, hands) {
       }
 
       html += '<div class="sec-subtitle mt-20">Best & Worst Sessions</div>';
+      html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;">';
 
       var sessionPairs = [
         { session: best, label: 'Best Session', frame: 'right' },
@@ -261,14 +269,10 @@ function renderMyGame(container, d, hands) {
         var sessEnd = (lastHand && lastHand.timestamp) ? new Date(lastHand.timestamp).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
         var dateLabel = sessStart ? (sessStart === sessEnd ? sessStart : sessStart + ' – ' + sessEnd) : '';
 
-        html += '<div style="margin:12px 0;padding:12px 16px;border:1px solid var(--border);border-radius:8px;">';
+        html += '<div style="padding:12px 16px;border:1px solid var(--border);border-radius:8px;">';
         html += '<div class="dim-label mb-12">' + sess.label + '</div>';
-        if (dateLabel) html += '<div class="meta-text" style="margin-bottom:4px;">' + dateLabel + '</div>';
-        html += '<div style="display:flex;gap:12px;align-items:baseline;flex-wrap:wrap;">';
-        html += '<span class="meta-text">' + tableName + '</span>';
-        html += '<span class="meta-text">' + s.hands.length + ' hands</span>';
-        html += '<span class="serif-value" style="font-size:16px;color:' + pnlCol + ';">' + pnlDisplay + '</span>';
-        html += '</div>';
+        if (dateLabel) html += '<div style="font-size:13px;color:var(--dim);margin-bottom:4px;">' + dateLabel + '</div>';
+        html += '<div style="font-size:13px;color:var(--dim);">' + tableName + ' &middot; ' + s.hands.length + ' hands &middot; <span class="serif-value" style="font-size:16px;color:' + pnlCol + ';">' + pnlDisplay + '</span></div>';
 
         // Pattern detection
         var sessionData = analyse(s.hands);
@@ -276,14 +280,14 @@ function renderMyGame(container, d, hands) {
 
         if (patterns.length) {
           var frameWord = sess.frame === 'right' ? 'what went right' : 'what went wrong';
-          html += '<div class="meta-text" style="margin-top:8px;font-style:italic;">Patterns — ' + frameWord + ':</div>';
+          html += '<div style="font-size:13px;color:var(--dim);margin-top:8px;font-style:italic;">Patterns — ' + frameWord + ':</div>';
           html += '<ul style="margin:4px 0 0 16px;padding:0;">';
           for (var pi2 = 0; pi2 < patterns.length; pi2++) {
-            html += '<li class="meta-text" style="margin-bottom:4px;">' + patterns[pi2].text + '</li>';
+            html += '<li style="font-size:13px;color:var(--dim);margin-bottom:4px;">' + patterns[pi2].text + '</li>';
           }
           html += '</ul>';
         } else if (sess.frame === 'wrong') {
-          html += '<div class="meta-text" style="margin-top:8px;">No clear pattern detected. Review the hands below for specific spots.</div>';
+          html += '<div style="font-size:13px;color:var(--dim);margin-top:8px;">No clear pattern detected. Review the hands below for specific spots.</div>';
         }
 
         var seeHandsBtnId = 'see-sess-' + Math.random().toString(36).slice(2, 8);
@@ -298,6 +302,7 @@ function renderMyGame(container, d, hands) {
 
         html += '</div>';
       }
+      html += '</div>';
     } else if (sessions.length > 0) {
       html += '<div class="sec-subtitle mt-20">Sessions</div>';
       html += '<div class="meta-text">Not enough separate table sessions to compare patterns. Keep playing.</div>';
