@@ -699,19 +699,15 @@ function inferTable(hand) {
 
 // Count unique players in a hand from action lines
 function countHandPlayers(hand) {
-  if (hand.tableSize) return Math.min(hand.tableSize, 9);
-  if (!hand.actions || !hand.actions.length) return 0;
+  if (hand.tableSize) return hand.tableSize;
+  var parsed = parseActions(hand.actions);
   var seen = {};
   var count = 0;
-  for (var i = 0; i < hand.actions.length; i++) {
-    var line = hand.actions[i].replace(/^(>>|&gt;&gt;)\s*/, '').replace(/^\s+/, '').trim();
-    var ci = line.indexOf(': ');
-    if (ci === -1) continue;
-    var author = line.slice(0, ci);
-    if (author === 'Game' || author === 'The preflop' || author === 'The flop' || author === 'The turn' || author === 'The river') continue;
-    if (!seen[author]) { seen[author] = true; count++; }
+  for (var i = 0; i < parsed.length; i++) {
+    var a = parsed[i].author;
+    if (!seen[a]) { seen[a] = true; count++; }
   }
-  return Math.min(count, 9);
+  return count;
 }
 
 // True if a hand should be treated as cash game rather than tournament
