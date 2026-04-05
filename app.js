@@ -134,7 +134,7 @@ function render(d, hands, meta) {
     var bannerHtml = '<div class="filter-banner">Showing stats for ' + bannerParts.join(' · ') + '</div>';
     ['p-welcome', 'p-mygame', 'p-cards', 'p-position', 'p-street', 'p-actions', 'p-bets', 'p-range', 'p-trends', 'p-showdown', 'p-log', 'p-allin', 'p-players', 'p-compare'].forEach(function(id) {
       var el = document.getElementById(id);
-      if (el) el.innerHTML = bannerHtml + el.innerHTML;
+      if (el) el.insertAdjacentHTML('afterbegin', bannerHtml);
     });
   }
 

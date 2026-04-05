@@ -699,15 +699,19 @@ function inferTable(hand) {
 
 // Count unique players in a hand from action lines
 function countHandPlayers(hand) {
-  if (hand.tableSize) return hand.tableSize;
-  var parsed = parseActions(hand.actions);
-  var seen = {};
-  var count = 0;
-  for (var i = 0; i < parsed.length; i++) {
-    var a = parsed[i].author;
-    if (!seen[a]) { seen[a] = true; count++; }
+  var n;
+  if (hand.tableSize) {
+    n = hand.tableSize;
+  } else {
+    var parsed = parseActions(hand.actions);
+    var seen = {};
+    n = 0;
+    for (var i = 0; i < parsed.length; i++) {
+      var a = parsed[i].author;
+      if (!seen[a]) { seen[a] = true; n++; }
+    }
   }
-  return count;
+  return Math.min(n, 9);
 }
 
 // True if a hand should be treated as cash game rather than tournament
@@ -829,8 +833,28 @@ function backfillHandData(hands) {
       for (var n = 0; n < h.board.length; n++) h.board[n] = normCard(h.board[n]);
     }
 
-    // Normalize card names in action strings: "10spades" → "T♠"
     var actions = h.actions || [];
+    if (!actions.length) continue;
+
+    var needBoard = !h.board || !h.board.length;
+    var needPot = !h.pot;
+    var needOutcome = !h.outcome;
+
+    // Extract board cards BEFORE normalizing action strings,
+    // because parseCardsFromStreet expects alphabetic suit names.
+    var board = [];
+    if (needBoard) {
+      for (var j = 0; j < actions.length; j++) {
+        var raw = (actions[j] || '').replace(/&gt;/g, '>').replace(/&lt;/g, '<').replace(/&amp;/g, '&');
+        var line = raw.replace(/^>>\s*/, '').replace(/^\s+/, '').trim();
+        if (line.indexOf('The flop') === 0 || line.indexOf('The turn') === 0 || line.indexOf('The river') === 0) {
+          var streetCards = parseCardsFromStreet(line);
+          for (var k = 0; k < streetCards.length; k++) board.push(streetCards[k]);
+        }
+      }
+    }
+
+    // Normalize card names in action strings: "10spades" → "T♠"
     for (var a = 0; a < actions.length; a++) {
       actions[a] = actions[a].replace(/(\d{1,2}|[AKQJT])([a-z]{4,8})/gi, function(_, r, s) {
         var rank = (r === '10') ? 'T' : r;
@@ -838,15 +862,9 @@ function backfillHandData(hands) {
         return suit ? rank + suit : r + s;
       });
     }
-    if (!actions.length) continue;
-
-    var needBoard = !h.board || !h.board.length;
-    var needPot = !h.pot;
-    var needOutcome = !h.outcome;
 
     if (!needBoard && !needPot && !needOutcome) continue;
 
-    var board = [];
     var totalPot = 0;
     var wonAmount = 0;
     var heroWon = false;
@@ -857,14 +875,6 @@ function backfillHandData(hands) {
       var raw = (actions[j] || '').replace(/&gt;/g, '>').replace(/&lt;/g, '<').replace(/&amp;/g, '&');
       var isMe = raw.indexOf('>>') === 0;
       var line = raw.replace(/^>>\s*/, '').replace(/^\s+/, '').trim();
-
-      // Extract board cards from street headers
-      if (needBoard) {
-        if (line.indexOf('The flop') === 0 || line.indexOf('The turn') === 0 || line.indexOf('The river') === 0) {
-          var streetCards = parseCardsFromStreet(line);
-          for (var k = 0; k < streetCards.length; k++) board.push(streetCards[k]);
-        }
-      }
 
       // Track pot from all dollar amounts in betting actions
       if (needPot) {
