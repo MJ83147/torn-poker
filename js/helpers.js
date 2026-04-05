@@ -699,7 +699,7 @@ function inferTable(hand) {
 
 // Count unique players in a hand from action lines
 function countHandPlayers(hand) {
-  if (hand.tableSize) return hand.tableSize;
+  if (hand.tableSize) return Math.min(hand.tableSize, 9);
   if (!hand.actions || !hand.actions.length) return 0;
   var seen = {};
   var count = 0;
@@ -711,7 +711,7 @@ function countHandPlayers(hand) {
     if (author === 'Game' || author === 'The preflop' || author === 'The flop' || author === 'The turn' || author === 'The river') continue;
     if (!seen[author]) { seen[author] = true; count++; }
   }
-  return count;
+  return Math.min(count, 9);
 }
 
 // True if a hand should be treated as cash game rather than tournament
