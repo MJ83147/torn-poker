@@ -50,9 +50,8 @@ function renderTrends(container, hands, meta) {
     });
   }
 
-  var styles = getComputedStyle(document.documentElement);
-  var dimColor = styles.getPropertyValue('--dim').trim() || '#666';
-  var borderColor = styles.getPropertyValue('--border').trim() || '#333';
+  var colors = getChartColors();
+  var dimColor = colors.dim;
   var greenColor = styles.getPropertyValue('--green').trim() || '#2ecc71';
   var goldColor = styles.getPropertyValue('--gold').trim() || '#f1c40f';
   var amberColor = styles.getPropertyValue('--amber').trim() || '#e67e22';
@@ -162,76 +161,40 @@ function renderTrends(container, hands, meta) {
       return function(val) { return s ? val + s : fmt(val); };
     })(suffix);
 
-    var chart = new Chart(canvas, {
-      type: 'line',
-      data: {
-        labels: labels,
-        datasets: [{
-          data: data,
-          borderColor: cfg.color,
-          borderWidth: 2,
-          pointRadius: points.length <= 15 ? 3 : 0,
-          pointHoverRadius: 5,
-          pointBackgroundColor: cfg.color,
-          pointHitRadius: 8,
-          tension: 0.3,
-          fill: true,
-          backgroundColor: (function(c) {
-            var ctx = canvas.getContext('2d');
-            var grad = ctx.createLinearGradient(0, 0, 0, canvas.parentElement.clientHeight || 160);
-            grad.addColorStop(0, c + '22');
-            grad.addColorStop(1, c + '02');
-            return grad;
-          })(cfg.color),
-          spanGaps: true,
-        }],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: true,
-        aspectRatio: 2.8,
-        interaction: { mode: 'index', intersect: false },
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            backgroundColor: 'rgba(20,20,28,0.95)',
-            titleColor: '#aaa',
-            bodyColor: '#eee',
-            borderColor: borderColor,
-            borderWidth: 1,
-            titleFont: { family: 'IBM Plex Mono', size: 11 },
-            bodyFont: { family: 'IBM Plex Mono', size: 11 },
-            padding: 10,
-            callbacks: {
-              title: function(items) { return items[0].label; },
-              label: tooltipLabelFn,
-            },
-          },
-        },
-        scales: {
-          x: {
-            ticks: {
-              color: dimColor,
-              font: { family: 'IBM Plex Mono', size: 9 },
-              maxTicksLimit: 6,
-              maxRotation: 0,
-            },
-            grid: { color: 'transparent' },
-            border: { color: borderColor },
-          },
-          y: {
-            ticks: {
-              color: dimColor,
-              font: { family: 'IBM Plex Mono', size: 9 },
-              callback: tickFn,
-            },
-            grid: {
-              color: gridColorFn,
-              lineWidth: gridWidthFn,
-            },
-            border: { display: false },
-          },
-        },
+    var yScale = (baselineVal !== null)
+      ? chartYScaleZeroLine(colors, { tickCallback: tickFn })
+      : chartYScale(colors, { tickCallback: tickFn, gridColor: gridColorFn, gridWidth: gridWidthFn });
+
+    var chart = createChart(canvas, 'line', {
+      labels: labels,
+      datasets: [{
+        data: data,
+        borderColor: cfg.color,
+        borderWidth: 2,
+        pointRadius: points.length <= 15 ? 3 : 0,
+        pointHoverRadius: 5,
+        pointBackgroundColor: cfg.color,
+        pointHitRadius: 8,
+        tension: 0.3,
+        fill: true,
+        backgroundColor: (function(c) {
+          var ctx = canvas.getContext('2d');
+          var grad = ctx.createLinearGradient(0, 0, 0, canvas.parentElement.clientHeight || 160);
+          grad.addColorStop(0, c + '22');
+          grad.addColorStop(1, c + '02');
+          return grad;
+        })(cfg.color),
+        spanGaps: true,
+      }],
+    }, {
+      interaction: { mode: 'index', intersect: false },
+      tooltip: chartTooltip(colors, {
+        title: function(items) { return items[0].label; },
+        label: tooltipLabelFn,
+      }),
+      scales: {
+        x: chartXScale(colors, { tickSize: 9, maxTicksLimit: 6, maxRotation: 0 }),
+        y: yScale,
       },
     });
     _trendsCharts.push(chart);

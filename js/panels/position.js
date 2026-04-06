@@ -112,91 +112,42 @@ function renderPosition(container, d, hands) {
   var canvas = document.getElementById('position-chart');
   if (!canvas || activePosOrder.length < 2) return;
 
-  var styles = getComputedStyle(document.documentElement);
-  var dimColor = styles.getPropertyValue('--dim').trim() || '#666';
-  var borderColor = styles.getPropertyValue('--border').trim() || '#333';
-  var greenColor = styles.getPropertyValue('--green').trim() || '#2ecc71';
-  var goldColor = styles.getPropertyValue('--gold').trim() || '#f1c40f';
+  var colors = getChartColors();
 
   var wrData = activePosOrder.map(function(p) { return pct(d.posMap[p].won, d.posMap[p].hands) || 0; });
   var vpipData = activePosOrder.map(function(p) { return pct(d.posMap[p].vpip, d.posMap[p].hands) || 0; });
   var handCounts = activePosOrder.map(function(p) { return d.posMap[p].hands; });
 
-  _positionChart = new Chart(canvas, {
-    type: 'bar',
-    data: {
-      labels: activePosOrder,
-      datasets: [
-        {
-          label: 'Win Rate',
-          data: wrData,
-          backgroundColor: greenColor + '99',
-          borderColor: greenColor,
-          borderWidth: 1,
-          borderRadius: 4,
-        },
-        {
-          label: 'VPIP',
-          data: vpipData,
-          backgroundColor: goldColor + '99',
-          borderColor: goldColor,
-          borderWidth: 1,
-          borderRadius: 4,
-        },
-      ],
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: true,
-      aspectRatio: 2.8,
-      plugins: {
-        legend: {
-          display: true,
-          position: 'top',
-          align: 'start',
-          labels: {
-            color: dimColor,
-            font: { family: 'IBM Plex Mono', size: 11 },
-            boxWidth: 14,
-            boxHeight: 2,
-            padding: 16,
-          },
-        },
-        tooltip: {
-          backgroundColor: 'rgba(20,20,28,0.95)',
-          titleColor: '#aaa',
-          bodyColor: '#eee',
-          borderColor: borderColor,
-          borderWidth: 1,
-          titleFont: { family: 'IBM Plex Mono', size: 11 },
-          bodyFont: { family: 'IBM Plex Mono', size: 11 },
-          padding: 10,
-          callbacks: {
-            label: function(ctx) {
-              return ' ' + ctx.dataset.label + ': ' + ctx.parsed.y + '% (' + handCounts[ctx.dataIndex] + ' hands)';
-            },
-          },
-        },
+  _positionChart = createChart(canvas, 'bar', {
+    labels: activePosOrder,
+    datasets: [
+      {
+        label: 'Win Rate',
+        data: wrData,
+        backgroundColor: colors.green + '99',
+        borderColor: colors.green,
+        borderWidth: 1,
+        borderRadius: 4,
       },
-      scales: {
-        x: {
-          ticks: {
-            color: dimColor,
-            font: { family: 'IBM Plex Mono', size: 10 },
-          },
-          grid: { color: 'transparent' },
-          border: { color: borderColor },
-        },
-        y: {
-          ticks: {
-            color: dimColor,
-            font: { family: 'IBM Plex Mono', size: 9 },
-            callback: function(val) { return val + '%'; },
-          },
-          grid: { color: 'rgba(255,255,255,0.04)' },
-          border: { display: false },
-        },
+      {
+        label: 'VPIP',
+        data: vpipData,
+        backgroundColor: colors.gold + '99',
+        borderColor: colors.gold,
+        borderWidth: 1,
+        borderRadius: 4,
       },
+    ],
+  }, {
+    legend: chartLegend(colors),
+    tooltip: chartTooltip(colors, {
+      label: function(ctx) {
+        return ' ' + ctx.dataset.label + ': ' + ctx.parsed.y + '% (' + handCounts[ctx.dataIndex] + ' hands)';
+      },
+    }),
+    scales: {
+      x: chartXScale(colors),
+      y: chartYScale(colors, { tickCallback: function(val) { return val + '%'; } }),
     },
   });
 }

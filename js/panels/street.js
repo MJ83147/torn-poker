@@ -78,13 +78,7 @@ function renderStreet(container, d, hands) {
   var canvas = document.getElementById('street-action-chart');
   if (!canvas) return;
 
-  var styles = getComputedStyle(document.documentElement);
-  var dimColor = styles.getPropertyValue('--dim').trim() || '#666';
-  var borderColor = styles.getPropertyValue('--border').trim() || '#333';
-  var redColor = styles.getPropertyValue('--red').trim() || '#e74c3c';
-  var greenColor = styles.getPropertyValue('--green').trim() || '#2ecc71';
-  var amberColor = styles.getPropertyValue('--amber').trim() || '#e67e22';
-  var goldColor = styles.getPropertyValue('--gold').trim() || '#f1c40f';
+  var colors = getChartColors();
 
   var foldData = [], checkData = [], callData = [], raiseData = [];
   for (var si = 0; si < streets.length; si++) {
@@ -96,103 +90,55 @@ function renderStreet(container, d, hands) {
     raiseData.push(tot > 0 ? Math.round(ss.ra / tot * 100) : 0);
   }
 
-  _streetChart = new Chart(canvas, {
-    type: 'bar',
-    data: {
-      labels: streets,
-      datasets: [
-        {
-          label: 'Fold',
-          data: foldData,
-          backgroundColor: redColor + '99',
-          borderColor: redColor,
-          borderWidth: 1,
-          borderRadius: 2,
-        },
-        {
-          label: 'Check',
-          data: checkData,
-          backgroundColor: dimColor + '66',
-          borderColor: dimColor,
-          borderWidth: 1,
-          borderRadius: 2,
-        },
-        {
-          label: 'Call',
-          data: callData,
-          backgroundColor: goldColor + '99',
-          borderColor: goldColor,
-          borderWidth: 1,
-          borderRadius: 2,
-        },
-        {
-          label: 'Raise/Bet',
-          data: raiseData,
-          backgroundColor: greenColor + '99',
-          borderColor: greenColor,
-          borderWidth: 1,
-          borderRadius: 2,
-        },
-      ],
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: true,
-      aspectRatio: 2.8,
-      plugins: {
-        legend: {
-          display: true,
-          position: 'top',
-          align: 'start',
-          labels: {
-            color: dimColor,
-            font: { family: 'IBM Plex Mono', size: 11 },
-            boxWidth: 14,
-            boxHeight: 2,
-            padding: 16,
-          },
-        },
-        tooltip: {
-          backgroundColor: 'rgba(20,20,28,0.95)',
-          titleColor: '#aaa',
-          bodyColor: '#eee',
-          borderColor: borderColor,
-          borderWidth: 1,
-          titleFont: { family: 'IBM Plex Mono', size: 11 },
-          bodyFont: { family: 'IBM Plex Mono', size: 11 },
-          padding: 10,
-          callbacks: {
-            label: function(ctx) {
-              var streetIdx = ctx.dataIndex;
-              var ss = d.ss[streets[streetIdx]];
-              var counts = [ss.f, ss.ch, ss.ca, ss.ra];
-              return ' ' + ctx.dataset.label + ': ' + ctx.parsed.y + '% (' + counts[ctx.datasetIndex] + ' actions)';
-            },
-          },
-        },
+  _streetChart = createChart(canvas, 'bar', {
+    labels: streets,
+    datasets: [
+      {
+        label: 'Fold',
+        data: foldData,
+        backgroundColor: colors.red + '99',
+        borderColor: colors.red,
+        borderWidth: 1,
+        borderRadius: 2,
       },
-      scales: {
-        x: {
-          stacked: true,
-          ticks: {
-            color: dimColor,
-            font: { family: 'IBM Plex Mono', size: 10 },
-          },
-          grid: { color: 'transparent' },
-          border: { color: borderColor },
-        },
-        y: {
-          stacked: true,
-          max: 100,
-          ticks: {
-            color: dimColor,
-            font: { family: 'IBM Plex Mono', size: 9 },
-            callback: function(val) { return val + '%'; },
-          },
-          grid: { color: 'rgba(255,255,255,0.04)' },
-          border: { display: false },
-        },
+      {
+        label: 'Check',
+        data: checkData,
+        backgroundColor: colors.dim + '66',
+        borderColor: colors.dim,
+        borderWidth: 1,
+        borderRadius: 2,
       },
+      {
+        label: 'Call',
+        data: callData,
+        backgroundColor: colors.gold + '99',
+        borderColor: colors.gold,
+        borderWidth: 1,
+        borderRadius: 2,
+      },
+      {
+        label: 'Raise/Bet',
+        data: raiseData,
+        backgroundColor: colors.green + '99',
+        borderColor: colors.green,
+        borderWidth: 1,
+        borderRadius: 2,
+      },
+    ],
+  }, {
+    legend: chartLegend(colors),
+    tooltip: chartTooltip(colors, {
+      label: function(ctx) {
+        var streetIdx = ctx.dataIndex;
+        var ss = d.ss[streets[streetIdx]];
+        var counts = [ss.f, ss.ch, ss.ca, ss.ra];
+        return ' ' + ctx.dataset.label + ': ' + ctx.parsed.y + '% (' + counts[ctx.datasetIndex] + ' actions)';
+      },
+    }),
+    scales: {
+      x: chartXScale(colors, { stacked: true }),
+      y: chartYScale(colors, { stacked: true, max: 100, tickCallback: function(val) { return val + '%'; } }),
     },
   });
 }

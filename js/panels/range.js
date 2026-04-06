@@ -269,14 +269,15 @@ function renderRange(container, d, hands) {
       var myActs = getActsSummary(h);
       var res = renderResult(h, 'span', 'saved-res');
       return '<div class="range-hand-row" data-ridx="' + idx + '">' +
+        '<div class="range-hand-row-top">' +
         '<div class="range-hand-row-side">' +
-        '<span class="meta-text">' + (h.position || '?') + '</span>' +
-        '<span>' + (h.hole ? h.hole.join(' ') : '??') + '</span>' +
-        '<span class="meta-text">' + (h.board && h.board.length ? h.board.join(' ') : '—') + '</span>' +
+        '<span class="range-hand-row-pos">' + (h.position || '?') + '</span>' +
+        '<span class="range-hand-row-hole">' + (h.hole ? h.hole.join(' ') : '??') + '</span>' +
+        '<span class="range-hand-row-board">' + (h.board && h.board.length ? h.board.join(' ') : '—') + '</span>' +
         '</div>' +
         '<div class="range-hand-row-side">' +
-        '<span class="meta-text">' + myActs + '</span>' +
-        res + '</div></div>';
+        '<span class="range-hand-row-actions">' + myActs + '</span>' +
+        res + '</div></div></div>';
     }).join('');
     box.innerHTML = '<button class="modal-close" id="modal-close-btn">&times;</button>' +
       summary + '<div class="mt-12">' + rows + '</div>';

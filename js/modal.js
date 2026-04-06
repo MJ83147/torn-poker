@@ -25,8 +25,12 @@ function showExampleHandModal(hand, coachingNote) {
 
   var actionsHtml = '';
   var actions = hand.actions || [];
+  var prevNorm = '';
   for (var i = 0; i < actions.length; i++) {
     var raw = (actions[i] || '');
+    var norm = raw.replace(/\s+/g, ' ').trim();
+    if (norm === prevNorm) continue;
+    prevNorm = norm;
     var decoded = raw.replace(/&gt;/g, '>').replace(/&lt;/g, '<').replace(/&amp;/g, '&');
     var isMe = decoded.indexOf('>>') === 0;
     var clean = decoded.replace(/^>>\s*/, '').replace(/^\s+/, '').trim();
@@ -115,4 +119,60 @@ function findExampleHand(filterFn) {
     if (filterFn(State.modalHands[i])) return State.modalHands[i];
   }
   return null;
+}
+
+// Hand-list modal: shows a scrollable list of hands, click any to open detail.
+// Same visual pattern as the range grid cell click modal.
+function showExampleHandListModal(title, handsList, coachingNote) {
+  var existing = document.getElementById('example-hand-modal');
+  if (existing) existing.remove();
+
+  var overlay = document.createElement('div');
+  overlay.id = 'example-hand-modal';
+  overlay.className = 'modal-overlay';
+  overlay.onclick = function(e) { if (e.target === overlay) closeModal(); };
+
+  var box = document.createElement('div');
+  box.className = 'modal-box';
+  box.style.position = 'relative';
+  box.style.maxHeight = '80vh';
+  box.style.overflowY = 'auto';
+
+  var header = '<div class="modal-title">' + title + '</div>' +
+    '<div class="mb-16">' + handsList.length + ' example hand' + (handsList.length !== 1 ? 's' : '') + '</div>';
+
+  if (coachingNote) {
+    header += '<div class="modal-coaching"><div class="modal-coaching-label dim-label">What to look for</div>' + coachingNote + '</div>';
+  }
+
+  var rows = handsList.map(function(h, idx) {
+    var myActs = getActsSummary(h);
+    var res = renderResult(h, 'span', 'saved-res range-hand-row-result');
+    return '<div class="range-hand-row" data-ridx="' + idx + '">' +
+      '<div class="range-hand-row-top">' +
+        '<div class="range-hand-row-side">' +
+          '<span class="range-hand-row-pos">' + (h.position || '?') + '</span>' +
+          '<span class="range-hand-row-hole">' + (h.hole ? h.hole.join(' ') : '??') + '</span>' +
+          '<span class="range-hand-row-board">' + (h.board && h.board.length ? h.board.join(' ') : '—') + '</span>' +
+        '</div>' +
+        '<div class="range-hand-row-side">' + res + '</div>' +
+      '</div>' +
+      '<div class="range-hand-row-actions">' + myActs + '</div>' +
+      '</div>';
+  }).join('');
+
+  box.innerHTML = '<button class="modal-close" id="modal-close-btn">&times;</button>' +
+    header + '<div class="mt-12">' + rows + '</div>';
+
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+  requestAnimationFrame(function() { overlay.classList.add('show'); });
+  document.getElementById('modal-close-btn').onclick = closeModal;
+
+  box.querySelectorAll('.range-hand-row').forEach(function(row) {
+    row.onclick = function() {
+      var idx = parseInt(row.getAttribute('data-ridx'));
+      if (!isNaN(idx) && handsList[idx]) showExampleHandModal(handsList[idx], coachingNote);
+    };
+  });
 }

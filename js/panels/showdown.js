@@ -227,207 +227,90 @@ function renderShowdown(container, hands, meta) {
   var canvas = document.getElementById('showdown-chart');
   if (!canvas) return;
 
-  var styles = getComputedStyle(document.documentElement);
-  var dimColor = styles.getPropertyValue('--dim').trim() || '#666';
-  var borderColor = styles.getPropertyValue('--border').trim() || '#333';
-  var greenColor = styles.getPropertyValue('--green').trim() || '#2ecc71';
+  var colors = getChartColors();
 
   // ── Pot Size Bar Chart ──
   var potCanvas = document.getElementById('pot-size-chart');
   if (potCanvas) {
-    _potSizeChart = new Chart(potCanvas, {
-      type: 'bar',
-      data: {
-        labels: ['Showdown Win', 'Showdown Loss', 'Non-SD Win', 'Non-SD Loss'],
-        datasets: [{
-          label: 'Avg Pot Size',
-          data: [avgPotSdWin, avgPotSdLoss, avgPotNsdWin, avgPotNsdLoss],
-          backgroundColor: [
-            'rgba(74, 158, 255, 0.7)',
-            'rgba(74, 158, 255, 0.25)',
-            'rgba(231, 76, 60, 0.7)',
-            'rgba(231, 76, 60, 0.25)',
-          ],
-          borderColor: [
-            '#4a9eff',
-            '#4a9eff',
-            '#e74c3c',
-            '#e74c3c',
-          ],
-          borderWidth: 1,
-          borderRadius: 4,
-        }],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: true,
-        aspectRatio: 3,
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            backgroundColor: 'rgba(20,20,28,0.95)',
-            titleColor: '#aaa',
-            bodyColor: '#eee',
-            borderColor: borderColor,
-            borderWidth: 1,
-            titleFont: { family: 'IBM Plex Mono', size: 11 },
-            bodyFont: { family: 'IBM Plex Mono', size: 11 },
-            padding: 10,
-            callbacks: {
-              label: function(ctx) {
-                var counts = [potSdWin.length, potSdLoss.length, potNsdWin.length, potNsdLoss.length];
-                return ' Avg: ' + fmt(ctx.parsed.y) + ' (' + counts[ctx.dataIndex] + ' hands)';
-              },
-            },
-          },
+    _potSizeChart = createChart(potCanvas, 'bar', {
+      labels: ['Showdown Win', 'Showdown Loss', 'Non-SD Win', 'Non-SD Loss'],
+      datasets: [{
+        label: 'Avg Pot Size',
+        data: [avgPotSdWin, avgPotSdLoss, avgPotNsdWin, avgPotNsdLoss],
+        backgroundColor: [
+          'rgba(74, 158, 255, 0.7)',
+          'rgba(74, 158, 255, 0.25)',
+          'rgba(231, 76, 60, 0.7)',
+          'rgba(231, 76, 60, 0.25)',
+        ],
+        borderColor: [
+          '#4a9eff',
+          '#4a9eff',
+          '#e74c3c',
+          '#e74c3c',
+        ],
+        borderWidth: 1,
+        borderRadius: 4,
+      }],
+    }, {
+      aspectRatio: 3,
+      tooltip: chartTooltip(colors, {
+        label: function(ctx) {
+          var counts = [potSdWin.length, potSdLoss.length, potNsdWin.length, potNsdLoss.length];
+          return ' Avg: ' + fmt(ctx.parsed.y) + ' (' + counts[ctx.dataIndex] + ' hands)';
         },
-        scales: {
-          x: {
-            ticks: {
-              color: dimColor,
-              font: { family: 'IBM Plex Mono', size: 10 },
-            },
-            grid: { color: 'transparent' },
-            border: { color: borderColor },
-          },
-          y: {
-            ticks: {
-              color: dimColor,
-              font: { family: 'IBM Plex Mono', size: 9 },
-              callback: function(val) { return fmt(val); },
-            },
-            grid: { color: 'rgba(255,255,255,0.04)' },
-            border: { display: false },
-          },
-        },
+      }),
+      scales: {
+        x: chartXScale(colors),
+        y: chartYScale(colors, { tickCallback: function(val) { return fmt(val); } }),
       },
     });
   }
 
-  _showdownChart = new Chart(canvas, {
-    type: 'line',
-    data: {
-      labels: labels,
-      datasets: [
-        {
-          label: 'Total P&L',
-          data: dataTotal,
-          borderColor: greenColor,
-          borderWidth: 2,
-          pointRadius: 0,
-          pointHitRadius: 6,
-          tension: 0.3,
-          order: 3,
-        },
-        {
-          label: 'Showdown',
-          data: dataSd,
-          borderColor: '#4a9eff',
-          borderWidth: 1.5,
-          pointRadius: 0,
-          pointHitRadius: 6,
-          tension: 0.3,
-          order: 2,
-        },
-        {
-          label: 'Non-Showdown',
-          data: dataNsd,
-          borderColor: '#e74c3c',
-          borderWidth: 1.5,
-          pointRadius: 0,
-          pointHitRadius: 6,
-          tension: 0.3,
-          order: 1,
-        },
-      ],
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: true,
-      aspectRatio: 2.8,
-      interaction: {
-        mode: 'index',
-        intersect: false,
+  _showdownChart = createChart(canvas, 'line', {
+    labels: labels,
+    datasets: [
+      {
+        label: 'Total P&L',
+        data: dataTotal,
+        borderColor: colors.green,
+        borderWidth: 2,
+        pointRadius: 0,
+        pointHitRadius: 6,
+        tension: 0.3,
+        order: 3,
       },
-      plugins: {
-        legend: {
-          display: true,
-          position: 'top',
-          align: 'start',
-          labels: {
-            color: dimColor,
-            font: { family: 'IBM Plex Mono', size: 11 },
-            boxWidth: 14,
-            boxHeight: 2,
-            padding: 16,
-            usePointStyle: false,
-          },
-        },
-        tooltip: {
-          backgroundColor: 'rgba(20,20,28,0.95)',
-          titleColor: '#aaa',
-          bodyColor: '#eee',
-          borderColor: borderColor,
-          borderWidth: 1,
-          titleFont: { family: 'IBM Plex Mono', size: 11 },
-          bodyFont: { family: 'IBM Plex Mono', size: 11 },
-          padding: 10,
-          callbacks: {
-            title: function(items) {
-              return 'Hand #' + items[0].label;
-            },
-            label: function(ctx) {
-              return ' ' + ctx.dataset.label + ': ' + fmtPnl(ctx.parsed.y);
-            },
-          },
-        },
+      {
+        label: 'Showdown',
+        data: dataSd,
+        borderColor: '#4a9eff',
+        borderWidth: 1.5,
+        pointRadius: 0,
+        pointHitRadius: 6,
+        tension: 0.3,
+        order: 2,
       },
-      scales: {
-        x: {
-          display: true,
-          title: {
-            display: true,
-            text: 'Hands',
-            color: dimColor,
-            font: { family: 'IBM Plex Mono', size: 10 },
-          },
-          ticks: {
-            color: dimColor,
-            font: { family: 'IBM Plex Mono', size: 9 },
-            maxTicksLimit: 8,
-            callback: function(val, idx) {
-              return labels[idx];
-            },
-          },
-          grid: {
-            color: 'transparent',
-          },
-          border: {
-            color: borderColor,
-          },
-        },
-        y: {
-          display: true,
-          ticks: {
-            color: dimColor,
-            font: { family: 'IBM Plex Mono', size: 9 },
-            callback: function(val) {
-              return fmt(val);
-            },
-          },
-          grid: {
-            color: function(ctx) {
-              return ctx.tick.value === 0 ? dimColor : 'rgba(255,255,255,0.04)';
-            },
-            lineWidth: function(ctx) {
-              return ctx.tick.value === 0 ? 1 : 0.5;
-            },
-          },
-          border: {
-            display: false,
-          },
-        },
+      {
+        label: 'Non-Showdown',
+        data: dataNsd,
+        borderColor: '#e74c3c',
+        borderWidth: 1.5,
+        pointRadius: 0,
+        pointHitRadius: 6,
+        tension: 0.3,
+        order: 1,
       },
+    ],
+  }, {
+    interaction: { mode: 'index', intersect: false },
+    legend: chartLegend(colors),
+    tooltip: chartTooltip(colors, {
+      title: function(items) { return 'Hand #' + items[0].label; },
+      label: function(ctx) { return ' ' + ctx.dataset.label + ': ' + fmtPnl(ctx.parsed.y); },
+    }),
+    scales: {
+      x: chartXScale(colors, { title: 'Hands', tickSize: 9, maxTicksLimit: 8, tickCallback: function(val, idx) { return labels[idx]; } }),
+      y: chartYScaleZeroLine(colors, { tickCallback: function(val) { return fmt(val); } }),
     },
   });
 }

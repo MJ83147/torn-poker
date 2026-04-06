@@ -1550,8 +1550,8 @@ textarea#jin:focus {
 .range-hand-row {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 10px 12px;
+  gap: 6px;
+  padding: 14px 16px;
   border-bottom: 1px solid var(--border);
   cursor: pointer;
   transition: background .15s;
@@ -1567,16 +1567,46 @@ textarea#jin:focus {
   align-items: center;
 }
 
+.range-hand-row-pos {
+  font-size: 11px;
+  color: var(--dim);
+  min-width: 28px;
+  text-transform: uppercase;
+}
+
+.range-hand-row-hole {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--text);
+  min-width: 52px;
+}
+
+.range-hand-row-board {
+  font-size: 12px;
+  color: var(--dim);
+  letter-spacing: 0.5px;
+}
+
+.range-hand-row-result {
+  font-size: 14px;
+  font-weight: 600;
+  text-align: right;
+  white-space: nowrap;
+}
+
 .range-hand-row-side {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
 }
 
 .range-hand-row-actions {
-  font-size: var(--fs-sm);
+  font-size: 12px;
   color: var(--dim);
   line-height: 1.4;
+  padding-left: 40px;
 }
 
 /* ── PLAYER DETAIL ── */

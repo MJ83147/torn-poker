@@ -415,10 +415,7 @@ function showAllInResults(container) {
     var canvas = document.getElementById('allin-ev-chart');
     if (!canvas) return;
 
-    var styles = getComputedStyle(document.documentElement);
-    var dimColor = styles.getPropertyValue('--dim').trim() || '#666';
-    var borderColor = styles.getPropertyValue('--border').trim() || '#333';
-    var goldColor = styles.getPropertyValue('--gold').trim() || '#d4842a';
+    var colors = getChartColors();
 
     var chartLabels = [], dataActual = [], dataExpected = [];
     var cumActual = 0, cumExpected = 0;
@@ -431,72 +428,41 @@ function showAllInResults(container) {
     }
 
     if (_allinChart) { _allinChart.destroy(); _allinChart = null; }
-    _allinChart = new Chart(canvas, {
-      type: 'line',
-      data: {
-        labels: chartLabels,
-        datasets: [
-          {
-            label: 'Actual Results',
-            data: dataActual,
-            borderColor: goldColor,
-            borderWidth: 2,
-            pointRadius: 0,
-            pointHitRadius: 6,
-            tension: 0.3,
-            order: 1,
-          },
-          {
-            label: 'Expected (EV)',
-            data: dataExpected,
-            borderColor: dimColor,
-            borderWidth: 2,
-            borderDash: [5, 3],
-            pointRadius: 0,
-            pointHitRadius: 6,
-            tension: 0.3,
-            order: 2,
-          },
-        ],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: true,
-        aspectRatio: 2.8,
-        interaction: { mode: 'index', intersect: false },
-        plugins: {
-          legend: {
-            display: true, position: 'top', align: 'start',
-            labels: { color: dimColor, font: { family: 'IBM Plex Mono', size: 11 }, boxWidth: 14, boxHeight: 2, padding: 16 },
-          },
-          tooltip: {
-            backgroundColor: 'rgba(20,20,28,0.95)', titleColor: '#aaa', bodyColor: '#eee',
-            borderColor: borderColor, borderWidth: 1,
-            titleFont: { family: 'IBM Plex Mono', size: 11 }, bodyFont: { family: 'IBM Plex Mono', size: 11 }, padding: 10,
-            callbacks: {
-              title: function(items) { return 'All-In #' + items[0].label; },
-              label: function(ctx) { return ' ' + ctx.dataset.label + ': ' + fmtPnl(ctx.parsed.y); },
-            },
-          },
+    _allinChart = createChart(canvas, 'line', {
+      labels: chartLabels,
+      datasets: [
+        {
+          label: 'Actual Results',
+          data: dataActual,
+          borderColor: colors.gold,
+          borderWidth: 2,
+          pointRadius: 0,
+          pointHitRadius: 6,
+          tension: 0.3,
+          order: 1,
         },
-        scales: {
-          x: {
-            display: true,
-            title: { display: true, text: 'All-In Hands', color: dimColor, font: { family: 'IBM Plex Mono', size: 10 } },
-            ticks: { color: dimColor, font: { family: 'IBM Plex Mono', size: 9 }, maxTicksLimit: 8 },
-            grid: { color: 'transparent' },
-            border: { color: borderColor },
-          },
-          y: {
-            display: true,
-            ticks: { color: dimColor, font: { family: 'IBM Plex Mono', size: 9 }, callback: function(val) { return fmt(val); } },
-            grid: {
-              color: function(ctx) { return ctx.tick.value === 0 ? dimColor : 'rgba(255,255,255,0.04)'; },
-              lineWidth: function(ctx) { return ctx.tick.value === 0 ? 1 : 0.5; },
-            },
-            border: { display: false },
-          },
+        {
+          label: 'Expected (EV)',
+          data: dataExpected,
+          borderColor: colors.dim,
+          borderWidth: 2,
+          borderDash: [5, 3],
+          pointRadius: 0,
+          pointHitRadius: 6,
+          tension: 0.3,
+          order: 2,
         },
+      ],
+    }, {
+      interaction: { mode: 'index', intersect: false },
+      legend: chartLegend(colors),
+      tooltip: chartTooltip(colors, {
+        title: function(items) { return 'All-In #' + items[0].label; },
+        label: function(ctx) { return ' ' + ctx.dataset.label + ': ' + fmtPnl(ctx.parsed.y); },
+      }),
+      scales: {
+        x: chartXScale(colors, { title: 'All-In Hands', tickSize: 9, maxTicksLimit: 8 }),
+        y: chartYScaleZeroLine(colors, { tickCallback: function(val) { return fmt(val); } }),
       },
     });
   }
