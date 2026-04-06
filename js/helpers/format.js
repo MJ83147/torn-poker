@@ -49,7 +49,7 @@ function calcPositionGroupVpip(posMap, positions) {
     var p = posMap[positions[i]];
     if (p) { v += p.vpip; h += p.hands; }
   }
-  return { vpip: pct(v, h), hands: h };
+  return { vpip: pct(v, h), hands: h, vpipCount: v };
 }
 
 function sev(v, rLo, rHi, aLo, aHi) {
