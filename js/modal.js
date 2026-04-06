@@ -20,7 +20,15 @@ function showExampleHandModal(hand, coachingNote) {
   var metaHtml = '<div class="modal-hand-meta">' +
     '<span>Board: <strong>' + (hand.board && hand.board.length ? hand.board.join(' ') : 'none') + '</strong></span>' +
     '<span>Pot: <strong>' + fmtBB(hand.pot || 0, getHandBB(hand)) + '</strong></span>' +
-    '<span>Result: <strong>' + (hand.outcome ? hand.outcome.result : '?') + '</strong></span>' +
+    (function() {
+      var pnl = getHandPnl(hand);
+      var res = hand.outcome ? hand.outcome.result : '?';
+      var label = res;
+      if (res === 'folded' && pnl.text !== 'folded') label = 'folded ' + pnl.text;
+      else if (res === 'won') label = 'won ' + pnl.text;
+      else if (res === 'lost') label = 'lost ' + pnl.text;
+      return '<span>Result: <strong class="' + pnl.cls + '">' + label + '</strong></span>';
+    })() +
     '</div>';
 
   var actionsHtml = '';

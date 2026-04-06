@@ -60,11 +60,7 @@ function render(d, hands, meta) {
   document.getElementById('paste-wrap').style.display = 'none';
   document.getElementById('dash').classList.add('on');
 
-  var netPnl = d.totalWonAmount - d.totalInvested;
-  var wr = pct(d.handsWon, d.handsWithOutcome);
-  var vpipPct = pct(d.vpip, d.n);
-  var aggPct = pct(d.raises, d.totalActs);
-  var allinFoldPct = pct(d.foldAllin, d.facedAllin);
+  var c = d.core;
 
   // Header meta
   document.getElementById('page-meta').textContent = meta.player + ' · ' + new Date(meta.exportedAt).toLocaleDateString('en-GB', {
@@ -77,11 +73,11 @@ function render(d, hands, meta) {
     : '';
   document.getElementById('hero-strip').innerHTML = [
     { l: 'Hands',      v: d.n,                        c: 'o' },
-    { l: 'Win Rate',   v: wr !== null ? wr + '%' : '—', c: wr >= 50 ? 'g' : 'r' },
-    { l: 'Net P&L',    v: fmtPnl(netPnl), c: netPnl >= 0 ? 'g' : 'r' },
-    { l: 'VPIP',       v: vpipPct !== null ? vpipPct + '%' : '—', c: vpipPct > 55 ? 'a' : 'w' },
-    { l: 'Aggression', v: aggPct !== null ? aggPct + '%' : '—',   c: aggPct > 25 ? 'g' : 'a' },
-    { l: 'vs All-in',  v: allinFoldPct !== null ? allinFoldPct + '% fold' : '—', c: 'w' },
+    { l: 'Win Rate',   v: c.wr !== null ? c.wr + '%' : '—', c: c.wr >= 50 ? 'g' : 'r' },
+    { l: 'Net P&L',    v: fmtPnl(c.netPnl), c: c.netPnl >= 0 ? 'g' : 'r' },
+    { l: 'VPIP',       v: c.vpipPct !== null ? c.vpipPct + '%' : '—', c: c.vpipPct > 55 ? 'a' : 'w' },
+    { l: 'Aggression', v: c.agg !== null ? c.agg + '%' : '—',   c: c.agg > 25 ? 'g' : 'a' },
+    { l: 'vs All-in',  v: c.allinFold !== null ? c.allinFold + '% fold' : '—', c: 'w' },
   ].map(function(h) { return '<div class="hs"><div class="hs-l dim-label">' + tipWrap(h.l) + '</div><div class="hs-v serif-value ' + h.c + '">' + h.v + '</div></div>'; }).join('');
   var noteEl = document.getElementById('sample-note');
   if (noteEl) noteEl.innerHTML = sampleNote;

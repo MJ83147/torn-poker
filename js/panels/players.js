@@ -722,7 +722,7 @@ function renderPlayers(container, d, hands) {
         ph += '<div class="flex-gap-6 mb-8" style="justify-content:flex-end;">' +
           renderPagination(phPage, playerHands.length, PH_SIZE, 'ph-prev', 'ph-next') + '</div>';
       }
-      ph += '<div class="overflow-x"><table class="tbl hlog-tbl"><thead><tr><th>Pos</th><th>Cards</th><th>Board</th><th>Actions</th><th>Result</th></tr></thead><tbody>';
+      ph += '<div class="overflow-x"><table class="tbl hlog-tbl"><thead><tr><th>Pos</th><th>Cards</th><th>Board</th><th>Pot</th><th>Actions</th><th>Result</th></tr></thead><tbody>';
       ph += page.map(function(h, pi) {
         return renderHandRow(h, start + pi, null).replace('data-hand-idx', 'data-ph-idx');
       }).join('') + '</tbody></table></div>';

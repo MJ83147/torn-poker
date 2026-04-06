@@ -355,6 +355,20 @@ function analyse(hands) {
     }
   }
 
+  // Derived percentages — single source of truth for all panels
+  var core = {
+    wr:        pct(handsWon, handsWithOutcome),
+    vpipPct:   pct(vpip, n),
+    pfrPct:    pct(pfrHands, n),
+    agg:       calcAggression(raises, calls, checks),
+    limpPct:   pct(limpHands, n),
+    allinFold: pct(foldAllin, facedAllin),
+    netPnl:    totalWonAmount - totalInvested,
+    ftrPct:    pct(foldedToRaise, facedRaise),
+    cbetPct:   pct(cbetDone, cbetOpps),
+    wtsdPct:   pct(wentToShowdown, sawFlop),
+  };
+
   return {
     n,
     posMap,
@@ -392,6 +406,7 @@ function analyse(hands) {
     wentToShowdown,
     facedRaise,
     foldedToRaise,
+    core,
   };
 }
 

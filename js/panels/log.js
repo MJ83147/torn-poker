@@ -41,7 +41,7 @@ function renderLog(container, hands) {
       '<div class="flex-gap-6">' +
       renderPagination(_logPage, sortedHands.length, PAGE_SIZE, 'log-prev', 'log-next') +
       '</div></div>';
-    logHtml += '<div class="overflow-x"><table class="tbl hlog-tbl"><thead><tr><th></th><th class="sortable" data-log-sort="pos">Pos' + logSortArrow('pos') + '</th><th>Cards</th><th>Board</th><th>Actions</th><th class="sortable" data-log-sort="result">Result' + logSortArrow('result') + '</th></tr></thead><tbody>';
+    logHtml += '<div class="overflow-x"><table class="tbl hlog-tbl"><thead><tr><th></th><th class="sortable" data-log-sort="pos">Pos' + logSortArrow('pos') + '</th><th>Cards</th><th>Board</th><th>Pot</th><th>Actions</th><th class="sortable" data-log-sort="result">Result' + logSortArrow('result') + '</th></tr></thead><tbody>';
     logHtml += pageHands.map(function(h, pi) {
       var globalIdx = start + pi;
       var starred = isHandStarred(h);
