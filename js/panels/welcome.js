@@ -2,7 +2,7 @@
 
 function renderWelcome(container, d, hands, meta) {
   var vpipPct = pct(d.vpip, d.n);
-  var aggPct = pct(d.raises, d.totalActs);
+  var aggPct = calcAggression(d.raises, d.calls, d.checks);
 
   var tabDescs = [
     { tab: 'mygame',   name: 'My Game',  desc: 'Personal scouting report: your stats, strengths, leaks, and what to work on' },

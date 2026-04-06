@@ -40,7 +40,17 @@ function renderLeaks(container, d, hands) {
     var rate = pct(d.cbetDone, d.cbetOpps);
     if (rate < 50) {
       var est = Math.round((50 - rate) * d.cbetOpps * 0.2);
-      leaks.push({ cost: est, html: ins('r', 'Low C-bet Rate', 'You c-bet only ' + rate + '% of the time after raising preflop. Continuation betting below 50% gives up too much initiative.', [{ v: 'C-bet: ' + rate + '%' }, { v: '~' + est + ' BB cost' }]) });
+      var examples = [];
+      for (var i = 0; i < hands.length && examples.length < 10; i++) {
+        var acts = parseActions(hands[i].actions);
+        var heroRaisedPre = false, heroCheckedFlop = false;
+        for (var j = 0; j < acts.length; j++) {
+          if (acts[j].isMe && acts[j].street === 'Preflop' && acts[j].type === 'raise') heroRaisedPre = true;
+          if (acts[j].isMe && acts[j].street === 'Flop' && acts[j].type === 'check') heroCheckedFlop = true;
+        }
+        if (heroRaisedPre && heroCheckedFlop) examples.push(hands[i]);
+      }
+      leaks.push({ cost: est, html: insWithExample('r', 'Low C-bet Rate', 'You c-bet only ' + rate + '% of the time after raising preflop. Continuation betting below 50% gives up too much initiative.', [{ v: 'C-bet: ' + rate + '%' }, { v: '~' + est + ' BB cost' }], examples, 'You raised preflop but checked the flop — a c-bet would maintain initiative.') });
     }
   })();
 
@@ -53,7 +63,20 @@ function renderLeaks(container, d, hands) {
     var rate = pct(d.foldedToRaise, d.facedRaise);
     if (rate > 60) {
       var est = Math.round((rate - 60) * d.facedRaise * 0.25);
-      leaks.push({ cost: est, html: ins('r', 'Over-folding to Raises', 'You fold ' + rate + '% when facing a raise. Opponents can exploit this by raising with anything.', [{ v: 'Fold to raise: ' + rate + '%' }, { v: '~' + est + ' BB cost' }]) });
+      var examples = [];
+      for (var i = 0; i < hands.length && examples.length < 10; i++) {
+        var acts = parseActions(hands[i].actions);
+        for (var j = 0; j < acts.length; j++) {
+          if (!acts[j].isMe && acts[j].type === 'raise' && acts[j].street !== 'Preflop') {
+            for (var k = j + 1; k < acts.length; k++) {
+              if (acts[k].isMe && acts[k].type === 'fold') { examples.push(hands[i]); break; }
+              if (acts[k].isMe) break;
+            }
+            break;
+          }
+        }
+      }
+      leaks.push({ cost: est, html: insWithExample('r', 'Over-folding to Raises', 'You fold ' + rate + '% when facing a raise. Opponents can exploit this by raising with anything.', [{ v: 'Fold to raise: ' + rate + '%' }, { v: '~' + est + ' BB cost' }], examples, 'You folded to a raise here — consider if your hand had enough equity to continue.') });
     }
   })();
 
@@ -90,7 +113,26 @@ function renderLeaks(container, d, hands) {
     var rate = pct(folded, faced);
     if (rate > 65) {
       var est = Math.round((rate - 65) * faced * 0.2);
-      leaks.push({ cost: est, html: ins('r', 'Over-folding to C-bets', 'You fold ' + rate + '% to continuation bets. Opponents can c-bet profitably with any hand.', [{ v: 'Fold to c-bet: ' + rate + '%' }, { v: '~' + est + ' BB cost' }]) });
+      var examples = [];
+      for (var ii = 0; ii < hands.length && examples.length < 10; ii++) {
+        var acts2 = parseActions(hands[ii].actions);
+        var pfr2 = null;
+        for (var jj = 0; jj < acts2.length; jj++) {
+          if (acts2[jj].street === 'Preflop' && acts2[jj].type === 'raise' && !acts2[jj].isMe) { pfr2 = acts2[jj].author; break; }
+        }
+        if (!pfr2) continue;
+        for (var jj = 0; jj < acts2.length; jj++) {
+          if (acts2[jj].street === 'Flop' && acts2[jj].author === pfr2 && (acts2[jj].type === 'bet' || acts2[jj].type === 'raise')) {
+            for (var kk = jj + 1; kk < acts2.length; kk++) {
+              if (acts2[kk].street !== 'Flop') break;
+              if (acts2[kk].isMe && acts2[kk].type === 'fold') { examples.push(hands[ii]); break; }
+              if (acts2[kk].isMe) break;
+            }
+            break;
+          }
+        }
+      }
+      leaks.push({ cost: est, html: insWithExample('r', 'Over-folding to C-bets', 'You fold ' + rate + '% to continuation bets. Opponents can c-bet profitably with any hand.', [{ v: 'Fold to c-bet: ' + rate + '%' }, { v: '~' + est + ' BB cost' }], examples, 'You folded to a c-bet here — many c-bets are bluffs worth calling or raising.') });
     }
   })();
 
@@ -126,7 +168,26 @@ function renderLeaks(container, d, hands) {
     var rate = pct(folded, faced);
     if (rate > 75) {
       var est = Math.round((rate - 75) * faced * 0.3);
-      leaks.push({ cost: est, html: ins('r', 'Over-folding to 3-bets', 'You fold ' + rate + '% to 3-bets. Opponents can 3-bet you profitably with any two cards.', [{ v: 'Fold to 3-bet: ' + rate + '%' }, { v: '~' + est + ' BB cost' }]) });
+      var examples = [];
+      for (var ii = 0; ii < hands.length && examples.length < 10; ii++) {
+        var acts2 = parseActions(hands[ii].actions);
+        var heroRaised = false;
+        for (var jj = 0; jj < acts2.length; jj++) {
+          if (acts2[jj].street === 'Preflop' && acts2[jj].isMe && acts2[jj].type === 'raise') { heroRaised = true; break; }
+        }
+        if (!heroRaised) continue;
+        for (var jj = 0; jj < acts2.length; jj++) {
+          if (acts2[jj].street === 'Preflop' && !acts2[jj].isMe && acts2[jj].type === 'raise') {
+            for (var kk = jj + 1; kk < acts2.length; kk++) {
+              if (acts2[kk].street !== 'Preflop') break;
+              if (acts2[kk].isMe && acts2[kk].type === 'fold') { examples.push(hands[ii]); break; }
+              if (acts2[kk].isMe) break;
+            }
+            break;
+          }
+        }
+      }
+      leaks.push({ cost: est, html: insWithExample('r', 'Over-folding to 3-bets', 'You fold ' + rate + '% to 3-bets. Opponents can 3-bet you profitably with any two cards.', [{ v: 'Fold to 3-bet: ' + rate + '%' }, { v: '~' + est + ' BB cost' }], examples, 'You folded to a 3-bet here — consider defending with suited connectors and strong broadways.') });
     }
   })();
 
@@ -155,10 +216,21 @@ function renderLeaks(container, d, hands) {
   // ── 7. Passive Post-flop ───────────────────────────────────────────────
   (function() {
     if (d.n < 30) return;
-    var agg = pct(d.raises, d.totalActs);
+    var agg = calcAggression(d.raises, d.calls, d.checks);
     if (agg !== null && agg < 18) {
       var est = Math.round((18 - agg) * d.n * 0.15);
-      leaks.push({ cost: est, html: ins('r', 'Passive Post-flop', 'Aggression is only ' + agg + '%. You check and call too often instead of betting and raising for value or as bluffs.', [{ v: 'Aggression: ' + agg + '%' }, { v: '~' + est + ' BB cost' }]) });
+      var examples = [];
+      for (var i = 0; i < hands.length && examples.length < 10; i++) {
+        var heroActs = getHeroActions(hands[i]);
+        var postFlopCalls = 0, postFlopBets = 0;
+        for (var j = 0; j < heroActs.length; j++) {
+          if (heroActs[j].street === 'Preflop') continue;
+          if (heroActs[j].type === 'call' || heroActs[j].type === 'check') postFlopCalls++;
+          if (heroActs[j].type === 'bet' || heroActs[j].type === 'raise') postFlopBets++;
+        }
+        if (postFlopCalls >= 2 && postFlopBets === 0) examples.push(hands[i]);
+      }
+      leaks.push({ cost: est, html: insWithExample('r', 'Passive Post-flop', 'Aggression is only ' + agg + '%. You check and call too often instead of betting and raising for value or as bluffs.', [{ v: 'Aggression: ' + agg + '%' }, { v: '~' + est + ' BB cost' }], examples, 'You checked and called multiple streets here — consider if a bet or raise would have been stronger.') });
     }
   })();
 
@@ -205,7 +277,7 @@ function renderLeaks(container, d, hands) {
       var h = hands[i];
       if (!h.board || h.board.length < 3) continue;
       var tex = classifyBoardTexture(h.board.slice(0, 3).map(normCard));
-      if (!tex || tex.wetness !== 'wet') continue;
+      if (!tex || tex.wetness === 'dry') continue;
       var heroActs = getHeroActions(h);
       var flopAct = null;
       for (var j = 0; j < heroActs.length; j++) {
@@ -222,7 +294,7 @@ function renderLeaks(container, d, hands) {
       }
     }
     if (wetFlops < 15) {
-      leaks.push({ cost: 0, html: ins('n', 'Wet Board Play', 'Need ' + (15 - wetFlops) + ' more wet flop hands to assess.', [{ v: wetFlops + '/15 hands' }]) });
+      leaks.push({ cost: 0, html: ins('n', 'Wet Board Play', 'Need ' + (15 - wetFlops) + ' more coordinated flop hands to assess.', [{ v: wetFlops + '/15 hands' }]) });
       return;
     }
     var rate = pct(passiveWet, wetFlops);
@@ -291,7 +363,14 @@ function renderLeaks(container, d, hands) {
     var baseline = bb * 0.8; // Expected blind loss baseline
     if (lossPerHand > baseline * 1.5) {
       var excessBB = Math.round((lossPerHand - baseline) * blindHands / bb);
-      leaks.push({ cost: excessBB, html: ins('a', 'Blind Losses', 'You\'re losing ' + fmt(Math.round(lossPerHand)) + ' per hand from the blinds, well above the ' + fmt(Math.round(baseline)) + ' baseline. Tighten blind defense or play more aggressively.', [{ v: fmt(Math.round(blindLoss)) + ' total blind losses' }, { v: '~' + excessBB + ' BB excess' }]) });
+      var examples = [];
+      for (var i = 0; i < hands.length && examples.length < 10; i++) {
+        var bpos = (hands[i].position || '').toUpperCase();
+        if (bpos !== 'SB' && bpos !== 'BB') continue;
+        var bpnl = getHandPnl(hands[i]);
+        if (bpnl.cls === 'l') examples.push(hands[i]);
+      }
+      leaks.push({ cost: excessBB, html: insWithExample('a', 'Blind Losses', 'You\'re losing ' + fmt(Math.round(lossPerHand)) + ' per hand from the blinds, well above the ' + fmt(Math.round(baseline)) + ' baseline. Tighten blind defense or play more aggressively.', [{ v: fmt(Math.round(blindLoss)) + ' total blind losses' }, { v: '~' + excessBB + ' BB excess' }], examples, 'You lost from the blinds here — consider if a tighter fold or more aggressive play would have been better.') });
     }
   })();
 
@@ -345,9 +424,12 @@ function renderLeaks(container, d, hands) {
   html += '<div class="desc-text mb-24">Automated analysis of your play patterns. Identifies areas where you may be losing value, sorted by estimated cost.</div>';
 
   if (leakCount > 0) {
+    var bb = getHandBB(hands[0]);
+    var costStr = '~' + totalCost + ' BB estimated cost';
+    if (bb && bb > 0) costStr += ' (' + fmt(Math.round(totalCost * bb)) + ')';
     html += '<div class="leak-summary">';
     html += '<span class="leak-summary-count">' + leakCount + ' leak' + (leakCount > 1 ? 's' : '') + ' found</span>';
-    html += '<span class="leak-summary-cost">~' + totalCost + ' BB estimated cost</span>';
+    html += '<span class="leak-summary-cost">' + costStr + '</span>';
     html += '</div>';
   } else {
     html += '<div class="leak-summary"><span class="leak-summary-count">No significant leaks detected</span></div>';

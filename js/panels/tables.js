@@ -44,7 +44,7 @@ function renderTables(container, hands, allHands, excludedTables, onRerender) {
       var tWr = pct(tD.handsWon, tD.handsWithOutcome);
       var tNet = tD.totalWonAmount - tD.totalInvested;
       var tVpip = pct(tD.vpip, tD.n);
-      var tAgg = pct(tD.raises, tD.totalActs);
+      var tAgg = calcAggression(tD.raises, tD.calls, tD.checks);
       var tLabel = tid3 === 'unknown' ? 'Unknown' : getTableLabel(tid3);
       var blinds = tid3 !== 'unknown' && TABLE_META[tid3] ? fmt(TABLE_META[tid3].sb) + '/' + fmt(TABLE_META[tid3].bb) : '';
       tableRows.push({

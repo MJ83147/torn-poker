@@ -31,17 +31,9 @@ function renderShowdown(container, hands, meta) {
 
   for (var i = 0; i < cash.length; i++) {
     var h = cash[i];
-    var invested = getInvested(h);
-    var delta = 0;
-    var won = false;
+    var delta = getHandPnlValue(h);
+    var won = h.outcome.result === 'won';
     var pot = h.pot || 0;
-
-    if (h.outcome.result === 'won') {
-      delta = (h.outcome.amount || 0) - invested;
-      won = true;
-    } else {
-      delta = -invested;
-    }
 
     var sd = isShowdown(h);
     if (sd) {

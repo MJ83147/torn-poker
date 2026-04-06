@@ -1,13 +1,6 @@
 // ── MY GAME PANEL ────────────────────────────────────────────────────────────
 
 function renderMyGame(container, d, hands) {
-  function sev(v, rLo, rHi, aLo, aHi) {
-    if (v === null) return 'text';
-    if (v <= rLo || v >= rHi) return 'red';
-    if (v <= aLo || v >= aHi) return 'amber';
-    return 'green';
-  }
-
   var playerName = State.meta.player || detectPlayerFromActions(hands) || 'Unknown';
   var exportDate = State.meta.exportedAt
     ? new Date(State.meta.exportedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
@@ -19,7 +12,7 @@ function renderMyGame(container, d, hands) {
   var vpipVal   = pct(d.vpip, d.n);
   var pfrVal    = pct(d.pfrHands, d.n);
   var limpVal   = pct(d.limpHands, d.n);
-  var aggVal    = pct(d.raises, d.raises + d.calls + d.checks);
+  var aggVal    = calcAggression(d.raises, d.calls, d.checks);
   var ftrVal    = pct(d.foldedToRaise, d.facedRaise);
   var cbetVal   = pct(d.cbetDone, d.cbetOpps);
   var wtsdVal   = pct(d.wentToShowdown, d.sawFlop);
@@ -91,17 +84,10 @@ function renderMyGame(container, d, hands) {
     // ── Helper: early/late position VPIP ──
     var earlyPos = ['UTG', 'UTG+1', 'MP'];
     var latePos = ['CO', 'BTN'];
-    var earlyVpip = 0, earlyHands = 0, lateVpip = 0, lateHands = 0;
-    for (var ep = 0; ep < earlyPos.length; ep++) {
-      var p = earlyPos[ep];
-      if (d.posMap[p]) { earlyVpip += d.posMap[p].vpip; earlyHands += d.posMap[p].hands; }
-    }
-    for (var lp = 0; lp < latePos.length; lp++) {
-      var p2 = latePos[lp];
-      if (d.posMap[p2]) { lateVpip += d.posMap[p2].vpip; lateHands += d.posMap[p2].hands; }
-    }
-    var epVpip = pct(earlyVpip, earlyHands);
-    var lpVpip = pct(lateVpip, lateHands);
+    var earlyGroup = calcPositionGroupVpip(d.posMap, earlyPos);
+    var lateGroup = calcPositionGroupVpip(d.posMap, latePos);
+    var epVpip = earlyGroup.vpip, earlyHands = earlyGroup.hands;
+    var lpVpip = lateGroup.vpip, lateHands = lateGroup.hands;
 
     // Best position by P&L
     var bestPos = null, bestPosPnl = -Infinity, bestPosWr = null;
@@ -201,6 +187,33 @@ function renderMyGame(container, d, hands) {
       html += '<div class="sec-subtitle mt-20">Exploitable Leaks</div>';
       html += '<div class="ins-grid">' + leaks.map(function(l) { return l.html; }).join('') + '</div>';
     }
+
+    // ── Section 5b: Leak Finder (merged from Leak Finder panel) ──
+    html += '<div class="sec-subtitle mt-20">Leak Finder</div>';
+    html += '<div style="font-size:13px;color:var(--dim);margin-bottom:12px;">Automated analysis sorted by estimated cost.</div>';
+    var detailedLeaks = [];
+    renderLeakChecks(detailedLeaks, d, hands);
+    detailedLeaks.sort(function(a, b) { return b.cost - a.cost; });
+    var totalCost = 0, leakCount = 0;
+    for (var dli = 0; dli < detailedLeaks.length; dli++) {
+      if (detailedLeaks[dli].cost > 0) { totalCost += detailedLeaks[dli].cost; leakCount++; }
+    }
+    if (leakCount > 0) {
+      var bb = getHandBB(hands[0]);
+      var costStr = '~' + totalCost + ' BB estimated cost';
+      if (bb && bb > 0) costStr += ' (' + fmt(Math.round(totalCost * bb)) + ')';
+      html += '<div class="leak-summary">';
+      html += '<span class="leak-summary-count">' + leakCount + ' leak' + (leakCount > 1 ? 's' : '') + ' found</span>';
+      html += '<span class="leak-summary-cost">' + costStr + '</span>';
+      html += '</div>';
+    } else {
+      html += '<div class="leak-summary"><span class="leak-summary-count">No significant leaks detected</span></div>';
+    }
+    html += '<div class="ins-grid">';
+    for (var dli2 = 0; dli2 < detailedLeaks.length; dli2++) {
+      html += detailedLeaks[dli2].html;
+    }
+    html += '</div>';
 
     // ── Section 6: Work on next ──
     html += '<div class="sec-subtitle mt-20">Work On Next</div>';
@@ -355,12 +368,7 @@ function sessionPnl(session) {
   for (var i = 0; i < session.hands.length; i++) {
     var h = session.hands[i];
     if (!isCashHand(h) || !h.outcome) continue;
-    var inv = getInvested(h);
-    if (h.outcome.result === 'won') {
-      pnl += (h.outcome.amount || 0) - inv;
-    } else {
-      pnl -= inv;
-    }
+    pnl += getHandPnlValue(h);
   }
   return pnl;
 }
@@ -369,8 +377,8 @@ function detectSessionPatterns(sessionData, overallData) {
   var patterns = [];
   var sVpip = pct(sessionData.vpip, sessionData.n);
   var oVpip = pct(overallData.vpip, overallData.n);
-  var sAgg = pct(sessionData.raises, sessionData.raises + sessionData.calls + sessionData.checks);
-  var oAgg = pct(overallData.raises, overallData.raises + overallData.calls + overallData.checks);
+  var sAgg = calcAggression(sessionData.raises, sessionData.calls, sessionData.checks);
+  var oAgg = calcAggression(overallData.raises, overallData.calls, overallData.checks);
   var sLimp = pct(sessionData.limpHands, sessionData.n);
   var oLimp = pct(overallData.limpHands, overallData.n);
   var sPfr = pct(sessionData.pfrHands, sessionData.n);
@@ -381,24 +389,8 @@ function detectSessionPatterns(sessionData, overallData) {
   var oWtsd = pct(overallData.wentToShowdown, overallData.sawFlop);
 
   var earlyPos = ['UTG', 'UTG+1', 'MP'];
-  var sEarlyVpip = 0, sEarlyHands = 0;
-  for (var ep = 0; ep < earlyPos.length; ep++) {
-    var p = earlyPos[ep];
-    if (sessionData.posMap[p]) {
-      sEarlyVpip += sessionData.posMap[p].vpip;
-      sEarlyHands += sessionData.posMap[p].hands;
-    }
-  }
-  var sEpVpip = pct(sEarlyVpip, sEarlyHands);
-  var oEarlyVpip = 0, oEarlyHands = 0;
-  for (var ep2 = 0; ep2 < earlyPos.length; ep2++) {
-    var p2 = earlyPos[ep2];
-    if (overallData.posMap[p2]) {
-      oEarlyVpip += overallData.posMap[p2].vpip;
-      oEarlyHands += overallData.posMap[p2].hands;
-    }
-  }
-  var oEpVpip = pct(oEarlyVpip, oEarlyHands);
+  var sEpVpip = calcPositionGroupVpip(sessionData.posMap, earlyPos).vpip;
+  var oEpVpip = calcPositionGroupVpip(overallData.posMap, earlyPos).vpip;
 
   var THRESH = 10;
 

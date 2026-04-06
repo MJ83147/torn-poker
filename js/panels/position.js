@@ -33,12 +33,8 @@ function renderPosition(container, d, hands) {
   var pIns = [];
   var earlyH = ['UTG', 'UTG+1', 'MP'];
   var lateH = ['CO', 'BTN'];
-  var ev = earlyH.reduce(function(s, p) { return s + (d.posMap[p] ? d.posMap[p].vpip : 0); }, 0);
-  var eh = earlyH.reduce(function(s, p) { return s + (d.posMap[p] ? d.posMap[p].hands : 0); }, 0);
-  var lv = lateH.reduce(function(s, p) { return s + (d.posMap[p] ? d.posMap[p].vpip : 0); }, 0);
-  var lh = lateH.reduce(function(s, p) { return s + (d.posMap[p] ? d.posMap[p].hands : 0); }, 0);
-  var evp = pct(ev, eh);
-  var lvp = pct(lv, lh);
+  var evp = calcPositionGroupVpip(d.posMap, earlyH).vpip;
+  var lvp = calcPositionGroupVpip(d.posMap, lateH).vpip;
 
   if (evp !== null && evp > 55) {
     var exEarlyWide = findExampleHand(function(h) {

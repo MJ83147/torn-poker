@@ -3,18 +3,12 @@
 var _logPage = 0;
 var _logSort = { col: null, dir: 'desc' };
 
-function getResultValue(h) {
-  if (!h.outcome) return 0;
-  if (h.outcome.result === 'won') return (h.outcome.amount || 0) - getInvested(h);
-  return -getInvested(h);
-}
-
 function sortHands(list, col, dir) {
   if (!col) return list;
   return list.slice().sort(function(a, b) {
     var va, vb;
     if (col === 'pos') { va = a.position || ''; vb = b.position || ''; return dir === 'asc' ? (va < vb ? -1 : va > vb ? 1 : 0) : (va > vb ? -1 : va < vb ? 1 : 0); }
-    if (col === 'result') { va = getResultValue(a); vb = getResultValue(b); }
+    if (col === 'result') { va = getHandPnlValue(a); vb = getHandPnlValue(b); }
     else return 0;
     return dir === 'asc' ? va - vb : vb - va;
   });

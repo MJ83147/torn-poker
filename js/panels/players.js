@@ -18,7 +18,7 @@ function cacheOpponentProfiles(hands) {
     if (s.hands < 5) continue;
     var vpip = pct(s.vpipHands, s.hands);
     var pfr = pct(s.pfrHands, s.hands);
-    var agg = pct(s.totalRaises, s.totalRaises + s.totalCalls + s.totalChecks);
+    var agg = calcAggression(s.totalRaises, s.totalCalls, s.totalChecks);
     var cbet = pct(s.cbetDone, s.cbetOpps);
     var foldToRaise = pct(s.foldedToRaise, s.facedRaise);
     var wtsd = pct(s.wentToShowdown, s.sawFlop);
@@ -235,7 +235,7 @@ function generateExploitInsights(s, playerName, hands) {
   var vpip = pct(s.vpipHands, s.hands);
   var pfr = pct(s.pfrHands, s.hands);
   var limp = pct(s.limpHands, s.hands);
-  var agg = pct(s.totalRaises, s.totalRaises + s.totalCalls + s.totalChecks);
+  var agg = calcAggression(s.totalRaises, s.totalCalls, s.totalChecks);
   var foldToRaise = pct(s.foldedToRaise, s.facedRaise);
   var cbet = pct(s.cbetDone, s.cbetOpps);
   var wtsd = pct(s.wentToShowdown, s.sawFlop);
@@ -484,17 +484,10 @@ function renderPlayers(container, d, hands) {
       oppMap[a.author].hands++;
       oppMap[a.author].handRefs.push(i);
       if (h.outcome) {
-        var inv = getInvested(h);
-        if (h.outcome.result === 'won') {
-          oppMap[a.author].won++;
-          oppMap[a.author].profit += (h.outcome.amount || 0) - inv;
-        } else if (h.outcome.result === 'folded') {
-          oppMap[a.author].folded++;
-          oppMap[a.author].profit -= inv;
-        } else {
-          oppMap[a.author].lost++;
-          oppMap[a.author].profit -= inv;
-        }
+        if (h.outcome.result === 'won') oppMap[a.author].won++;
+        else if (h.outcome.result === 'folded') oppMap[a.author].folded++;
+        else oppMap[a.author].lost++;
+        oppMap[a.author].profit += getHandPnlValue(h);
       }
     }
   }
@@ -664,18 +657,13 @@ function renderPlayers(container, d, hands) {
       var vpip = pct(oppStats.vpipHands, oppStats.hands);
       var pfr = pct(oppStats.pfrHands, oppStats.hands);
       var limp = pct(oppStats.limpHands, oppStats.hands);
-      var aggPct = pct(oppStats.totalRaises, oppStats.totalRaises + oppStats.totalCalls + oppStats.totalChecks);
+      var aggPct = calcAggression(oppStats.totalRaises, oppStats.totalCalls, oppStats.totalChecks);
       var ftr = pct(oppStats.foldedToRaise, oppStats.facedRaise);
       var cbet = pct(oppStats.cbetDone, oppStats.cbetOpps);
       var wtsd = pct(oppStats.wentToShowdown, oppStats.sawFlop);
       var wsd = pct(oppStats.wonAtShowdown, oppStats.wentToShowdown);
 
-      function sev(v, rLo, rHi, aLo, aHi) {
-        if (v === null) return 'text';
-        if (v <= rLo || v >= rHi) return 'red';
-        if (v <= aLo || v >= aHi) return 'amber';
-        return 'green';
-      }
+
 
       if (oppStats.hands >= 5) {
         var minis = [

@@ -26,7 +26,7 @@ function renderTrends(container, hands, meta) {
     dayMap[day].push(sorted[i]);
   }
   var points = [];
-  var cumWon = 0, cumOutcome = 0, cumVpip = 0, cumN = 0, cumRaise = 0, cumActs = 0, cumCashWon = 0, cumCashInvested = 0;
+  var cumWon = 0, cumOutcome = 0, cumVpip = 0, cumN = 0, cumRaise = 0, cumCalls = 0, cumChecks = 0, cumCashWon = 0, cumCashInvested = 0;
   for (var si = 0; si < sessions.length; si++) {
     var dayHands = dayMap[sessions[si]];
     var dStats = analyse(dayHands);
@@ -35,7 +35,8 @@ function renderTrends(container, hands, meta) {
     cumVpip += dStats.vpip;
     cumN += dStats.n;
     cumRaise += dStats.raises;
-    cumActs += dStats.totalActs;
+    cumCalls += dStats.calls;
+    cumChecks += dStats.checks;
     cumCashWon += dStats.totalWonAmount;
     cumCashInvested += dStats.totalInvested;
     points.push({
@@ -44,7 +45,7 @@ function renderTrends(container, hands, meta) {
       cumHands: cumN,
       wr: cumOutcome > 0 ? Math.round(cumWon / cumOutcome * 100) : null,
       vpip: cumN > 0 ? Math.round(cumVpip / cumN * 100) : null,
-      agg: cumActs > 0 ? Math.round(cumRaise / cumActs * 100) : null,
+      agg: calcAggression(cumRaise, cumCalls, cumChecks),
       sessionWr: dStats.handsWithOutcome > 0 ? Math.round(dStats.handsWon / dStats.handsWithOutcome * 100) : null,
       netPnl: cumCashWon - cumCashInvested,
     });

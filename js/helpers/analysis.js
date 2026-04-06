@@ -33,6 +33,14 @@ function getHandPnl(h) {
   return { cls: 'l', text: '-' + fmt(invested) };
 }
 
+// Numeric P&L value for a hand (positive = profit, negative = loss).
+function getHandPnlValue(h) {
+  if (!h.outcome) return 0;
+  var invested = getInvested(h);
+  if (h.outcome.result === 'won') return (h.outcome.amount || 0) - invested;
+  return -invested;
+}
+
 // Infer TC table id from hand metadata and blind sizes
 function inferTable(hand) {
   // Use the tableId field from TM script (e.g. "holdem21")

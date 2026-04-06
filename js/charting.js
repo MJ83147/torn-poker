@@ -90,7 +90,7 @@ function chartYScale(colors, opts) {
   var scale = {
     ticks: {
       color: colors.dim,
-      font: { family: 'IBM Plex Mono', size: opts.tickSize || 9 },
+      font: { family: 'IBM Plex Mono', size: opts.tickSize || 10 },
     },
     grid: { color: opts.gridColor || 'rgba(255,255,255,0.04)' },
     border: { display: false },
@@ -111,7 +111,7 @@ function chartYScaleZeroLine(colors, opts) {
   return {
     ticks: {
       color: colors.dim,
-      font: { family: 'IBM Plex Mono', size: opts.tickSize || 9 },
+      font: { family: 'IBM Plex Mono', size: opts.tickSize || 10 },
       callback: opts.tickCallback,
     },
     grid: {

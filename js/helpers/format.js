@@ -33,6 +33,32 @@ function pct(a, b) {
   return b > 0 ? Math.round(a / b * 100) : null;
 }
 
+// Standard poker aggression frequency: raises / (raises + calls + checks)
+// Excludes folds — folding is not an aggressive or passive action.
+function calcAggression(raises, calls, checks) {
+  return pct(raises, raises + calls + checks);
+}
+
+// Severity rating: maps a value to 'red'/'amber'/'green'/'text' based on thresholds.
+// rLo/rHi = red thresholds (outside = red), aLo/aHi = amber thresholds (outside = amber).
+// Aggregate VPIP across a group of positions from posMap.
+// Returns { vpip: pct, hands: totalHands }
+function calcPositionGroupVpip(posMap, positions) {
+  var v = 0, h = 0;
+  for (var i = 0; i < positions.length; i++) {
+    var p = posMap[positions[i]];
+    if (p) { v += p.vpip; h += p.hands; }
+  }
+  return { vpip: pct(v, h), hands: h };
+}
+
+function sev(v, rLo, rHi, aLo, aHi) {
+  if (v === null) return 'text';
+  if (v <= rLo || v >= rHi) return 'red';
+  if (v <= aLo || v >= aHi) return 'amber';
+  return 'green';
+}
+
 function clamp(v, lo, hi) {
   return Math.max(lo, Math.min(hi, v));
 }
