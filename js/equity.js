@@ -30,7 +30,7 @@ function evaluate5(cards) {
     ranks.push(rankIndex(cards[i]));
     suits.push(suitOf(cards[i]));
   }
-  ranks.sort(function(a, b) { return b - a; }); // descending
+  ranks.sort(function (a, b) { return b - a; }); // descending
 
   var isFlush = suits[0] === suits[1] && suits[1] === suits[2] && suits[2] === suits[3] && suits[3] === suits[4];
 
@@ -38,7 +38,7 @@ function evaluate5(cards) {
   var isStraight = false;
   var straightHigh = 0;
   if (ranks[0] - ranks[4] === 4 &&
-      ranks[0] !== ranks[1] && ranks[1] !== ranks[2] && ranks[2] !== ranks[3] && ranks[3] !== ranks[4]) {
+    ranks[0] !== ranks[1] && ranks[1] !== ranks[2] && ranks[2] !== ranks[3] && ranks[3] !== ranks[4]) {
     isStraight = true;
     straightHigh = ranks[0];
   }
@@ -58,7 +58,7 @@ function evaluate5(cards) {
     groups.push({ rank: Number(rk), count: freq[rk] });
   }
   // Sort by count desc, then rank desc
-  groups.sort(function(a, b) { return b.count - a.count || b.rank - a.rank; });
+  groups.sort(function (a, b) { return b.count - a.count || b.rank - a.rank; });
 
   var M = 1e10;
 
@@ -86,7 +86,7 @@ function evaluate5(cards) {
   if (groups[0].count === 3) {
     var kickers3 = [];
     for (var k = 1; k < groups.length; k++) kickers3.push(groups[k].rank);
-    kickers3.sort(function(a, b) { return b - a; });
+    kickers3.sort(function (a, b) { return b - a; });
     return 3 * M + groups[0].rank * 10000 + kickers3[0] * 100 + kickers3[1];
   }
   // Two pair
@@ -99,7 +99,7 @@ function evaluate5(cards) {
   if (groups[0].count === 2) {
     var kickers1 = [];
     for (var p = 1; p < groups.length; p++) kickers1.push(groups[p].rank);
-    kickers1.sort(function(a, b) { return b - a; });
+    kickers1.sort(function (a, b) { return b - a; });
     return 1 * M + groups[0].rank * 1000000 + kickers1[0] * 10000 + kickers1[1] * 100 + kickers1[2];
   }
   // High card
@@ -144,34 +144,66 @@ function classifyMadeHand(holeCards, boardCards) {
   var tier = Math.floor(score / M);
 
   var labels = ['High Card', 'Pair', 'Two Pair', 'Three of a Kind', 'Straight',
-                'Flush', 'Full House', 'Four of a Kind', 'Straight Flush'];
+    'Flush', 'Full House', 'Four of a Kind', 'Straight Flush'];
   var label = labels[tier] || 'High Card';
 
   // Refine pair/trips/quads labels using hole card context
-  var heroRanks = hero.map(function(c) { return RANKS.indexOf(c.slice(0, -1)); });
-  var boardRanks = board.map(function(c) { return RANKS.indexOf(c.slice(0, -1)); });
+  var heroRanks = hero.map(function (c) { return RANKS.indexOf(c.slice(0, -1)); });
+  var boardRanks = board.map(function (c) { return RANKS.indexOf(c.slice(0, -1)); });
   var boardRankCounts = {};
   for (var bi = 0; bi < boardRanks.length; bi++) {
     boardRankCounts[boardRanks[bi]] = (boardRankCounts[boardRanks[bi]] || 0) + 1;
   }
 
-  if (tier === 1) {
-    // Pair — is it pocket pair (overpair/underpair), top pair, middle pair, bottom pair?
-    var boardSorted = boardRanks.slice().sort(function(a, b) { return b - a; });
+  // Helper: readable rank name for labels
+  var _rankNames = {
+    '2': 'Deuce', '3': 'Three', '4': 'Four', '5': 'Five', '6': 'Six', '7': 'Seven',
+    '8': 'Eight', '9': 'Nine', 'T': 'Ten', 'J': 'Jack', 'Q': 'Queen', 'K': 'King', 'A': 'Ace'
+  };
+  var heroHighRank = Math.max(heroRanks[0], heroRanks[1]);
+  var heroHighName = _rankNames[RANKS[heroHighRank]] || RANKS[heroHighRank];
+
+  if (tier === 0) {
+    label = heroHighName + ' High';
+  } else if (tier === 1) {
+    // Pair — check if hero actually pairs with the board, or if it's just a board pair
+    var boardSorted = boardRanks.slice().sort(function (a, b) { return b - a; });
     if (heroRanks[0] === heroRanks[1]) {
       if (heroRanks[0] > boardSorted[0]) label = 'Overpair';
       else label = 'Pocket Pair';
     } else {
+      // Check if either hole card pairs with a board card
       var pairedRank = -1;
       for (var hi = 0; hi < heroRanks.length; hi++) {
         if (boardRanks.indexOf(heroRanks[hi]) !== -1) { pairedRank = heroRanks[hi]; break; }
       }
-      if (pairedRank === boardSorted[0]) label = 'Top Pair';
+      if (pairedRank === -1) {
+        // Hero doesn't pair the board — board has its own pair, hero just has high cards
+        label = heroHighName + ' High';
+      } else if (pairedRank === boardSorted[0]) label = 'Top Pair';
       else if (pairedRank === boardSorted[boardSorted.length - 1]) label = 'Bottom Pair';
       else label = 'Middle Pair';
     }
   } else if (tier === 2) {
-    label = 'Two Pair';
+    // Two Pair — check if hero contributes to either pair or both are board pairs
+    var heroPairsBoard = false;
+    for (var tpi = 0; tpi < heroRanks.length; tpi++) {
+      if (boardRanks.indexOf(heroRanks[tpi]) !== -1) { heroPairsBoard = true; break; }
+    }
+    // Check if board itself has two pairs (e.g. 6-3-6-3)
+    var boardPairCount = 0;
+    for (var bpc in boardRankCounts) {
+      if (boardRankCounts[bpc] >= 2) boardPairCount++;
+    }
+    if (!heroPairsBoard && boardPairCount >= 2) {
+      // Both pairs are on the board — hero just has kickers
+      label = heroHighName + ' High (board two pair)';
+    } else if (!heroPairsBoard && boardPairCount === 1) {
+      // One board pair + hero doesn't pair = hero effectively has high cards
+      label = heroHighName + ' High (board pair)';
+    } else {
+      label = 'Two Pair';
+    }
   } else if (tier === 3) {
     // Three of a kind — set (pocket pair hit board) vs trips (board pair + one hole card)
     if (heroRanks[0] === heroRanks[1] && boardRanks.indexOf(heroRanks[0]) !== -1) {
@@ -189,8 +221,8 @@ function classifyMadeHand(holeCards, boardCards) {
 
   // Draw detection
   var draws = [];
-  var allRanks = all.map(function(c) { return RANKS.indexOf(c.slice(0, -1)); });
-  var allSuits = all.map(function(c) { return c.slice(-1); });
+  var allRanks = all.map(function (c) { return RANKS.indexOf(c.slice(0, -1)); });
+  var allSuits = all.map(function (c) { return c.slice(-1); });
 
   // Flush draw: 4 of one suit (only if not already a flush)
   if (tier < 5) {
@@ -201,7 +233,7 @@ function classifyMadeHand(holeCards, boardCards) {
     for (var suit in suitCounts) {
       if (suitCounts[suit] === 4) {
         // Verify at least one hole card contributes
-        var heroHasSuit = hero.some(function(c) { return c.slice(-1) === suit; });
+        var heroHasSuit = hero.some(function (c) { return c.slice(-1) === suit; });
         if (heroHasSuit) draws.push('Flush draw (9 outs)');
       }
     }
@@ -213,7 +245,7 @@ function classifyMadeHand(holeCards, boardCards) {
     for (var ui = 0; ui < allRanks.length; ui++) {
       if (uniqueRanks.indexOf(allRanks[ui]) === -1) uniqueRanks.push(allRanks[ui]);
     }
-    uniqueRanks.sort(function(a, b) { return a - b; });
+    uniqueRanks.sort(function (a, b) { return a - b; });
     // Also consider ace-low (A as 0-ish) by adding -1 if ace present
     if (uniqueRanks.indexOf(12) !== -1) uniqueRanks.unshift(-1);
 
@@ -254,7 +286,7 @@ function simulateStreet(heroHole, knownBoard, iterations) {
   for (var i = 0; i < heroHole.length; i++) dead[heroHole[i]] = true;
   for (var j = 0; j < knownBoard.length; j++) dead[knownBoard[j]] = true;
 
-  var remaining = buildDeck().filter(function(c) { return !dead[c]; });
+  var remaining = buildDeck().filter(function (c) { return !dead[c]; });
   var boardNeed = 5 - knownBoard.length;
   var wins = 0, ties = 0, total = 0;
 
@@ -430,13 +462,14 @@ function getHeroStreetActions(hand) {
   return { streets: streets, foldedOn: heroFoldedOn };
 }
 
-function generateGuidance(equity, streetInfo, texture, madeHand, villainProfile) {
+function generateGuidance(equity, streetInfo, texture, madeHand, villainProfile, priorStreets) {
   var eq = equity * 100;
   var act = streetInfo.action;
   var potOdds = streetInfo.potOdds * 100;
   var pot = streetInfo.potBefore || 0;
   var text = '';
   var quality = 'neutral'; // 'good', 'neutral', 'bad'
+  priorStreets = priorStreets || [];
 
   // Bet sizing as % of pot (for bets/raises)
   var betPotPct = (act.amount && pot > 0 && (act.type === 'bet' || act.type === 'raise'))
@@ -456,16 +489,39 @@ function generateGuidance(equity, streetInfo, texture, madeHand, villainProfile)
   var vAgg = villainProfile && (villainProfile.type === 'LAG' || (villainProfile.agg !== null && villainProfile.agg >= 40));
   var vCalls = villainProfile && villainProfile.wtsd !== null && villainProfile.wtsd >= 55;
   var vPassive = villainProfile && villainProfile.agg !== null && villainProfile.agg < 15;
+  var vHands = villainProfile ? villainProfile.hands : 0;
+
+  // ── Cross-street pattern analysis ──
+  var heroActionLine = priorStreets.map(function (ps) { return ps.heroActionType || ''; });
+  var villainActionLine = priorStreets.map(function (ps) { return ps.villainActionType || ''; });
+  var heroCallCount = heroActionLine.filter(function (a) { return a === 'call'; }).length;
+  var heroCheckCount = heroActionLine.filter(function (a) { return a === 'check'; }).length;
+  var villainBetCount = villainActionLine.filter(function (a) { return a === 'bet' || a === 'raise'; }).length;
+  var heroPassiveStreets = heroCallCount + heroCheckCount;
+  var isPassiveLine = heroPassiveStreets >= 2;
+
+  // ── Board-relative hand strength awareness ──
+  var isBoardPairHand = madeHand && madeHand.label.indexOf('board') !== -1;
+  var isEffectivelyHighCard = isBoardPairHand || (madeHand && madeHand.tier === 0);
+  var boardIsPaired = texture && texture.label && (texture.label.indexOf('Paired') !== -1 || texture.label.indexOf('paired') !== -1);
+  var boardIsDoublePaired = false;
+  if (texture && texture.boardRankCounts) {
+    var bpCount = 0;
+    for (var brk in texture.boardRankCounts) {
+      if (texture.boardRankCounts[brk] >= 2) bpCount++;
+    }
+    boardIsDoublePaired = bpCount >= 2;
+  }
 
   // Build villain action description
   var facingDesc = '';
   if (vAct) {
     var vSizeDesc = '';
     if (vBetPct !== null) {
-      if (vBetPct <= 33) vSizeDesc = ' (small — ' + vBetPct + '% pot)';
+      if (vBetPct <= 33) vSizeDesc = ' (small, ' + vBetPct + '% pot)';
       else if (vBetPct <= 75) vSizeDesc = ' (' + vBetPct + '% pot)';
-      else if (vBetPct <= 100) vSizeDesc = ' (large — ' + vBetPct + '% pot)';
-      else vSizeDesc = ' (overbet — ' + vBetPct + '% pot)';
+      else if (vBetPct <= 100) vSizeDesc = ' (large, ' + vBetPct + '% pot)';
+      else vSizeDesc = ' (overbet, ' + vBetPct + '% pot)';
     }
     facingDesc = 'Facing ' + vAct.author + '\'s ' + fmtDollar(vAct.amount) + ' ' + vAct.type + vSizeDesc + '. ';
   }
@@ -476,153 +532,184 @@ function generateGuidance(equity, streetInfo, texture, madeHand, villainProfile)
     mwDesc = playersActive + '-way pot' + (callersBefore > 0 ? ' (' + callersBefore + ' caller' + (callersBefore > 1 ? 's' : '') + ' before you)' : '') + '. ';
   }
 
+  // Villain line description for cross-street context
+  var vLineDesc = '';
+  if (villainBetCount >= 2 && vName) {
+    vLineDesc = vName + ' has bet ' + villainBetCount + ' street' + (villainBetCount > 1 ? 's' : '') + ' so far. ';
+  }
+
   // ── Blinds ──
   if (act.type === 'sb' || act.type === 'bb') {
     if (eq > 55) { text = 'Strong starting hand.'; quality = 'good'; }
     else if (eq >= 40) { text = 'Playable hand from the blinds.'; quality = 'neutral'; }
     else { text = 'Weak hand. Defend selectively.'; quality = 'bad'; }
 
-  // ── Check ──
+    // ── Check ──
   } else if (act.type === 'check') {
-    if (eq > 65 && vFolds !== null && vFolds >= 60) {
-      text = facingDesc + Math.round(eq) + '% equity but you checked. ' + vName + ' folds to raises ' + vFolds + '% — missed value opportunity.';
+    // Board-relative: checking ace high on paired/double-paired board is often fine
+    if (isEffectivelyHighCard && boardIsPaired) {
+      text = facingDesc + mwDesc + heroHighCardCheckText(eq, madeHand, boardIsDoublePaired, vName, vFolds, vCalls, vHands);
+      quality = eq >= 40 ? 'neutral' : 'good';
+    } else if (eq > 65 && vFolds !== null && vFolds >= 60) {
+      text = facingDesc + vLineDesc + Math.round(eq) + '% equity but you checked. ' + vName + ' folds to raises ' + vFolds + '% (' + vHands + ' hands) — missed value.';
       quality = 'bad';
     } else if (eq > 65 && vCalls) {
-      text = facingDesc + Math.round(eq) + '% equity but you checked. ' + vName + ' calls to showdown ' + villainProfile.wtsd + '% — bet big, they\'ll pay you off.';
+      text = facingDesc + vLineDesc + Math.round(eq) + '% equity but you checked. ' + vName + ' calls to showdown ' + villainProfile.wtsd + '% — bet big, they pay.';
       quality = 'bad';
     } else if (eq > 65 && vPassive) {
-      text = facingDesc + Math.round(eq) + '% equity but you checked. ' + vName + ' is passive — take the lead and bet for value.';
+      text = facingDesc + vLineDesc + Math.round(eq) + '% equity but you checked. ' + vName + ' is passive — take the lead.';
       quality = 'bad';
     } else if (eq > 65) {
-      text = facingDesc + 'Strong hand (' + Math.round(eq) + '% equity) but you checked. Betting for value is usually correct here.';
+      text = facingDesc + vLineDesc + 'Strong hand (' + Math.round(eq) + '% equity) but you checked. Betting for value is usually correct.';
       quality = 'bad';
     } else if (eq >= 40 && multiway) {
-      text = mwDesc + 'Decent equity (' + Math.round(eq) + '%) but checking in a multiway pot is fine — you\'re less likely to get folds from multiple opponents.';
+      text = mwDesc + vLineDesc + 'Decent equity (' + Math.round(eq) + '%) but checking multiway is reasonable — harder to get folds from multiple opponents.';
       quality = 'neutral';
     } else if (eq >= 40 && vFolds !== null && vFolds >= 60) {
-      text = facingDesc + Math.round(eq) + '% equity. ' + vName + ' folds to raises ' + vFolds + '% — a bet could take this down without showdown.';
+      text = facingDesc + vLineDesc + Math.round(eq) + '% equity. ' + vName + ' folds to raises ' + vFolds + '% (' + vHands + ' hands) — a bet could take this down.';
       quality = 'neutral';
     } else if (eq >= 40) {
-      text = 'Decent hand (' + Math.round(eq) + '% equity). A bet could protect your equity or extract thin value.';
-      quality = 'neutral';
+      if (isPassiveLine) {
+        text = vLineDesc + 'You\'ve played passively through ' + (heroPassiveStreets + 1) + ' streets with ' + Math.round(eq) + '% equity. Without a bet at some point, you\'re letting villain control the pot and set the price.';
+        quality = 'neutral';
+      } else {
+        text = vLineDesc + Math.round(eq) + '% equity. Checking is reasonable if you plan to call a bet.';
+        quality = 'neutral';
+      }
     } else {
-      text = 'Weak hand. Checking is correct — no value in betting here.';
+      text = 'Weak hand. Checking is correct.';
       quality = 'good';
     }
 
-  // ── Call ──
+    // ── Call ──
   } else if (act.type === 'call') {
-    // Always include what you were facing
     text = facingDesc;
-    if (eq > potOdds + 10 && vFolds !== null && vFolds >= 60) {
-      text += 'Your ' + Math.round(eq) + '% equity justified a call, but ' + vName + ' folds to raises ' + vFolds + '% — raising could have won the pot outright.';
+
+    // Cross-street passive line warning
+    if (heroCallCount >= 1 && isEffectivelyHighCard && !multiway) {
+      text += vLineDesc + 'You\'ve called ' + (heroCallCount + 1) + ' streets with ' + (madeHand ? madeHand.label : 'a marginal hand') + '. ';
+      if (boardIsDoublePaired) {
+        text += 'On a double-paired board, any pocket pair beats you. ';
+      }
+      if (vFolds !== null && vFolds >= 60 && vHands >= 5) {
+        text += vName + ' folds to raises ' + vFolds + '% (' + vHands + ' hands) — raising was better than calling.';
+        quality = 'bad';
+      } else if (vAgg) {
+        text += vName + ' is aggressive (AFq ' + villainProfile.agg + '%) — could be bluffing, but calling passively lets them barrel you off.';
+        quality = 'neutral';
+      } else {
+        text += 'A raise at some point would test whether villain actually has a hand.';
+        quality = 'neutral';
+      }
+    } else if (eq > potOdds + 10 && vFolds !== null && vFolds >= 60) {
+      text += vLineDesc + Math.round(eq) + '% equity justified a call, but ' + vName + ' folds to raises ' + vFolds + '% (' + vHands + ' hands) — raising wins the pot outright.';
       quality = 'neutral';
     } else if (eq > potOdds + 10 && vAgg) {
-      text += vName + ' is aggressive — calling down with ' + Math.round(eq) + '% equity is correct. Let them keep bluffing into you.';
+      text += vLineDesc + vName + ' is aggressive — calling with ' + Math.round(eq) + '% equity is fine. Let them bluff into you.';
       quality = 'good';
     } else if (eq > potOdds + 10 && multiway && callersBefore > 0) {
-      text += mwDesc + 'Good call with ' + Math.round(eq) + '% equity, but be cautious — ' + callersBefore + ' caller' + (callersBefore > 1 ? 's' : '') + ' already in means someone likely has a real hand.';
+      text += mwDesc + vLineDesc + 'Good call with ' + Math.round(eq) + '% equity, but ' + callersBefore + ' caller' + (callersBefore > 1 ? 's' : '') + ' already in means someone likely has a real hand.';
       quality = 'good';
     } else if (eq > potOdds + 10) {
-      text += 'Good price. Your ' + Math.round(eq) + '% equity comfortably beats the ' + Math.round(potOdds) + '% needed.';
+      text += vLineDesc + 'Good price. ' + Math.round(eq) + '% equity beats the ' + Math.round(potOdds) + '% needed.';
       quality = 'good';
     } else if (eq >= potOdds - 10) {
-      text += 'Borderline spot. Your ' + Math.round(eq) + '% equity roughly matches the ' + Math.round(potOdds) + '% needed — implied odds make or break this call.';
+      text += vLineDesc + 'Borderline. ' + Math.round(eq) + '% equity roughly matches the ' + Math.round(potOdds) + '% needed — implied odds decide this.';
       quality = 'neutral';
     } else {
-      text += 'Unprofitable call. You had ' + Math.round(eq) + '% equity but needed ' + Math.round(potOdds) + '%.';
+      text += vLineDesc + 'Unprofitable call. ' + Math.round(eq) + '% equity but needed ' + Math.round(potOdds) + '%.';
       quality = 'bad';
     }
     // Sizing commentary for calls
     if (vBetPct !== null) {
       if (vBetPct <= 33) {
-        text += ' Small sizing from villain — you\'re getting a great price to see more cards.';
+        text += ' Small sizing — you\'re getting a great price.';
       } else if (vBetPct > 100) {
-        text += ' Villain overbets the pot — this usually polarises their range to nuts or bluffs.';
+        text += ' Overbet usually means polarised: nuts or bluff.';
       }
     }
 
-  // ── Raise ──
+    // ── Raise ──
   } else if (act.type === 'raise') {
-    text = facingDesc;
+    text = facingDesc + vLineDesc;
     if (eq > 55) {
       text += 'Value raise with ' + Math.round(eq) + '% equity.';
       quality = 'good';
+      if (isPassiveLine) {
+        text += ' Good to finally take initiative after playing passively.';
+      }
     } else if (eq >= 35) {
-      text += 'Semi-bluff raise with ' + Math.round(eq) + '% equity — applying pressure while you have outs.';
+      text += 'Semi-bluff raise with ' + Math.round(eq) + '% equity — pressure plus outs.';
       quality = 'neutral';
     } else if (vFolds !== null && vFolds >= 60) {
-      text += 'Bluff raise targeting ' + vName + ' who folds ' + vFolds + '% to raises — the aggression is justified even with weak equity.';
+      text += 'Bluff raise targeting ' + vName + ' who folds ' + vFolds + '% to raises (' + vHands + ' hands) — justified even with weak equity.';
       quality = 'good';
     } else if (multiway) {
-      text += mwDesc + 'Aggressive raise into multiple opponents with ' + Math.round(eq) + '% equity — risky, but isolates weak ranges.';
+      text += mwDesc + 'Aggressive raise into multiple opponents with ' + Math.round(eq) + '% equity — risky, but isolates.';
       quality = 'neutral';
     } else {
-      text += 'Bluff raise with ' + Math.round(eq) + '% equity. Applies pressure but you\'re mostly relying on fold equity.';
+      text += 'Bluff raise with ' + Math.round(eq) + '% equity. Relying on fold equity.';
       quality = 'neutral';
     }
     // Bet sizing for raises
     if (betPotPct !== null) {
       if (vCalls && betPotPct < 60 && eq > 55) {
-        text += ' Your ' + betPotPct + '% pot sizing is small — ' + vName + ' goes to showdown ' + villainProfile.wtsd + '% of the time, so size up to extract more.';
+        text += ' Your ' + betPotPct + '% pot sizing is small — ' + vName + ' goes to showdown ' + villainProfile.wtsd + '%, size up.';
       } else if (vFolds !== null && vFolds >= 60 && betPotPct > 80) {
-        text += ' Your ' + betPotPct + '% pot sizing is large — ' + vName + ' folds ' + vFolds + '% anyway, a smaller raise risks less for the same fold.';
-      } else if (betPotPct !== null) {
-        text += ' You sized ' + betPotPct + '% of pot.';
+        text += ' ' + betPotPct + '% pot is large — ' + vName + ' folds ' + vFolds + '% anyway, a smaller raise risks less.';
       }
     }
 
-  // ── Bet ──
+    // ── Bet ──
   } else if (act.type === 'bet') {
+    text = vLineDesc;
     if (eq > 55) {
-      text = 'Value bet with ' + Math.round(eq) + '% equity.';
+      text += 'Value bet with ' + Math.round(eq) + '% equity.';
       quality = 'good';
     } else if (eq >= 35) {
-      text = 'Thin value or semi-bluff with ' + Math.round(eq) + '% equity.';
+      text += 'Thin value or semi-bluff with ' + Math.round(eq) + '% equity.';
       quality = 'neutral';
     } else if (vFolds !== null && vFolds >= 60) {
-      text = 'Bluff targeting ' + vName + ' who folds ' + vFolds + '% to raises — good target for aggression.';
+      text += 'Bluff targeting ' + vName + ' who folds ' + vFolds + '% to raises (' + vHands + ' hands).';
       quality = 'good';
     } else if (multiway) {
-      text = mwDesc + 'Betting into ' + playersActive + ' opponents with ' + Math.round(eq) + '% equity — someone likely has something. Be sure you have a plan if raised.';
+      text += mwDesc + 'Betting into ' + playersActive + ' opponents with ' + Math.round(eq) + '% equity — someone likely has something.';
       quality = 'neutral';
     } else {
-      text = 'Bluff bet with ' + Math.round(eq) + '% equity. Putting pressure on but you need villain to fold.';
+      text += 'Bluff bet with ' + Math.round(eq) + '% equity. Need villain to fold.';
       quality = 'neutral';
     }
     // Bet sizing
     if (betPotPct !== null) {
       if (vCalls && betPotPct < 60 && eq > 55) {
-        text += ' Your ' + betPotPct + '% pot sizing is small — ' + vName + ' goes to showdown ' + villainProfile.wtsd + '%, size up to punish them.';
+        text += ' Your ' + betPotPct + '% pot sizing is small — ' + vName + ' goes to showdown ' + villainProfile.wtsd + '%, size up.';
       } else if (vFolds !== null && vFolds >= 60 && betPotPct > 80) {
-        text += ' Your ' + betPotPct + '% pot sizing is large — ' + vName + ' folds ' + vFolds + '% anyway, a smaller bet gets the same fold for less risk.';
+        text += ' ' + betPotPct + '% pot is large — ' + vName + ' folds ' + vFolds + '% anyway, smaller works.';
       } else if (vLoose && betPotPct < 50 && eq > 55) {
-        text += ' Your ' + betPotPct + '% pot sizing is small — ' + vName + ' plays loose (VPIP ' + villainProfile.vpip + '%), size up against wide ranges.';
-      } else if (betPotPct !== null) {
-        text += ' You sized ' + betPotPct + '% of pot.';
+        text += ' ' + betPotPct + '% pot is small — ' + vName + ' plays loose (VPIP ' + villainProfile.vpip + '%), size up.';
       }
     }
 
-  // ── Fold ──
+    // ── Fold ──
   } else if (act.type === 'fold') {
-    text = facingDesc;
+    text = facingDesc + vLineDesc;
     if (eq > 40 && vLoose) {
-      text += 'You folded ' + Math.round(eq) + '% equity against ' + vName + ' who plays loose (VPIP ' + villainProfile.vpip + '%). Their range is wide — this fold was likely too tight.';
+      text += 'Folded ' + Math.round(eq) + '% equity against ' + vName + ' (VPIP ' + villainProfile.vpip + '%). Their range is wide — this fold was likely too tight.';
       quality = 'bad';
     } else if (eq > 40 && vFolds !== null && vFolds >= 60) {
-      text += 'You folded ' + Math.round(eq) + '% equity but ' + vName + ' folds to raises ' + vFolds + '% — raising would have been better than folding.';
+      text += 'Folded ' + Math.round(eq) + '% equity but ' + vName + ' folds to raises ' + vFolds + '% (' + vHands + ' hands) — raising was better than folding.';
       quality = 'bad';
     } else if (eq > 40 && multiway) {
-      text += mwDesc + 'You folded with ' + Math.round(eq) + '% equity. In a multiway pot the fold is more understandable — more opponents means more chance someone has you beat.';
+      text += mwDesc + 'Folded with ' + Math.round(eq) + '% equity. In a multiway pot the fold is more defensible.';
       quality = 'neutral';
     } else if (eq > 40) {
-      text += 'You folded with ' + Math.round(eq) + '% equity. This may have been too tight unless villain\'s range here is very strong.';
+      text += 'Folded with ' + Math.round(eq) + '% equity. May have been too tight unless villain\'s range here is very strong.';
       quality = 'bad';
     } else if (eq >= 25) {
       text += 'Marginal fold with ' + Math.round(eq) + '% equity.';
       quality = 'neutral';
       if (vAgg) text += ' ' + vName + ' is aggressive though — calling could be defensible.';
-      if (vBetPct !== null && vBetPct <= 33) text += ' The small sizing gave you a good price — consider calling more against small bets.';
+      if (vBetPct !== null && vBetPct <= 33) text += ' Small sizing gave a good price — consider calling more against small bets.';
     } else {
       text += 'Clean fold. ' + Math.round(eq) + '% equity isn\'t enough to continue.';
       quality = 'good';
@@ -634,7 +721,7 @@ function generateGuidance(equity, streetInfo, texture, madeHand, villainProfile)
     if (texture.wetness === 'dry' && act.type === 'fold' && eq > 40) {
       text += ' Dry board makes this fold worse — fewer draws threaten you.';
     }
-    if (texture.wetness === 'wet' && act.type === 'check' && eq > 65) {
+    if (texture.wetness === 'wet' && act.type === 'check' && eq > 65 && !isEffectivelyHighCard) {
       text += ' Wet board — you need to charge draws here.';
       if (quality !== 'bad') quality = 'bad';
     }
@@ -653,27 +740,187 @@ function generateGuidance(equity, streetInfo, texture, madeHand, villainProfile)
         if (m) totalOuts += parseInt(m[1], 10);
       }
       if (totalOuts > 0) {
-        var drawEquity = totalOuts * 2; // rough rule of 2
-        if (drawEquity >= potOdds) text += ' Your draw odds (' + totalOuts + ' outs ≈ ' + (totalOuts * 2) + '%) justified the call.';
-        else text += ' Your draw odds (' + totalOuts + ' outs ≈ ' + (totalOuts * 2) + '%) were thin for this price.';
+        var drawEquity = totalOuts * 2;
+        if (drawEquity >= potOdds) text += ' Draw odds (' + totalOuts + ' outs ≈ ' + (totalOuts * 2) + '%) justified the call.';
+        else text += ' Draw odds (' + totalOuts + ' outs ≈ ' + (totalOuts * 2) + '%) were thin for this price.';
       }
     }
   }
 
-  // ── Made hand context (post-flop) — only add if it's actionable, not just restating ──
-  if (madeHand && texture) {
+  // ── Made hand context (post-flop) — only add if actionable ──
+  if (madeHand && texture && !isEffectivelyHighCard) {
     if (madeHand.label === 'Top Pair' && texture.wetness === 'wet' && act.type === 'check') {
-      text += ' Top pair on a wet board — bet to deny free cards to draws.';
+      text += ' Top pair on a wet board — bet to deny free cards.';
     } else if (madeHand.label === 'Overpair' && texture.wetness === 'dry' && act.type === 'check') {
-      text += ' Overpair on dry board — strong, bet for value since villain has few outs.';
+      text += ' Overpair on dry board — bet for value, villain has few outs.';
     } else if (madeHand.label === 'Set' && (act.type === 'check' || (act.type === 'call' && betPotPct === null))) {
-      text += ' Set is disguised — consider raising to build the pot while villain doesn\'t suspect it.';
+      text += ' Set is disguised — consider raising to build the pot.';
     } else if ((madeHand.label === 'Full House' || madeHand.label === 'Quads' || madeHand.label === 'Straight Flush') && act.type === 'check') {
-      text += ' You\'re at the top of your range — consider trapping if villain is aggressive, or betting small to induce a raise.';
+      text += ' Top of your range — consider trapping if villain is aggressive, or bet small to induce.';
     }
   }
 
   return { text: text, quality: quality };
+}
+
+// ── Helper for check guidance on paired boards with high-card hands ──
+function heroHighCardCheckText(eq, madeHand, boardIsDoublePaired, vName, vFolds, vCalls, vHands) {
+  var label = madeHand ? madeHand.label : 'high card';
+  var text = '';
+  if (boardIsDoublePaired) {
+    text = 'You have ' + label + ' on a double-paired board. Any pocket pair beats you. ';
+    if (eq >= 40) {
+      text += 'Checking is fine — you have showdown value against missed draws, but betting accomplishes little since worse hands fold and better hands call.';
+    } else {
+      text += 'Checking is correct. You can\'t get called by worse here.';
+    }
+  } else {
+    text = 'You have ' + label + ' on a paired board. ';
+    if (vFolds !== null && vFolds >= 60 && vName) {
+      text += vName + ' folds to raises ' + vFolds + '% (' + vHands + ' hands) — a bet could take this down, but if called you\'re usually behind.';
+    } else if (vCalls && vName) {
+      text += vName + ' calls down often — don\'t bluff, check for showdown value.';
+    } else {
+      text += 'Checking makes sense. Most hands that call a bet have you beat.';
+    }
+  }
+  return text;
+}
+
+// ── Hand Summary (rendered after all streets) ─────────────────────────────
+function generateHandSummary(results, hand, villainProfile) {
+  if (!results || results.length < 2) return null;
+
+  var invested = 0;
+  if (typeof getInvested === 'function') {
+    invested = getInvested(hand);
+  } else if (typeof calcInvestmentFromActions === 'function') {
+    invested = calcInvestmentFromActions(hand.actions);
+  }
+
+  var outcome = hand.outcome || {};
+  var won = outcome.result === 'won';
+  var folded = outcome.result === 'folded';
+  var pnl = won ? (outcome.amount || 0) - invested : -invested;
+
+  // Hero's action line
+  var heroActions = [];
+  var villainActions = [];
+  for (var i = 0; i < results.length; i++) {
+    var r = results[i];
+    if (r.street === 'Preflop') {
+      heroActions.push(r.actionDesc || '');
+      continue;
+    }
+    heroActions.push(r.actionDesc || '');
+    if (r.villainActionType) villainActions.push(r.street + ': ' + r.villainActionType);
+  }
+
+  // Describe hero's line
+  var postflopResults = results.filter(function (r) { return r.street !== 'Preflop'; });
+  var heroPostflopTypes = postflopResults.map(function (r) { return r.heroActionType || ''; });
+  var allCalls = heroPostflopTypes.every(function (t) { return t === 'call'; });
+  var allChecks = heroPostflopTypes.every(function (t) { return t === 'check'; });
+  var allPassive = heroPostflopTypes.every(function (t) { return t === 'call' || t === 'check'; });
+  var streetsPlayed = postflopResults.length;
+
+  // Describe villain's line
+  var villainPostflopTypes = postflopResults.map(function (r) { return r.villainActionType || ''; });
+  var villainBets = villainPostflopTypes.filter(function (t) { return t === 'bet' || t === 'raise'; }).length;
+
+  var vName = villainProfile ? villainProfile.name : null;
+  var vHands = villainProfile ? villainProfile.hands : 0;
+
+  // Parse showdown reveals
+  var villainRevealed = null;
+  var villainHandDesc = null;
+  if (hand.actions) {
+    for (var ai = 0; ai < hand.actions.length; ai++) {
+      var line = hand.actions[ai] || '';
+      if (line.indexOf(' reveals ') !== -1 && line.indexOf('>>') === -1 && line.indexOf('&gt;&gt;') === -1) {
+        var revealMatch = line.match(/reveals \[([^\]]+)\]/);
+        var strengthMatch = line.match(/\(([^)]+)\)/);
+        if (revealMatch) villainRevealed = revealMatch[1];
+        if (strengthMatch) villainHandDesc = strengthMatch[1];
+      }
+    }
+  }
+
+  // Final made hand
+  var finalMadeHand = postflopResults.length > 0 ? postflopResults[postflopResults.length - 1].madeHand : null;
+  var finalLabel = finalMadeHand ? finalMadeHand.label : '';
+
+  // Build summary text
+  var parts = [];
+
+  // 1. Hero's line through the hand
+  if (allCalls && streetsPlayed >= 2) {
+    parts.push('You called ' + streetsPlayed + ' streets' + (finalLabel ? ' with ' + finalLabel : '') + ', investing ' + fmtDollar(invested) + '.');
+  } else if (allChecks && streetsPlayed >= 2) {
+    parts.push('You checked ' + streetsPlayed + ' streets' + (finalLabel ? ' with ' + finalLabel : '') + '.');
+  } else if (allPassive && streetsPlayed >= 2) {
+    parts.push('You played passively through ' + streetsPlayed + ' streets' + (finalLabel ? ' with ' + finalLabel : '') + ', investing ' + fmtDollar(invested) + '.');
+  } else if (folded) {
+    parts.push('You folded on the ' + (outcome.foldStreet || '').toLowerCase() + ', saving further investment after putting in ' + fmtDollar(invested) + '.');
+  }
+
+  // 2. Villain's line
+  if (vName && villainBets >= 2) {
+    parts.push(vName + ' bet ' + villainBets + ' of ' + streetsPlayed + ' streets, applying consistent pressure.');
+  } else if (vName && villainBets === 1 && streetsPlayed >= 2) {
+    var checkStreets = streetsPlayed - villainBets;
+    parts.push(vName + ' bet once then checked ' + checkStreets + ' street' + (checkStreets > 1 ? 's' : '') + '.');
+  }
+
+  // 3. Showdown reveal and what it means
+  if (villainRevealed && villainHandDesc && vName) {
+    parts.push(vName + ' showed ' + villainRevealed + ' (' + villainHandDesc + ').');
+    // Contextualise what that means on this board
+    var boardIsDoublePaired = false;
+    if (postflopResults.length > 0) {
+      var lastTex = postflopResults[postflopResults.length - 1].texture;
+      if (lastTex && lastTex.label && lastTex.label.indexOf('Paired') !== -1) {
+        var vhd = villainHandDesc.toLowerCase();
+        if (vhd.indexOf('pair') !== -1 && vhd.indexOf('two pair') === -1) {
+          parts.push('A pocket pair on a paired board is exactly the hand that continues through multiple streets.');
+        }
+      }
+    }
+  }
+
+  // 4. Opponent profile insight
+  if (villainProfile && vHands >= 10) {
+    var exploitNote = '';
+    if (allPassive && villainProfile.foldToRaise !== null && villainProfile.foldToRaise >= 60) {
+      exploitNote = 'In ' + vHands + ' hands, ' + vName + ' folds to raises ' + villainProfile.foldToRaise + '%. A raise on any street likely wins this pot without showdown.';
+    } else if (allPassive && villainProfile.wtsd !== null && villainProfile.wtsd >= 55) {
+      exploitNote = vName + ' goes to showdown ' + villainProfile.wtsd + '% of the time. Against a station, passive play without a strong hand is expensive.';
+    } else if (villainProfile.agg !== null && villainProfile.agg >= 40 && allCalls) {
+      exploitNote = vName + ' is aggressive (AFq ' + villainProfile.agg + '%). Calling down can be correct if you have a real hand, but ' + finalLabel + ' wasn\'t strong enough to justify it.';
+    }
+    if (exploitNote) parts.push(exploitNote);
+  }
+
+  // 5. P&L
+  if (won) {
+    parts.push('Result: won ' + fmtDollar(outcome.amount) + ' (profit ' + fmtDollar(pnl) + ').');
+  } else if (folded) {
+    parts.push('Result: folded, losing ' + fmtDollar(invested) + '.');
+  } else {
+    parts.push('Result: lost ' + fmtDollar(invested) + ' at showdown.');
+  }
+
+  // Determine overall quality
+  var overallQuality = 'neutral';
+  var goodCount = 0, badCount = 0;
+  for (var qi = 0; qi < results.length; qi++) {
+    if (results[qi].guidance.quality === 'good') goodCount++;
+    if (results[qi].guidance.quality === 'bad') badCount++;
+  }
+  if (badCount > goodCount) overallQuality = 'bad';
+  else if (goodCount > badCount) overallQuality = 'good';
+
+  return { text: parts.join(' '), quality: overallQuality };
 }
 
 // ── Main simulation runner ────────────────────────────────────────────────
@@ -685,9 +932,9 @@ function runEquitySimulation(hand) {
 
   var streetDefs = [
     { name: 'Preflop', boardSlice: 0, iters: 10000 },
-    { name: 'Flop',    boardSlice: 3, iters: 10000 },
-    { name: 'Turn',    boardSlice: 4, iters: 5000 },
-    { name: 'River',   boardSlice: 5, iters: 0 } // exact
+    { name: 'Flop', boardSlice: 3, iters: 10000 },
+    { name: 'Turn', boardSlice: 4, iters: 5000 },
+    { name: 'River', boardSlice: 5, iters: 0 } // exact
   ];
 
   for (var i = 0; i < streetDefs.length; i++) {
@@ -712,11 +959,26 @@ function runEquitySimulation(hand) {
     var madeHand = streetBoard.length >= 3 ? classifyMadeHand(heroHole, streetBoard) : null;
     var villainProfile = getPrimaryVillain(hand);
 
-    var guidance = streetInfo ? generateGuidance(sim.equity, streetInfo, texture, madeHand, villainProfile) : { text: '', quality: 'neutral' };
+    // Build priorStreets context for cross-street awareness
+    var priorStreets = results.map(function (pr) {
+      return {
+        street: pr.street,
+        equity: pr.equity,
+        heroActionType: pr.heroActionType || '',
+        villainActionType: pr.villainActionType || '',
+        madeHand: pr.madeHand,
+        texture: pr.texture
+      };
+    });
+
+    var guidance = streetInfo ? generateGuidance(sim.equity, streetInfo, texture, madeHand, villainProfile, priorStreets) : { text: '', quality: 'neutral' };
 
     var actionDesc = '';
+    var heroActionType = '';
+    var villainActionType = '';
     if (streetInfo && streetInfo.action) {
       var a = streetInfo.action;
+      heroActionType = a.type;
       if (a.type === 'fold') actionDesc = 'You folded.';
       else if (a.type === 'check') actionDesc = 'You checked.';
       else if (a.type === 'call') actionDesc = 'You called ' + fmtDollar(a.amount) + '.';
@@ -725,8 +987,21 @@ function runEquitySimulation(hand) {
       else if (a.type === 'sb') actionDesc = 'Small blind.';
       else if (a.type === 'bb') actionDesc = 'Big blind.';
     }
+    if (streetInfo && streetInfo.villainAction) {
+      villainActionType = streetInfo.villainAction.type || '';
+    }
 
     var potOddsStr = '';
+
+    // Pot size at this street
+    var potSize = streetInfo ? (streetInfo.potBefore || 0) : 0;
+    // Add hero's action amount to get pot after action
+    if (streetInfo && streetInfo.action && streetInfo.action.amount && streetInfo.action.type !== 'fold') {
+      potSize += streetInfo.action.amount;
+    }
+
+    // Board cards for this street (original non-normalised for display)
+    var boardDisplay = (hand.board || []).slice(0, sd.boardSlice);
 
     results.push({
       street: sd.name,
@@ -734,15 +1009,24 @@ function runEquitySimulation(hand) {
       iterations: sim.iterations,
       exact: sim.exact,
       actionDesc: actionDesc,
+      heroActionType: heroActionType,
+      villainActionType: villainActionType,
       potOddsStr: potOddsStr,
       guidance: guidance,
       texture: texture,
       madeHand: madeHand,
-      villainProfile: villainProfile
+      villainProfile: villainProfile,
+      potSize: potSize,
+      boardCards: boardDisplay,
+      playersActive: streetInfo ? (streetInfo.playersActive || 0) : 0
     });
   }
 
-  return results;
+  // Generate hand summary
+  var villainProfile = getPrimaryVillain(hand);
+  var summary = generateHandSummary(results, hand, villainProfile);
+
+  return { streets: results, summary: summary };
 }
 
 // ── Dollar formatting helper ──────────────────────────────────────────────
@@ -754,7 +1038,11 @@ function fmtDollar(n) {
 }
 
 // ── UI rendering ──────────────────────────────────────────────────────────
-function renderEquityResults(container, results) {
+function renderEquityResults(container, simResult) {
+  // Support both old (array) and new ({streets, summary}) return shapes
+  var results = Array.isArray(simResult) ? simResult : simResult.streets;
+  var summary = Array.isArray(simResult) ? null : simResult.summary;
+
   var hasExact = false;
   var maxIters = 0;
   for (var i = 0; i < results.length; i++) {
@@ -795,6 +1083,22 @@ function renderEquityResults(container, results) {
     html += '<div class="eq-pct">' + eqPct + '%</div>';
     html += '<div class="eq-bar-track"><div class="eq-bar-fill" style="width:' + barWidth + '%"></div></div>';
     html += '</div>';
+
+    // Meta line: board cards, pot size, player count
+    var metaParts = [];
+    if (res.boardCards && res.boardCards.length > 0) {
+      metaParts.push(res.boardCards.join(' '));
+    }
+    if (res.potSize > 0) {
+      metaParts.push('Pot: ' + fmtDollar(res.potSize));
+    }
+    if (res.playersActive > 0) {
+      metaParts.push(res.playersActive + '-way');
+    }
+    if (metaParts.length > 0) {
+      html += '<div class="eq-meta-line">' + metaParts.join(' · ') + '</div>';
+    }
+
     // Bottom section: badges + coaching
     var hasBottom = res.madeHand || res.guidance.text || res.villainProfile;
     if (hasBottom) {
@@ -809,7 +1113,7 @@ function renderEquityResults(container, results) {
         }
         html += '</div>';
       }
-      html += '<div class="eq-detail ' + qualClass + '">' + res.actionDesc + ' ' + res.potOddsStr + res.guidance.text + '</div>';
+      html += '<div class="eq-detail ' + qualClass + '">' + res.actionDesc + ' ' + res.guidance.text + '</div>';
       if (res.villainProfile && res.guidance.text.indexOf(res.villainProfile.name) === -1) {
         html += '<div class="villain-profile-line">vs ' + res.villainProfile.type + ' (' + res.villainProfile.name + ' \u00b7 VPIP ' + (res.villainProfile.vpip || '?') + '% \u00b7 Fold to raise ' + (res.villainProfile.foldToRaise || '?') + '%)</div>';
       }
@@ -837,8 +1141,17 @@ function renderEquityResults(container, results) {
     html += '</svg></div>';
   }
 
+  // Hand summary
+  if (summary && summary.text) {
+    var sumClass = summary.quality === 'good' ? 'eq-good' : summary.quality === 'bad' ? 'eq-bad' : 'eq-neutral';
+    html += '<div class="eq-summary">';
+    html += '<div class="eq-summary-label">Hand Summary</div>';
+    html += '<div class="eq-summary-text ' + sumClass + '">' + summary.text + '</div>';
+    html += '</div>';
+  }
+
   // Caveats
-  var hasFlopOrTurn = results.some(function(r) { return r.street === 'Flop' || r.street === 'Turn'; });
+  var hasFlopOrTurn = results.some(function (r) { return r.street === 'Flop' || r.street === 'Turn'; });
   var caveats = '<div class="eq-caveats">';
   caveats += 'Equity calculated against a single random hand. In multiway pots, true equity may be lower.';
   if (hasFlopOrTurn) {
@@ -888,10 +1201,10 @@ function injectEquityButton(box, hand) {
   btn.textContent = 'Run Equity Simulation';
   slot.appendChild(btn);
 
-  btn.onclick = function() {
+  btn.onclick = function () {
     slot.innerHTML = '<div class="eq-spinner"><div class="eq-spinner-ring"></div><span class="eq-spinner-text">Simulating...</span></div>';
 
-    setTimeout(function() {
+    setTimeout(function () {
       var results = runEquitySimulation(hand);
       renderEquityResults(slot, results);
     }, 50);
