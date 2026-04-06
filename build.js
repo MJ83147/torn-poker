@@ -4,11 +4,19 @@ var path = require('path');
 
 // Files in exact load order (matches original script tags)
 var files = [
-  'js/helpers.js',
+  'js/helpers/cards.js',
+  'js/helpers/tables.js',
+  'js/helpers/format.js',
+  'js/helpers/hand-parsing.js',
+  'js/helpers/analysis.js',
+  'js/helpers/storage.js',
+  'js/helpers/ui.js',
+  'js/helpers/migration.js',
   'js/stats.js',
   'js/loader.js',
   'js/state.js',
   'js/modal.js',
+  'js/charting.js',
   'js/panels/welcome.js',
   'js/panels/cards.js',
   'js/panels/position.js',
@@ -23,6 +31,7 @@ var files = [
   'js/panels/allin.js',
   'js/panels/players.js',
   'js/panels/mygame.js',
+  'js/panels/leaks.js',
   'js/panels/compare.js',
   'js/equity.js',
   'js/tour.js',

@@ -18,6 +18,7 @@ function renderAll() {
   var filtered = State.getFilteredHands();
   if (!filtered.length) return false;
   var fd = analyse(filtered);
+  cacheOpponentProfiles(filtered);
   render(fd, filtered, State.meta);
   return true;
 }
@@ -117,6 +118,7 @@ function render(d, hands, meta) {
   renderAllIn(document.getElementById('p-allin'), hands);
   renderPlayers(document.getElementById('p-players'), d, hands);
   renderMyGame(document.getElementById('p-mygame'), d, hands);
+  renderLeaks(document.getElementById('p-leaks'), d, hands);
   renderCompare(document.getElementById('p-compare'), d, hands);
 
   // Filter banners (cross-cutting)
@@ -132,7 +134,7 @@ function render(d, hands, meta) {
   }
   if (bannerParts.length) {
     var bannerHtml = '<div class="filter-banner">Showing stats for ' + bannerParts.join(' · ') + '</div>';
-    ['p-welcome', 'p-mygame', 'p-cards', 'p-position', 'p-street', 'p-actions', 'p-bets', 'p-range', 'p-trends', 'p-showdown', 'p-log', 'p-allin', 'p-players', 'p-compare'].forEach(function(id) {
+    ['p-welcome', 'p-mygame', 'p-leaks', 'p-cards', 'p-position', 'p-street', 'p-actions', 'p-bets', 'p-range', 'p-trends', 'p-showdown', 'p-log', 'p-allin', 'p-players', 'p-compare'].forEach(function(id) {
       var el = document.getElementById(id);
       if (el) el.insertAdjacentHTML('afterbegin', bannerHtml);
     });

@@ -133,6 +133,112 @@ function bestHand(cards) {
   return best;
 }
 
+// ── Made Hand + Draw Classification ──────────────────────────────────────
+function classifyMadeHand(holeCards, boardCards) {
+  if (!holeCards || holeCards.length < 2 || !boardCards || boardCards.length < 3) return null;
+  var hero = holeCards.map(normCard);
+  var board = boardCards.map(normCard);
+  var all = hero.concat(board);
+  var score = bestHand(all);
+  var M = 1e10;
+  var tier = Math.floor(score / M);
+
+  var labels = ['High Card', 'Pair', 'Two Pair', 'Three of a Kind', 'Straight',
+                'Flush', 'Full House', 'Four of a Kind', 'Straight Flush'];
+  var label = labels[tier] || 'High Card';
+
+  // Refine pair/trips/quads labels using hole card context
+  var heroRanks = hero.map(function(c) { return RANKS.indexOf(c.slice(0, -1)); });
+  var boardRanks = board.map(function(c) { return RANKS.indexOf(c.slice(0, -1)); });
+  var boardRankCounts = {};
+  for (var bi = 0; bi < boardRanks.length; bi++) {
+    boardRankCounts[boardRanks[bi]] = (boardRankCounts[boardRanks[bi]] || 0) + 1;
+  }
+
+  if (tier === 1) {
+    // Pair — is it pocket pair (overpair/underpair), top pair, middle pair, bottom pair?
+    var boardSorted = boardRanks.slice().sort(function(a, b) { return b - a; });
+    if (heroRanks[0] === heroRanks[1]) {
+      if (heroRanks[0] > boardSorted[0]) label = 'Overpair';
+      else label = 'Pocket Pair';
+    } else {
+      var pairedRank = -1;
+      for (var hi = 0; hi < heroRanks.length; hi++) {
+        if (boardRanks.indexOf(heroRanks[hi]) !== -1) { pairedRank = heroRanks[hi]; break; }
+      }
+      if (pairedRank === boardSorted[0]) label = 'Top Pair';
+      else if (pairedRank === boardSorted[boardSorted.length - 1]) label = 'Bottom Pair';
+      else label = 'Middle Pair';
+    }
+  } else if (tier === 2) {
+    label = 'Two Pair';
+  } else if (tier === 3) {
+    // Three of a kind — set (pocket pair hit board) vs trips (board pair + one hole card)
+    if (heroRanks[0] === heroRanks[1] && boardRanks.indexOf(heroRanks[0]) !== -1) {
+      label = 'Set';
+    } else {
+      label = 'Trips';
+    }
+  } else if (tier === 6) {
+    label = 'Full House';
+  } else if (tier === 7) {
+    label = 'Quads';
+  } else if (tier === 8) {
+    label = 'Straight Flush';
+  }
+
+  // Draw detection
+  var draws = [];
+  var allRanks = all.map(function(c) { return RANKS.indexOf(c.slice(0, -1)); });
+  var allSuits = all.map(function(c) { return c.slice(-1); });
+
+  // Flush draw: 4 of one suit (only if not already a flush)
+  if (tier < 5) {
+    var suitCounts = {};
+    for (var si = 0; si < allSuits.length; si++) {
+      suitCounts[allSuits[si]] = (suitCounts[allSuits[si]] || 0) + 1;
+    }
+    for (var suit in suitCounts) {
+      if (suitCounts[suit] === 4) {
+        // Verify at least one hole card contributes
+        var heroHasSuit = hero.some(function(c) { return c.slice(-1) === suit; });
+        if (heroHasSuit) draws.push('Flush draw (9 outs)');
+      }
+    }
+  }
+
+  // Straight draws: OESD and gutshot (only if not already a straight+)
+  if (tier < 4) {
+    var uniqueRanks = [];
+    for (var ui = 0; ui < allRanks.length; ui++) {
+      if (uniqueRanks.indexOf(allRanks[ui]) === -1) uniqueRanks.push(allRanks[ui]);
+    }
+    uniqueRanks.sort(function(a, b) { return a - b; });
+    // Also consider ace-low (A as 0-ish) by adding -1 if ace present
+    if (uniqueRanks.indexOf(12) !== -1) uniqueRanks.unshift(-1);
+
+    var bestStraightDraw = 0; // 0=none, 4=gutshot, 8=oesd
+    for (var sw = 0; sw <= 12; sw++) {
+      var inWindow = 0;
+      var windowRanks = [];
+      for (var swi = 0; swi < uniqueRanks.length; swi++) {
+        var r = uniqueRanks[swi] === -1 ? -1 : uniqueRanks[swi];
+        if (r >= sw - 1 && r <= sw + 3) { inWindow++; windowRanks.push(r); }
+      }
+      if (inWindow === 4) {
+        // Check if it's open-ended (both ends open) or gutshot (gap in middle)
+        var span = windowRanks[windowRanks.length - 1] - windowRanks[0];
+        if (span === 3) bestStraightDraw = Math.max(bestStraightDraw, 8); // OESD
+        else bestStraightDraw = Math.max(bestStraightDraw, 4); // Gutshot
+      }
+    }
+    if (bestStraightDraw === 8) draws.push('OESD (8 outs)');
+    else if (bestStraightDraw === 4) draws.push('Gutshot (4 outs)');
+  }
+
+  return { tier: tier, label: label, draws: draws };
+}
+
 // ── Fisher-Yates shuffle (partial) ────────────────────────────────────────
 function shuffleDraw(deck, n) {
   for (var i = deck.length - 1; i > 0 && i >= deck.length - n; i--) {
@@ -281,7 +387,7 @@ function getHeroStreetActions(hand) {
   return { streets: streets, foldedOn: heroFoldedOn };
 }
 
-function generateGuidance(equity, streetInfo) {
+function generateGuidance(equity, streetInfo, texture, madeHand, villainProfile) {
   var eq = equity * 100;
   var act = streetInfo.action;
   var potOdds = streetInfo.potOdds * 100;
@@ -312,6 +418,72 @@ function generateGuidance(equity, streetInfo) {
     if (eq > 40) { text = 'You folded with significant equity. This may have been too tight unless the opponent\'s range was very strong.'; quality = 'bad'; }
     else if (eq >= 25) { text = 'Marginal fold. Defensible depending on opponent tendencies.'; quality = 'neutral'; }
     else { text = 'Clean fold. Low equity against a random hand.'; quality = 'good'; }
+  }
+
+  // Board texture adjustments (post-flop only)
+  if (texture) {
+    if (texture.wetness === 'dry' && act.type === 'fold' && eq > 40) {
+      text += ' Dry board makes this fold worse — fewer draws threaten you.';
+    }
+    if (texture.wetness === 'wet' && act.type === 'check' && eq > 65) {
+      text += ' Wet board — you need to charge draws here.';
+      quality = 'bad';
+    }
+    if (texture.wetness === 'wet' && (act.type === 'bet' || act.type === 'raise') && eq >= 35 && eq <= 55) {
+      text += ' Good aggression on a wet board — fold equity plus draw equity.';
+      if (quality === 'neutral') quality = 'good';
+    }
+  }
+
+  // Draw-aware notes
+  if (madeHand && madeHand.draws.length > 0) {
+    for (var di = 0; di < madeHand.draws.length; di++) {
+      text += ' You have a ' + madeHand.draws[di].toLowerCase() + '.';
+    }
+    if (act.type === 'call' && potOdds > 0) {
+      var totalOuts = 0;
+      for (var oi = 0; oi < madeHand.draws.length; oi++) {
+        var m = madeHand.draws[oi].match(/(\d+) outs/);
+        if (m) totalOuts += parseInt(m[1], 10);
+      }
+      if (totalOuts > 0) {
+        var drawEquity = totalOuts * 2; // rough rule of 2
+        if (drawEquity >= potOdds) text += ' Your draw odds justified the call.';
+        else text += ' Your draw odds were thin for this price.';
+      }
+    }
+  }
+
+  // Made hand context (post-flop)
+  if (madeHand && texture) {
+    if (madeHand.label === 'Top Pair' && texture.wetness === 'wet') {
+      text += ' Top pair on a wet board — vulnerable to draws, bet to protect.';
+    } else if (madeHand.label === 'Overpair' && texture.wetness === 'dry') {
+      text += ' Overpair on dry board — strong, bet for value.';
+    } else if (madeHand.label === 'Set') {
+      text += ' Set — disguised monster, build the pot.';
+    } else if (madeHand.label === 'Full House' || madeHand.label === 'Quads' || madeHand.label === 'Straight Flush') {
+      text += ' Monster hand — extract maximum value.';
+    }
+  }
+
+  // Villain adjustments
+  if (villainProfile) {
+    if (villainProfile.type === 'LAP' || villainProfile.type === 'LAG') {
+      if (act.type === 'fold' && eq >= 30) {
+        text += ' Villain is loose — your fold may have been too tight.';
+      }
+    }
+    if (villainProfile.foldToRaise !== null && villainProfile.foldToRaise >= 60) {
+      if (act.type === 'check' || act.type === 'call') {
+        text += ' Villain folds to raises ' + villainProfile.foldToRaise + '% — a raise could take this down.';
+      }
+    }
+    if (villainProfile.type === 'LAG' || (villainProfile.agg !== null && villainProfile.agg >= 40)) {
+      if (act.type === 'call' && eq >= 35) {
+        text += ' Villain is aggressive — calling down is fine.';
+      }
+    }
   }
 
   return { text: text, quality: quality };
@@ -348,7 +520,12 @@ function runEquitySimulation(hand) {
 
     var sim = simulateStreet(heroHole, streetBoard, sd.iters);
 
-    var guidance = streetInfo ? generateGuidance(sim.equity, streetInfo) : { text: '', quality: 'neutral' };
+    // Board texture + made hand + villain (post-flop only)
+    var texture = streetBoard.length >= 3 ? classifyBoardTexture(streetBoard) : null;
+    var madeHand = streetBoard.length >= 3 ? classifyMadeHand(heroHole, streetBoard) : null;
+    var villainProfile = getPrimaryVillain(hand);
+
+    var guidance = streetInfo ? generateGuidance(sim.equity, streetInfo, texture, madeHand, villainProfile) : { text: '', quality: 'neutral' };
 
     var actionDesc = '';
     if (streetInfo && streetInfo.action) {
@@ -374,7 +551,10 @@ function runEquitySimulation(hand) {
       exact: sim.exact,
       actionDesc: actionDesc,
       potOddsStr: potOddsStr,
-      guidance: guidance
+      guidance: guidance,
+      texture: texture,
+      madeHand: madeHand,
+      villainProfile: villainProfile
     });
   }
 
@@ -422,9 +602,25 @@ function renderEquityResults(container, results) {
 
     html += '<div class="eq-row">';
     html += '<div class="eq-street">' + res.street + '</div>';
+    if (res.texture) {
+      var texCls = res.texture.wetness === 'wet' ? 'tex-wet' : res.texture.wetness === 'dry' ? 'tex-dry' : 'tex-med';
+      html += '<span class="board-texture-badge ' + texCls + '">' + res.texture.label + '</span>';
+    }
     html += '<div class="eq-pct">' + eqPct + '%</div>';
     html += '<div class="eq-bar-track"><div class="eq-bar-fill" style="width:' + barWidth + '%"></div></div>';
+    if (res.madeHand) {
+      html += '<div class="eq-made-hand">' + res.madeHand.label;
+      if (res.madeHand.draws.length) {
+        for (var dri = 0; dri < res.madeHand.draws.length; dri++) {
+          html += ' <span class="draw-outs">' + res.madeHand.draws[dri] + '</span>';
+        }
+      }
+      html += '</div>';
+    }
     html += '<div class="eq-detail ' + qualClass + '">' + res.actionDesc + ' ' + res.potOddsStr + res.guidance.text + '</div>';
+    if (res.villainProfile) {
+      html += '<div class="villain-profile-line">vs ' + res.villainProfile.type + ' (' + res.villainProfile.name + ' \u00b7 VPIP ' + (res.villainProfile.vpip || '?') + '% \u00b7 Fold to raise ' + (res.villainProfile.foldToRaise || '?') + '%)</div>';
+    }
     html += '</div>';
   }
 
