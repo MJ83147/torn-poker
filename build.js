@@ -28,6 +28,7 @@ var files = [
   'js/panels/showdown.js',
   'js/panels/log.js',
   'js/panels/allin.js',
+  'js/panels/compare.js',
   'js/panels/players.js',
   'js/panels/mygame.js',
   'js/panels/leaks.js',
