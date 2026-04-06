@@ -1779,37 +1779,51 @@ textarea#jin:focus {
 
 .eq-sim-note {
   color: var(--dim);
-  font-size: 9px;
+  font-size: 11px;
   font-family: 'IBM Plex Mono', monospace;
 }
 
 .eq-row {
-  display: grid;
-  grid-template-columns: 58px 48px 80px 1fr;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.eq-row:last-of-type {
+  border-bottom: none;
+}
+.eq-row-top {
+  display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 5px 0;
+  gap: 10px;
+}
+.eq-row-bottom {
+  margin-top: 6px;
+  padding-left: 2px;
 }
 
 .eq-street {
   color: var(--gold);
   font-family: 'IBM Plex Mono', monospace;
-  font-size: 11px;
-  font-weight: 500;
+  font-size: 12px;
+  font-weight: 600;
+  min-width: 58px;
 }
 
 .eq-pct {
   color: var(--text);
   font-family: 'IBM Plex Mono', monospace;
-  font-size: 12px;
+  font-size: 13px;
+  font-weight: 600;
   text-align: right;
+  min-width: 48px;
 }
 
 .eq-bar-track {
+  flex: 1;
   height: 8px;
   background: var(--border);
   border-radius: 4px;
   overflow: hidden;
+  min-width: 60px;
 }
 
 .eq-bar-fill {
@@ -1820,9 +1834,10 @@ textarea#jin:focus {
 }
 
 .eq-detail {
-  font-size: 10px;
+  font-size: 11px;
   font-family: 'IBM Plex Mono', monospace;
-  line-height: 1.4;
+  line-height: 1.5;
+  margin-top: 4px;
 }
 
 .eq-good {
@@ -1848,7 +1863,7 @@ textarea#jin:focus {
   margin-top: 10px;
   padding-top: 8px;
   border-top: 1px solid var(--border);
-  font-size: 9px;
+  font-size: 10px;
   color: var(--dim);
   font-family: 'IBM Plex Mono', monospace;
   line-height: 1.5;
@@ -2779,12 +2794,21 @@ tr.hrow:hover .hrow-star {
 }
 
 /* ── Made Hand Label ──────────────────────────────────────────────────── */
+.eq-badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
 .eq-made-hand {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
   font-size: 11px;
   font-family: 'IBM Plex Mono', monospace;
   color: var(--text);
   font-weight: 500;
-  margin-top: 2px;
+  background: rgba(255, 255, 255, 0.06);
 }
 
 /* ── Villain Profile Line ─────────────────────────────────────────────── */

@@ -391,43 +391,151 @@ function generateGuidance(equity, streetInfo, texture, madeHand, villainProfile)
   var eq = equity * 100;
   var act = streetInfo.action;
   var potOdds = streetInfo.potOdds * 100;
+  var pot = streetInfo.potBefore || 0;
   var text = '';
   var quality = 'neutral'; // 'good', 'neutral', 'bad'
 
+  // Bet sizing as % of pot (for bets/raises)
+  var betPotPct = (act.amount && pot > 0 && (act.type === 'bet' || act.type === 'raise'))
+    ? Math.round((act.amount / pot) * 100) : null;
+
+  // Villain shorthand
+  var vName = villainProfile ? villainProfile.name : null;
+  var vFolds = villainProfile && villainProfile.foldToRaise !== null ? villainProfile.foldToRaise : null;
+  var vLoose = villainProfile && (villainProfile.type === 'LAP' || villainProfile.type === 'LAG');
+  var vAgg = villainProfile && (villainProfile.type === 'LAG' || (villainProfile.agg !== null && villainProfile.agg >= 40));
+  var vCalls = villainProfile && villainProfile.wtsd !== null && villainProfile.wtsd >= 55;
+  var vPassive = villainProfile && villainProfile.agg !== null && villainProfile.agg < 15;
+
+  // ── Blinds ──
   if (act.type === 'sb' || act.type === 'bb') {
     if (eq > 55) { text = 'Strong starting hand.'; quality = 'good'; }
     else if (eq >= 40) { text = 'Playable hand from the blinds.'; quality = 'neutral'; }
     else { text = 'Weak hand. Defend selectively.'; quality = 'bad'; }
+
+  // ── Check ──
   } else if (act.type === 'check') {
-    if (eq > 65) { text = 'Strong hand. Betting for value would usually be correct here.'; quality = 'neutral'; }
-    else if (eq >= 40) { text = 'Decent hand. A bet could protect your equity or extract thin value.'; quality = 'neutral'; }
-    else { text = 'Weak hand. Checking is reasonable.'; quality = 'good'; }
+    if (eq > 65 && vFolds !== null && vFolds >= 60) {
+      text = 'You had ' + Math.round(eq) + '% equity but checked. ' + vName + ' folds to raises ' + vFolds + '% of the time — this was a missed value opportunity.';
+      quality = 'bad';
+    } else if (eq > 65 && vCalls) {
+      text = 'You had ' + Math.round(eq) + '% equity but checked. ' + vName + ' calls to showdown ' + villainProfile.wtsd + '% of the time — bet big, they\'ll pay you off.';
+      quality = 'bad';
+    } else if (eq > 65 && vPassive) {
+      text = 'You had ' + Math.round(eq) + '% equity but checked. ' + vName + ' is passive — take the lead and bet for value.';
+      quality = 'bad';
+    } else if (eq > 65) {
+      text = 'Strong hand but you checked. Betting for value would usually be correct here.';
+      quality = 'bad';
+    } else if (eq >= 40 && vFolds !== null && vFolds >= 60) {
+      text = 'Decent equity and ' + vName + ' folds to raises ' + vFolds + '%. A bet could take this down without a showdown.';
+      quality = 'neutral';
+    } else if (eq >= 40) {
+      text = 'Decent hand. A bet could protect your equity or extract thin value.';
+      quality = 'neutral';
+    } else {
+      text = 'Weak hand. Checking is reasonable.';
+      quality = 'good';
+    }
+
+  // ── Call ──
   } else if (act.type === 'call') {
-    if (eq > potOdds + 10) { text = 'Clear call. Your equity significantly exceeded the price.'; quality = 'good'; }
-    else if (eq >= potOdds - 10) { text = 'Close spot. Your equity roughly matched the pot odds.'; quality = 'neutral'; }
-    else { text = 'Unprofitable call. Your equity did not justify the price.'; quality = 'bad'; }
+    if (eq > potOdds + 10 && vFolds !== null && vFolds >= 60) {
+      text = 'Your equity justified a call, but ' + vName + ' folds to raises ' + vFolds + '% — raising could have won the pot outright.';
+      quality = 'neutral';
+    } else if (eq > potOdds + 10 && vAgg) {
+      text = 'Clear call. ' + vName + ' is aggressive so calling down with ' + Math.round(eq) + '% equity is correct — let them bluff into you.';
+      quality = 'good';
+    } else if (eq > potOdds + 10) {
+      text = 'Clear call. Your equity significantly exceeded the price.';
+      quality = 'good';
+    } else if (eq >= potOdds - 10) {
+      text = 'Close spot. Your equity roughly matched the pot odds.';
+      quality = 'neutral';
+    } else {
+      text = 'Unprofitable call. Your equity did not justify the price.';
+      quality = 'bad';
+    }
+
+  // ── Raise ──
   } else if (act.type === 'raise') {
-    if (eq > 55) { text = 'Value raise. You had a strong hand and built the pot.'; quality = 'good'; }
-    else if (eq >= 35) { text = 'Semi-bluff or thin value raise.'; quality = 'neutral'; }
-    else { text = 'Bluff raise. Your hand was weak but raising applies pressure.'; quality = 'neutral'; }
+    if (eq > 55) {
+      text = 'Value raise with ' + Math.round(eq) + '% equity.';
+      quality = 'good';
+    } else if (eq >= 35) {
+      text = 'Semi-bluff or thin value raise.';
+      quality = 'neutral';
+    } else if (vFolds !== null && vFolds >= 60) {
+      text = 'Bluff raise, but ' + vName + ' folds to raises ' + vFolds + '% — the aggression is justified.';
+      quality = 'good';
+    } else {
+      text = 'Bluff raise. Your hand was weak but raising applies pressure.';
+      quality = 'neutral';
+    }
+    // Bet sizing for raises
+    if (betPotPct !== null) {
+      if (vCalls && betPotPct < 60 && eq > 55) {
+        text += ' You sized ' + betPotPct + '% of pot — ' + vName + ' calls to showdown ' + villainProfile.wtsd + '%, go bigger to extract max value.';
+      } else if (vFolds !== null && vFolds >= 60 && betPotPct > 80) {
+        text += ' You sized ' + betPotPct + '% of pot — ' + vName + ' folds to raises ' + vFolds + '%, a smaller raise risks less for the same fold.';
+      }
+    }
+
+  // ── Bet ──
   } else if (act.type === 'bet') {
-    if (eq > 55) { text = 'Value bet. Strong hand, extracting value.'; quality = 'good'; }
-    else if (eq >= 35) { text = 'Thin value or semi-bluff. Reasonable with this equity.'; quality = 'neutral'; }
-    else { text = 'Bluff bet. Weak hand, but betting puts pressure on opponents.'; quality = 'neutral'; }
+    if (eq > 55) {
+      text = 'Value bet with ' + Math.round(eq) + '% equity.';
+      quality = 'good';
+    } else if (eq >= 35) {
+      text = 'Thin value or semi-bluff. Reasonable with this equity.';
+      quality = 'neutral';
+    } else if (vFolds !== null && vFolds >= 60) {
+      text = 'Bluff bet, but ' + vName + ' folds to raises ' + vFolds + '% — good target for aggression.';
+      quality = 'good';
+    } else {
+      text = 'Bluff bet. Weak hand, but betting puts pressure on opponents.';
+      quality = 'neutral';
+    }
+    // Bet sizing
+    if (betPotPct !== null) {
+      if (vCalls && betPotPct < 60 && eq > 55) {
+        text += ' You sized ' + betPotPct + '% of pot — ' + vName + ' calls down ' + villainProfile.wtsd + '% to showdown, size up to punish them.';
+      } else if (vFolds !== null && vFolds >= 60 && betPotPct > 80) {
+        text += ' You sized ' + betPotPct + '% of pot — ' + vName + ' folds ' + vFolds + '% to raises, a smaller bet gets the same fold for less risk.';
+      } else if (vLoose && betPotPct < 50 && eq > 55) {
+        text += ' You sized ' + betPotPct + '% of pot — ' + vName + ' plays loose (VPIP ' + villainProfile.vpip + '%), size up against wide ranges.';
+      }
+    }
+
+  // ── Fold ──
   } else if (act.type === 'fold') {
-    if (eq > 40) { text = 'You folded with significant equity. This may have been too tight unless the opponent\'s range was very strong.'; quality = 'bad'; }
-    else if (eq >= 25) { text = 'Marginal fold. Defensible depending on opponent tendencies.'; quality = 'neutral'; }
-    else { text = 'Clean fold. Low equity against a random hand.'; quality = 'good'; }
+    if (eq > 40 && vLoose) {
+      text = 'You folded with ' + Math.round(eq) + '% equity against ' + vName + ', who plays loose (VPIP ' + villainProfile.vpip + '%). Their range is wide — this fold was likely too tight.';
+      quality = 'bad';
+    } else if (eq > 40 && vFolds !== null && vFolds >= 60) {
+      text = 'You folded with ' + Math.round(eq) + '% equity. ' + vName + ' folds to raises ' + vFolds + '% — raising would have been better than folding.';
+      quality = 'bad';
+    } else if (eq > 40) {
+      text = 'You folded with significant equity (' + Math.round(eq) + '%). This may have been too tight unless the opponent\'s range was very strong.';
+      quality = 'bad';
+    } else if (eq >= 25) {
+      text = 'Marginal fold.';
+      quality = 'neutral';
+      if (vAgg) text += ' ' + vName + ' is aggressive — calling could be defensible here.';
+    } else {
+      text = 'Clean fold. Low equity against a random hand.';
+      quality = 'good';
+    }
   }
 
-  // Board texture adjustments (post-flop only)
+  // ── Board texture adjustments (post-flop) ──
   if (texture) {
     if (texture.wetness === 'dry' && act.type === 'fold' && eq > 40) {
       text += ' Dry board makes this fold worse — fewer draws threaten you.';
     }
     if (texture.wetness === 'wet' && act.type === 'check' && eq > 65) {
       text += ' Wet board — you need to charge draws here.';
-      quality = 'bad';
+      if (quality !== 'bad') quality = 'bad';
     }
     if (texture.wetness === 'wet' && (act.type === 'bet' || act.type === 'raise') && eq >= 35 && eq <= 55) {
       text += ' Good aggression on a wet board — fold equity plus draw equity.';
@@ -435,7 +543,7 @@ function generateGuidance(equity, streetInfo, texture, madeHand, villainProfile)
     }
   }
 
-  // Draw-aware notes
+  // ── Draw-aware notes ──
   if (madeHand && madeHand.draws.length > 0) {
     for (var di = 0; di < madeHand.draws.length; di++) {
       text += ' You have a ' + madeHand.draws[di].toLowerCase() + '.';
@@ -454,7 +562,7 @@ function generateGuidance(equity, streetInfo, texture, madeHand, villainProfile)
     }
   }
 
-  // Made hand context (post-flop)
+  // ── Made hand context (post-flop) ──
   if (madeHand && texture) {
     if (madeHand.label === 'Top Pair' && texture.wetness === 'wet') {
       text += ' Top pair on a wet board — vulnerable to draws, bet to protect.';
@@ -464,25 +572,6 @@ function generateGuidance(equity, streetInfo, texture, madeHand, villainProfile)
       text += ' Set — disguised monster, build the pot.';
     } else if (madeHand.label === 'Full House' || madeHand.label === 'Quads' || madeHand.label === 'Straight Flush') {
       text += ' Monster hand — extract maximum value.';
-    }
-  }
-
-  // Villain adjustments
-  if (villainProfile) {
-    if (villainProfile.type === 'LAP' || villainProfile.type === 'LAG') {
-      if (act.type === 'fold' && eq >= 30) {
-        text += ' Villain is loose — your fold may have been too tight.';
-      }
-    }
-    if (villainProfile.foldToRaise !== null && villainProfile.foldToRaise >= 60) {
-      if (act.type === 'check' || act.type === 'call') {
-        text += ' Villain folds to raises ' + villainProfile.foldToRaise + '% — a raise could take this down.';
-      }
-    }
-    if (villainProfile.type === 'LAG' || (villainProfile.agg !== null && villainProfile.agg >= 40)) {
-      if (act.type === 'call' && eq >= 35) {
-        text += ' Villain is aggressive — calling down is fine.';
-      }
     }
   }
 
@@ -601,6 +690,8 @@ function renderEquityResults(container, results) {
     curvePoints.push({ street: res.street, equity: res.equity });
 
     html += '<div class="eq-row">';
+    // Top line: street name, texture badge, equity %, bar
+    html += '<div class="eq-row-top">';
     html += '<div class="eq-street">' + res.street + '</div>';
     if (res.texture) {
       var texCls = res.texture.wetness === 'wet' ? 'tex-wet' : res.texture.wetness === 'dry' ? 'tex-dry' : 'tex-med';
@@ -608,18 +699,26 @@ function renderEquityResults(container, results) {
     }
     html += '<div class="eq-pct">' + eqPct + '%</div>';
     html += '<div class="eq-bar-track"><div class="eq-bar-fill" style="width:' + barWidth + '%"></div></div>';
-    if (res.madeHand) {
-      html += '<div class="eq-made-hand">' + res.madeHand.label;
-      if (res.madeHand.draws.length) {
-        for (var dri = 0; dri < res.madeHand.draws.length; dri++) {
-          html += ' <span class="draw-outs">' + res.madeHand.draws[dri] + '</span>';
+    html += '</div>';
+    // Bottom section: badges + coaching
+    var hasBottom = res.madeHand || res.guidance.text || res.villainProfile;
+    if (hasBottom) {
+      html += '<div class="eq-row-bottom">';
+      if (res.madeHand) {
+        html += '<div class="eq-badges">';
+        html += '<span class="eq-made-hand">' + res.madeHand.label + '</span>';
+        if (res.madeHand.draws.length) {
+          for (var dri = 0; dri < res.madeHand.draws.length; dri++) {
+            html += '<span class="draw-outs">' + res.madeHand.draws[dri] + '</span>';
+          }
         }
+        html += '</div>';
+      }
+      html += '<div class="eq-detail ' + qualClass + '">' + res.actionDesc + ' ' + res.potOddsStr + res.guidance.text + '</div>';
+      if (res.villainProfile && res.guidance.text.indexOf(res.villainProfile.name) === -1) {
+        html += '<div class="villain-profile-line">vs ' + res.villainProfile.type + ' (' + res.villainProfile.name + ' \u00b7 VPIP ' + (res.villainProfile.vpip || '?') + '% \u00b7 Fold to raise ' + (res.villainProfile.foldToRaise || '?') + '%)</div>';
       }
       html += '</div>';
-    }
-    html += '<div class="eq-detail ' + qualClass + '">' + res.actionDesc + ' ' + res.potOddsStr + res.guidance.text + '</div>';
-    if (res.villainProfile) {
-      html += '<div class="villain-profile-line">vs ' + res.villainProfile.type + ' (' + res.villainProfile.name + ' \u00b7 VPIP ' + (res.villainProfile.vpip || '?') + '% \u00b7 Fold to raise ' + (res.villainProfile.foldToRaise || '?') + '%)</div>';
     }
     html += '</div>';
   }
@@ -635,9 +734,9 @@ function renderEquityResults(container, results) {
       var x = pad + (plotW / (curvePoints.length - 1)) * c;
       var y = svgH - pad - (curvePoints[c].equity * plotH);
       pts.push(x + ',' + y);
-      html += '<text x="' + x + '" y="' + (svgH - 2) + '" text-anchor="middle" fill="var(--dim)" font-size="8" font-family="IBM Plex Mono, monospace">' + curvePoints[c].street.slice(0, 1) + '</text>';
+      html += '<text x="' + x + '" y="' + (svgH - 2) + '" text-anchor="middle" fill="var(--dim)" font-size="10" font-family="IBM Plex Mono, monospace">' + curvePoints[c].street.slice(0, 1) + '</text>';
       html += '<circle cx="' + x + '" cy="' + y + '" r="3" fill="var(--gold)"/>';
-      html += '<text x="' + x + '" y="' + (y - 7) + '" text-anchor="middle" fill="var(--dim)" font-size="7" font-family="IBM Plex Mono, monospace">' + (curvePoints[c].equity * 100).toFixed(0) + '%</text>';
+      html += '<text x="' + x + '" y="' + (y - 7) + '" text-anchor="middle" fill="var(--dim)" font-size="10" font-family="IBM Plex Mono, monospace">' + (curvePoints[c].equity * 100).toFixed(0) + '%</text>';
     }
     html += '<polyline points="' + pts.join(' ') + '" fill="none" stroke="var(--gold)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>';
     html += '</svg></div>';
