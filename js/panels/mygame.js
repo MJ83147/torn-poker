@@ -190,30 +190,9 @@ function renderMyGame(container, d, hands) {
 
     // ── Section 5b: Leak Finder (merged from Leak Finder panel) ──
     html += '<div class="sec-subtitle mt-20">Leak Finder</div>';
-    html += '<div style="font-size:13px;color:var(--dim);margin-bottom:12px;">Automated analysis sorted by estimated cost.</div>';
-    var detailedLeaks = [];
-    renderLeakChecks(detailedLeaks, d, hands);
-    detailedLeaks.sort(function(a, b) { return b.cost - a.cost; });
-    var totalCost = 0, leakCount = 0;
-    for (var dli = 0; dli < detailedLeaks.length; dli++) {
-      if (detailedLeaks[dli].cost > 0) { totalCost += detailedLeaks[dli].cost; leakCount++; }
-    }
-    if (leakCount > 0) {
-      var bb = getHandBB(hands[0]);
-      var costStr = '~' + totalCost + ' BB estimated cost';
-      if (bb && bb > 0) costStr += ' (' + fmt(Math.round(totalCost * bb)) + ')';
-      html += '<div class="leak-summary">';
-      html += '<span class="leak-summary-count">' + leakCount + ' leak' + (leakCount > 1 ? 's' : '') + ' found</span>';
-      html += '<span class="leak-summary-cost">' + costStr + '</span>';
-      html += '</div>';
-    } else {
-      html += '<div class="leak-summary"><span class="leak-summary-count">No significant leaks detected</span></div>';
-    }
-    html += '<div class="ins-grid">';
-    for (var dli2 = 0; dli2 < detailedLeaks.length; dli2++) {
-      html += detailedLeaks[dli2].html;
-    }
-    html += '</div>';
+    var _lkEl = document.createElement('div');
+    renderLeaks(_lkEl, d, hands);
+    html += _lkEl.innerHTML.replace(/<div class="section-title">[^<]*<\/div>/, '').replace(/<div class="desc-text mb-24">[^<]*<\/div>/, '');
 
     // ── Section 6: Work on next ──
     html += '<div class="sec-subtitle mt-20">Work On Next</div>';

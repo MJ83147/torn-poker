@@ -545,6 +545,7 @@ function renderPlayers(container, d, hands) {
     var watchedOpps = filtered.filter(function(o) { return watched.indexOf(o.name) >= 0; });
     var html = '<div class="panel-title">Players</div>';
     html += '<div class="panel-desc">Opponent records, head-to-head stats, and watch list.</div>';
+    html += '<div style="margin-bottom:16px;"><button class="example-hand-btn" id="open-compare-btn">Compare Players</button></div>';
 
     if (watchedOpps.length) {
       html += '<div class="p-row"><div class="sec-subtitle mt-0">Watched Players</div>';
@@ -631,6 +632,32 @@ function renderPlayers(container, d, hands) {
         renderPlayerList();
       };
     });
+
+    // Compare Players modal button
+    var cmpBtn = document.getElementById('open-compare-btn');
+    if (cmpBtn) {
+      cmpBtn.onclick = function() {
+        var overlay = document.createElement('div');
+        overlay.className = 'modal-overlay';
+        overlay.style.display = 'flex';
+        var box = document.createElement('div');
+        box.className = 'modal-box';
+        box.style.maxWidth = '700px';
+        box.style.maxHeight = '85vh';
+        box.style.overflow = 'auto';
+        var closeBtn = document.createElement('button');
+        closeBtn.className = 'modal-close';
+        closeBtn.innerHTML = '&times;';
+        closeBtn.onclick = function() { overlay.remove(); };
+        overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
+        box.appendChild(closeBtn);
+        var cmpContent = document.createElement('div');
+        renderCompare(cmpContent, d, hands);
+        box.appendChild(cmpContent);
+        overlay.appendChild(box);
+        document.body.appendChild(overlay);
+      };
+    }
   }
 
   function renderPlayerHands(playerName) {

@@ -108,7 +108,6 @@ function render(d, hands, meta) {
   renderPosition(document.getElementById('p-position'), d, hands);
   renderStreet(document.getElementById('p-street'), d, hands);
   renderActions(document.getElementById('p-actions'), d, hands);
-  renderBets(document.getElementById('p-bets'), d, hands);
   renderRange(document.getElementById('p-range'), d, hands);
   renderTables(document.getElementById('p-tables'), hands, State.allHands, State.excludedTables, renderAll);
   renderTrends(document.getElementById('p-trends'), hands, meta);
@@ -118,8 +117,6 @@ function render(d, hands, meta) {
   renderAllIn(document.getElementById('p-allin'), hands);
   renderPlayers(document.getElementById('p-players'), d, hands);
   renderMyGame(document.getElementById('p-mygame'), d, hands);
-  renderLeaks(document.getElementById('p-leaks'), d, hands);
-  renderCompare(document.getElementById('p-compare'), d, hands);
 
   // Filter banners (cross-cutting)
   var filterEl = document.getElementById('table-filter');

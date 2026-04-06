@@ -100,19 +100,14 @@
         fallback: '<strong>Street Insights</strong><br>Insight cards appear here when patterns are detected in your street-by-street play.' }
     ],
     actions: [
-      { el: '.panel-title', intro: '<strong>Actions</strong><br>Your overall action tendencies: how often you fold, check, call, or raise across all streets.', pos: 'bottom' },
+      { el: '.panel-title', intro: '<strong>Betting</strong><br>Action frequencies, bet sizing, and situational stats across all streets.', pos: 'bottom' },
       { el: '.mini-row', intro: '<strong>Action Totals</strong><br>Total action count broken into folds, checks, calls, and raises, plus your overall aggression percentage.', pos: 'bottom' },
       { el: '.stack-bar', intro: '<strong>Action Split Bar</strong><br>Visual breakdown of your frequencies. Red = fold, green = raise, amber = call, grey = check. A healthy profile has more green than red.', pos: 'top' },
       { el: '.tbl', intro: '<strong>Actions by Street</strong><br>How your action mix changes from preflop through the river. Look for streets where you become too passive.', pos: 'top' },
       { el: '.bar-group', intro: '<strong>Situational Stats</strong><br>Key spots like C-Bet rate, donk bet frequency, fold to 3-bet, and more. These pinpoint specific leaks in your game.', pos: 'top' },
-      { el: '.ins-grid', intro: '<strong>Action Insights</strong><br>Automated flags for action-related leaks and strengths.', pos: 'top',
-        fallback: '<strong>Action Insights</strong><br>Insight cards appear here when your action patterns reveal specific leaks or strengths.' }
-    ],
-    bets: [
-      { el: '.panel-title', intro: '<strong>Bets</strong><br>Your average bet sizing and frequency across each street.', pos: 'bottom' },
-      { el: '.two-col', intro: '<strong>Bet Sizing</strong><br>Left: your average bet size on each street. Right: how often you bet on each street. Use BB mode in the header to compare across stakes.', pos: 'top' },
-      { el: '.ins-grid', intro: '<strong>Bet Insights</strong><br>Flags sizing issues — betting too small gives opponents odds, too large risks more than necessary.', pos: 'top',
-        fallback: '<strong>Bet Insights</strong><br>Insight cards appear here when your bet sizing reveals patterns worth addressing.' }
+      { el: '.two-col', intro: '<strong>Bet Sizing</strong><br>Average bet size and bet frequency on each street. Use BB mode in the header to compare across stakes.', pos: 'top' },
+      { el: '.ins-grid', intro: '<strong>Betting Insights</strong><br>Automated flags for action and sizing patterns.', pos: 'top',
+        fallback: '<strong>Betting Insights</strong><br>Insight cards appear here when your betting patterns reveal specific leaks or strengths.' }
     ],
     range: [
       { el: '.panel-title', intro: '<strong>Range</strong><br>The classic 13x13 hand matrix showing every possible starting hand combination.', pos: 'bottom' },
@@ -166,20 +161,13 @@
         fallback: '<strong>EV Insights</strong><br>Insight cards appear after simulation when patterns are found — running hot/cold, underdog frequency, or variance masking good decisions.' }
     ],
     players: [
-      { el: '.panel-title', intro: '<strong>Players</strong><br>Stats on every opponent you\'ve faced, with watch lists and head-to-head records.', pos: 'bottom' },
+      { el: '.panel-title', intro: '<strong>Players</strong><br>Stats on every opponent you\'ve faced, with watch lists and head-to-head comparison.', pos: 'bottom' },
+      { el: '#open-compare-btn', intro: '<strong>Compare Players</strong><br>Opens a head-to-head comparison modal where you can compare any two players side by side with stats, shared hands, and exploit tips.', pos: 'bottom' },
       { el: '#player-search', intro: '<strong>Search</strong><br>Type a player name to find them quickly in your opponent list.', pos: 'bottom' },
       { el: '.players-table-scroll', intro: '<strong>Opponent Table</strong><br>Every opponent with VPIP, PFR, limp rate, fold-to-raise, and showdown stats. <strong>Click any row</strong> to see their full profile: tendencies, exploit suggestions, and every hand you\'ve played together.', pos: 'top' },
       { el: '.watch-star', intro: '<strong>Watch List</strong><br>Click the star next to any player to add them to your watch list. Watched players appear in a section at the top so you can track key opponents across sessions.', pos: 'left' },
       { el: '.ins-grid', intro: '<strong>Player Insights</strong><br>Your most-seen opponents, best/worst records, and flags for exploitable tendencies.', pos: 'top',
         fallback: '<strong>Player Insights</strong><br>Insight cards appear here highlighting your most-seen opponents, best/worst records, and exploitable tendencies.' }
-    ],
-    compare: [
-      { el: '.panel-title', intro: '<strong>Head to Head</strong><br>Compare any two players side by side — stats, shared hands, and exploit tips.', pos: 'bottom' },
-      { el: '.compare-selectors', intro: '<strong>Player Selection</strong><br>Pick two players to compare. Hero is selected by default in the first dropdown.', pos: 'bottom' },
-      { el: '.compare-table', intro: '<strong>Stat Comparison</strong><br>Key stats side by side with edge indicators showing who has the advantage.', pos: 'top',
-        fallback: '<strong>Stat Comparison</strong><br>Select two different players to see their stats compared in a table.' },
-      { el: '.compare-exploits', intro: '<strong>Exploit Tips</strong><br>Auto-generated tips based on the stat differentials between the two players.', pos: 'top',
-        fallback: '<strong>Exploit Tips</strong><br>Exploit suggestions appear here when stat differences reveal exploitable tendencies.' }
     ]
   };
 
