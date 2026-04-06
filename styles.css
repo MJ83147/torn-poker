@@ -460,7 +460,7 @@ textarea#jin:focus {
   font-size: 11px;
   letter-spacing: 1px;
   text-transform: uppercase;
-  color: var(--dim);
+  color: #2a2a2a;
   background: none;
   border: none;
   cursor: pointer;
@@ -469,12 +469,13 @@ textarea#jin:focus {
 }
 
 .tab-item:hover {
-  color: var(--text);
-  background: rgba(255,255,255,0.05);
+  color: #fff;
+  background: rgba(0,0,0,0.2);
 }
 
 .tab-item.active {
-  color: var(--gold);
+  color: #1a1a1a;
+  font-weight: 700;
 }
 
 /* PANELS */

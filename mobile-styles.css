@@ -20,8 +20,9 @@
     position: static;
     box-shadow: none;
     border: none;
-    border-top: 1px solid var(--border);
-    background: rgba(255,255,255,0.02);
+    border-top: 1px solid rgba(0,0,0,0.15);
+    background: var(--menu-bg);
+    border-radius: 0;
   }
 }
 

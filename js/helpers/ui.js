@@ -77,8 +77,15 @@ function switchTab(tabId) {
     var menu = item.closest('.tab-menu');
     if (menu) menu.querySelector('.tab-menu-btn').classList.add('active');
   }
-  // Close any open menus
+  // Close any open menus and backdrop
   document.querySelectorAll('.tab-menu').forEach(function(m) { m.classList.remove('open'); });
+  var bd = document.getElementById('menu-backdrop');
+  if (bd) bd.classList.remove('active');
+}
+
+function _toggleBackdrop(show) {
+  var bd = document.getElementById('menu-backdrop');
+  if (bd) bd.classList.toggle('active', show);
 }
 
 // Tab menu open/close logic
@@ -91,7 +98,12 @@ function switchTab(tabId) {
       var wasOpen = menu.classList.contains('open');
       // Close all menus first
       document.querySelectorAll('.tab-menu').forEach(function(m) { m.classList.remove('open'); });
-      if (!wasOpen) menu.classList.add('open');
+      if (!wasOpen) {
+        menu.classList.add('open');
+        _toggleBackdrop(true);
+      } else {
+        _toggleBackdrop(false);
+      }
       return;
     }
     var item = e.target.closest('.tab-item');
@@ -102,6 +114,7 @@ function switchTab(tabId) {
     }
     // Click outside closes all menus
     document.querySelectorAll('.tab-menu').forEach(function(m) { m.classList.remove('open'); });
+    _toggleBackdrop(false);
   });
 })();
 
