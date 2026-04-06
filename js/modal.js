@@ -115,17 +115,36 @@ function closeModal() {
 }
 
 function findExampleHand(filterFn) {
+  var results = [];
   for (var i = State.modalHands.length - 1; i >= 0; i--) {
-    if (filterFn(State.modalHands[i])) return State.modalHands[i];
+    if (filterFn(State.modalHands[i])) results.push(State.modalHands[i]);
   }
-  return null;
+  return results;
 }
 
 // Hand-list modal: shows a scrollable list of hands, click any to open detail.
 // Same visual pattern as the range grid cell click modal.
+function buildHandRow(h, idx) {
+  var myActs = getActsSummary(h);
+  var res = renderResult(h, 'span', 'saved-res range-hand-row-result');
+  return '<div class="range-hand-row" data-ridx="' + idx + '">' +
+    '<div class="range-hand-row-top">' +
+      '<div class="range-hand-row-side">' +
+        '<span class="range-hand-row-pos">' + (h.position || '?') + '</span>' +
+        '<span class="range-hand-row-hole">' + (h.hole ? h.hole.join(' ') : '??') + '</span>' +
+        '<span class="range-hand-row-board">' + (h.board && h.board.length ? h.board.join(' ') : '—') + '</span>' +
+      '</div>' +
+      '<div class="range-hand-row-side">' + res + '</div>' +
+    '</div>' +
+    '<div class="range-hand-row-actions">' + myActs + '</div>' +
+    '</div>';
+}
+
 function showExampleHandListModal(title, handsList, coachingNote) {
   var existing = document.getElementById('example-hand-modal');
   if (existing) existing.remove();
+  var BATCH = 10;
+  var shown = 0;
 
   var overlay = document.createElement('div');
   overlay.id = 'example-hand-modal';
@@ -145,34 +164,50 @@ function showExampleHandListModal(title, handsList, coachingNote) {
     header += '<div class="modal-coaching"><div class="modal-coaching-label dim-label">What to look for</div>' + coachingNote + '</div>';
   }
 
-  var rows = handsList.map(function(h, idx) {
-    var myActs = getActsSummary(h);
-    var res = renderResult(h, 'span', 'saved-res range-hand-row-result');
-    return '<div class="range-hand-row" data-ridx="' + idx + '">' +
-      '<div class="range-hand-row-top">' +
-        '<div class="range-hand-row-side">' +
-          '<span class="range-hand-row-pos">' + (h.position || '?') + '</span>' +
-          '<span class="range-hand-row-hole">' + (h.hole ? h.hole.join(' ') : '??') + '</span>' +
-          '<span class="range-hand-row-board">' + (h.board && h.board.length ? h.board.join(' ') : '—') + '</span>' +
-        '</div>' +
-        '<div class="range-hand-row-side">' + res + '</div>' +
-      '</div>' +
-      '<div class="range-hand-row-actions">' + myActs + '</div>' +
-      '</div>';
-  }).join('');
-
   box.innerHTML = '<button class="modal-close" id="modal-close-btn">&times;</button>' +
-    header + '<div class="mt-12">' + rows + '</div>';
+    header + '<div class="mt-12" id="hand-list-rows"></div>';
+
+  var rowsContainer = box.querySelector('#hand-list-rows');
+
+  function wireRow(row) {
+    row.onclick = function() {
+      var idx = parseInt(row.getAttribute('data-ridx'));
+      if (!isNaN(idx) && handsList[idx]) showExampleHandModal(handsList[idx], coachingNote);
+    };
+  }
+
+  function loadBatch() {
+    var end = Math.min(shown + BATCH, handsList.length);
+    for (var i = shown; i < end; i++) {
+      var tmp = document.createElement('div');
+      tmp.innerHTML = buildHandRow(handsList[i], i);
+      var row = tmp.firstChild;
+      wireRow(row);
+      rowsContainer.appendChild(row);
+    }
+    shown = end;
+    updateLoadMore();
+  }
+
+  function updateLoadMore() {
+    var existing = box.querySelector('#load-more-btn');
+    if (existing) existing.remove();
+    var remaining = handsList.length - shown;
+    if (remaining > 0) {
+      var btn = document.createElement('button');
+      btn.id = 'load-more-btn';
+      btn.className = 'example-hand-btn';
+      btn.style.marginTop = '12px';
+      btn.textContent = 'Load more (' + remaining + ' remaining)';
+      btn.onclick = loadBatch;
+      rowsContainer.parentNode.appendChild(btn);
+    }
+  }
 
   overlay.appendChild(box);
   document.body.appendChild(overlay);
   requestAnimationFrame(function() { overlay.classList.add('show'); });
   document.getElementById('modal-close-btn').onclick = closeModal;
 
-  box.querySelectorAll('.range-hand-row').forEach(function(row) {
-    row.onclick = function() {
-      var idx = parseInt(row.getAttribute('data-ridx'));
-      if (!isNaN(idx) && handsList[idx]) showExampleHandModal(handsList[idx], coachingNote);
-    };
-  });
+  loadBatch();
 }

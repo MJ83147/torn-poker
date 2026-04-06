@@ -139,20 +139,14 @@ function insWithExample(sev, label, text, chips, exampleHands, coachingNote) {
   var handsList = !exampleHands ? [] : Array.isArray(exampleHands) ? exampleHands : [exampleHands];
   if (!handsList.length) return base;
   const btnId = 'ex-' + Math.random().toString(36).slice(2, 8);
-  var count = handsList.length;
-  const btn = '<button class="example-hand-btn" id="' + btnId + '">' +
-    (count === 1 ? 'See example hand' : 'See ' + count + ' example hands') + '</button>';
+  const btn = '<button class="example-hand-btn" id="' + btnId + '">See example hands</button>';
   const insertPoint = base.lastIndexOf('</div>');
   const result = base.slice(0, insertPoint) + btn + base.slice(insertPoint);
   setTimeout(function() {
     const el = document.getElementById(btnId);
     if (!el) return;
     el.onclick = function() {
-      if (count === 1) {
-        showExampleHandModal(handsList[0], coachingNote);
-      } else {
-        showExampleHandListModal(label, handsList, coachingNote);
-      }
+      showExampleHandListModal(label, handsList, coachingNote);
     };
   }, 50);
   return result;
