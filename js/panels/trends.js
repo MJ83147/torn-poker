@@ -52,9 +52,9 @@ function renderTrends(container, hands, meta) {
 
   var colors = getChartColors();
   var dimColor = colors.dim;
-  var greenColor = styles.getPropertyValue('--green').trim() || '#2ecc71';
-  var goldColor = styles.getPropertyValue('--gold').trim() || '#f1c40f';
-  var amberColor = styles.getPropertyValue('--amber').trim() || '#e67e22';
+  var greenColor = colors.green;
+  var goldColor = colors.gold;
+  var amberColor = colors.amber;
 
   var chartConfigs = [
     { id: 'trend-wr', title: 'Cumulative Win Rate', key: 'wr', color: greenColor, suffix: '%', baseline: 50 },
