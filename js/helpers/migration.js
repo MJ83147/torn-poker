@@ -34,6 +34,16 @@ function backfillHandData(hands) {
     var actions = h.actions || [];
     if (!actions.length) continue;
 
+    // Deduplicate consecutive identical action lines (TM script sometimes logs twice)
+    var deduped = [actions[0]];
+    for (var d = 1; d < actions.length; d++) {
+      if (actions[d].replace(/\s+/g, ' ').trim() !== actions[d - 1].replace(/\s+/g, ' ').trim()) {
+        deduped.push(actions[d]);
+      }
+    }
+    h.actions = deduped;
+    actions = deduped;
+
     var needBoard = !h.board || !h.board.length;
     var needPot = !h.pot;
     var needOutcome = !h.outcome;
