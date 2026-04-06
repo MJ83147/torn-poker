@@ -321,11 +321,30 @@ function getHeroStreetActions(hand) {
     var amountToCall = 0;
     var potAtHeroAction = potRunning;
 
+    // Track villain action that prompted hero's response
+    var villainAction = null;
+    var lastVillainBet = null;
+
+    // Count active players on this street
+    var activePlayers = {};
+    var foldedPlayers = {};
+
     var allHeroActions = [];
     for (var ai = 0; ai < acts.length; ai++) {
       var a = acts[ai];
+      // Track active players (anyone who acts and doesn't fold)
+      if (a.type !== 'won') {
+        activePlayers[a.author] = true;
+      }
+      if (a.type === 'fold') {
+        foldedPlayers[a.author] = true;
+      }
+      // Track the last villain bet/raise before hero acts
+      if (!a.isMe && (a.type === 'bet' || a.type === 'raise') && a.amount) {
+        lastVillainBet = a;
+      }
       if (a.isMe && a.type !== 'won' && a.type !== 'sb' && a.type !== 'bb') {
-        allHeroActions.push({ action: a, potAtAction: potRunning });
+        allHeroActions.push({ action: a, potAtAction: potRunning, facingAction: lastVillainBet });
       }
       if (a.amount && a.type !== 'won') {
         potRunning += a.amount;
@@ -333,6 +352,11 @@ function getHeroStreetActions(hand) {
       if (a.isMe && a.type === 'fold') {
         heroFoldedOn = st;
       }
+    }
+
+    var numActive = 0;
+    for (var ap in activePlayers) {
+      if (!foldedPlayers[ap]) numActive++;
     }
 
     // Pick the most significant action: fold > call/raise/bet > check
@@ -346,6 +370,7 @@ function getHeroStreetActions(hand) {
       }
       heroAction = picked.action;
       potAtHeroAction = picked.potAtAction;
+      villainAction = picked.facingAction;
     }
 
     if (!heroAction) {
@@ -368,6 +393,7 @@ function getHeroStreetActions(hand) {
         for (var fi = acts.length - 1; fi >= 0; fi--) {
           if (!acts[fi].isMe && (acts[fi].type === 'raise' || acts[fi].type === 'bet') && acts[fi].amount) {
             amountToCall = acts[fi].amount;
+            villainAction = acts[fi];
             break;
           }
         }
@@ -375,11 +401,28 @@ function getHeroStreetActions(hand) {
 
       var potOdds = amountToCall > 0 ? amountToCall / (potAtHeroAction + amountToCall) : 0;
 
+      // Calculate villain bet as % of pot
+      var villainBetPct = null;
+      if (villainAction && villainAction.amount && potBefore > 0) {
+        villainBetPct = Math.round((villainAction.amount / potBefore) * 100);
+      }
+
+      // Count callers before hero on this street
+      var callersBefore = 0;
+      for (var ci = 0; ci < acts.length; ci++) {
+        if (acts[ci].isMe) break;
+        if (acts[ci].type === 'call') callersBefore++;
+      }
+
       streets[st] = {
         action: heroAction,
         potBefore: potAtHeroAction,
         amountToCall: amountToCall,
-        potOdds: potOdds
+        potOdds: potOdds,
+        villainAction: villainAction,
+        villainBetPct: villainBetPct,
+        playersActive: numActive,
+        callersBefore: callersBefore
       };
     }
   }
@@ -399,6 +442,13 @@ function generateGuidance(equity, streetInfo, texture, madeHand, villainProfile)
   var betPotPct = (act.amount && pot > 0 && (act.type === 'bet' || act.type === 'raise'))
     ? Math.round((act.amount / pot) * 100) : null;
 
+  // Villain action context
+  var vAct = streetInfo.villainAction;
+  var vBetPct = streetInfo.villainBetPct;
+  var playersActive = streetInfo.playersActive || 0;
+  var callersBefore = streetInfo.callersBefore || 0;
+  var multiway = playersActive > 2;
+
   // Villain shorthand
   var vName = villainProfile ? villainProfile.name : null;
   var vFolds = villainProfile && villainProfile.foldToRaise !== null ? villainProfile.foldToRaise : null;
@@ -406,6 +456,25 @@ function generateGuidance(equity, streetInfo, texture, madeHand, villainProfile)
   var vAgg = villainProfile && (villainProfile.type === 'LAG' || (villainProfile.agg !== null && villainProfile.agg >= 40));
   var vCalls = villainProfile && villainProfile.wtsd !== null && villainProfile.wtsd >= 55;
   var vPassive = villainProfile && villainProfile.agg !== null && villainProfile.agg < 15;
+
+  // Build villain action description
+  var facingDesc = '';
+  if (vAct) {
+    var vSizeDesc = '';
+    if (vBetPct !== null) {
+      if (vBetPct <= 33) vSizeDesc = ' (small — ' + vBetPct + '% pot)';
+      else if (vBetPct <= 75) vSizeDesc = ' (' + vBetPct + '% pot)';
+      else if (vBetPct <= 100) vSizeDesc = ' (large — ' + vBetPct + '% pot)';
+      else vSizeDesc = ' (overbet — ' + vBetPct + '% pot)';
+    }
+    facingDesc = 'Facing ' + vAct.author + '\'s ' + fmtDollar(vAct.amount) + ' ' + vAct.type + vSizeDesc + '. ';
+  }
+
+  // Multiway context
+  var mwDesc = '';
+  if (multiway) {
+    mwDesc = playersActive + '-way pot' + (callersBefore > 0 ? ' (' + callersBefore + ' caller' + (callersBefore > 1 ? 's' : '') + ' before you)' : '') + '. ';
+  }
 
   // ── Blinds ──
   if (act.type === 'sb' || act.type === 'bb') {
@@ -416,68 +485,90 @@ function generateGuidance(equity, streetInfo, texture, madeHand, villainProfile)
   // ── Check ──
   } else if (act.type === 'check') {
     if (eq > 65 && vFolds !== null && vFolds >= 60) {
-      text = 'You had ' + Math.round(eq) + '% equity but checked. ' + vName + ' folds to raises ' + vFolds + '% of the time — this was a missed value opportunity.';
+      text = facingDesc + Math.round(eq) + '% equity but you checked. ' + vName + ' folds to raises ' + vFolds + '% — missed value opportunity.';
       quality = 'bad';
     } else if (eq > 65 && vCalls) {
-      text = 'You had ' + Math.round(eq) + '% equity but checked. ' + vName + ' calls to showdown ' + villainProfile.wtsd + '% of the time — bet big, they\'ll pay you off.';
+      text = facingDesc + Math.round(eq) + '% equity but you checked. ' + vName + ' calls to showdown ' + villainProfile.wtsd + '% — bet big, they\'ll pay you off.';
       quality = 'bad';
     } else if (eq > 65 && vPassive) {
-      text = 'You had ' + Math.round(eq) + '% equity but checked. ' + vName + ' is passive — take the lead and bet for value.';
+      text = facingDesc + Math.round(eq) + '% equity but you checked. ' + vName + ' is passive — take the lead and bet for value.';
       quality = 'bad';
     } else if (eq > 65) {
-      text = 'Strong hand but you checked. Betting for value would usually be correct here.';
+      text = facingDesc + 'Strong hand (' + Math.round(eq) + '% equity) but you checked. Betting for value is usually correct here.';
       quality = 'bad';
+    } else if (eq >= 40 && multiway) {
+      text = mwDesc + 'Decent equity (' + Math.round(eq) + '%) but checking in a multiway pot is fine — you\'re less likely to get folds from multiple opponents.';
+      quality = 'neutral';
     } else if (eq >= 40 && vFolds !== null && vFolds >= 60) {
-      text = 'Decent equity and ' + vName + ' folds to raises ' + vFolds + '%. A bet could take this down without a showdown.';
+      text = facingDesc + Math.round(eq) + '% equity. ' + vName + ' folds to raises ' + vFolds + '% — a bet could take this down without showdown.';
       quality = 'neutral';
     } else if (eq >= 40) {
-      text = 'Decent hand. A bet could protect your equity or extract thin value.';
+      text = 'Decent hand (' + Math.round(eq) + '% equity). A bet could protect your equity or extract thin value.';
       quality = 'neutral';
     } else {
-      text = 'Weak hand. Checking is reasonable.';
+      text = 'Weak hand. Checking is correct — no value in betting here.';
       quality = 'good';
     }
 
   // ── Call ──
   } else if (act.type === 'call') {
+    // Always include what you were facing
+    text = facingDesc;
     if (eq > potOdds + 10 && vFolds !== null && vFolds >= 60) {
-      text = 'Your equity justified a call, but ' + vName + ' folds to raises ' + vFolds + '% — raising could have won the pot outright.';
+      text += 'Your ' + Math.round(eq) + '% equity justified a call, but ' + vName + ' folds to raises ' + vFolds + '% — raising could have won the pot outright.';
       quality = 'neutral';
     } else if (eq > potOdds + 10 && vAgg) {
-      text = 'Clear call. ' + vName + ' is aggressive so calling down with ' + Math.round(eq) + '% equity is correct — let them bluff into you.';
+      text += vName + ' is aggressive — calling down with ' + Math.round(eq) + '% equity is correct. Let them keep bluffing into you.';
+      quality = 'good';
+    } else if (eq > potOdds + 10 && multiway && callersBefore > 0) {
+      text += mwDesc + 'Good call with ' + Math.round(eq) + '% equity, but be cautious — ' + callersBefore + ' caller' + (callersBefore > 1 ? 's' : '') + ' already in means someone likely has a real hand.';
       quality = 'good';
     } else if (eq > potOdds + 10) {
-      text = 'Clear call. Your equity significantly exceeded the price.';
+      text += 'Good price. Your ' + Math.round(eq) + '% equity comfortably beats the ' + Math.round(potOdds) + '% needed.';
       quality = 'good';
     } else if (eq >= potOdds - 10) {
-      text = 'Close spot. Your equity roughly matched the pot odds.';
+      text += 'Borderline spot. Your ' + Math.round(eq) + '% equity roughly matches the ' + Math.round(potOdds) + '% needed — implied odds make or break this call.';
       quality = 'neutral';
     } else {
-      text = 'Unprofitable call. Your equity did not justify the price.';
+      text += 'Unprofitable call. You had ' + Math.round(eq) + '% equity but needed ' + Math.round(potOdds) + '%.';
       quality = 'bad';
+    }
+    // Sizing commentary for calls
+    if (vBetPct !== null) {
+      if (vBetPct <= 33) {
+        text += ' Small sizing from villain — you\'re getting a great price to see more cards.';
+      } else if (vBetPct > 100) {
+        text += ' Villain overbets the pot — this usually polarises their range to nuts or bluffs.';
+      }
     }
 
   // ── Raise ──
   } else if (act.type === 'raise') {
+    text = facingDesc;
     if (eq > 55) {
-      text = 'Value raise with ' + Math.round(eq) + '% equity.';
+      text += 'Value raise with ' + Math.round(eq) + '% equity.';
       quality = 'good';
     } else if (eq >= 35) {
-      text = 'Semi-bluff or thin value raise.';
+      text += 'Semi-bluff raise with ' + Math.round(eq) + '% equity — applying pressure while you have outs.';
       quality = 'neutral';
     } else if (vFolds !== null && vFolds >= 60) {
-      text = 'Bluff raise, but ' + vName + ' folds to raises ' + vFolds + '% — the aggression is justified.';
+      text += 'Bluff raise targeting ' + vName + ' who folds ' + vFolds + '% to raises — the aggression is justified even with weak equity.';
       quality = 'good';
+    } else if (multiway) {
+      text += mwDesc + 'Aggressive raise into multiple opponents with ' + Math.round(eq) + '% equity — risky, but isolates weak ranges.';
+      quality = 'neutral';
     } else {
-      text = 'Bluff raise. Your hand was weak but raising applies pressure.';
+      text += 'Bluff raise with ' + Math.round(eq) + '% equity. Applies pressure but you\'re mostly relying on fold equity.';
       quality = 'neutral';
     }
     // Bet sizing for raises
     if (betPotPct !== null) {
       if (vCalls && betPotPct < 60 && eq > 55) {
-        text += ' You sized ' + betPotPct + '% of pot — ' + vName + ' calls to showdown ' + villainProfile.wtsd + '%, go bigger to extract max value.';
+        text += ' Your ' + betPotPct + '% pot sizing is small — ' + vName + ' goes to showdown ' + villainProfile.wtsd + '% of the time, so size up to extract more.';
       } else if (vFolds !== null && vFolds >= 60 && betPotPct > 80) {
-        text += ' You sized ' + betPotPct + '% of pot — ' + vName + ' folds to raises ' + vFolds + '%, a smaller raise risks less for the same fold.';
+        text += ' Your ' + betPotPct + '% pot sizing is large — ' + vName + ' folds ' + vFolds + '% anyway, a smaller raise risks less for the same fold.';
+      } else if (betPotPct !== null) {
+        text += ' You sized ' + betPotPct + '% of pot.';
       }
     }
 
@@ -487,43 +578,53 @@ function generateGuidance(equity, streetInfo, texture, madeHand, villainProfile)
       text = 'Value bet with ' + Math.round(eq) + '% equity.';
       quality = 'good';
     } else if (eq >= 35) {
-      text = 'Thin value or semi-bluff. Reasonable with this equity.';
+      text = 'Thin value or semi-bluff with ' + Math.round(eq) + '% equity.';
       quality = 'neutral';
     } else if (vFolds !== null && vFolds >= 60) {
-      text = 'Bluff bet, but ' + vName + ' folds to raises ' + vFolds + '% — good target for aggression.';
+      text = 'Bluff targeting ' + vName + ' who folds ' + vFolds + '% to raises — good target for aggression.';
       quality = 'good';
+    } else if (multiway) {
+      text = mwDesc + 'Betting into ' + playersActive + ' opponents with ' + Math.round(eq) + '% equity — someone likely has something. Be sure you have a plan if raised.';
+      quality = 'neutral';
     } else {
-      text = 'Bluff bet. Weak hand, but betting puts pressure on opponents.';
+      text = 'Bluff bet with ' + Math.round(eq) + '% equity. Putting pressure on but you need villain to fold.';
       quality = 'neutral';
     }
     // Bet sizing
     if (betPotPct !== null) {
       if (vCalls && betPotPct < 60 && eq > 55) {
-        text += ' You sized ' + betPotPct + '% of pot — ' + vName + ' calls down ' + villainProfile.wtsd + '% to showdown, size up to punish them.';
+        text += ' Your ' + betPotPct + '% pot sizing is small — ' + vName + ' goes to showdown ' + villainProfile.wtsd + '%, size up to punish them.';
       } else if (vFolds !== null && vFolds >= 60 && betPotPct > 80) {
-        text += ' You sized ' + betPotPct + '% of pot — ' + vName + ' folds ' + vFolds + '% to raises, a smaller bet gets the same fold for less risk.';
+        text += ' Your ' + betPotPct + '% pot sizing is large — ' + vName + ' folds ' + vFolds + '% anyway, a smaller bet gets the same fold for less risk.';
       } else if (vLoose && betPotPct < 50 && eq > 55) {
-        text += ' You sized ' + betPotPct + '% of pot — ' + vName + ' plays loose (VPIP ' + villainProfile.vpip + '%), size up against wide ranges.';
+        text += ' Your ' + betPotPct + '% pot sizing is small — ' + vName + ' plays loose (VPIP ' + villainProfile.vpip + '%), size up against wide ranges.';
+      } else if (betPotPct !== null) {
+        text += ' You sized ' + betPotPct + '% of pot.';
       }
     }
 
   // ── Fold ──
   } else if (act.type === 'fold') {
+    text = facingDesc;
     if (eq > 40 && vLoose) {
-      text = 'You folded with ' + Math.round(eq) + '% equity against ' + vName + ', who plays loose (VPIP ' + villainProfile.vpip + '%). Their range is wide — this fold was likely too tight.';
+      text += 'You folded ' + Math.round(eq) + '% equity against ' + vName + ' who plays loose (VPIP ' + villainProfile.vpip + '%). Their range is wide — this fold was likely too tight.';
       quality = 'bad';
     } else if (eq > 40 && vFolds !== null && vFolds >= 60) {
-      text = 'You folded with ' + Math.round(eq) + '% equity. ' + vName + ' folds to raises ' + vFolds + '% — raising would have been better than folding.';
+      text += 'You folded ' + Math.round(eq) + '% equity but ' + vName + ' folds to raises ' + vFolds + '% — raising would have been better than folding.';
       quality = 'bad';
+    } else if (eq > 40 && multiway) {
+      text += mwDesc + 'You folded with ' + Math.round(eq) + '% equity. In a multiway pot the fold is more understandable — more opponents means more chance someone has you beat.';
+      quality = 'neutral';
     } else if (eq > 40) {
-      text = 'You folded with significant equity (' + Math.round(eq) + '%). This may have been too tight unless the opponent\'s range was very strong.';
+      text += 'You folded with ' + Math.round(eq) + '% equity. This may have been too tight unless villain\'s range here is very strong.';
       quality = 'bad';
     } else if (eq >= 25) {
-      text = 'Marginal fold.';
+      text += 'Marginal fold with ' + Math.round(eq) + '% equity.';
       quality = 'neutral';
-      if (vAgg) text += ' ' + vName + ' is aggressive — calling could be defensible here.';
+      if (vAgg) text += ' ' + vName + ' is aggressive though — calling could be defensible.';
+      if (vBetPct !== null && vBetPct <= 33) text += ' The small sizing gave you a good price — consider calling more against small bets.';
     } else {
-      text = 'Clean fold. Low equity against a random hand.';
+      text += 'Clean fold. ' + Math.round(eq) + '% equity isn\'t enough to continue.';
       quality = 'good';
     }
   }
@@ -545,9 +646,6 @@ function generateGuidance(equity, streetInfo, texture, madeHand, villainProfile)
 
   // ── Draw-aware notes ──
   if (madeHand && madeHand.draws.length > 0) {
-    for (var di = 0; di < madeHand.draws.length; di++) {
-      text += ' You have a ' + madeHand.draws[di].toLowerCase() + '.';
-    }
     if (act.type === 'call' && potOdds > 0) {
       var totalOuts = 0;
       for (var oi = 0; oi < madeHand.draws.length; oi++) {
@@ -556,22 +654,22 @@ function generateGuidance(equity, streetInfo, texture, madeHand, villainProfile)
       }
       if (totalOuts > 0) {
         var drawEquity = totalOuts * 2; // rough rule of 2
-        if (drawEquity >= potOdds) text += ' Your draw odds justified the call.';
-        else text += ' Your draw odds were thin for this price.';
+        if (drawEquity >= potOdds) text += ' Your draw odds (' + totalOuts + ' outs ≈ ' + (totalOuts * 2) + '%) justified the call.';
+        else text += ' Your draw odds (' + totalOuts + ' outs ≈ ' + (totalOuts * 2) + '%) were thin for this price.';
       }
     }
   }
 
-  // ── Made hand context (post-flop) ──
+  // ── Made hand context (post-flop) — only add if it's actionable, not just restating ──
   if (madeHand && texture) {
-    if (madeHand.label === 'Top Pair' && texture.wetness === 'wet') {
-      text += ' Top pair on a wet board — vulnerable to draws, bet to protect.';
-    } else if (madeHand.label === 'Overpair' && texture.wetness === 'dry') {
-      text += ' Overpair on dry board — strong, bet for value.';
-    } else if (madeHand.label === 'Set') {
-      text += ' Set — disguised monster, build the pot.';
-    } else if (madeHand.label === 'Full House' || madeHand.label === 'Quads' || madeHand.label === 'Straight Flush') {
-      text += ' Monster hand — extract maximum value.';
+    if (madeHand.label === 'Top Pair' && texture.wetness === 'wet' && act.type === 'check') {
+      text += ' Top pair on a wet board — bet to deny free cards to draws.';
+    } else if (madeHand.label === 'Overpair' && texture.wetness === 'dry' && act.type === 'check') {
+      text += ' Overpair on dry board — strong, bet for value since villain has few outs.';
+    } else if (madeHand.label === 'Set' && (act.type === 'check' || (act.type === 'call' && betPotPct === null))) {
+      text += ' Set is disguised — consider raising to build the pot while villain doesn\'t suspect it.';
+    } else if ((madeHand.label === 'Full House' || madeHand.label === 'Quads' || madeHand.label === 'Straight Flush') && act.type === 'check') {
+      text += ' You\'re at the top of your range — consider trapping if villain is aggressive, or betting small to induce a raise.';
     }
   }
 
@@ -622,16 +720,13 @@ function runEquitySimulation(hand) {
       if (a.type === 'fold') actionDesc = 'You folded.';
       else if (a.type === 'check') actionDesc = 'You checked.';
       else if (a.type === 'call') actionDesc = 'You called ' + fmtDollar(a.amount) + '.';
-      else if (a.type === 'raise') actionDesc = 'You raised ' + fmtDollar(a.amount) + '.';
+      else if (a.type === 'raise') actionDesc = 'You raised to ' + fmtDollar(a.amount) + '.';
       else if (a.type === 'bet') actionDesc = 'You bet ' + fmtDollar(a.amount) + '.';
       else if (a.type === 'sb') actionDesc = 'Small blind.';
       else if (a.type === 'bb') actionDesc = 'Big blind.';
     }
 
     var potOddsStr = '';
-    if (streetInfo && streetInfo.potOdds > 0 && streetInfo.action && (streetInfo.action.type === 'call' || streetInfo.action.type === 'fold')) {
-      potOddsStr = 'Needed ' + (streetInfo.potOdds * 100).toFixed(0) + '% equity. ';
-    }
 
     results.push({
       street: sd.name,
