@@ -65,10 +65,10 @@ function classifyBoardTexture(boardCards) {
   var maxSuit = 0;
   for (var s in suitCounts) { if (suitCounts[s] > maxSuit) maxSuit = suitCounts[s]; }
 
-  var monotone = maxSuit >= 3 && cards.length === 3 ? true : maxSuit >= 4;
+  var monotone = maxSuit === cards.length;
   var twoTone = !monotone && maxSuit >= 2;
-  var rainbow = maxSuit === 1;
-  var flushDraw = maxSuit === (cards.length === 5 ? 4 : (cards.length >= 3 ? 3 : 0));
+  var rainbow = Object.keys(suitCounts).length >= 3;
+  var flushDraw = !monotone && maxSuit >= 3;
 
   // Rank analysis
   var sorted = ranks.slice().sort(function(a, b) { return a - b; });

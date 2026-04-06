@@ -171,8 +171,9 @@ function renderLeaks(container, d, hands) {
       if (!h.outcome || h.outcome.result !== 'won') continue;
       var acts = parseActions(h.actions);
       var wentToSD = false;
-      for (var j = 0; j < acts.length; j++) {
-        if ((h.actions[j] || '').indexOf(' reveals ') !== -1) { wentToSD = true; break; }
+      var rawActs = h.actions || [];
+      for (var j = 0; j < rawActs.length; j++) {
+        if ((rawActs[j] || '').indexOf(' reveals ') !== -1) { wentToSD = true; break; }
       }
       if (!wentToSD) continue;
       sdHands++;
