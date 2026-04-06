@@ -77,15 +77,15 @@ function switchTab(tabId) {
     var menu = item.closest('.tab-menu');
     if (menu) menu.querySelector('.tab-menu-btn').classList.add('active');
   }
-  // Close any open menus and backdrop
+  // Close any open menus and remove blur
   document.querySelectorAll('.tab-menu').forEach(function(m) { m.classList.remove('open'); });
-  var bd = document.getElementById('menu-backdrop');
-  if (bd) bd.classList.remove('active');
+  var pw = document.getElementById('panels-wrap');
+  if (pw) pw.classList.remove('blurred');
 }
 
 function _toggleBackdrop(show) {
-  var bd = document.getElementById('menu-backdrop');
-  if (bd) bd.classList.toggle('active', show);
+  var pw = document.getElementById('panels-wrap');
+  if (pw) pw.classList.toggle('blurred', show);
 }
 
 // Tab menu open/close logic

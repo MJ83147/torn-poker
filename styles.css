@@ -376,6 +376,7 @@ textarea#jin:focus {
   border-bottom: 1px solid var(--border);
   position: relative;
   z-index: 1001;
+  background: var(--menu-bg);
 }
 
 .tab-menu {
@@ -436,18 +437,10 @@ textarea#jin:focus {
   border-radius: 0 0 6px 6px;
 }
 
-/* Backdrop blur overlay */
-.menu-backdrop {
-  display: none;
-  position: fixed;
-  inset: 0;
-  z-index: 999;
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  background: rgba(0,0,0,0.3);
-}
-.menu-backdrop.active {
-  display: block;
+/* Backdrop blur overlay — panels only */
+.panels-wrap.blurred {
+  filter: blur(3px);
+  pointer-events: none;
 }
 
 .tab-menu.open .tab-menu-items {
