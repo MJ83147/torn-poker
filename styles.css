@@ -11,7 +11,7 @@
   --text: #d0d8d0;
   --dim: #7a9a7a;
   --muted: #1a2a1c;
-  --menu-bg: #8a9a6a;
+  --menu-bg: #1e3024;
 }
 
 * {
@@ -374,6 +374,8 @@ textarea#jin:focus {
 .tab-nav {
   display: flex;
   border-bottom: 1px solid var(--border);
+  position: relative;
+  z-index: 1001;
 }
 
 .tab-menu {
@@ -427,7 +429,7 @@ textarea#jin:focus {
   left: 0;
   min-width: 100%;
   background: var(--menu-bg);
-  border: 1px solid rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.1);
   border-top: none;
   z-index: 1001;
   box-shadow: 0 8px 32px rgba(0,0,0,0.5);
@@ -460,7 +462,7 @@ textarea#jin:focus {
   font-size: 11px;
   letter-spacing: 1px;
   text-transform: uppercase;
-  color: #2a2a2a;
+  color: var(--text);
   background: none;
   border: none;
   cursor: pointer;
@@ -470,12 +472,11 @@ textarea#jin:focus {
 
 .tab-item:hover {
   color: #fff;
-  background: rgba(0,0,0,0.2);
+  background: rgba(255,255,255,0.08);
 }
 
 .tab-item.active {
-  color: #1a1a1a;
-  font-weight: 700;
+  color: var(--gold);
 }
 
 /* PANELS */
