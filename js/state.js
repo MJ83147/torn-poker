@@ -132,7 +132,6 @@ var State = {
 
   setSession: function(hands, meta) {
     backfillHandData(hands);
-    migratePositions(hands);
     var seen = {};
     var clean = [];
     for (var i = 0; i < hands.length; i++) {
