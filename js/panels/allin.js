@@ -93,8 +93,20 @@ function detectAllInCandidates(hands) {
     if (!reveals.length) continue;
 
     var heroHole = [normCardAllIn(h.hole[0]), normCardAllIn(h.hole[1])];
+
+    // Find hero's name so we can exclude their reveal from opponents
+    var heroName = null;
+    for (var ni = 0; ni < acts.length; ni++) {
+      if (acts[ni].isMe) { heroName = acts[ni].author; break; }
+    }
+
     var opponentHoles = [];
-    for (var ri = 0; ri < reveals.length; ri++) opponentHoles.push(reveals[ri].hole);
+    for (var ri = 0; ri < reveals.length; ri++) {
+      if (reveals[ri].name !== heroName) {
+        opponentHoles.push(reveals[ri].hole);
+      }
+    }
+    if (!opponentHoles.length) continue;
 
     var streetIdx = { 'Preflop': 0, 'Flop': 3, 'Turn': 4, 'River': 5 };
     var boardSlice = streetIdx[allInStreet] || 0;
@@ -134,7 +146,7 @@ function detectAllInCandidates(hands) {
     });
   }
 
-  results.sort(function(a, b) { return a.timestamp - b.timestamp; });
+  results.sort(function (a, b) { return a.timestamp - b.timestamp; });
   return results;
 }
 
@@ -147,7 +159,7 @@ function calcMultiwayEquity(heroHole, opponentHoles, boardAtAllIn) {
   }
   for (var b = 0; b < boardAtAllIn.length; b++) dead[boardAtAllIn[b]] = true;
 
-  var remaining = buildDeck().filter(function(c) { return !dead[c]; });
+  var remaining = buildDeck().filter(function (c) { return !dead[c]; });
   var boardNeed = 5 - boardAtAllIn.length;
   var wins = 0, ties = 0, total = 0;
   var numOpps = opponentHoles.length;
@@ -255,7 +267,7 @@ function renderAllIn(container, hands) {
     html += '<tr class="allin-row row-hover" data-allin-idx="' + ti + '">' +
       '<td>' + (ti + 1) + '</td>' +
       '<td class="allin-cards">' + displayCards(ah.heroHole) + '</td>' +
-      '<td class="allin-cards">' + ah.opponents.map(function(opp) { return displayCards(opp); }).join('<br>') + '</td>' +
+      '<td class="allin-cards">' + ah.opponents.map(function (opp) { return displayCards(opp); }).join('<br>') + '</td>' +
       '<td class="allin-cards">' + (ah.boardAtAllIn.length ? displayCards(ah.boardAtAllIn) : '\u2014') + '</td>' +
       '<td>' + ah.street + '</td>' +
       '<td>' + fmt(ah.potAtAllIn) + '</td>' +
@@ -270,8 +282,8 @@ function renderAllIn(container, hands) {
   container.innerHTML = html;
 
   // Wire row clicks
-  container.querySelectorAll('.allin-row').forEach(function(row) {
-    row.onclick = function() {
+  container.querySelectorAll('.allin-row').forEach(function (row) {
+    row.onclick = function () {
       var idx = parseInt(row.getAttribute('data-allin-idx'));
       if (!isNaN(idx) && _allinHands[idx]) showExampleHandModal(_allinHands[idx].hand);
     };
@@ -280,7 +292,7 @@ function renderAllIn(container, hands) {
   // Wire simulation button
   var runBtn = document.getElementById('allin-run-btn');
   if (runBtn) {
-    runBtn.onclick = function() {
+    runBtn.onclick = function () {
       runBtn.disabled = true;
       runBtn.textContent = 'Simulating\u2026 0/' + _allinHands.length;
       var batchSize = 2;
@@ -389,7 +401,7 @@ function showAllInResults(container) {
     html += '<tr class="allin-row row-hover" data-allin-idx="' + ti + '">' +
       '<td>' + (ti + 1) + '</td>' +
       '<td class="allin-cards">' + displayCards(ah.heroHole) + '</td>' +
-      '<td class="allin-cards">' + ah.opponents.map(function(opp) { return displayCards(opp); }).join('<br>') + '</td>' +
+      '<td class="allin-cards">' + ah.opponents.map(function (opp) { return displayCards(opp); }).join('<br>') + '</td>' +
       '<td class="allin-cards">' + (ah.boardAtAllIn.length ? displayCards(ah.boardAtAllIn) : '\u2014') + '</td>' +
       '<td>' + ah.street + '</td>' +
       '<td>' + (ah.equity * 100).toFixed(1) + '%</td>' +
@@ -403,8 +415,8 @@ function showAllInResults(container) {
   container.innerHTML = html;
 
   // Wire row clicks
-  container.querySelectorAll('.allin-row').forEach(function(row) {
-    row.onclick = function() {
+  container.querySelectorAll('.allin-row').forEach(function (row) {
+    row.onclick = function () {
       var idx = parseInt(row.getAttribute('data-allin-idx'));
       if (!isNaN(idx) && allInHands[idx]) showExampleHandModal(allInHands[idx].hand);
     };
@@ -457,12 +469,12 @@ function showAllInResults(container) {
       interaction: { mode: 'index', intersect: false },
       legend: chartLegend(colors),
       tooltip: chartTooltip(colors, {
-        title: function(items) { return 'All-In #' + items[0].label; },
-        label: function(ctx) { return ' ' + ctx.dataset.label + ': ' + fmtPnl(ctx.parsed.y); },
+        title: function (items) { return 'All-In #' + items[0].label; },
+        label: function (ctx) { return ' ' + ctx.dataset.label + ': ' + fmtPnl(ctx.parsed.y); },
       }),
       scales: {
         x: chartXScale(colors, { title: 'All-In Hands', tickSize: 9, maxTicksLimit: 8 }),
-        y: chartYScaleZeroLine(colors, { tickCallback: function(val) { return fmt(val); } }),
+        y: chartYScaleZeroLine(colors, { tickCallback: function (val) { return fmt(val); } }),
       },
     });
   }
