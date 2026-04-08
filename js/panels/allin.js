@@ -159,8 +159,7 @@ function calcMultiwayEquity(heroHole, opponentHoles, boardAtAllIn) {
   }
   for (var b = 0; b < boardAtAllIn.length; b++) dead[boardAtAllIn[b]] = true;
 
-  var remaining = buildDeck().filter(function (c) { return !dead[c]; });
-  var boardNeed = 5 - boardAtAllIn.length;
+  var remaining = buildDeck().map(normCardAllIn).filter(function (c) { return !dead[c]; }); var boardNeed = 5 - boardAtAllIn.length;
   var wins = 0, ties = 0, total = 0;
   var numOpps = opponentHoles.length;
 
