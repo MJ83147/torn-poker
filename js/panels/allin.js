@@ -45,7 +45,7 @@ function parseReveals(actions) {
       for (var j = 0; j < results.length; j++) {
         if (results[j].name === playerName) { alreadyHave = true; break; }
       }
-      if (!alreadyHave) results.push({ name: playerName, hole: cards });
+      if (!alreadyHave) results.push({ name: playerName, hole: cards.map(normCardAllIn) });
     }
   }
   return results;
