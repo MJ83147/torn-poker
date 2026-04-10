@@ -639,7 +639,6 @@ function renderPlayers(container, d, hands) {
       cmpBtn.onclick = function() {
         var overlay = document.createElement('div');
         overlay.className = 'modal-overlay';
-        overlay.style.display = 'flex';
         var box = document.createElement('div');
         box.className = 'modal-box';
         box.style.maxWidth = '700px';
@@ -648,14 +647,15 @@ function renderPlayers(container, d, hands) {
         var closeBtn = document.createElement('button');
         closeBtn.className = 'modal-close';
         closeBtn.innerHTML = '&times;';
-        closeBtn.onclick = function() { overlay.remove(); };
-        overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
+        closeBtn.onclick = function() { overlay.classList.remove('show'); setTimeout(function() { overlay.remove(); }, 200); };
+        overlay.onclick = function(e) { if (e.target === overlay) { overlay.classList.remove('show'); setTimeout(function() { overlay.remove(); }, 200); } };
         box.appendChild(closeBtn);
         var cmpContent = document.createElement('div');
         renderCompare(cmpContent, d, hands);
         box.appendChild(cmpContent);
         overlay.appendChild(box);
         document.body.appendChild(overlay);
+        requestAnimationFrame(function() { overlay.classList.add('show'); });
       };
     }
   }
