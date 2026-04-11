@@ -58,6 +58,7 @@ function render(d, hands, meta) {
 
   State.modalHands = hands;
   document.getElementById('paste-wrap').style.display = 'none';
+  document.getElementById('upload-wrap').style.display = 'none';
   document.getElementById('dash').classList.add('on');
 
   var c = d.core;
