@@ -43,6 +43,7 @@
         <div class="paste-title">Analyse your session</div>
         <div class="desc-text mb-24">Click below to paste your tracked session data from the TC Poker Tracker</div>
         <button class="go-btn go-btn-primary" id="paste-btn">Paste from Clipboard</button>
+        <button class="go-btn go-btn-secondary" id="upload-nav-btn" style="margin-top:8px;">Upload .json files instead</button>
         <div id="paste-error" class="paste-error"></div>
         <div class="paste-manual">
           <div class="dim-label mb-12">Or paste manually:</div>
@@ -52,6 +53,22 @@
         <div id="restore-block" class="restore-block">
           <div class="desc-text mb-12" id="restore-label"></div>
           <button class="go-btn go-btn-secondary restore-btn" id="restore-btn">Restore Previous Session</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="upload-wrap" style="display:none;">
+      <div class="paste-box">
+        <div class="paste-suit">♣</div>
+        <div class="paste-title">Upload hand files</div>
+        <div class="desc-text mb-24">Use the Download Hands button in the TC Poker Tracker to save your hand data as a .json file, then upload it here. You can upload multiple files to merge sessions from different devices.</div>
+        <input type="file" id="upload-input" accept=".json" multiple style="display:none;">
+        <button class="go-btn go-btn-primary" id="upload-pick-btn">Choose .json files</button>
+        <div id="upload-file-list" style="margin-top:16px;"></div>
+        <div id="upload-error" class="paste-error"></div>
+        <button class="go-btn go-btn-secondary" id="upload-analyse-btn" style="display:none;margin-top:12px;">Analyse merged hands</button>
+        <div style="margin-top:20px;">
+          <span id="upload-back-btn" class="paste-nav-link" style="cursor:pointer;">&larr; Back to paste</span>
         </div>
       </div>
     </div>

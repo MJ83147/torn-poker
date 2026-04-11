@@ -158,6 +158,7 @@ function render(d, hands, meta) {
   // Reset button
   document.getElementById('reset-btn').onclick = function() {
     document.getElementById('paste-wrap').style.display = 'block';
+    document.getElementById('upload-wrap').style.display = 'none';
     document.getElementById('jin').value = '';
     document.getElementById('dash').classList.remove('on');
     document.getElementById('table-filter').value = 'all';
@@ -298,6 +299,108 @@ window.addEventListener('resize', function() {
   var active = document.querySelector('.tooltip.active');
   if (active) positionTip(active);
 });
+
+// ── UPLOAD / MERGE HANDLERS ─────────────────────────────────────────────────
+var _uploadedHands = [];
+
+document.getElementById('upload-nav-btn').onclick = function() {
+  document.getElementById('paste-wrap').style.display = 'none';
+  document.getElementById('upload-wrap').style.display = 'block';
+};
+
+document.getElementById('upload-back-btn').onclick = function() {
+  document.getElementById('upload-wrap').style.display = 'none';
+  document.getElementById('paste-wrap').style.display = 'block';
+  _uploadedHands = [];
+  document.getElementById('upload-file-list').innerHTML = '';
+  document.getElementById('upload-analyse-btn').style.display = 'none';
+  document.getElementById('upload-error').style.display = 'none';
+};
+
+document.getElementById('upload-pick-btn').onclick = function() {
+  document.getElementById('upload-input').click();
+};
+
+document.getElementById('upload-input').onchange = function() {
+  var files = this.files;
+  if (!files || !files.length) return;
+  var errEl = document.getElementById('upload-error');
+  var listEl = document.getElementById('upload-file-list');
+  errEl.style.display = 'none';
+  _uploadedHands = [];
+  listEl.innerHTML = '';
+
+  var pending = files.length;
+  var fileResults = [];
+
+  for (var i = 0; i < files.length; i++) {
+    (function(file) {
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          var json = JSON.parse(e.target.result);
+          var hands = (Array.isArray(json) ? json : (json.hands || [])).filter(function(h) {
+            return h.hole && h.hole.length === 2;
+          });
+          fileResults.push({ name: file.name, count: hands.length, hands: hands });
+        } catch (err) {
+          fileResults.push({ name: file.name, count: 0, hands: [], error: err.message });
+        }
+        pending--;
+        if (pending === 0) finishUpload(fileResults);
+      };
+      reader.onerror = function() {
+        fileResults.push({ name: file.name, count: 0, hands: [], error: 'Could not read file' });
+        pending--;
+        if (pending === 0) finishUpload(fileResults);
+      };
+      reader.readAsText(file);
+    })(files[i]);
+  }
+};
+
+function finishUpload(results) {
+  var listEl = document.getElementById('upload-file-list');
+  var errEl = document.getElementById('upload-error');
+  var analyseBtn = document.getElementById('upload-analyse-btn');
+  _uploadedHands = [];
+  var html = '';
+
+  for (var i = 0; i < results.length; i++) {
+    var r = results[i];
+    if (r.error) {
+      html += '<div class="desc-text" style="color:var(--red);margin-bottom:6px;">' + r.name + ' — error: ' + r.error + '</div>';
+    } else if (r.count === 0) {
+      html += '<div class="desc-text" style="color:var(--muted);margin-bottom:6px;">' + r.name + ' — no valid hands found</div>';
+    } else {
+      html += '<div class="desc-text" style="margin-bottom:6px;"><strong style="color:var(--gold);">' + r.count + '</strong> hands from ' + r.name + '</div>';
+      _uploadedHands = _uploadedHands.concat(r.hands);
+    }
+  }
+
+  listEl.innerHTML = html;
+
+  if (_uploadedHands.length > 0) {
+    var total = '<div class="desc-text" style="margin-top:12px;"><strong style="color:var(--text);">' + _uploadedHands.length + '</strong> total hands across ' + results.filter(function(r) { return r.count > 0; }).length + ' file(s)</div>';
+    listEl.innerHTML += total;
+    analyseBtn.style.display = 'block';
+  } else {
+    errEl.textContent = 'No valid hands found in the uploaded files.';
+    errEl.style.display = 'block';
+    analyseBtn.style.display = 'none';
+  }
+}
+
+document.getElementById('upload-analyse-btn').onclick = function() {
+  if (!_uploadedHands.length) return;
+  var merged = {
+    exportedAt: new Date().toISOString(),
+    player: detectPlayerFromActions(_uploadedHands) || 'Unknown',
+    totalHands: _uploadedHands.length,
+    hands: _uploadedHands,
+  };
+  process(JSON.stringify(merged));
+};
 
 // ── BOOT ────────────────────────────────────────────────────────────────────
 initStorage(function() {
