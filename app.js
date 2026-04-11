@@ -3,9 +3,9 @@
 // Tab navigation is handled by click listener in helpers.js
 
 // BB toggle handler
-document.getElementById('bb-toggle').onclick = function() {
+document.getElementById('bb-toggle').onclick = function () {
   _displayBB = !_displayBB;
-  this.querySelectorAll('.bb-opt').forEach(function(o) {
+  this.querySelectorAll('.bb-opt').forEach(function (o) {
     o.classList.toggle('active', _displayBB ? o.dataset.mode === 'bb' : o.dataset.mode === 'dollar');
   });
   if (State.allHands.length) {
@@ -25,10 +25,10 @@ function renderAll() {
 
 // Saved session: check IndexedDB and wire restore button
 function checkSavedSession() {
-  State.loadSaved(function(json) {
+  State.loadSaved(function (json) {
     if (!json) return;
     try {
-      var hands = (Array.isArray(json) ? json : (json.hands || [])).filter(function(h) { return h.hole && h.hole.length === 2; });
+      var hands = (Array.isArray(json) ? json : (json.hands || [])).filter(function (h) { return h.hole && h.hole.length === 2; });
       if (!hands.length) return;
       var playerName = json.player || detectPlayerFromActions(hands) || 'Unknown';
       var rb = document.getElementById('restore-block');
@@ -38,16 +38,16 @@ function checkSavedSession() {
       }) : '';
       rl.textContent = hands.length + ' hands from ' + playerName + (date ? ' · ' + date : '') + ' found in storage';
       rb.style.display = 'block';
-      document.getElementById('restore-btn').onclick = function() {
+      document.getElementById('restore-btn').onclick = function () {
         var meta = {
           player: playerName,
           exportedAt: new Date().toISOString(),
         };
         State.setSession(hands, meta);
-        try { fetch('https://script.google.com/macros/s/AKfycbyTtG1UMCpYXP15dgKQttFyG4Pe-BG8FoAftoW3oYtMBISS37Ws5lYhPPDJ0zl1GYxyQA/exec', { method: 'POST', body: JSON.stringify({ player: playerName, hands: hands.length }), mode: 'no-cors' }); } catch(_) {}
-        showImportLoader(hands.length, function() { render(analyse(hands), hands, meta); });
+        try { fetch('https://script.google.com/macros/s/AKfycbyTtG1UMCpYXP15dgKQttFyG4Pe-BG8FoAftoW3oYtMBISS37Ws5lYhPPDJ0zl1GYxyQA/exec', { method: 'POST', body: JSON.stringify({ player: playerName, hands: hands.length }), mode: 'no-cors' }); } catch (_) { }
+        showImportLoader(hands.length, function () { render(analyse(hands), hands, meta); });
       };
-    } catch (_) {}
+    } catch (_) { }
   });
 }
 
@@ -73,13 +73,13 @@ function render(d, hands, meta) {
     ? '<div style="padding:12px 32px;font-size:12px;color:var(--amber);background:rgba(212,132,42,0.08);border-bottom:1px solid var(--border);">⚠ Small sample: ' + d.n + ' hands. The more hands you play and track, the more accurate these stats become. Aim for 100+ hands for reliable patterns.</div>'
     : '';
   document.getElementById('hero-strip').innerHTML = [
-    { l: 'Hands',      v: d.n,                        c: 'o' },
-    { l: 'Win Rate',   v: c.wr !== null ? c.wr + '%' : '—', c: c.wr >= 50 ? 'g' : 'r' },
-    { l: 'Net P&L',    v: fmtPnl(c.netPnl), c: c.netPnl >= 0 ? 'g' : 'r' },
-    { l: 'VPIP',       v: c.vpipPct !== null ? c.vpipPct + '%' : '—', c: c.vpipPct > 55 ? 'a' : 'w' },
-    { l: 'Aggression', v: c.agg !== null ? c.agg + '%' : '—',   c: c.agg > 25 ? 'g' : 'a' },
-    { l: 'vs All-in',  v: c.allinFold !== null ? c.allinFold + '% fold' : '—', c: 'w' },
-  ].map(function(h) { return '<div class="hs"><div class="hs-l dim-label">' + tipWrap(h.l) + '</div><div class="hs-v serif-value ' + h.c + '">' + h.v + '</div></div>'; }).join('');
+    { l: 'Hands', v: d.n, c: 'o' },
+    { l: 'Win Rate', v: c.wr !== null ? c.wr + '%' : '—', c: c.wr >= 50 ? 'g' : 'r' },
+    { l: 'Net P&L', v: fmtPnl(c.netPnl), c: c.netPnl >= 0 ? 'g' : 'r' },
+    { l: 'VPIP', v: c.vpipPct !== null ? c.vpipPct + '%' : '—', c: c.vpipPct > 55 ? 'a' : 'w' },
+    { l: 'Aggression', v: c.agg !== null ? c.agg + '%' : '—', c: c.agg > 25 ? 'g' : 'a' },
+    { l: 'vs All-in', v: c.allinFold !== null ? c.allinFold + '% fold' : '—', c: 'w' },
+  ].map(function (h) { return '<div class="hs"><div class="hs-l dim-label">' + tipWrap(h.l) + '</div><div class="hs-v serif-value ' + h.c + '">' + h.v + '</div></div>'; }).join('');
   var noteEl = document.getElementById('sample-note');
   if (noteEl) noteEl.innerHTML = sampleNote;
 
@@ -91,7 +91,7 @@ function render(d, hands, meta) {
     var sc = countHandPlayers(State.allHands[si]);
     if (sc >= 2) sizeCounts[sc] = (sizeCounts[sc] || 0) + 1;
   }
-  var sizeKeys = Object.keys(sizeCounts).map(Number).sort(function(a, b) { return a - b; });
+  var sizeKeys = Object.keys(sizeCounts).map(Number).sort(function (a, b) { return a - b; });
   pfEl.innerHTML = '<option value="all">All Sizes</option>';
   for (var ski = 0; ski < sizeKeys.length; ski++) {
     var sk = sizeKeys[ski];
@@ -128,14 +128,14 @@ function render(d, hands, meta) {
   }
   if (bannerParts.length) {
     var bannerHtml = '<div class="filter-banner">Showing stats for ' + bannerParts.join(' · ') + '</div>';
-    ['p-welcome', 'p-mygame', 'p-leaks', 'p-cards', 'p-position', 'p-street', 'p-actions', 'p-bets', 'p-range', 'p-trends', 'p-showdown', 'p-log', 'p-allin', 'p-players', 'p-compare'].forEach(function(id) {
+    ['p-welcome', 'p-mygame', 'p-leaks', 'p-cards', 'p-position', 'p-street', 'p-actions', 'p-bets', 'p-range', 'p-trends', 'p-showdown', 'p-log', 'p-allin', 'p-players', 'p-compare'].forEach(function (id) {
       var el = document.getElementById(id);
       if (el) el.insertAdjacentHTML('afterbegin', bannerHtml);
     });
   }
 
   // Table filter handler
-  filterEl.onchange = function() {
+  filterEl.onchange = function () {
     var v = this.value;
     if (!renderAll()) {
       alert('No hands for this filter.');
@@ -146,7 +146,7 @@ function render(d, hands, meta) {
   };
 
   // Players count filter handler
-  pfEl.onchange = function() {
+  pfEl.onchange = function () {
     var v = this.value;
     if (!renderAll()) {
       alert('No hands for this filter.');
@@ -157,7 +157,7 @@ function render(d, hands, meta) {
   };
 
   // Reset button
-  document.getElementById('reset-btn').onclick = function() {
+  document.getElementById('reset-btn').onclick = function () {
     document.getElementById('paste-wrap').style.display = 'block';
     document.getElementById('upload-wrap').style.display = 'none';
     document.getElementById('jin').value = '';
@@ -167,8 +167,8 @@ function render(d, hands, meta) {
     document.getElementById('players-filter').value = 'all';
     document.getElementById('players-filter').style.display = 'none';
     State.clear();
-    document.querySelectorAll('.tab').forEach(function(b, i) { b.classList.toggle('active', i === 0); });
-    document.querySelectorAll('.panel').forEach(function(p, i) { p.classList.toggle('on', i === 0); });
+    document.querySelectorAll('.tab').forEach(function (b, i) { b.classList.toggle('active', i === 0); });
+    document.querySelectorAll('.panel').forEach(function (p, i) { p.classList.toggle('on', i === 0); });
     checkSavedSession();
   };
 
@@ -180,7 +180,7 @@ function render(d, hands, meta) {
   // Sync BB toggle
   var bbBtn = document.getElementById('bb-toggle');
   if (bbBtn) {
-    bbBtn.querySelectorAll('.bb-opt').forEach(function(o) {
+    bbBtn.querySelectorAll('.bb-opt').forEach(function (o) {
       o.classList.toggle('active', _displayBB ? o.dataset.mode === 'bb' : o.dataset.mode === 'dollar');
     });
   }
@@ -195,7 +195,7 @@ function process(raw) {
     alert('Could not parse JSON.\n\nMake sure you:\n1. Clicked Export in the TC panel\n2. Pasted the full clipboard contents here\n\nError: ' + e.message);
     return;
   }
-  var hands = (Array.isArray(json) ? json : (json.hands || [])).filter(function(h) { return h.hole && h.hole.length === 2; });
+  var hands = (Array.isArray(json) ? json : (json.hands || [])).filter(function (h) { return h.hole && h.hole.length === 2; });
   if (!hands.length) {
     alert('No hands found in export. Play some hands first, then export.');
     return;
@@ -210,19 +210,20 @@ function process(raw) {
     exportedAt: json.exportedAt || new Date().toISOString(),
   };
   State.setSession(hands, meta);
-  try { fetch('https://script.google.com/macros/s/AKfycbyTtG1UMCpYXP15dgKQttFyG4Pe-BG8FoAftoW3oYtMBISS37Ws5lYhPPDJ0zl1GYxyQA/exec', { method: 'POST', body: JSON.stringify({ player: playerName, hands: hands.length }), mode: 'no-cors' }); } catch(_) {}
+  hands = State.allHands;
+  try { fetch('https://script.google.com/macros/s/AKfycbyTtG1UMCpYXP15dgKQttFyG4Pe-BG8FoAftoW3oYtMBISS37Ws5lYhPPDJ0zl1GYxyQA/exec', { method: 'POST', body: JSON.stringify({ player: playerName, hands: hands.length }), mode: 'no-cors' }); } catch (_) { }
   var d = analyse(hands);
-  showImportLoader(hands.length, function() { render(d, hands, meta); });
+  showImportLoader(hands.length, function () { render(d, hands, meta); });
 }
 
 // ── INPUT HANDLERS ──────────────────────────────────────────────────────────
-document.getElementById('go-btn').onclick = function() {
+document.getElementById('go-btn').onclick = function () {
   var v = document.getElementById('jin').value.trim();
   if (v) process(v);
   else alert('Paste JSON first.');
 };
 
-document.getElementById('paste-btn').onclick = async function() {
+document.getElementById('paste-btn').onclick = async function () {
   var errEl = document.getElementById('paste-error');
   var jin = document.getElementById('jin');
   errEl.style.display = 'none';
@@ -242,17 +243,17 @@ document.getElementById('paste-btn').onclick = async function() {
   }
 };
 
-document.getElementById('jin').addEventListener('keydown', function(e) {
+document.getElementById('jin').addEventListener('keydown', function (e) {
   if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) process(this.value);
 });
 
-document.getElementById('how-it-works-btn').onclick = function() {
+document.getElementById('how-it-works-btn').onclick = function () {
   document.getElementById('hiw-modal').classList.add('show');
 };
-document.getElementById('hiw-close').onclick = function() {
+document.getElementById('hiw-close').onclick = function () {
   document.getElementById('hiw-modal').classList.remove('show');
 };
-document.getElementById('hiw-modal').onclick = function(e) {
+document.getElementById('hiw-modal').onclick = function (e) {
   if (e.target === this) this.classList.remove('show');
 };
 
@@ -276,14 +277,14 @@ function positionTip(tooltipEl) {
   tipBox.style.left = left + 'px';
 }
 
-document.addEventListener('mouseover', function(e) {
+document.addEventListener('mouseover', function (e) {
   var tip = e.target.closest('.tooltip');
   if (tip) positionTip(tip);
 });
 
-document.addEventListener('click', function(e) {
+document.addEventListener('click', function (e) {
   var tip = e.target.closest('.tooltip');
-  document.querySelectorAll('.tooltip.active').forEach(function(t) {
+  document.querySelectorAll('.tooltip.active').forEach(function (t) {
     if (t !== tip) t.classList.remove('active');
   });
   if (tip) {
@@ -292,11 +293,11 @@ document.addEventListener('click', function(e) {
   }
 });
 
-window.addEventListener('scroll', function() {
+window.addEventListener('scroll', function () {
   var active = document.querySelector('.tooltip.active');
   if (active) positionTip(active);
 }, true);
-window.addEventListener('resize', function() {
+window.addEventListener('resize', function () {
   var active = document.querySelector('.tooltip.active');
   if (active) positionTip(active);
 });
@@ -304,12 +305,12 @@ window.addEventListener('resize', function() {
 // ── UPLOAD / MERGE HANDLERS ─────────────────────────────────────────────────
 var _uploadedHands = [];
 
-document.getElementById('upload-nav-btn').onclick = function() {
+document.getElementById('upload-nav-btn').onclick = function () {
   document.getElementById('paste-wrap').style.display = 'none';
   document.getElementById('upload-wrap').style.display = 'block';
 };
 
-document.getElementById('upload-back-btn').onclick = function() {
+document.getElementById('upload-back-btn').onclick = function () {
   document.getElementById('upload-wrap').style.display = 'none';
   document.getElementById('paste-wrap').style.display = 'block';
   _uploadedHands = [];
@@ -318,11 +319,11 @@ document.getElementById('upload-back-btn').onclick = function() {
   document.getElementById('upload-error').style.display = 'none';
 };
 
-document.getElementById('upload-pick-btn').onclick = function() {
+document.getElementById('upload-pick-btn').onclick = function () {
   document.getElementById('upload-input').click();
 };
 
-document.getElementById('upload-input').onchange = function() {
+document.getElementById('upload-input').onchange = function () {
   var files = this.files;
   if (!files || !files.length) return;
   var errEl = document.getElementById('upload-error');
@@ -335,12 +336,12 @@ document.getElementById('upload-input').onchange = function() {
   var fileResults = [];
 
   for (var i = 0; i < files.length; i++) {
-    (function(file) {
+    (function (file) {
       var reader = new FileReader();
-      reader.onload = function(e) {
+      reader.onload = function (e) {
         try {
           var json = JSON.parse(e.target.result);
-          var hands = (Array.isArray(json) ? json : (json.hands || [])).filter(function(h) {
+          var hands = (Array.isArray(json) ? json : (json.hands || [])).filter(function (h) {
             return h.hole && h.hole.length === 2;
           });
           fileResults.push({ name: file.name, count: hands.length, hands: hands });
@@ -350,7 +351,7 @@ document.getElementById('upload-input').onchange = function() {
         pending--;
         if (pending === 0) finishUpload(fileResults);
       };
-      reader.onerror = function() {
+      reader.onerror = function () {
         fileResults.push({ name: file.name, count: 0, hands: [], error: 'Could not read file' });
         pending--;
         if (pending === 0) finishUpload(fileResults);
@@ -382,7 +383,7 @@ function finishUpload(results) {
   listEl.innerHTML = html;
 
   if (_uploadedHands.length > 0) {
-    var total = '<div class="desc-text" style="margin-top:12px;"><strong style="color:var(--text);">' + _uploadedHands.length + '</strong> total hands across ' + results.filter(function(r) { return r.count > 0; }).length + ' file(s)</div>';
+    var total = '<div class="desc-text" style="margin-top:12px;"><strong style="color:var(--text);">' + _uploadedHands.length + '</strong> total hands across ' + results.filter(function (r) { return r.count > 0; }).length + ' file(s)</div>';
     listEl.innerHTML += total;
     analyseBtn.style.display = 'block';
   } else {
@@ -392,7 +393,7 @@ function finishUpload(results) {
   }
 }
 
-document.getElementById('upload-analyse-btn').onclick = function() {
+document.getElementById('upload-analyse-btn').onclick = function () {
   if (!_uploadedHands.length) return;
   var merged = {
     exportedAt: new Date().toISOString(),
@@ -404,6 +405,6 @@ document.getElementById('upload-analyse-btn').onclick = function() {
 };
 
 // ── BOOT ────────────────────────────────────────────────────────────────────
-initStorage(function() {
+initStorage(function () {
   checkSavedSession();
 });
