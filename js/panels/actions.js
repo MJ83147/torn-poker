@@ -274,6 +274,20 @@ function renderActions(container, d, hands) {
     }], exFlopPassive, 'On this flop you checked or called instead of betting. Betting puts opponents on the defensive and charges draws. In TC where players call wide, you want to be the one setting the price.'));
   }
 
+  // Append engine insights (rules + patterns) to legacy insights
+  var engineActIns = InsightEngine.forPanel('actions', 6);
+  for (var eai = 0; eai < engineActIns.length; eai++) {
+    var dupAct = false;
+    for (var ai2 = 0; ai2 < aIns.length; ai2++) {
+      if (aIns[ai2].indexOf(engineActIns[eai].label) !== -1) { dupAct = true; break; }
+    }
+    if (!dupAct) aIns.push(renderRuleInsight(engineActIns[eai]));
+  }
+  // Engine narrative
+  var actNarrative = InsightEngine.narrativeFor('actions', 6);
+  if (actNarrative) {
+    actHtml += '<div class="p-row"><div class="engine-narrative">' + actNarrative + '</div></div>';
+  }
   actHtml += '<div class="p-row">' + renderInsights(aIns, 'Betting', 'Keep building data for betting pattern insights.') + '</div>';
   container.innerHTML = actHtml;
 }

@@ -6,7 +6,7 @@
 
 defineRule({
   id: 'limp-too-much',
-  panels: ['mygame', 'actions'],
+  panels: ['mygame', 'actions', 'leaks'],
   minSample: { n: 30 },
   test: function(d) {
     var rate = pct(d.limpHands, d.n);
@@ -94,7 +94,7 @@ defineRule({
 
 defineRule({
   id: 'too-passive',
-  panels: ['mygame', 'actions'],
+  panels: ['mygame', 'actions', 'leaks'],
   minSample: { n: 30 },
   test: function(d) {
     var agg = calcAggression(d.raises, d.calls, d.checks);
@@ -154,7 +154,7 @@ defineRule({
 
 defineRule({
   id: 'folding-to-pressure',
-  panels: ['mygame', 'actions'],
+  panels: ['mygame', 'actions', 'leaks'],
   minSample: { facedRaise: 5 },
   test: function(d) {
     var ftr = pct(d.foldedToRaise, d.facedRaise);
@@ -195,7 +195,7 @@ defineRule({
 
 defineRule({
   id: 'low-cbet',
-  panels: ['mygame', 'actions'],
+  panels: ['mygame', 'actions', 'leaks'],
   minSample: { cbetOpps: 5 },
   test: function(d) {
     var cb = pct(d.cbetDone, d.cbetOpps);
@@ -217,7 +217,7 @@ defineRule({
 
 defineRule({
   id: 'overfolds-to-cbets',
-  panels: ['mygame', 'actions'],
+  panels: ['mygame', 'actions', 'leaks'],
   minSample: { foldToCbetOpps: 5 },
   test: function(d) {
     var fcb = pct(d.foldToCbetDone, d.foldToCbetOpps);
@@ -279,7 +279,7 @@ defineRule({
 
 defineRule({
   id: 'paying-off-too-much',
-  panels: ['mygame', 'showdown'],
+  panels: ['mygame', 'showdown', 'leaks'],
   minSample: { sawFlop: 10 },
   test: function(d) {
     var wtsd = pct(d.wentToShowdown, d.sawFlop);
@@ -391,7 +391,7 @@ defineRule({
 
 defineRule({
   id: 'cbet-then-fold',
-  panels: ['mygame', 'actions'],
+  panels: ['mygame', 'actions', 'leaks'],
   minSample: { cbetOpps: 8, facedRaise: 5 },
   test: function(d) {
     var cb = pct(d.cbetDone, d.cbetOpps);
@@ -438,7 +438,7 @@ defineRule({
 
 defineRule({
   id: 'loose-ep-then-fold-flop',
-  panels: ['mygame', 'position', 'street'],
+  panels: ['mygame', 'position', 'street', 'leaks'],
   minSample: { n: 40 },
   test: function(d) {
     var ep = calcPositionGroupVpip(d.posMap, ['UTG', 'UTG+1', 'MP']);
@@ -462,7 +462,7 @@ defineRule({
 
 defineRule({
   id: 'winning-small-losing-big',
-  panels: ['mygame', 'showdown'],
+  panels: ['mygame', 'showdown', 'bets', 'leaks'],
   minSample: { handsWithOutcome: 20 },
   test: function(d, hands) {
     var winPots = [], lossPots = [];
@@ -494,7 +494,7 @@ defineRule({
 
 defineRule({
   id: 'winning-bigger-than-losing',
-  panels: ['mygame', 'showdown'],
+  panels: ['mygame', 'showdown', 'bets'],
   minSample: { handsWithOutcome: 20 },
   test: function(d, hands) {
     var winPots = [], lossPots = [];
@@ -672,4 +672,312 @@ defineRule({
   },
   chips: function(ctx) { return [{ v: 'Turn fold: ' + ctx.tf + '%', hi: true }]; },
   tags: ['street', 'leak']
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ── BETS / SIZING RULES ──
+// ═══════════════════════════════════════════════════════════════════════════════
+
+defineRule({
+  id: 'turn-sizing-drops',
+  panels: ['bets', 'actions'],
+  minSample: { n: 30 },
+  test: function(d) {
+    var flopAmts = d.betAmts.Flop;
+    var turnAmts = d.betAmts.Turn;
+    if (!flopAmts || !turnAmts || flopAmts.length < 3 || turnAmts.length < 3) return null;
+    var avgFlop = avg(flopAmts);
+    var avgTurn = avg(turnAmts);
+    if (avgFlop <= 0 || avgTurn >= avgFlop) return null;
+    var drop = Math.round((1 - avgTurn / avgFlop) * 100);
+    if (drop < 15) return null;
+    return { avgFlop: Math.round(avgFlop), avgTurn: Math.round(avgTurn), drop: drop };
+  },
+  sev: function(ctx) { return ctx.drop > 30 ? 'r' : 'a'; },
+  score: function(ctx) { return ctx.drop * 0.5; },
+  label: 'Turn sizing drops',
+  text: function(ctx) {
+    return 'Average turn bet (' + fmt(ctx.avgTurn) + ') is ' + ctx.drop + '% smaller than flop (' + fmt(ctx.avgFlop) + '). Size up as the pot grows to charge draws.';
+  },
+  chips: function(ctx) {
+    return [{ v: 'Flop: ' + fmt(ctx.avgFlop) }, { v: 'Turn: ' + fmt(ctx.avgTurn), hi: true }];
+  },
+  tags: ['bets', 'sizing', 'leak'],
+  costBB: function(ctx) { return Math.round(ctx.drop * 0.3); }
+});
+
+defineRule({
+  id: 'river-value-missed',
+  panels: ['bets', 'leaks'],
+  minSample: { n: 40 },
+  test: function(d) {
+    var rbo = d.betOpps.River;
+    if (!rbo || rbo.t < 5) return null;
+    var riverBetPct = pct(rbo.b, rbo.t);
+    if (riverBetPct === null || riverBetPct >= 30) return null;
+    return { pct: riverBetPct, bets: rbo.b, opps: rbo.t };
+  },
+  sev: function(ctx) { return ctx.pct < 15 ? 'r' : 'a'; },
+  score: function(ctx) { return 30 - ctx.pct + 5; },
+  label: 'Missing river value',
+  text: function(ctx) {
+    return 'You only bet the river ' + ctx.pct + '% of the time (' + ctx.bets + '/' + ctx.opps + ' spots). The river is where you get paid with strong hands \u2014 bet more for value.';
+  },
+  chips: function(ctx) { return [{ v: 'River bet: ' + ctx.pct + '%', hi: true }]; },
+  tags: ['bets', 'sizing', 'river', 'leak'],
+  costBB: function(ctx) { return Math.round((30 - ctx.pct) * 0.5); }
+});
+
+defineRule({
+  id: 'flop-bet-frequency-low',
+  panels: ['bets', 'actions', 'leaks'],
+  minSample: { n: 30 },
+  test: function(d) {
+    var fbo = d.betOpps.Flop;
+    if (!fbo || fbo.t < 5) return null;
+    var fp = pct(fbo.b, fbo.t);
+    if (fp === null || fp >= 30) return null;
+    return { pct: fp, bets: fbo.b, opps: fbo.t };
+  },
+  sev: function(ctx) { return ctx.pct < 15 ? 'r' : 'a'; },
+  score: function(ctx) { return 30 - ctx.pct + 5; },
+  label: 'Flop passivity',
+  text: function(ctx) {
+    return 'You only bet the flop ' + ctx.pct + '% of the time when you have the option (' + ctx.bets + '/' + ctx.opps + '). Checking strong hands gives free cards to draws.';
+  },
+  chips: function(ctx) { return [{ v: 'Flop bet: ' + ctx.pct + '%', hi: true }]; },
+  tags: ['bets', 'flop', 'passive', 'leak'],
+  costBB: function(ctx) { return Math.round((30 - ctx.pct) * 0.4); }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ── CARDS / HAND TYPE RULES ──
+// ═══════════════════════════════════════════════════════════════════════════════
+
+defineRule({
+  id: 'pairs-underperforming',
+  panels: ['cards'],
+  minSample: { n: 20 },
+  test: function(d) {
+    var ps = d.htMap['Pocket Pairs'];
+    if (!ps || ps.played < 3) return null;
+    var wr = pct(ps.won, ps.played);
+    if (wr === null || wr >= 45) return null;
+    return { wr: wr, played: ps.played, dealt: ps.dealt };
+  },
+  sev: function(ctx) { return ctx.wr < 30 ? 'r' : 'a'; },
+  score: function(ctx) { return 45 - ctx.wr + 5; },
+  label: 'Pocket pairs struggling',
+  text: function(ctx) {
+    return 'Only ' + ctx.wr + '% win rate with pocket pairs (' + ctx.played + ' played of ' + ctx.dealt + ' dealt). Bet aggressively preflop and charge draws \u2014 don\'t slow play.';
+  },
+  chips: function(ctx) { return [{ v: ctx.wr + '% win rate', hi: true }, { v: ctx.played + ' played' }]; },
+  tags: ['cards', 'pairs', 'leak']
+});
+
+defineRule({
+  id: 'trash-hands-played',
+  panels: ['cards', 'leaks'],
+  minSample: { n: 20 },
+  test: function(d) {
+    var ts = d.htMap['Offsuit Trash'];
+    if (!ts || ts.dealt < 3 || ts.played < 1) return null;
+    var playRate = pct(ts.played, ts.dealt);
+    if (playRate === null || playRate < 20) return null;
+    return { playRate: playRate, played: ts.played, dealt: ts.dealt };
+  },
+  sev: function(ctx) { return ctx.playRate > 40 ? 'r' : 'a'; },
+  score: function(ctx) { return ctx.playRate - 20 + 8; },
+  label: 'Playing trash hands',
+  text: function(ctx) {
+    return 'You play ' + ctx.playRate + '% of offsuit trash hands (' + ctx.played + ' of ' + ctx.dealt + ' dealt). These are almost always folds preflop \u2014 they cost chips over time.';
+  },
+  chips: function(ctx) { return [{ v: ctx.playRate + '% play rate', hi: true }]; },
+  tags: ['cards', 'preflop', 'leak'],
+  costBB: function(ctx) { return Math.round(ctx.played * 1.5); }
+});
+
+defineRule({
+  id: 'broadway-strong',
+  panels: ['cards'],
+  minSample: { n: 20 },
+  test: function(d) {
+    var bw = d.htMap['Broadway'];
+    if (!bw || bw.played < 3) return null;
+    var wr = pct(bw.won, bw.played);
+    if (wr === null || wr < 55) return null;
+    return { wr: wr, played: bw.played };
+  },
+  sev: function() { return 'g'; },
+  score: function(ctx) { return ctx.wr - 55 + 3; },
+  label: 'Broadway hands performing',
+  text: function(ctx) {
+    return ctx.wr + '% win rate with broadway hands across ' + ctx.played + ' played. Premium hands are your bread and butter.';
+  },
+  chips: function(ctx) { return [{ v: ctx.wr + '% win rate', hi: true }]; },
+  tags: ['cards', 'strength']
+});
+
+defineRule({
+  id: 'suited-connectors-profit',
+  panels: ['cards'],
+  minSample: { n: 20 },
+  test: function(d) {
+    var sc = d.htMap['Suited Connectors'];
+    if (!sc || sc.played < 3) return null;
+    var wr = pct(sc.won, sc.played);
+    if (wr === null || wr < 50) return null;
+    return { wr: wr, played: sc.played };
+  },
+  sev: function() { return 'g'; },
+  score: function(ctx) { return ctx.wr - 50 + 2; },
+  label: 'Suited connectors paying off',
+  text: function(ctx) {
+    return ctx.wr + '% win rate with suited connectors (' + ctx.played + ' played). These drawing hands hit big when they connect.';
+  },
+  chips: function(ctx) { return [{ v: ctx.wr + '% win rate' }]; },
+  tags: ['cards', 'strength']
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ── TRENDS RULES ──
+// ═══════════════════════════════════════════════════════════════════════════════
+
+defineRule({
+  id: 'session-tilt-detected',
+  panels: ['trends', 'mygame', 'leaks'],
+  minSample: { n: 40 },
+  test: function(d, hands) {
+    if (hands.length < 20) return null;
+    var sorted = hands.slice().sort(function(a, b) { return (a.timestamp || 0) - (b.timestamp || 0); });
+    var afterLossWins = 0, afterLossTotal = 0;
+    var normalWins = 0, normalTotal = 0;
+    for (var i = 1; i < sorted.length; i++) {
+      var prev = sorted[i - 1];
+      var prevPnl = getHandPnlValue(prev);
+      var bb = getHandBB(prev);
+      var cur = sorted[i];
+      var won = cur.outcome && cur.outcome.result === 'won';
+      if (bb && bb > 0 && prevPnl < -bb * 10) {
+        afterLossTotal++;
+        if (won) afterLossWins++;
+      } else {
+        normalTotal++;
+        if (won) normalWins++;
+      }
+    }
+    if (afterLossTotal < 5 || normalTotal < 10) return null;
+    var afterWr = pct(afterLossWins, afterLossTotal);
+    var normalWr = pct(normalWins, normalTotal);
+    if (afterWr === null || normalWr === null) return null;
+    var diff = normalWr - afterWr;
+    if (diff < 12) return null;
+    return { afterWr: afterWr, normalWr: normalWr, diff: diff, afterN: afterLossTotal };
+  },
+  sev: function(ctx) { return ctx.diff > 20 ? 'r' : 'a'; },
+  score: function(ctx) { return ctx.diff * 0.8 + 10; },
+  label: 'Tilt detected',
+  text: function(ctx) {
+    return 'After a big loss, your win rate drops to ' + ctx.afterWr + '% vs ' + ctx.normalWr + '% normally (' + ctx.diff + '-point gap across ' + ctx.afterN + ' hands). Take a break after big losses.';
+  },
+  chips: function(ctx) {
+    return [{ v: 'After loss: ' + ctx.afterWr + '%', hi: true }, { v: 'Normal: ' + ctx.normalWr + '%' }];
+  },
+  tags: ['tilt', 'trends', 'leak'],
+  costBB: function(ctx) { return Math.round(ctx.diff * ctx.afterN * 0.1); }
+});
+
+defineRule({
+  id: 'second-half-decline',
+  panels: ['trends'],
+  minSample: { n: 40 },
+  test: function(d, hands) {
+    if (hands.length < 20) return null;
+    var sorted = hands.slice().sort(function(a, b) { return (a.timestamp || 0) - (b.timestamp || 0); });
+    var mid = Math.floor(sorted.length / 2);
+    var firstHalf = sorted.slice(0, mid);
+    var secondHalf = sorted.slice(mid);
+    var d1 = analyse(firstHalf);
+    var d2 = analyse(secondHalf);
+    var wr1 = pct(d1.handsWon, d1.handsWithOutcome);
+    var wr2 = pct(d2.handsWon, d2.handsWithOutcome);
+    if (wr1 === null || wr2 === null) return null;
+    var diff = wr1 - wr2;
+    if (diff < 10) return null;
+    return { wr1: wr1, wr2: wr2, diff: diff, n1: d1.n, n2: d2.n };
+  },
+  sev: function(ctx) { return ctx.diff > 15 ? 'r' : 'a'; },
+  score: function(ctx) { return ctx.diff * 0.5 + 3; },
+  label: 'Late-session decline',
+  text: function(ctx) {
+    return 'Win rate drops from ' + ctx.wr1 + '% in the first half to ' + ctx.wr2 + '% in the second half. Fatigue or tilt may be affecting your play \u2014 consider shorter sessions.';
+  },
+  chips: function(ctx) {
+    return [{ v: 'First half: ' + ctx.wr1 + '%' }, { v: 'Second half: ' + ctx.wr2 + '%', hi: true }];
+  },
+  tags: ['trends', 'fatigue', 'leak']
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ── LEAKS-SPECIFIC RULES ──
+// ═══════════════════════════════════════════════════════════════════════════════
+
+defineRule({
+  id: 'blind-defense-leak',
+  panels: ['leaks', 'position'],
+  minSample: { n: 30 },
+  test: function(d) {
+    var sb = d.posMap['SB'];
+    var bb = d.posMap['BB'];
+    if (!sb || !bb) return null;
+    var blindHands = (sb.hands || 0) + (bb.hands || 0);
+    if (blindHands < 15) return null;
+    var blindLoss = (sb.pnl || 0) + (bb.pnl || 0);
+    if (blindLoss >= 0) return null;
+    var lossPerHand = Math.abs(blindLoss) / blindHands;
+    var avgPot = d.n > 0 ? Math.round((d.totalWonAmount + d.totalInvested) / d.n) : 0;
+    if (avgPot <= 0 || lossPerHand < avgPot * 0.15) return null;
+    return { loss: Math.round(Math.abs(blindLoss)), hands: blindHands, perHand: Math.round(lossPerHand) };
+  },
+  sev: function() { return 'a'; },
+  score: function(ctx) { return Math.min(ctx.loss / 50, 20); },
+  label: 'Blind defense bleeding',
+  text: function(ctx) {
+    return 'You\'ve lost ' + fmt(ctx.loss) + ' from the blinds over ' + ctx.hands + ' hands (~' + fmt(ctx.perHand) + '/hand). Tighten blind defense or play more aggressively post-flop.';
+  },
+  chips: function(ctx) { return [{ v: fmt(ctx.loss) + ' lost', hi: true }, { v: ctx.hands + ' blind hands' }]; },
+  tags: ['blinds', 'position', 'leak'],
+  costBB: function(ctx) { return Math.round(ctx.loss / 10); }
+});
+
+defineRule({
+  id: 'missed-river-value',
+  panels: ['leaks', 'showdown'],
+  minSample: { n: 30 },
+  test: function(d, hands) {
+    var sdWins = 0, riverCheckWins = 0;
+    for (var i = 0; i < hands.length; i++) {
+      var h = hands[i];
+      if (!h.outcome || h.outcome.result !== 'won') continue;
+      var acts = parseActions(h.actions);
+      var wentToSD = (h.actions || []).some(function(a) { return (a || '').indexOf(' reveals ') !== -1; });
+      if (!wentToSD) continue;
+      sdWins++;
+      var heroCheckedRiver = acts.some(function(a) { return a.isMe && a.street === 'River' && a.type === 'check'; });
+      if (heroCheckedRiver) riverCheckWins++;
+    }
+    if (sdWins < 10) return null;
+    var rate = pct(riverCheckWins, sdWins);
+    if (rate === null || rate < 35) return null;
+    return { rate: rate, count: riverCheckWins, total: sdWins };
+  },
+  sev: function(ctx) { return ctx.rate > 50 ? 'r' : 'a'; },
+  score: function(ctx) { return ctx.rate - 35 + 8; },
+  label: 'Missed value bets',
+  text: function(ctx) {
+    return 'You check the river and win at showdown ' + ctx.rate + '% of the time (' + ctx.count + '/' + ctx.total + '). A bet could have extracted more value from second-best hands.';
+  },
+  chips: function(ctx) { return [{ v: ctx.rate + '% check-win', hi: true }]; },
+  tags: ['river', 'value', 'showdown', 'leak'],
+  costBB: function(ctx) { return Math.round(ctx.count * 2); }
 });

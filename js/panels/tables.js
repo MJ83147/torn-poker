@@ -101,6 +101,15 @@ function renderTables(container, hands, allHands, excludedTables, onRerender) {
         tIns2.push(insWithExample('a', 'Biggest Loss', bigLoss.label + ' at ' + fmtPnl(bigLoss.net) + '. Review whether leaks are table-specific or general.', [{ v: fmtPnl(bigLoss.net), hi: true }], exLossTable, 'A losing hand from ' + bigLoss.label + '. Check if you are playing too loose or calling too much at these stakes.'));
       }
     }
+    // Append engine insights to legacy
+    var engineTblIns = InsightEngine.forPanel('tables', 4);
+    for (var etbi = 0; etbi < engineTblIns.length; etbi++) {
+      var dupTbl = false;
+      for (var ti3 = 0; ti3 < tIns2.length; ti3++) {
+        if (tIns2[ti3].indexOf(engineTblIns[etbi].label) !== -1) { dupTbl = true; break; }
+      }
+      if (!dupTbl) tIns2.push(renderRuleInsight(engineTblIns[etbi]));
+    }
     tablesHtml += '<div class="p-row">' + renderInsights(tIns2, 'Tables', 'More data needed for table-level insights.') + '</div>';
   }
   container.innerHTML = tablesHtml;

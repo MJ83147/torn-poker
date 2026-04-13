@@ -173,6 +173,12 @@ function renderRange(container, d, hands) {
       }
     }
 
+    // Append engine insights for range panel
+    var engineRangeIns = InsightEngine.forPanel('range', 3);
+    for (var eri = 0; eri < engineRangeIns.length; eri++) {
+      rangeIns.push(renderRuleInsight(engineRangeIns[eri]));
+    }
+
     return { seen: seen, totalCombos: totalCombos, wrGrid: wrGrid, freqGrid: freqGrid, legend1: legend1, legend2: legend2, rangeIns: rangeIns, rMap: rMap };
   }
 

@@ -411,6 +411,15 @@ function renderLeaks(container, d, hands) {
     }
   })();
 
+  // ── Append engine leak insights ─────────────────────────────────────────
+  var engineLeakIns = InsightEngine.forPanel('leaks', 6);
+  for (var eli = 0; eli < engineLeakIns.length; eli++) {
+    var el = engineLeakIns[eli];
+    if (el.sev === 'r' || el.sev === 'a') {
+      leaks.push({ cost: el.costBB || Math.round(el.score), html: renderRuleInsight(el) });
+    }
+  }
+
   // ── Sort by cost and render ─────────────────────────────────────────────
   leaks.sort(function(a, b) { return b.cost - a.cost; });
 

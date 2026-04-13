@@ -119,6 +119,15 @@ function renderCards(container, d, hands) {
       { v: worstHT.ht + ': ' + worstHT.wr + '%' },
     ]));
   }
+  // Append engine insights (patterns: hand-strength) to legacy
+  var engineCardIns = InsightEngine.forPanel('cards', 4);
+  for (var eci = 0; eci < engineCardIns.length; eci++) {
+    var dupCard = false;
+    for (var ci2 = 0; ci2 < cIns.length; ci2++) {
+      if (cIns[ci2].indexOf(engineCardIns[eci].label) !== -1) { dupCard = true; break; }
+    }
+    if (!dupCard) cIns.push(renderRuleInsight(engineCardIns[eci]));
+  }
   cardsHtml += '</div>';
   cardsHtml += '<div class="p-row">' + renderInsights(cIns, 'Cards', 'More hands needed for card-type breakdowns.') + '</div>';
   container.innerHTML = cardsHtml;

@@ -117,6 +117,15 @@ function renderTrends(container, hands, meta) {
       }
     }
   }
+  // Append engine insights (patterns: session-half, tilt) to legacy
+  var engineTrendIns = InsightEngine.forPanel('trends', 4);
+  for (var eti = 0; eti < engineTrendIns.length; eti++) {
+    var dupTrend = false;
+    for (var ti2 = 0; ti2 < tIns.length; ti2++) {
+      if (tIns[ti2].indexOf(engineTrendIns[eti].label) !== -1) { dupTrend = true; break; }
+    }
+    if (!dupTrend) tIns.push(renderRuleInsight(engineTrendIns[eti]));
+  }
   tHtml += '<div class="p-row">' + renderInsights(tIns, 'Trends', 'Keep tracking to build up enough data points for trend insights.') + '</div>';
   container.innerHTML = tHtml;
 

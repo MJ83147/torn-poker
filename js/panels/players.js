@@ -581,6 +581,11 @@ function renderPlayers(container, d, hands) {
     }
     if (best) pIns.push(ins('g', 'Best Record', 'You win ' + pct(best.won, best.won + best.lost) + '% against ' + best.name + ' (' + (best.won + best.lost) + ' contested hands).', [{ v: best.name, hi: true }, { v: pct(best.won, best.won + best.lost) + '% win' }]));
     if (worst && worst !== best) pIns.push(ins('r', 'Toughest Opponent', 'Only ' + pct(worst.won, worst.won + worst.lost) + '% win rate against ' + worst.name + ' (' + (worst.won + worst.lost) + ' contested hands).', [{ v: worst.name, hi: true }, { v: pct(worst.won, worst.won + worst.lost) + '% win' }]));
+    // Append engine insights for players panel
+    var enginePlrIns = InsightEngine.forPanel('players', 3);
+    for (var epi = 0; epi < enginePlrIns.length; epi++) {
+      pIns.push(renderRuleInsight(enginePlrIns[epi]));
+    }
     if (pIns.length) html += '<div class="p-row" style="margin-top:8px;"><div class="ins-grid">' + pIns.join('') + '</div></div>';
 
     html += '<div class="p-row"><div class="flex-between"><div class="sec-subtitle mt-0">All Opponents</div>';

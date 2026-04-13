@@ -116,6 +116,13 @@ function renderShowdown(container, hands, meta) {
     }
   }
 
+  // Append engine insights for showdown panel
+  var engineSdIns = InsightEngine.forPanel('showdown', 4);
+  for (var esi = 0; esi < engineSdIns.length; esi++) {
+    insHtml += renderRuleInsight(engineSdIns[esi]);
+    hasInsight = true;
+  }
+
   if (!hasInsight) {
     insHtml += ins('n', 'Showdown Breakdown', 'Track more hands to unlock showdown vs non-showdown insights. Aim for 20+ hands in each category.', [
       { v: sdTotal + ' SD hands' },

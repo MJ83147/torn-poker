@@ -380,6 +380,11 @@ function showAllInResults(container) {
       ]));
     }
   }
+  // Append engine insights
+  var engineAllinIns = InsightEngine.forPanel('allin', 3);
+  for (var eali = 0; eali < engineAllinIns.length; eali++) {
+    insArr.push(renderRuleInsight(engineAllinIns[eali]));
+  }
   if (insArr.length) {
     html += '<div class="p-row">' + renderInsights(insArr, 'All-In EV', 'More all-in hands needed for patterns.') + '</div>';
   }
