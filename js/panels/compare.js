@@ -107,9 +107,9 @@ function renderCompare(container, d, hands) {
   }
 
   function renderComparison() {
-    var p1Name = document.getElementById('compare-p1').value;
-    var p2Name = document.getElementById('compare-p2').value;
-    var body = document.getElementById('compare-body');
+    var p1Name = container.querySelector('#compare-p1').value;
+    var p2Name = container.querySelector('#compare-p2').value;
+    var body = container.querySelector('#compare-body');
     if (!body) return;
 
     if (p1Name === p2Name) {
@@ -235,7 +235,7 @@ function renderCompare(container, d, hands) {
 
     // Wire shared hands button
     if (sharedHands.length > 0) {
-      var sharedBtn = document.getElementById('compare-shared-btn');
+      var sharedBtn = container.querySelector('#compare-shared-btn');
       if (sharedBtn) {
         sharedBtn.onclick = function() {
           showExampleHandListModal(p1Name + ' vs ' + p2Name, sharedHands, 'Hands where both players were at the table.');
@@ -245,6 +245,6 @@ function renderCompare(container, d, hands) {
   }
 
   renderComparison();
-  document.getElementById('compare-p1').onchange = renderComparison;
-  document.getElementById('compare-p2').onchange = renderComparison;
+  container.querySelector('#compare-p1').onchange = renderComparison;
+  container.querySelector('#compare-p2').onchange = renderComparison;
 }

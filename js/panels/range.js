@@ -13,10 +13,23 @@ var RECOMMENDED_RANGES = {
   'BB': new Set(['AA','KK','QQ','JJ','TT','99','88','77','66','55','44','33','22','AKs','AQs','AJs','ATs','A9s','A8s','A7s','A6s','A5s','A4s','A3s','A2s','KQs','KJs','KTs','K9s','K8s','K7s','K6s','K5s','K4s','QJs','QTs','Q9s','Q8s','Q7s','Q6s','Q5s','JTs','J9s','J8s','J7s','T9s','T8s','T7s','98s','97s','96s','87s','86s','76s','75s','65s','64s','54s','53s','43s','AKo','AQo','AJo','ATo','A9o','A8o','A7o','A6o','A5o','KQo','KJo','KTo','K9o','QJo','QTo','Q9o','JTo','J9o','T9o','98o','87o']),
 };
 
+var _rangeVpipChart = null;
+
 function renderRange(container, d, hands) {
   var gridR = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2'];
   var rangePositions = ['All Positions', 'BB', 'SB', 'BTN', 'CO', 'HJ', 'LJ', 'MP', 'UTG', 'UTG+1'];
   var advisorOn = false;
+  var posGuide = {
+    'BTN': { ideal: '40-55%', tight: 35, loose: 60, desc: 'The button is your most profitable seat. You act last post-flop, so you can play a wide range — suited connectors, broadways, and most pairs are all profitable opens here.' },
+    'CO': { ideal: '25-35%', tight: 20, loose: 40, desc: 'Cutoff is the second-best position. You can open wide but be cautious of BTN 3-bets. Strong broadways, suited aces, and pairs down to 55 are standard opens.' },
+    'HJ': { ideal: '18-25%', tight: 14, loose: 30, desc: 'Hijack is a middle-late position. Start tightening up — focus on strong broadways, suited connectors T9s+, and pairs 66+. Drop weak suited aces.' },
+    'LJ': { ideal: '15-22%', tight: 12, loose: 27, desc: 'Lojack is where your range should start getting noticeably tighter. Stick to pairs 77+, strong broadways ATo+/KJo+, and suited connectors 89s+.' },
+    'MP': { ideal: '14-20%', tight: 10, loose: 25, desc: 'Middle position requires discipline. Focus on pairs 77+, AJo+, KQo, and suited broadways. Suited connectors below T9s become marginal.' },
+    'UTG': { ideal: '10-16%', tight: 8, loose: 20, desc: 'Under the gun is the tightest position. You have the whole table behind you — stick to pairs 88+, AQo+, AJs+, and KQs. Playing too loose here is a common leak.' },
+    'UTG+1': { ideal: '12-18%', tight: 9, loose: 22, desc: 'UTG+1 is nearly as tight as UTG. You can add a few more hands like 77, AJo, KJs, but keep it disciplined. Most of the table still acts after you.' },
+    'SB': { ideal: '25-40%', tight: 20, loose: 45, desc: 'Small blind is tricky — you put in half a blind but act first post-flop. Against a single raiser, 3-bet or fold is often better than calling. Defend wide vs BTN steals but tighten up against early position opens.' },
+    'BB': { ideal: '35-55%', tight: 25, loose: 60, desc: 'Big blind gets the best pot odds to defend. You should be calling or 3-betting a wide range, especially vs late position opens. However, you are out of position post-flop, so avoid calling with hands that play poorly without initiative.' }
+  };
 
   function buildKey(ri, ci) {
     var r1 = gridR[Math.min(ri, ci)];
@@ -131,29 +144,27 @@ function renderRange(container, d, hands) {
       Object.keys(rMap).forEach(function(k) { totalDealt += rMap[k].dealt; totalPlayedPos += rMap[k].played; totalWon += rMap[k].won; });
       var vpipPctPos = totalDealt > 0 ? Math.round(totalPlayedPos / totalDealt * 100) : 0;
       var wrPctPos = totalPlayedPos > 0 ? Math.round(totalWon / totalPlayedPos * 100) : 0;
-      var posGuide = {
-        'BTN': { ideal: '40-55%', tight: 35, loose: 60, desc: 'The button is your most profitable seat. You act last post-flop, so you can play a wide range — suited connectors, broadways, and most pairs are all profitable opens here.' },
-        'CO': { ideal: '25-35%', tight: 20, loose: 40, desc: 'Cutoff is the second-best position. You can open wide but be cautious of BTN 3-bets. Strong broadways, suited aces, and pairs down to 55 are standard opens.' },
-        'HJ': { ideal: '18-25%', tight: 14, loose: 30, desc: 'Hijack is a middle-late position. Start tightening up — focus on strong broadways, suited connectors T9s+, and pairs 66+. Drop weak suited aces.' },
-        'LJ': { ideal: '15-22%', tight: 12, loose: 27, desc: 'Lojack is where your range should start getting noticeably tighter. Stick to pairs 77+, strong broadways ATo+/KJo+, and suited connectors 89s+.' },
-        'MP': { ideal: '14-20%', tight: 10, loose: 25, desc: 'Middle position requires discipline. Focus on pairs 77+, AJo+, KQo, and suited broadways. Suited connectors below T9s become marginal.' },
-        'UTG': { ideal: '10-16%', tight: 8, loose: 20, desc: 'Under the gun is the tightest position. You have the whole table behind you — stick to pairs 88+, AQo+, AJs+, and KQs. Playing too loose here is a common leak.' },
-        'UTG+1': { ideal: '12-18%', tight: 9, loose: 22, desc: 'UTG+1 is nearly as tight as UTG. You can add a few more hands like 77, AJo, KJs, but keep it disciplined. Most of the table still acts after you.' },
-        'SB': { ideal: '25-40%', tight: 20, loose: 45, desc: 'Small blind is tricky — you put in half a blind but act first post-flop. Against a single raiser, 3-bet or fold is often better than calling. Defend wide vs BTN steals but tighten up against early position opens.' },
-        'BB': { ideal: '35-55%', tight: 25, loose: 60, desc: 'Big blind gets the best pot odds to defend. You should be calling or 3-betting a wide range, especially vs late position opens. However, you are out of position post-flop, so avoid calling with hands that play poorly without initiative.' }
-      };
       var guide = posGuide[posLabel];
       if (guide && totalDealt >= 3) {
+        var exFolded = findExampleHand(function(h) {
+          return (h.position || '?') === posLabel && h.outcome && h.outcome.result === 'folded';
+        });
+        var exPlayed = findExampleHand(function(h) {
+          return (h.position || '?') === posLabel && !(h.outcome && h.outcome.result === 'folded');
+        });
+        var exPos = findExampleHand(function(h) {
+          return (h.position || '?') === posLabel;
+        });
         rangeIns.push(ins('n', posLabel + ' Guide', guide.desc, [{ v: 'Ideal VPIP: ' + guide.ideal }]));
         if (vpipPctPos < guide.tight) {
-          rangeIns.push(ins('r', 'Too Tight from ' + posLabel, 'You are playing ' + vpipPctPos + '% of hands from ' + posLabel + ', which is below the typical range of ' + guide.ideal + '. You may be folding profitable hands. Consider opening wider with suited connectors and broadways.', [{ v: vpipPctPos + '% VPIP' }, { v: guide.ideal + ' ideal' }]));
+          rangeIns.push(insWithExample('r', 'Too Tight from ' + posLabel, 'You are playing ' + vpipPctPos + '% of hands from ' + posLabel + ', which is below the typical range of ' + guide.ideal + '. You may be folding profitable hands. Consider opening wider with suited connectors and broadways.', [{ v: vpipPctPos + '% VPIP' }, { v: guide.ideal + ' ideal' }], exFolded, 'Here are hands you folded from ' + posLabel + '. Some of these may have been profitable opens given your position.'));
         } else if (vpipPctPos > guide.loose) {
-          rangeIns.push(ins('r', 'Too Loose from ' + posLabel, 'You are playing ' + vpipPctPos + '% of hands from ' + posLabel + ', above the typical range of ' + guide.ideal + '. Tighten up to avoid getting into marginal spots out of position or with weak holdings.', [{ v: vpipPctPos + '% VPIP' }, { v: guide.ideal + ' ideal' }]));
+          rangeIns.push(insWithExample('r', 'Too Loose from ' + posLabel, 'You are playing ' + vpipPctPos + '% of hands from ' + posLabel + ', above the typical range of ' + guide.ideal + '. Tighten up to avoid getting into marginal spots out of position or with weak holdings.', [{ v: vpipPctPos + '% VPIP' }, { v: guide.ideal + ' ideal' }], exPlayed, 'Here are hands you played from ' + posLabel + '. Review whether some of these could have been folded pre-flop.'));
         } else {
-          rangeIns.push(ins('g', posLabel + ' VPIP on Track', 'You are playing ' + vpipPctPos + '% of hands from ' + posLabel + ', which is within the typical range of ' + guide.ideal + '. Keep it up.', [{ v: vpipPctPos + '% VPIP' }, { v: guide.ideal + ' ideal' }]));
+          rangeIns.push(insWithExample('g', posLabel + ' VPIP on Track', 'You are playing ' + vpipPctPos + '% of hands from ' + posLabel + ', which is within the typical range of ' + guide.ideal + '. Keep it up.', [{ v: vpipPctPos + '% VPIP' }, { v: guide.ideal + ' ideal' }], exPlayed, 'Here are hands you played from ' + posLabel + '. Your range selection looks solid for this position.'));
         }
         if (totalPlayedPos >= 5) {
-          rangeIns.push(ins(wrPctPos >= 50 ? 'g' : wrPctPos >= 35 ? 'n' : 'r', posLabel + ' Win Rate', 'You are winning ' + wrPctPos + '% of hands you play from ' + posLabel + ' (' + totalWon + '/' + totalPlayedPos + ').', [{ v: wrPctPos + '% win' }, { v: totalPlayedPos + ' played' }]));
+          rangeIns.push(insWithExample(wrPctPos >= 50 ? 'g' : wrPctPos >= 35 ? 'n' : 'r', posLabel + ' Win Rate', 'You are winning ' + wrPctPos + '% of hands you play from ' + posLabel + ' (' + totalWon + '/' + totalPlayedPos + ').', [{ v: wrPctPos + '% win' }, { v: totalPlayedPos + ' played' }], exPos, 'Here are hands from ' + posLabel + '. Review your play patterns to see what is working and where you can improve.'));
         }
       }
     }
@@ -198,11 +209,92 @@ function renderRange(container, d, hands) {
       '</div><div class="divider"></div><div class="ins-grid">' + rc.rangeIns.join('') + '</div>';
   }
 
+  function renderVpipChart(posLabel) {
+    if (_rangeVpipChart) { _rangeVpipChart.destroy(); _rangeVpipChart = null; }
+    var wrap = document.getElementById('range-vpip-chart-wrap');
+    var canvas = document.getElementById('range-vpip-canvas');
+    if (!wrap || !canvas) return;
+    if (posLabel === 'all') { wrap.style.display = 'none'; return; }
+    wrap.style.display = '';
+
+    var posOrder = ['UTG', 'UTG+1', 'MP', 'LJ', 'HJ', 'CO', 'BTN', 'SB', 'BB'];
+    var colors = getChartColors();
+    var idealData = [];
+    var actualData = [];
+    var actualColors = [];
+    var actualBorders = [];
+
+    for (var pi = 0; pi < posOrder.length; pi++) {
+      var p = posOrder[pi];
+      var guide = posGuide[p];
+      idealData.push([guide.tight, guide.loose]);
+
+      var pm = d.posMap[p];
+      var vpip = pm && pm.hands > 0 ? pct(pm.vpip, pm.hands) : null;
+      actualData.push(vpip);
+
+      var inRange = vpip !== null && vpip >= guide.tight && vpip <= guide.loose;
+      var isSelected = (p === posLabel);
+      if (isSelected) {
+        actualColors.push(inRange ? colors.green + 'cc' : colors.red + 'cc');
+        actualBorders.push(inRange ? colors.green : colors.red);
+      } else {
+        actualColors.push(inRange ? colors.green + '44' : colors.red + '44');
+        actualBorders.push(inRange ? colors.green + '66' : colors.red + '66');
+      }
+    }
+
+    _rangeVpipChart = createChart(canvas, 'bar', {
+      labels: posOrder,
+      datasets: [
+        {
+          label: 'Ideal Range',
+          data: idealData,
+          backgroundColor: colors.dim + '33',
+          borderColor: colors.border,
+          borderWidth: 1,
+          barPercentage: 0.9,
+          categoryPercentage: 0.8,
+          order: 2
+        },
+        {
+          label: 'Your VPIP',
+          data: actualData,
+          backgroundColor: actualColors,
+          borderColor: actualBorders,
+          borderWidth: 2,
+          barPercentage: 0.5,
+          categoryPercentage: 0.8,
+          order: 1
+        }
+      ]
+    }, {
+      aspectRatio: 2.5,
+      legend: chartLegend(colors),
+      tooltip: chartTooltip(colors, {
+        callbacks: {
+          label: function(ctx) {
+            if (ctx.datasetIndex === 0) {
+              var raw = ctx.raw;
+              return 'Ideal: ' + raw[0] + '–' + raw[1] + '%';
+            }
+            return 'Your VPIP: ' + (ctx.raw !== null ? ctx.raw + '%' : 'no data');
+          }
+        }
+      }),
+      scales: {
+        x: chartXScale(colors),
+        y: chartYScale(colors, { max: 80, tickCallback: function(v) { return v + '%'; } })
+      }
+    });
+  }
+
   function refreshRange() {
     var pos = document.getElementById('range-pos-filter').value;
     var filtered = (pos === 'all') ? hands : hands.filter(function(h) { return (h.position || '?') === pos; });
     var newRc = buildRangeContent(filtered, pos);
     renderRangeGrids(newRc);
+    renderVpipChart(pos);
     // Update advisor toggle state
     var advBtn = document.getElementById('range-advisor-btn');
     if (advBtn) {
@@ -226,8 +318,12 @@ function renderRange(container, d, hands) {
     '<div class="p-row"><div class="flex-gap-6 mb-16">' +
     '<select id="range-pos-filter" class="table-filter">' + posOpts + '</select>' +
     '<button id="range-advisor-btn" class="advisor-btn" disabled>Advisor Off</button>' +
-    '</div><div id="range-grids"></div></div>';
+    '</div><div id="range-grids"></div>' +
+    '<div id="range-vpip-chart-wrap" style="display:none">' +
+    '<div class="sec-subtitle mt-16">VPIP by Position vs Ideal</div>' +
+    '<canvas id="range-vpip-canvas" height="160"></canvas></div></div>';
   renderRangeGrids(rc);
+  renderVpipChart('all');
 
   // Advisor toggle
   document.getElementById('range-advisor-btn').onclick = function() {
