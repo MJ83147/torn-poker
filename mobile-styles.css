@@ -117,6 +117,7 @@
   .ins { overflow: hidden; width: 100%; }
   .ins-text { padding-right: 60px; word-break: break-word; }
   .ins-label { padding-right: 60px; }
+  .engine-narrative { font-size: 13px; padding: 10px 12px; }
 
   /* Loader */
   .l-sub { margin-bottom: 32px; }

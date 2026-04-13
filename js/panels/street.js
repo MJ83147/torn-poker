@@ -43,35 +43,32 @@ function renderStreet(container, d, hands) {
   stHtml += '<div class="p-row"><div class="sec-subtitle mt-0">Action Breakdown by Street</div>';
   stHtml += '<div class="chart-wrap-full"><canvas id="street-action-chart"></canvas></div></div>';
 
-  var sIns = [];
-  var fr = pct(d.ss.Flop.seen, d.ss.Preflop.seen);
-  var rr = pct(d.ss.River.seen, d.ss.Preflop.seen);
-  if (fr !== null) {
-    sIns.push(ins('n', 'Street Depth', 'You see the flop ' + fr + '% of hands and reach the river ' + rr + '% of the time.', [{
-      v: 'Flop: ' + fr + '%',
-    }, {
-      v: 'River: ' + rr + '%',
-    }]));
+  // Engine insights for street panel
+  var engineStreetHtml = InsightEngine.renderForPanel('street', 6);
+  if (engineStreetHtml) {
+    stHtml += '<div class="p-row">' + engineStreetHtml + '</div>';
+  } else {
+    // Legacy fallback
+    var sIns = [];
+    var fr = pct(d.ss.Flop.seen, d.ss.Preflop.seen);
+    var rr = pct(d.ss.River.seen, d.ss.Preflop.seen);
+    if (fr !== null) {
+      sIns.push(ins('n', 'Street Depth', 'You see the flop ' + fr + '% of hands and reach the river ' + rr + '% of the time.', [{
+        v: 'Flop: ' + fr + '%',
+      }, {
+        v: 'River: ' + rr + '%',
+      }]));
+    }
+    var flopFoldP = pct(d.ss.Flop.f, d.ss.Flop.f + d.ss.Flop.ch + d.ss.Flop.ca + d.ss.Flop.ra);
+    var turnFoldP = pct(d.ss.Turn.f, d.ss.Turn.f + d.ss.Turn.ch + d.ss.Turn.ca + d.ss.Turn.ra);
+    if (flopFoldP !== null && flopFoldP > 50) {
+      sIns.push(ins('a', 'Flop Folding', 'You fold ' + flopFoldP + '% on the flop.', [{ v: d.ss.Flop.f + ' flop folds' }]));
+    }
+    if (turnFoldP !== null && turnFoldP > 55) {
+      sIns.push(ins('r', 'Turn Folding', 'Folding ' + turnFoldP + '% on the turn.', [{ v: d.ss.Turn.f + ' turn folds' }]));
+    }
+    stHtml += '<div class="p-row">' + renderInsights(sIns, 'Streets', 'Keep building the sample for street-level patterns.') + '</div>';
   }
-  var flopFoldP = pct(d.ss.Flop.f, d.ss.Flop.f + d.ss.Flop.ch + d.ss.Flop.ca + d.ss.Flop.ra);
-  var turnFoldP = pct(d.ss.Turn.f, d.ss.Turn.f + d.ss.Turn.ch + d.ss.Turn.ca + d.ss.Turn.ra);
-  if (flopFoldP !== null && flopFoldP > 50) {
-    var exFlopFold = findExampleHand(function(h) {
-      return parseActions(h.actions).some(function(a) { return a.isMe && a.street === 'Flop' && a.type === 'fold'; });
-    });
-    sIns.push(insWithExample('a', 'Flop Folding', 'You fold ' + flopFoldP + '% on the flop. If you\'re calling pre and folding the flop often, your preflop range is too wide.', [{
-      v: d.ss.Flop.f + ' flop folds',
-    }], exFlopFold, 'You folded on the flop here. If you\'re entering pots preflop and folding the flop regularly, tighten your preflop range to hands that connect better with boards.'));
-  }
-  if (turnFoldP !== null && turnFoldP > 55) {
-    var exTurnFold = findExampleHand(function(h) {
-      return parseActions(h.actions).some(function(a) { return a.isMe && a.street === 'Turn' && a.type === 'fold'; });
-    });
-    sIns.push(insWithExample('r', 'Turn Folding', 'Folding ' + turnFoldP + '% on the turn. If you have a made hand, bet and protect it — don\'t check-fold to draws.', [{
-      v: d.ss.Turn.f + ' turn folds',
-    }], exTurnFold, 'You folded on the turn here. If you had a made hand, betting protects it from draws. Check-folding lets opponents draw cheaply and control the pot.'));
-  }
-  stHtml += '<div class="p-row">' + renderInsights(sIns, 'Streets', 'Keep building the sample for street-level patterns.') + '</div>';
   container.innerHTML = stHtml;
 
   // ── Render Chart.js stacked bar chart ──

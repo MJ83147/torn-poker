@@ -105,87 +105,28 @@ function renderMyGame(container, d, hands) {
     var f3b = pct(d.foldTo3betDone, d.foldTo3betOpps);
     var fcbet = pct(d.foldToCbetDone, d.foldToCbetOpps);
 
-    // ── Section 4: Strengths ──
-    var strengths = [];
-    if (bestPos && bestPosPnl > 0) {
-      strengths.push({ score: bestPosPnl, html: ins('g', 'Best seat: ' + bestPos, 'Your ' + bestPos + ' play is profitable at ' + fmtPnl(bestPosPnl) + '. You win ' + (bestPosWr !== null ? bestPosWr : '?') + '% from this seat.', [{ v: bestPos + ': ' + fmtPnl(bestPosPnl) }]) });
-    }
-    if (aggVal !== null && aggVal >= 15 && aggVal <= 40) {
-      strengths.push({ score: 40 - Math.abs(27.5 - aggVal), html: ins('g', 'Balanced aggression', aggVal + '% aggression is solid. You bet for value without overbluffing.', [{ v: 'Agg: ' + aggVal + '%' }]) });
-    }
-    if (cbetVal !== null && cbetVal >= 50 && cbetVal <= 75) {
-      strengths.push({ score: 75 - Math.abs(62.5 - cbetVal), html: ins('g', 'Good c-bet rate', 'You continuation bet ' + cbetVal + '% of the time. Enough to maintain initiative without being auto-pilot.', [{ v: 'C-Bet: ' + cbetVal + '%' }]) });
-    }
-    if (f3b !== null && f3b < 55 && d.foldTo3betOpps >= 5) {
-      strengths.push({ score: 55 - f3b, html: ins('g', 'Handles 3-bets', 'You fold to 3-bets ' + f3b + '% of the time. Not giving up opens too cheaply.', [{ v: 'F3B: ' + f3b + '%' }]) });
-    }
-    if (wtsdVal !== null && wtsdVal >= 25 && wtsdVal <= 35) {
-      strengths.push({ score: 35 - Math.abs(30 - wtsdVal), html: ins('g', 'Selective showdowns', 'You reach showdown ' + wtsdVal + '% after seeing a flop. Picking spots well.', [{ v: 'WTSD: ' + wtsdVal + '%' }]) });
-    }
-    if (epVpip !== null && epVpip < 30 && earlyHands >= 10) {
-      strengths.push({ score: 30 - epVpip, html: ins('g', 'Tight early', 'Only ' + epVpip + '% VPIP from early position. Good discipline where you act first.', [{ v: 'EP VPIP: ' + epVpip + '%' }]) });
-    }
-    if (lpVpip !== null && lpVpip > 40 && lateHands >= 10) {
-      strengths.push({ score: lpVpip - 40, html: ins('g', 'Active late', 'Playing ' + lpVpip + '% from CO/BTN. Using positional advantage.', [{ v: 'LP VPIP: ' + lpVpip + '%' }]) });
-    }
-    if (limpVal !== null && limpVal < 10) {
-      strengths.push({ score: 10 - limpVal, html: ins('g', 'Rarely limps', 'Only ' + limpVal + '% limp rate. You enter pots with initiative.', [{ v: 'Limp: ' + limpVal + '%' }]) });
-    }
-    if (pfrVal !== null && pfrVal > 15) {
-      strengths.push({ score: pfrVal - 15, html: ins('g', 'Opens with raises', 'PFR of ' + pfrVal + '%. You raise when you play, putting opponents on the defensive.', [{ v: 'PFR: ' + pfrVal + '%' }]) });
-    }
-
-    strengths.sort(function(a, b) { return b.score - a.score; });
-    if (strengths.length > 4) strengths = strengths.slice(0, 4);
-
-    if (strengths.length) {
+    // ── Section 4: Strengths (via Insight Engine) ──
+    var engineStrengths = InsightEngine.forPanel('mygame', 12).filter(function(i) { return i.sev === 'g'; });
+    if (engineStrengths.length > 4) engineStrengths = engineStrengths.slice(0, 4);
+    if (engineStrengths.length) {
       html += '<div class="sec-subtitle mt-20">Strengths</div>';
-      html += '<div class="ins-grid">' + strengths.map(function(s) { return s.html; }).join('') + '</div>';
+      html += '<div class="ins-grid">' + engineStrengths.map(function(i) { return renderRuleInsight(i); }).join('') + '</div>';
     }
 
-    // ── Section 5: Exploitable leaks ──
-    var leaks = [];
-    if (limpVal !== null && limpVal > 15) {
-      var lSev = limpVal > 25 ? 'r' : 'a';
-      leaks.push({ score: limpVal - 15, sev: lSev, label: 'Limping too much', html: ins(lSev, 'Limping too much', 'You limp ' + limpVal + '% of hands. Limping gives up initiative and lets opponents see cheap flops with position.', [{ v: 'Limp: ' + limpVal + '%' }]) });
-    }
-    if (ftrVal !== null && ftrVal > 60 && d.facedRaise >= 5) {
-      var fSev = ftrVal > 70 ? 'r' : 'a';
-      leaks.push({ score: ftrVal - 60, sev: fSev, label: 'Folding to pressure', html: ins(fSev, 'Folding to pressure', 'You fold ' + ftrVal + '% when raised. Opponents can push you off hands cheaply.', [{ v: 'FTR: ' + ftrVal + '%' }]) });
-    }
-    if (cbetVal !== null && cbetVal < 40 && d.cbetOpps >= 5) {
-      var cSev = cbetVal < 25 ? 'r' : 'a';
-      leaks.push({ score: 40 - cbetVal, sev: cSev, label: 'Low c-bet', html: ins(cSev, 'Low c-bet', 'You only c-bet ' + cbetVal + '%. After raising preflop, follow through on the flop or opponents learn you give up easily.', [{ v: 'C-Bet: ' + cbetVal + '%' }]) });
-    }
-    if (wtsdVal !== null && wtsdVal > 40) {
-      var wSev = wtsdVal > 50 ? 'r' : 'a';
-      leaks.push({ score: wtsdVal - 40, sev: wSev, label: 'Paying off too much', html: ins(wSev, 'Paying off too much', 'You go to showdown ' + wtsdVal + '% of the time. Folding more on later streets saves money against strong hands.', [{ v: 'WTSD: ' + wtsdVal + '%' }]) });
-    }
-    if (epVpip !== null && epVpip > 45 && earlyHands >= 10) {
-      var eSev = epVpip > 55 ? 'r' : 'a';
-      leaks.push({ score: epVpip - 45, sev: eSev, label: 'Too loose early', html: ins(eSev, 'Too loose early', 'Playing ' + epVpip + '% from early position. These seats act first on every street; tighten up.', [{ v: 'EP VPIP: ' + epVpip + '%' }]) });
-    }
-    if (aggVal !== null && aggVal < 15) {
-      leaks.push({ score: 15 - aggVal, sev: 'r', label: 'Too passive', html: ins('r', 'Too passive', 'Only ' + aggVal + '% aggression. You check and call when you should be betting for value.', [{ v: 'Agg: ' + aggVal + '%' }]) });
-    }
-    if (aggVal !== null && aggVal > 50) {
-      leaks.push({ score: aggVal - 50, sev: 'a', label: 'Over-aggressive', html: ins('a', 'Over-aggressive', 'Aggression at ' + aggVal + '%. In TC where players call wide, excessive raising gets called down.', [{ v: 'Agg: ' + aggVal + '%' }]) });
-    }
-    if (fcbet !== null && fcbet > 65 && d.foldToCbetOpps >= 5) {
-      var fcSev = fcbet > 75 ? 'r' : 'a';
-      leaks.push({ score: fcbet - 65, sev: fcSev, label: 'Overfolds to c-bets', html: ins(fcSev, 'Overfolds to c-bets', 'You fold to c-bets ' + fcbet + '% of the time. Opponents can bluff you off the flop profitably.', [{ v: 'FCB: ' + fcbet + '%' }]) });
-    }
-    if (pfrVal !== null && pfrVal < 8) {
-      leaks.push({ score: 8 - pfrVal, sev: 'r', label: 'Passive opener', html: ins('r', 'Passive opener', 'PFR of only ' + pfrVal + '%. You play hands but rarely raise, entering pots without initiative.', [{ v: 'PFR: ' + pfrVal + '%' }]) });
-    }
+    // ── Section 5: Exploitable leaks (via Insight Engine) ──
+    var engineLeaks = InsightEngine.forPanel('mygame', 12).filter(function(i) { return i.sev === 'r' || i.sev === 'a'; });
+    var allLeaks = engineLeaks.slice();
+    if (engineLeaks.length > 6) engineLeaks = engineLeaks.slice(0, 6);
 
-    leaks.sort(function(a, b) { return b.score - a.score; });
-    var allLeaks = leaks.slice();
-    if (leaks.length > 4) leaks = leaks.slice(0, 4);
-
-    if (leaks.length) {
+    if (engineLeaks.length) {
+      // Narrative summary
+      var narr = InsightEngine.narrativeFor('mygame');
+      if (narr && narr.narrative) {
+        html += '<div class="sec-subtitle mt-20">Analysis</div>';
+        html += '<div class="engine-narrative">' + narr.narrative + '</div>';
+      }
       html += '<div class="sec-subtitle mt-20">Exploitable Leaks</div>';
-      html += '<div class="ins-grid">' + leaks.map(function(l) { return l.html; }).join('') + '</div>';
+      html += '<div class="ins-grid">' + engineLeaks.map(function(i) { return renderRuleInsight(i); }).join('') + '</div>';
     }
 
     // ── Section 5b: Leak Finder (merged from Leak Finder panel) ──
@@ -368,7 +309,9 @@ function detectSessionPatterns(sessionData, overallData) {
   var oWtsd = pct(overallData.wentToShowdown, overallData.sawFlop);
 
   var earlyPos = ['UTG', 'UTG+1', 'MP'];
-  var sEpVpip = calcPositionGroupVpip(sessionData.posMap, earlyPos).vpip;
+  var sEpGroup = calcPositionGroupVpip(sessionData.posMap, earlyPos);
+  var sEpVpip = sEpGroup.vpip;
+  var sEarlyHands = sEpGroup.hands;
   var oEpVpip = calcPositionGroupVpip(overallData.posMap, earlyPos).vpip;
 
   var THRESH = 10;

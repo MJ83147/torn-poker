@@ -99,6 +99,9 @@ function render(d, hands, meta) {
   }
   pfEl.style.display = sizeKeys.length > 1 ? '' : 'none';
 
+  // Run insight engine
+  InsightEngine.run(d, hands);
+
   // Render all panels
   renderWelcome(document.getElementById('p-welcome'), d, hands, meta);
   renderCards(document.getElementById('p-cards'), d, hands);

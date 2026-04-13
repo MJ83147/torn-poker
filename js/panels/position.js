@@ -103,6 +103,16 @@ function renderPosition(container, d, hands) {
       ]));
     }
   }
+  // Append engine insights (patterns + multi-factor) to legacy insights
+  var enginePosIns = InsightEngine.forPanel('position', 4);
+  for (var epi = 0; epi < enginePosIns.length; epi++) {
+    // Avoid duplicates: skip if engine label matches an existing legacy insight label
+    var dupFound = false;
+    for (var pi2 = 0; pi2 < pIns.length; pi2++) {
+      if (pIns[pi2].indexOf(enginePosIns[epi].label) !== -1) { dupFound = true; break; }
+    }
+    if (!dupFound) pIns.push(renderRuleInsight(enginePosIns[epi]));
+  }
   posHtml += '<div class="p-row">' + renderInsights(pIns, 'Position', 'More hands needed for positional patterns.') + '</div>';
   container.innerHTML = posHtml;
 
