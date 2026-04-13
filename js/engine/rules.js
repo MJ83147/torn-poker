@@ -78,7 +78,7 @@ function getInsightsForPanel(results, panelName, maxCount) {
 // Render a rule result into ins() HTML
 function renderRuleInsight(result) {
   var rule = result._rule;
-  if (rule.examples && result._hands) {
+  if (rule && rule.examples && result._hands) {
     var exHands;
     try { exHands = rule.examples(result.ctx, result._hands); } catch (_) { exHands = []; }
     if (exHands && exHands.length) {
