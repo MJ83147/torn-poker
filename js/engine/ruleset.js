@@ -981,3 +981,256 @@ defineRule({
   tags: ['river', 'value', 'showdown', 'leak'],
   costBB: function(ctx) { return Math.round(ctx.count * 2); }
 });
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ── PLAYERS / OPPONENT POOL RULES ──
+// ═══════════════════════════════════════════════════════════════════════════════
+
+defineRule({
+  id: 'opponent-pool-composition',
+  panels: ['players'],
+  minSample: { n: 20 },
+  test: function(d, hands) {
+    var types = { LAG: 0, LAP: 0, TAG: 0, TAP: 0, AG: 0, PA: 0, Unknown: 0 };
+    var totalProf = 0;
+    for (var name in _opponentCache) {
+      var prof = _opponentCache[name];
+      types[prof.type] = (types[prof.type] || 0) + 1;
+      totalProf++;
+    }
+    if (totalProf < 3) return null;
+    var dominant = null, maxCount = 0;
+    for (var t in types) {
+      if (types[t] > maxCount) { maxCount = types[t]; dominant = t; }
+    }
+    var dominantPct = Math.round(maxCount / totalProf * 100);
+    if (dominantPct < 35) return null;
+    var typeNames = { LAG: 'Loose-Aggressive', LAP: 'Loose-Passive', TAG: 'Tight-Aggressive', TAP: 'Tight-Passive', AG: 'Aggressive', PA: 'Passive' };
+    return { dominant: dominant, dominantLabel: typeNames[dominant] || dominant, pct: dominantPct, count: maxCount, total: totalProf, types: types };
+  },
+  sev: function() { return 'n'; },
+  score: function(ctx) { return 8; },
+  label: function(ctx) { return 'Table profile: ' + ctx.dominantLabel; },
+  text: function(ctx) {
+    return ctx.pct + '% of your opponents (' + ctx.count + '/' + ctx.total + ') play a ' + ctx.dominantLabel + ' style. Adjust your strategy \u2014 ' +
+      (ctx.dominant === 'LAP' || ctx.dominant === 'PA' ? 'value bet relentlessly, skip bluffs.' :
+       ctx.dominant === 'LAG' || ctx.dominant === 'AG' ? 'tighten up, trap with strong hands, let them hang themselves.' :
+       ctx.dominant === 'TAG' ? 'respect their bets but steal their blinds.' :
+       ctx.dominant === 'TAP' ? 'bluff them more \u2014 they fold too easily.' : 'adapt to the mix.');
+  },
+  chips: function(ctx) {
+    var c = [];
+    for (var t in ctx.types) { if (ctx.types[t] > 0) c.push({ v: t + ': ' + ctx.types[t], hi: t === ctx.dominant }); }
+    return c;
+  },
+  tags: ['players', 'pool']
+});
+
+defineRule({
+  id: 'biggest-fish',
+  panels: ['players'],
+  minSample: { n: 20 },
+  test: function(d, hands) {
+    var fish = null, fishVpip = 0;
+    for (var name in _opponentCache) {
+      var prof = _opponentCache[name];
+      if (prof.hands < 10 || prof.vpip === null) continue;
+      if (prof.vpip > fishVpip) { fishVpip = prof.vpip; fish = prof; }
+    }
+    if (!fish || fishVpip < 50) return null;
+    return { name: fish.name, vpip: fish.vpip, agg: fish.agg, hands: fish.hands, type: fish.type, ftr: fish.foldToRaise };
+  },
+  sev: function() { return 'g'; },
+  score: function(ctx) { return ctx.vpip - 50 + 5; },
+  label: function(ctx) { return 'Fish spotted: ' + ctx.name; },
+  text: function(ctx) {
+    var advice = ctx.ftr !== null && ctx.ftr >= 50
+      ? 'They fold to raises ' + ctx.ftr + '% \u2014 raise their limps and steal pots.'
+      : ctx.ftr !== null && ctx.ftr < 30
+      ? 'They rarely fold to raises \u2014 value bet wide, never bluff.'
+      : 'Value bet them relentlessly with strong hands.';
+    return ctx.name + ' plays ' + ctx.vpip + '% of hands (' + ctx.type + ', ' + ctx.hands + ' shared hands). ' + advice;
+  },
+  chips: function(ctx) {
+    return [{ v: 'VPIP: ' + ctx.vpip + '%', hi: true }, { v: ctx.type }, { v: ctx.hands + ' hands' }];
+  },
+  tags: ['players', 'exploit'],
+  examples: function(ctx, hands) {
+    return findExampleHand(function(h) {
+      var acts = parseActions(h.actions);
+      return acts.some(function(a) { return a.author === ctx.name; }) && h.outcome && h.outcome.result === 'won';
+    });
+  },
+  coaching: function() { return 'You won this hand with the fish at the table. Keep value betting them.'; }
+});
+
+defineRule({
+  id: 'most-dangerous-opponent',
+  panels: ['players'],
+  minSample: { n: 20 },
+  test: function(d, hands) {
+    var shark = null, sharkScore = 0;
+    for (var name in _opponentCache) {
+      var prof = _opponentCache[name];
+      if (prof.hands < 10 || prof.vpip === null || prof.agg === null) continue;
+      // TAG profile with decent showdown strength = dangerous
+      var score = 0;
+      if (prof.vpip >= 18 && prof.vpip <= 35) score += 10; // tight range
+      if (prof.agg >= 25 && prof.agg <= 50) score += 10; // aggressive but controlled
+      if (prof.cbet !== null && prof.cbet >= 50 && prof.cbet <= 80) score += 5; // selective c-bets
+      if (prof.raw && prof.raw.showdownStrong > prof.raw.showdownWeak) score += 5; // shows strong hands
+      if (score > sharkScore) { sharkScore = score; shark = prof; }
+    }
+    if (!shark || sharkScore < 15) return null;
+    return { name: shark.name, vpip: shark.vpip, agg: shark.agg, type: shark.type, hands: shark.hands, score: sharkScore };
+  },
+  sev: function() { return 'a'; },
+  score: function(ctx) { return ctx.score * 0.5; },
+  label: function(ctx) { return 'Tough opponent: ' + ctx.name; },
+  text: function(ctx) {
+    return ctx.name + ' plays a solid ' + ctx.type + ' style: ' + ctx.vpip + '% VPIP, ' + ctx.agg + '% aggression (' + ctx.hands + ' hands). Avoid big pots without premium hands. Don\'t try to bluff them.';
+  },
+  chips: function(ctx) {
+    return [{ v: ctx.type, hi: true }, { v: 'VPIP: ' + ctx.vpip + '%' }, { v: 'Agg: ' + ctx.agg + '%' }];
+  },
+  tags: ['players', 'danger']
+});
+
+defineRule({
+  id: 'unexploited-opponent',
+  panels: ['players', 'leaks'],
+  minSample: { n: 30 },
+  test: function(d, hands) {
+    var targets = [];
+    for (var name in _opponentCache) {
+      var prof = _opponentCache[name];
+      if (prof.hands < 15) continue;
+      // Look for exploitable opponents you're not beating
+      var heroWins = 0, heroLosses = 0;
+      for (var i = 0; i < hands.length; i++) {
+        var h = hands[i];
+        if (!h.outcome) continue;
+        var acts = parseActions(h.actions);
+        var inHand = acts.some(function(a) { return a.author === name; });
+        if (!inHand) continue;
+        if (h.outcome.result === 'won') heroWins++;
+        else if (h.outcome.result !== 'folded') heroLosses++;
+      }
+      if (heroWins + heroLosses < 5) continue;
+      var heroWr = pct(heroWins, heroWins + heroLosses);
+      if (heroWr === null || heroWr >= 45) continue;
+      // Opponent has exploitable tendencies but hero is losing
+      if (prof.adjustments.length >= 2) {
+        targets.push({ name: name, vpip: prof.vpip, agg: prof.agg, type: prof.type, heroWr: heroWr, adjustments: prof.adjustments, hands: prof.hands });
+      }
+    }
+    if (!targets.length) return null;
+    targets.sort(function(a, b) { return a.heroWr - b.heroWr; });
+    var t = targets[0];
+    return t;
+  },
+  sev: function() { return 'r'; },
+  score: function(ctx) { return 45 - ctx.heroWr + 10; },
+  label: function(ctx) { return 'Not exploiting ' + ctx.name; },
+  text: function(ctx) {
+    return 'You only win ' + ctx.heroWr + '% against ' + ctx.name + ' (' + ctx.type + ', ' + ctx.hands + ' hands) despite clear leaks: ' + ctx.adjustments.slice(0, 2).join('. ') + '.';
+  },
+  chips: function(ctx) {
+    return [{ v: 'Hero WR: ' + ctx.heroWr + '%', hi: true }, { v: ctx.type }, { v: ctx.adjustments.length + ' exploits' }];
+  },
+  tags: ['players', 'exploit', 'leak'],
+  costBB: function(ctx) { return Math.round((45 - ctx.heroWr) * 2); }
+});
+
+defineRule({
+  id: 'hero-vs-loose-tight',
+  panels: ['players'],
+  minSample: { n: 30 },
+  test: function(d, hands) {
+    var vsLoose = { w: 0, t: 0 }, vsTight = { w: 0, t: 0 };
+    for (var i = 0; i < hands.length; i++) {
+      var h = hands[i];
+      if (!h.outcome || h.outcome.result === 'folded') continue;
+      var acts = parseActions(h.actions);
+      var opponents = {};
+      for (var j = 0; j < acts.length; j++) {
+        if (!acts[j].isMe && acts[j].author) opponents[acts[j].author] = true;
+      }
+      var hasLoose = false, hasTight = false;
+      for (var opp in opponents) {
+        var prof = _opponentCache[opp];
+        if (!prof) continue;
+        if (prof.vpip !== null && prof.vpip >= 40) hasLoose = true;
+        if (prof.vpip !== null && prof.vpip < 25) hasTight = true;
+      }
+      var won = h.outcome.result === 'won';
+      if (hasLoose) { vsLoose.t++; if (won) vsLoose.w++; }
+      if (hasTight) { vsTight.t++; if (won) vsTight.w++; }
+    }
+    if (vsLoose.t < 8 || vsTight.t < 8) return null;
+    var looseWr = pct(vsLoose.w, vsLoose.t);
+    var tightWr = pct(vsTight.w, vsTight.t);
+    if (looseWr === null || tightWr === null) return null;
+    var diff = Math.abs(looseWr - tightWr);
+    if (diff < 10) return null;
+    return { looseWr: looseWr, tightWr: tightWr, looseN: vsLoose.t, tightN: vsTight.t, diff: diff, betterVs: looseWr > tightWr ? 'loose' : 'tight' };
+  },
+  sev: function(ctx) { return ctx.diff > 20 ? 'a' : 'n'; },
+  score: function(ctx) { return ctx.diff * 0.3 + 5; },
+  label: function(ctx) { return ctx.betterVs === 'loose' ? 'Better vs loose players' : 'Better vs tight players'; },
+  text: function(ctx) {
+    if (ctx.betterVs === 'loose') {
+      return 'You win ' + ctx.looseWr + '% against loose opponents (' + ctx.looseN + ' hands) but only ' + ctx.tightWr + '% against tight ones (' + ctx.tightN + ' hands). Your value-betting style works vs calling stations. Against tight opponents, try more steals and bluffs.';
+    }
+    return 'You win ' + ctx.tightWr + '% against tight opponents (' + ctx.tightN + ' hands) but only ' + ctx.looseWr + '% against loose ones (' + ctx.looseN + ' hands). Tighten your range vs loose players and value bet more.';
+  },
+  chips: function(ctx) {
+    return [{ v: 'vs Loose: ' + ctx.looseWr + '%', hi: ctx.betterVs === 'loose' }, { v: 'vs Tight: ' + ctx.tightWr + '%', hi: ctx.betterVs === 'tight' }];
+  },
+  tags: ['players', 'adjustment']
+});
+
+defineRule({
+  id: 'opponent-aggression-mismatch',
+  panels: ['players'],
+  minSample: { n: 30 },
+  test: function(d, hands) {
+    var vsPassive = { w: 0, t: 0 }, vsAggressive = { w: 0, t: 0 };
+    for (var i = 0; i < hands.length; i++) {
+      var h = hands[i];
+      if (!h.outcome || h.outcome.result === 'folded') continue;
+      var acts = parseActions(h.actions);
+      var opponents = {};
+      for (var j = 0; j < acts.length; j++) {
+        if (!acts[j].isMe && acts[j].author) opponents[acts[j].author] = true;
+      }
+      var hasPassive = false, hasAggressive = false;
+      for (var opp in opponents) {
+        var prof = _opponentCache[opp];
+        if (!prof || prof.agg === null) continue;
+        if (prof.agg < 15) hasPassive = true;
+        if (prof.agg >= 35) hasAggressive = true;
+      }
+      var won = h.outcome.result === 'won';
+      if (hasPassive) { vsPassive.t++; if (won) vsPassive.w++; }
+      if (hasAggressive) { vsAggressive.t++; if (won) vsAggressive.w++; }
+    }
+    if (vsPassive.t < 8 || vsAggressive.t < 8) return null;
+    var passWr = pct(vsPassive.w, vsPassive.t);
+    var aggWr = pct(vsAggressive.w, vsAggressive.t);
+    if (passWr === null || aggWr === null) return null;
+    var diff = passWr - aggWr;
+    if (diff < 10) return null;
+    return { passWr: passWr, aggWr: aggWr, passN: vsPassive.t, aggN: vsAggressive.t, diff: diff };
+  },
+  sev: function(ctx) { return ctx.diff > 20 ? 'a' : 'n'; },
+  score: function(ctx) { return ctx.diff * 0.3 + 3; },
+  label: 'Struggling vs aggressive players',
+  text: function(ctx) {
+    return 'You win ' + ctx.passWr + '% vs passive opponents (' + ctx.passN + ' hands) but only ' + ctx.aggWr + '% vs aggressive ones (' + ctx.aggN + ' hands). Against aggression, tighten your calling range and trap with strong hands instead of folding.';
+  },
+  chips: function(ctx) {
+    return [{ v: 'vs Passive: ' + ctx.passWr + '%' }, { v: 'vs Aggressive: ' + ctx.aggWr + '%', hi: true }];
+  },
+  tags: ['players', 'adjustment', 'leak']
+});

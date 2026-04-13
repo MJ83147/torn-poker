@@ -568,24 +568,71 @@ function renderPlayers(container, d, hands) {
     }
 
     var pIns = [];
-    if (filtered.length >= 1) {
-      pIns.push(ins('n', 'Most Seen', 'You have played ' + filtered[0].hands + ' hands with ' + filtered[0].name + '.', [{ v: filtered[0].name, hi: true }, { v: filtered[0].hands + ' hands' }]));
-    }
-    var best = null, worst = null;
+
+    // ── Head-to-head records ──
+    var best = null, worst = null, mostProfitable = null, biggestLoser = null;
     for (var m = 0; m < filtered.length; m++) {
       var ow = filtered[m];
       var owr = pct(ow.won, ow.won + ow.lost);
-      if (owr === null || (ow.won + ow.lost) < 5) continue;
-      if (!best || owr > pct(best.won, best.won + best.lost)) best = ow;
-      if (!worst || owr < pct(worst.won, worst.won + worst.lost)) worst = ow;
+      if (owr !== null && (ow.won + ow.lost) >= 5) {
+        if (!best || owr > pct(best.won, best.won + best.lost)) best = ow;
+        if (!worst || owr < pct(worst.won, worst.won + worst.lost)) worst = ow;
+      }
+      if (ow.profit > 0 && (!mostProfitable || ow.profit > mostProfitable.profit)) mostProfitable = ow;
+      if (ow.profit < 0 && (!biggestLoser || ow.profit < biggestLoser.profit)) biggestLoser = ow;
     }
-    if (best) pIns.push(ins('g', 'Best Record', 'You win ' + pct(best.won, best.won + best.lost) + '% against ' + best.name + ' (' + (best.won + best.lost) + ' contested hands).', [{ v: best.name, hi: true }, { v: pct(best.won, best.won + best.lost) + '% win' }]));
-    if (worst && worst !== best) pIns.push(ins('r', 'Toughest Opponent', 'Only ' + pct(worst.won, worst.won + worst.lost) + '% win rate against ' + worst.name + ' (' + (worst.won + worst.lost) + ' contested hands).', [{ v: worst.name, hi: true }, { v: pct(worst.won, worst.won + worst.lost) + '% win' }]));
-    // Append engine insights for players panel
-    var enginePlrIns = InsightEngine.forPanel('players', 3);
+
+    if (best) {
+      var bestWr = pct(best.won, best.won + best.lost);
+      var bestProf = _opponentCache[best.name];
+      var bestExtra = bestProf ? ' They play a ' + bestProf.type + ' style' + (bestProf.vpip !== null ? ' (' + bestProf.vpip + '% VPIP)' : '') + '.' : '';
+      pIns.push(ins('g', 'Best Record: ' + best.name, 'You win ' + bestWr + '% across ' + (best.won + best.lost) + ' contested hands.' + bestExtra, [{ v: best.name, hi: true }, { v: bestWr + '% win' }, { v: fmtPnl(best.profit) }]));
+    }
+    if (worst && worst !== best) {
+      var worstWr = pct(worst.won, worst.won + worst.lost);
+      var worstProf = _opponentCache[worst.name];
+      var worstExtra = worstProf ? ' They\'re a ' + worstProf.type + (worstProf.agg !== null && worstProf.agg >= 30 ? ' \u2014 consider tightening up and trapping.' : worstProf.vpip !== null && worstProf.vpip >= 50 ? ' \u2014 value bet them harder, cut the bluffs.' : '.') : '.';
+      pIns.push(ins('r', 'Toughest: ' + worst.name, 'Only ' + worstWr + '% win rate across ' + (worst.won + worst.lost) + ' contested hands.' + worstExtra, [{ v: worst.name, hi: true }, { v: worstWr + '% win' }, { v: fmtPnl(worst.profit) }]));
+    }
+    if (mostProfitable && mostProfitable !== best) {
+      pIns.push(ins('g', 'Cash Cow: ' + mostProfitable.name, 'You\'ve profited ' + fmtPnl(mostProfitable.profit) + ' in hands with ' + mostProfitable.name + '. Keep doing whatever works.', [{ v: fmtPnl(mostProfitable.profit), hi: true }, { v: mostProfitable.hands + ' hands' }]));
+    }
+    if (biggestLoser && biggestLoser !== worst) {
+      pIns.push(ins('r', 'Biggest Loss: ' + biggestLoser.name, 'You\'ve lost ' + fmtPnl(biggestLoser.profit) + ' in hands with ' + biggestLoser.name + '. Review these hands for pattern leaks.', [{ v: fmtPnl(biggestLoser.profit), hi: true }, { v: biggestLoser.hands + ' hands' }]));
+    }
+
+    // ── Opponent-specific adjustment alerts ──
+    for (var oppName in _opponentCache) {
+      var oppProf = _opponentCache[oppName];
+      if (oppProf.hands < 15 || oppProf.adjustments.length < 2) continue;
+      // Check if hero is losing to this exploitable opponent
+      var oppData = oppMap[oppName];
+      if (!oppData) continue;
+      var heroVsWr = pct(oppData.won, oppData.won + oppData.lost);
+      if (heroVsWr !== null && heroVsWr < 40 && (oppData.won + oppData.lost) >= 5) {
+        pIns.push(ins('a', 'Adjust vs ' + oppName,
+          'You\'re losing (' + heroVsWr + '% WR) against ' + oppName + ' despite their leaks: ' + oppProf.adjustments.slice(0, 2).join('. ') + '.',
+          [{ v: heroVsWr + '% WR', hi: true }, { v: oppProf.type }, { v: oppProf.adjustments.length + ' exploits' }]));
+        break; // Only show the most important one
+      }
+    }
+
+    // ── Engine insights (pool composition, fish, shark, etc.) ──
+    var enginePlrIns = InsightEngine.forPanel('players', 6);
     for (var epi = 0; epi < enginePlrIns.length; epi++) {
-      pIns.push(renderRuleInsight(enginePlrIns[epi]));
+      var dupPlr = false;
+      for (var pi2 = 0; pi2 < pIns.length; pi2++) {
+        if (pIns[pi2].indexOf(enginePlrIns[epi].label) !== -1) { dupPlr = true; break; }
+      }
+      if (!dupPlr) pIns.push(renderRuleInsight(enginePlrIns[epi]));
     }
+
+    // ── Engine narrative for players ──
+    var plrNarrative = InsightEngine.narrativeFor('players', 6);
+    if (plrNarrative) {
+      html += '<div class="p-row"><div class="engine-narrative">' + plrNarrative + '</div></div>';
+    }
+
     if (pIns.length) html += '<div class="p-row" style="margin-top:8px;"><div class="ins-grid">' + pIns.join('') + '</div></div>';
 
     html += '<div class="p-row"><div class="flex-between"><div class="sec-subtitle mt-0">All Opponents</div>';
