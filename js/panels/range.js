@@ -211,11 +211,8 @@ function renderRange(container, d, hands) {
 
   function renderVpipChart(posLabel) {
     if (_rangeVpipChart) { _rangeVpipChart.destroy(); _rangeVpipChart = null; }
-    var wrap = document.getElementById('range-vpip-chart-wrap');
     var canvas = document.getElementById('range-vpip-canvas');
-    if (!wrap || !canvas) return;
-    if (posLabel === 'all') { wrap.style.display = 'none'; return; }
-    wrap.style.display = '';
+    if (!canvas) return;
 
     var posOrder = ['UTG', 'UTG+1', 'MP', 'LJ', 'HJ', 'CO', 'BTN', 'SB', 'BB'];
     var colors = getChartColors();
@@ -223,6 +220,7 @@ function renderRange(container, d, hands) {
     var actualData = [];
     var actualColors = [];
     var actualBorders = [];
+    var hasSelection = posLabel && posLabel !== 'all';
 
     for (var pi = 0; pi < posOrder.length; pi++) {
       var p = posOrder[pi];
@@ -234,13 +232,14 @@ function renderRange(container, d, hands) {
       actualData.push(vpip);
 
       var inRange = vpip !== null && vpip >= guide.tight && vpip <= guide.loose;
-      var isSelected = (p === posLabel);
-      if (isSelected) {
+      var isSelected = hasSelection && p === posLabel;
+      var isDimmed = hasSelection && !isSelected;
+      if (isDimmed) {
+        actualColors.push(inRange ? colors.green + '33' : colors.red + '33');
+        actualBorders.push(inRange ? colors.green + '44' : colors.red + '44');
+      } else {
         actualColors.push(inRange ? colors.green + 'cc' : colors.red + 'cc');
         actualBorders.push(inRange ? colors.green : colors.red);
-      } else {
-        actualColors.push(inRange ? colors.green + '44' : colors.red + '44');
-        actualBorders.push(inRange ? colors.green + '66' : colors.red + '66');
       }
     }
 
@@ -318,10 +317,11 @@ function renderRange(container, d, hands) {
     '<div class="p-row"><div class="flex-gap-6 mb-16">' +
     '<select id="range-pos-filter" class="table-filter">' + posOpts + '</select>' +
     '<button id="range-advisor-btn" class="advisor-btn" disabled>Advisor Off</button>' +
-    '</div><div id="range-grids"></div>' +
-    '<div id="range-vpip-chart-wrap" style="display:none">' +
-    '<div class="sec-subtitle mt-16">VPIP by Position vs Ideal</div>' +
-    '<canvas id="range-vpip-canvas" height="160"></canvas></div></div>';
+    '</div>' +
+    '<div id="range-vpip-chart-wrap">' +
+    '<div class="sec-subtitle mt-0">VPIP by Position vs Ideal</div>' +
+    '<canvas id="range-vpip-canvas" height="160"></canvas></div>' +
+    '<div id="range-grids"></div></div>';
   renderRangeGrids(rc);
   renderVpipChart('all');
 
