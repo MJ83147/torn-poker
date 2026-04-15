@@ -26,10 +26,13 @@ var PATTERN_DIMENSIONS = [
   {
     id: 'session-half',
     label: 'Session Progress',
-    split: function(h, idx, total) {
-      return idx < total / 2 ? 'first' : 'second';
+    preSegment: function(hands) {
+      return splitSessionHalves(hands, 20).handToHalf;
     },
-    labels: { first: 'First Half', second: 'Second Half' },
+    split: function(h, idx, total, hands, preComputed) {
+      return preComputed ? (preComputed.get(h) || null) : null;
+    },
+    labels: { first: 'First Half of Session', second: 'Second Half of Session' },
     panels: ['trends', 'mygame']
   },
   {
@@ -114,9 +117,10 @@ function detectPatterns(d, hands) {
     var dim = PATTERN_DIMENSIONS[di];
 
     // Segment hands
+    var preComputed = typeof dim.preSegment === 'function' ? dim.preSegment(sorted) : null;
     var buckets = {};
     for (var hi = 0; hi < sorted.length; hi++) {
-      var seg = dim.split(sorted[hi], hi, sorted.length, sorted);
+      var seg = dim.split(sorted[hi], hi, sorted.length, sorted, preComputed);
       if (seg === null) continue;
       if (!buckets[seg]) buckets[seg] = [];
       buckets[seg].push(sorted[hi]);

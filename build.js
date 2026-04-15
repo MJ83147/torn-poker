@@ -9,6 +9,7 @@ var files = [
   'js/helpers/format.js',
   'js/helpers/hand-parsing.js',
   'js/helpers/analysis.js',
+  'js/helpers/sessions.js',
   'js/helpers/storage.js',
   'js/helpers/ui.js',
   'js/helpers/migration.js',

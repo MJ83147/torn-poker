@@ -893,12 +893,10 @@ defineRule({
   minSample: { n: 40 },
   test: function(d, hands) {
     if (hands.length < 20) return null;
-    var sorted = hands.slice().sort(function(a, b) { return (a.timestamp || 0) - (b.timestamp || 0); });
-    var mid = Math.floor(sorted.length / 2);
-    var firstHalf = sorted.slice(0, mid);
-    var secondHalf = sorted.slice(mid);
-    var d1 = analyse(firstHalf);
-    var d2 = analyse(secondHalf);
+    var halves = splitSessionHalves(hands, 20);
+    if (halves.firstHalf.length < 15 || halves.secondHalf.length < 15) return null;
+    var d1 = analyse(halves.firstHalf);
+    var d2 = analyse(halves.secondHalf);
     var wr1 = pct(d1.handsWon, d1.handsWithOutcome);
     var wr2 = pct(d2.handsWon, d2.handsWithOutcome);
     if (wr1 === null || wr2 === null) return null;
@@ -910,10 +908,10 @@ defineRule({
   score: function(ctx) { return ctx.diff * 0.5 + 3; },
   label: 'Late-session decline',
   text: function(ctx) {
-    return 'Win rate drops from ' + ctx.wr1 + '% in the first half to ' + ctx.wr2 + '% in the second half. Fatigue or tilt may be affecting your play \u2014 consider shorter sessions.';
+    return 'Win rate drops from ' + ctx.wr1 + '% early in your sessions to ' + ctx.wr2 + '% later in the same sessions. Fatigue or tilt may be affecting your play \u2014 consider shorter sessions.';
   },
   chips: function(ctx) {
-    return [{ v: 'First half: ' + ctx.wr1 + '%' }, { v: 'Second half: ' + ctx.wr2 + '%', hi: true }];
+    return [{ v: 'Early session: ' + ctx.wr1 + '%' }, { v: 'Late session: ' + ctx.wr2 + '%', hi: true }];
   },
   tags: ['trends', 'fatigue', 'leak']
 });
