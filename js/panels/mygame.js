@@ -244,98 +244,128 @@ function renderMyGame(container, d, hands) {
   } // end !smallSample
 
   // ── Table Dynamics reference ──
-  html += renderTableDynamicsReference(hands);
+  html += renderTableDynamicsReference(hands, d);
 
   html += '</div>';
   container.innerHTML = html;
 }
 
-// Collapsible reference block: the full seat × stack × flop matrix with
-// a lightweight "hands in this bucket" cross-tab so users can see where their
-// play concentrates.
-function renderTableDynamicsReference(hands) {
-  var h = '<div class="sec-subtitle mt-20">Table Dynamics Reference</div>';
-  h += '<div class="desc-text mb-16">Recommended play by table size, stack depth, and flop multiplicity. Numbers in parentheses are your hand counts in that bucket.</div>';
+// Parse a target range like "65-75%" or "40-50%" into [lo, hi] numbers.
+function _parsePctRange(s) {
+  if (!s) return null;
+  var m = s.match(/(\d+)\s*-\s*(\d+)/);
+  if (!m) return null;
+  return [parseInt(m[1], 10), parseInt(m[2], 10)];
+}
 
-  // Cross-tab: seats × stack → hand count
+// Return { cls, label } verdict for an actual pct against a target range.
+function _verdict(actual, lo, hi) {
+  if (actual == null) return { cls: 'v-na', label: 'no data' };
+  if (actual < lo) return { cls: 'v-low', label: 'too low' };
+  if (actual > hi) return { cls: 'v-high', label: 'too high' };
+  return { cls: 'v-ok', label: 'on target' };
+}
+
+// Render a "your X% vs target Y-Z% → verdict" row.
+function _vsRow(label, actualPct, actualDenom, targetText) {
+  var rng = _parsePctRange(targetText);
+  var actualStr = (actualPct == null) ? '—' : actualPct + '%';
+  var sampleStr = actualDenom != null ? ' <span class="dim-label">(' + actualDenom + ' spots)</span>' : '';
+  var v = rng ? _verdict(actualPct, rng[0], rng[1]) : { cls: 'v-na', label: '' };
+  return '<div class="dynamics-vs ' + v.cls + '">' +
+    '<div class="dynamics-vs-top"><span>You: <strong>' + actualStr + '</strong>' + sampleStr + '</span>' +
+    '<span class="dim-label">Target: ' + targetText + '</span></div>' +
+    (v.label ? '<div class="dynamics-vs-verdict">' + v.label + '</div>' : '') +
+    '</div>';
+}
+
+// Table Dynamics: compares YOUR actual play (c-bet %, VPIP per position) against
+// the recommended targets for each bucket. Each card carries a clear verdict.
+function renderTableDynamicsReference(hands, d) {
+  var h = '<div class="sec-subtitle mt-20">Table Dynamics — You vs Target</div>';
+  h += '<div class="desc-text mb-16">Your actual play at each table size, stack depth, and flop multiplicity, compared to the recommended benchmarks. <span class="v-ok">Green = on target</span>, <span class="v-low">amber = too low / too tight</span>, <span class="v-high">red = too high / too loose</span>.</div>';
+
   var seatKeys = Object.keys(SEAT_MATRIX).map(Number).sort(function(a, b) { return a - b; });
   var stackKeys = ['short', 'medium', 'standard', 'deep'];
-  var bucketCounts = {};
-  for (var i = 0; i < hands.length; i++) {
-    var hh = hands[i];
-    if (!hh.seatBucket || !hh.stackBucket) continue;
-    var k = hh.seats + '|' + hh.stackBucket;
-    bucketCounts[k] = (bucketCounts[k] || 0) + 1;
-  }
 
-  // Seat-size cards
+  // ── Seat-size cards: per-position VPIP vs target ──
+  h += '<div class="sec-subtitle mt-12">By Table Size</div>';
   h += '<div class="dynamics-cards">';
   for (var si = 0; si < seatKeys.length; si++) {
     var seats = seatKeys[si];
     var entry = SEAT_MATRIX[seats];
     if (!entry) continue;
-    var totalForSize = 0;
-    for (var sj = 0; sj < stackKeys.length; sj++) {
-      totalForSize += bucketCounts[seats + '|' + stackKeys[sj]] || 0;
-    }
+    var seatBucket = seats + 'p';
+    var subD = d && d.bySeatBucket ? d.bySeatBucket[seatBucket] : null;
+    var nHands = subD ? subD.n : 0;
+
     h += '<div class="dynamics-card">';
-    h += '<div class="dynamics-card-head">' + seats + '-handed <span class="dim-label">(' + totalForSize + ' hands)</span></div>';
+    h += '<div class="dynamics-card-head">' + seats + '-handed <span class="dim-label">(' + nHands + ' hands)</span></div>';
+    if (!nHands) {
+      h += '<div class="dynamics-card-note dim-label">No hands at this table size yet.</div>';
+      h += '</div>';
+      continue;
+    }
     h += '<div class="dynamics-card-note">' + entry.notes + '</div>';
-    h += '<div class="dynamics-card-sub">' + entry.aggression + '</div>';
-    h += '<div class="dynamics-card-kv"><span>Open raise</span><span>' + entry.openRaise + '</span></div>';
-    h += '<div class="dynamics-card-kv"><span>3-bet</span><span>' + entry.threeBet + '</span></div>';
-    h += '<div class="dynamics-card-kv"><span>C-bet</span><span>' + entry.cbetFreq + '</span></div>';
-    // Position VPIP targets
-    h += '<table class="tbl mt-12" style="font-size:12px;"><thead><tr><th>Pos</th><th>Ideal VPIP</th><th>Summary</th></tr></thead><tbody>';
+
+    // Per-position VPIP comparison
+    h += '<table class="tbl mt-8 dynamics-pos-tbl"><thead><tr><th>Pos</th><th>You</th><th>Target</th><th>Hands</th></tr></thead><tbody>';
     for (var pi = 0; pi < entry.positions.length; pi++) {
       var p = entry.positions[pi];
       var g = entry.guideByPos[p];
       if (!g) continue;
-      h += '<tr><td>' + p + '</td><td>' + g.ideal + '</td><td class="dim-label">' + g.desc + '</td></tr>';
+      var pm = subD.posMap[p];
+      var actPct = (pm && pm.hands > 0) ? pct(pm.vpip, pm.hands) : null;
+      var rng = _parsePctRange(g.ideal);
+      var cls = rng ? _verdict(actPct, rng[0], rng[1]).cls : 'v-na';
+      h += '<tr class="' + cls + '"><td>' + p + '</td><td>' + (actPct != null ? actPct + '%' : '—') + '</td><td class="dim-label">' + g.ideal + '</td><td class="dim-label">' + (pm ? pm.hands : 0) + '</td></tr>';
     }
     h += '</tbody></table>';
     h += '</div>';
   }
   h += '</div>';
 
-  // Stack regime cards
-  h += '<div class="sec-subtitle mt-20">Stack Depth Regimes</div>';
+  // ── Flop multiplicity cards: c-bet % vs target ──
+  h += '<div class="sec-subtitle mt-20">By Flop Players</div>';
   h += '<div class="dynamics-cards">';
-  for (var k = 0; k < stackKeys.length; k++) {
-    var sk = stackKeys[k];
-    var se = STACK_MATRIX[sk];
-    var total = 0;
-    for (var sn = 0; sn < seatKeys.length; sn++) total += bucketCounts[seatKeys[sn] + '|' + sk] || 0;
+  var flopKeys = ['HU', '3-way', 'multiway'];
+  var flopLabels = { HU: 'Heads-up flop', '3-way': '3-way flop', multiway: 'Multiway flop (4+)' };
+  for (var fk = 0; fk < flopKeys.length; fk++) {
+    var bk = flopKeys[fk];
+    var fe = FLOP_MATRIX[bk];
+    var subF = d && d.byFlopBucket ? d.byFlopBucket[bk] : null;
+    var nF = subF ? subF.n : 0;
+
     h += '<div class="dynamics-card">';
-    h += '<div class="dynamics-card-head">' + sk + ' <span class="dim-label">(' + se.label + ' · ' + total + ' hands)</span></div>';
-    h += '<div class="dynamics-card-note">' + se.notes + '</div>';
-    h += '<div class="dynamics-card-kv"><span>Sizing</span><span>' + se.sizingAdjustment + '</span></div>';
-    h += '<div class="dynamics-card-kv"><span>3-bet</span><span>' + se.threeBetAdjustment + '</span></div>';
+    h += '<div class="dynamics-card-head">' + flopLabels[bk] + ' <span class="dim-label">(' + nF + ' hands)</span></div>';
+    if (!nF) {
+      h += '<div class="dynamics-card-note dim-label">No flops with this many players yet.</div>';
+      h += '</div>';
+      continue;
+    }
+    h += '<div class="dynamics-card-note">' + fe.notes + '</div>';
+
+    var cbetActual = subF.cbetOpps > 0 ? pct(subF.cbetDone, subF.cbetOpps) : null;
+    h += _vsRow('C-bet', cbetActual, subF.cbetOpps, fe.cbetFreq);
+
+    h += '<div class="dynamics-card-kv"><span>Target sizing</span><span>' + fe.cbetSizing + '</span></div>';
+    h += '<div class="dynamics-card-kv"><span>Continue</span><span>' + fe.continueRange + '</span></div>';
     h += '</div>';
   }
   h += '</div>';
 
-  // Flop multiplicity cards
-  h += '<div class="sec-subtitle mt-20">Flop Multiplicity</div>';
+  // ── Stack regime cards (context only — no per-bucket hero stat to compare) ──
+  h += '<div class="sec-subtitle mt-20">By Stack Depth</div>';
+  h += '<div class="desc-text mb-16">Regime notes — these describe what your play should look like at each depth. Stack depth is only inferred when an all-in occurs or commitments exceed 20 BB; otherwise hands are left as "unknown".</div>';
   h += '<div class="dynamics-cards">';
-  var flopKeys = ['HU', '3-way', 'multiway'];
-  var flopLabels = { HU: 'Heads-up flop', '3-way': '3-way flop', multiway: 'Multiway flop (4+)' };
-  var flopCounts = {};
-  for (var fi = 0; fi < hands.length; fi++) {
-    var fh = hands[fi];
-    if (!fh.flopBucket) continue;
-    flopCounts[fh.flopBucket] = (flopCounts[fh.flopBucket] || 0) + 1;
-  }
-  for (var fk = 0; fk < flopKeys.length; fk++) {
-    var bk = flopKeys[fk];
-    var fe = FLOP_MATRIX[bk];
+  for (var k = 0; k < stackKeys.length; k++) {
+    var sk = stackKeys[k];
+    var se = STACK_MATRIX[sk];
+    var subS = d && d.byStackBucket ? d.byStackBucket[sk] : null;
+    var nS = subS ? subS.n : 0;
     h += '<div class="dynamics-card">';
-    h += '<div class="dynamics-card-head">' + flopLabels[bk] + ' <span class="dim-label">(' + (flopCounts[bk] || 0) + ' hands)</span></div>';
-    h += '<div class="dynamics-card-note">' + fe.notes + '</div>';
-    h += '<div class="dynamics-card-kv"><span>C-bet</span><span>' + fe.cbetFreq + '</span></div>';
-    h += '<div class="dynamics-card-kv"><span>Sizing</span><span>' + fe.cbetSizing + '</span></div>';
-    h += '<div class="dynamics-card-kv"><span>Continue</span><span>' + fe.continueRange + '</span></div>';
-    h += '<div class="dynamics-card-kv"><span>SD bar</span><span>' + fe.showdownBar + '</span></div>';
+    h += '<div class="dynamics-card-head">' + sk + ' <span class="dim-label">(' + se.label + ' · ' + nS + ' hands)</span></div>';
+    h += '<div class="dynamics-card-note">' + se.notes + '</div>';
     h += '</div>';
   }
   h += '</div>';
