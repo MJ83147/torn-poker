@@ -243,8 +243,104 @@ function renderMyGame(container, d, hands) {
 
   } // end !smallSample
 
+  // ── Table Dynamics reference ──
+  html += renderTableDynamicsReference(hands);
+
   html += '</div>';
   container.innerHTML = html;
+}
+
+// Collapsible reference block: the full seat × stack × flop matrix with
+// a lightweight "hands in this bucket" cross-tab so users can see where their
+// play concentrates.
+function renderTableDynamicsReference(hands) {
+  var h = '<div class="sec-subtitle mt-20">Table Dynamics Reference</div>';
+  h += '<div class="desc-text mb-16">Recommended play by table size, stack depth, and flop multiplicity. Numbers in parentheses are your hand counts in that bucket.</div>';
+
+  // Cross-tab: seats × stack → hand count
+  var seatKeys = Object.keys(SEAT_MATRIX).map(Number).sort(function(a, b) { return a - b; });
+  var stackKeys = ['short', 'medium', 'standard', 'deep'];
+  var bucketCounts = {};
+  for (var i = 0; i < hands.length; i++) {
+    var hh = hands[i];
+    if (!hh.seatBucket || !hh.stackBucket) continue;
+    var k = hh.seats + '|' + hh.stackBucket;
+    bucketCounts[k] = (bucketCounts[k] || 0) + 1;
+  }
+
+  // Seat-size cards
+  h += '<div class="dynamics-cards">';
+  for (var si = 0; si < seatKeys.length; si++) {
+    var seats = seatKeys[si];
+    var entry = SEAT_MATRIX[seats];
+    if (!entry) continue;
+    var totalForSize = 0;
+    for (var sj = 0; sj < stackKeys.length; sj++) {
+      totalForSize += bucketCounts[seats + '|' + stackKeys[sj]] || 0;
+    }
+    h += '<div class="dynamics-card">';
+    h += '<div class="dynamics-card-head">' + seats + '-handed <span class="dim-label">(' + totalForSize + ' hands)</span></div>';
+    h += '<div class="dynamics-card-note">' + entry.notes + '</div>';
+    h += '<div class="dynamics-card-sub">' + entry.aggression + '</div>';
+    h += '<div class="dynamics-card-kv"><span>Open raise</span><span>' + entry.openRaise + '</span></div>';
+    h += '<div class="dynamics-card-kv"><span>3-bet</span><span>' + entry.threeBet + '</span></div>';
+    h += '<div class="dynamics-card-kv"><span>C-bet</span><span>' + entry.cbetFreq + '</span></div>';
+    // Position VPIP targets
+    h += '<table class="tbl mt-12" style="font-size:12px;"><thead><tr><th>Pos</th><th>Ideal VPIP</th><th>Summary</th></tr></thead><tbody>';
+    for (var pi = 0; pi < entry.positions.length; pi++) {
+      var p = entry.positions[pi];
+      var g = entry.guideByPos[p];
+      if (!g) continue;
+      h += '<tr><td>' + p + '</td><td>' + g.ideal + '</td><td class="dim-label">' + g.desc + '</td></tr>';
+    }
+    h += '</tbody></table>';
+    h += '</div>';
+  }
+  h += '</div>';
+
+  // Stack regime cards
+  h += '<div class="sec-subtitle mt-20">Stack Depth Regimes</div>';
+  h += '<div class="dynamics-cards">';
+  for (var k = 0; k < stackKeys.length; k++) {
+    var sk = stackKeys[k];
+    var se = STACK_MATRIX[sk];
+    var total = 0;
+    for (var sn = 0; sn < seatKeys.length; sn++) total += bucketCounts[seatKeys[sn] + '|' + sk] || 0;
+    h += '<div class="dynamics-card">';
+    h += '<div class="dynamics-card-head">' + sk + ' <span class="dim-label">(' + se.label + ' · ' + total + ' hands)</span></div>';
+    h += '<div class="dynamics-card-note">' + se.notes + '</div>';
+    h += '<div class="dynamics-card-kv"><span>Sizing</span><span>' + se.sizingAdjustment + '</span></div>';
+    h += '<div class="dynamics-card-kv"><span>3-bet</span><span>' + se.threeBetAdjustment + '</span></div>';
+    h += '</div>';
+  }
+  h += '</div>';
+
+  // Flop multiplicity cards
+  h += '<div class="sec-subtitle mt-20">Flop Multiplicity</div>';
+  h += '<div class="dynamics-cards">';
+  var flopKeys = ['HU', '3-way', 'multiway'];
+  var flopLabels = { HU: 'Heads-up flop', '3-way': '3-way flop', multiway: 'Multiway flop (4+)' };
+  var flopCounts = {};
+  for (var fi = 0; fi < hands.length; fi++) {
+    var fh = hands[fi];
+    if (!fh.flopBucket) continue;
+    flopCounts[fh.flopBucket] = (flopCounts[fh.flopBucket] || 0) + 1;
+  }
+  for (var fk = 0; fk < flopKeys.length; fk++) {
+    var bk = flopKeys[fk];
+    var fe = FLOP_MATRIX[bk];
+    h += '<div class="dynamics-card">';
+    h += '<div class="dynamics-card-head">' + flopLabels[bk] + ' <span class="dim-label">(' + (flopCounts[bk] || 0) + ' hands)</span></div>';
+    h += '<div class="dynamics-card-note">' + fe.notes + '</div>';
+    h += '<div class="dynamics-card-kv"><span>C-bet</span><span>' + fe.cbetFreq + '</span></div>';
+    h += '<div class="dynamics-card-kv"><span>Sizing</span><span>' + fe.cbetSizing + '</span></div>';
+    h += '<div class="dynamics-card-kv"><span>Continue</span><span>' + fe.continueRange + '</span></div>';
+    h += '<div class="dynamics-card-kv"><span>SD bar</span><span>' + fe.showdownBar + '</span></div>';
+    h += '</div>';
+  }
+  h += '</div>';
+
+  return h;
 }
 
 // ── Session helpers ────────────────────────────────────────────────────────

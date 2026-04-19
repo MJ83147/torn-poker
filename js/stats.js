@@ -1,6 +1,11 @@
 // ── ANALYSE (pure data-in/data-out) ───────────────────────────────────────────
 
 function analyse(hands) {
+  // Safety net: ensure every hand has the three-axis dynamics tags. Idempotent.
+  if (typeof annotateHandDynamics === 'function') {
+    for (var _ai = 0; _ai < hands.length; _ai++) annotateHandDynamics(hands[_ai]);
+  }
+
   const n = hands.length;
   const posMap = {};
   const htMap = {};
@@ -371,6 +376,7 @@ function analyse(hands) {
 
   return {
     n,
+    hands,
     posMap,
     htMap,
     rangeMap,
@@ -408,5 +414,46 @@ function analyse(hands) {
     foldedToRaise,
     core,
   };
+}
+
+// Group hands by the three dynamics axes and compute a sub-`d` per bucket.
+// Returns { bySeatBucket, byFlopBucket, byStackBucket, composition } attached
+// to the top-level `d` in render(). Sub-`d`s are regular analyse() results.
+function bucketizeAnalysis(topD, hands) {
+  var seatGroups = {};
+  var flopGroups = {};
+  var stackGroups = {};
+  var composition = {}; // { 'stack|seat': count }
+
+  for (var i = 0; i < hands.length; i++) {
+    var h = hands[i];
+    if (h.seatBucket) {
+      (seatGroups[h.seatBucket] = seatGroups[h.seatBucket] || []).push(h);
+    }
+    if (h.flopBucket) {
+      (flopGroups[h.flopBucket] = flopGroups[h.flopBucket] || []).push(h);
+    }
+    if (h.stackBucket) {
+      (stackGroups[h.stackBucket] = stackGroups[h.stackBucket] || []).push(h);
+    }
+    if (h.stackBucket && h.seatBucket) {
+      var cKey = h.stackBucket + '|' + h.seatBucket;
+      composition[cKey] = (composition[cKey] || 0) + 1;
+    }
+  }
+
+  function mapGroups(groups) {
+    var out = {};
+    for (var k in groups) {
+      if (groups[k].length >= 1) out[k] = analyse(groups[k]);
+    }
+    return out;
+  }
+
+  topD.bySeatBucket = mapGroups(seatGroups);
+  topD.byFlopBucket = mapGroups(flopGroups);
+  topD.byStackBucket = mapGroups(stackGroups);
+  topD.stackSeatComposition = composition;
+  return topD;
 }
 

@@ -18,6 +18,7 @@ function renderAll() {
   var filtered = State.getFilteredHands();
   if (!filtered.length) return false;
   var fd = analyse(filtered);
+  bucketizeAnalysis(fd, filtered);
   cacheOpponentProfiles(filtered);
   render(fd, filtered, State.meta);
   return true;
@@ -45,7 +46,11 @@ function checkSavedSession() {
         };
         State.setSession(hands, meta);
         try { fetch('https://script.google.com/macros/s/AKfycbyTtG1UMCpYXP15dgKQttFyG4Pe-BG8FoAftoW3oYtMBISS37Ws5lYhPPDJ0zl1GYxyQA/exec', { method: 'POST', body: JSON.stringify({ player: playerName, hands: hands.length }), mode: 'no-cors' }); } catch (_) { }
-        showImportLoader(hands.length, function () { render(analyse(hands), hands, meta); });
+        showImportLoader(hands.length, function () {
+          var rd = analyse(hands);
+          bucketizeAnalysis(rd, hands);
+          render(rd, hands, meta);
+        });
       };
     } catch (_) { }
   });
@@ -83,6 +88,43 @@ function render(d, hands, meta) {
   var noteEl = document.getElementById('sample-note');
   if (noteEl) noteEl.innerHTML = sampleNote;
 
+  // Session composition (seat + stack distribution)
+  var compEl = document.getElementById('composition-strip');
+  if (compEl) {
+    var seatDist = {};
+    var stackDist = {};
+    var flopDist = {};
+    var totalAnn = 0;
+    for (var ci = 0; ci < hands.length; ci++) {
+      var ch = hands[ci];
+      if (typeof annotateHandDynamics === 'function') annotateHandDynamics(ch);
+      if (ch.seatBucket) { seatDist[ch.seatBucket] = (seatDist[ch.seatBucket] || 0) + 1; totalAnn++; }
+      if (ch.stackBucket) stackDist[ch.stackBucket] = (stackDist[ch.stackBucket] || 0) + 1;
+      if (ch.flopBucket) flopDist[ch.flopBucket] = (flopDist[ch.flopBucket] || 0) + 1;
+    }
+    function fmtDist(dist, totalHands, order) {
+      var keys = order || Object.keys(dist);
+      var parts = [];
+      for (var j = 0; j < keys.length; j++) {
+        var k = keys[j];
+        if (!dist[k]) continue;
+        var pp = totalHands > 0 ? Math.round(dist[k] / totalHands * 100) : 0;
+        parts.push(k + ' ' + pp + '%');
+      }
+      return parts.join(' · ');
+    }
+    var seatKeys = Object.keys(seatDist).sort();
+    var stackKeys = ['short','medium','standard','deep','unknown'];
+    var flopKeys = ['HU','3-way','multiway'];
+    var html = '';
+    if (totalAnn > 0) {
+      html += '<div class="comp-row"><span class="comp-label">Seats:</span> ' + fmtDist(seatDist, totalAnn, seatKeys) + '</div>';
+      html += '<div class="comp-row"><span class="comp-label">Stacks:</span> ' + fmtDist(stackDist, totalAnn, stackKeys) + '</div>';
+      html += '<div class="comp-row"><span class="comp-label">Flop:</span> ' + fmtDist(flopDist, totalAnn, flopKeys) + '</div>';
+    }
+    compEl.innerHTML = html;
+  }
+
   // Populate players-filter dropdown
   var pfEl = document.getElementById('players-filter');
   var pfVal = pfEl.value;
@@ -98,6 +140,30 @@ function render(d, hands, meta) {
     pfEl.innerHTML += '<option value="' + sk + '"' + (pfVal == sk ? ' selected' : '') + '>' + sk + ' Players (' + sizeCounts[sk] + ')</option>';
   }
   pfEl.style.display = sizeKeys.length > 1 ? '' : 'none';
+
+  // Populate stacks-filter dropdown
+  var sfEl = document.getElementById('stacks-filter');
+  if (sfEl) {
+    var sfVal = sfEl.value;
+    var stackCounts = { short: 0, medium: 0, standard: 0, deep: 0, unknown: 0 };
+    for (var sti = 0; sti < State.allHands.length; sti++) {
+      var sth = State.allHands[sti];
+      if (typeof annotateHandDynamics === 'function') annotateHandDynamics(sth);
+      var sb = sth.stackBucket || 'unknown';
+      stackCounts[sb] = (stackCounts[sb] || 0) + 1;
+    }
+    var stackOrder = ['short', 'medium', 'standard', 'deep', 'unknown'];
+    var stackLabels = { short: '< 20 BB (short)', medium: '20-50 BB', standard: '50-100 BB', deep: '100+ BB (deep)', unknown: 'Unknown depth' };
+    sfEl.innerHTML = '<option value="all">All Depths</option>';
+    var visibleStacks = 0;
+    for (var stk = 0; stk < stackOrder.length; stk++) {
+      var sbName = stackOrder[stk];
+      if (!stackCounts[sbName]) continue;
+      visibleStacks++;
+      sfEl.innerHTML += '<option value="' + sbName + '"' + (sfVal === sbName ? ' selected' : '') + '>' + stackLabels[sbName] + ' (' + stackCounts[sbName] + ')</option>';
+    }
+    sfEl.style.display = visibleStacks > 1 ? '' : 'none';
+  }
 
   // Run insight engine
   InsightEngine.run(d, hands);
@@ -122,12 +188,16 @@ function render(d, hands, meta) {
   var filterEl = document.getElementById('table-filter');
   var filterVal = filterEl.value;
   var pfFilterVal = pfEl.value;
+  var sfFilterVal = sfEl ? sfEl.value : 'all';
   var bannerParts = [];
   if (filterVal && filterVal !== 'all') {
     bannerParts.push(filterVal === 'unknown' ? 'Unknown Table' : getTableLabel(Number(filterVal)));
   }
   if (pfFilterVal && pfFilterVal !== 'all') {
     bannerParts.push(pfFilterVal + '-player hands');
+  }
+  if (sfFilterVal && sfFilterVal !== 'all') {
+    bannerParts.push(sfFilterVal + '-stack hands');
   }
   if (bannerParts.length) {
     var bannerHtml = '<div class="filter-banner">Showing stats for ' + bannerParts.join(' · ') + '</div>';
@@ -159,6 +229,19 @@ function render(d, hands, meta) {
     document.getElementById('players-filter').value = v;
   };
 
+  // Stack depth filter handler
+  if (sfEl) {
+    sfEl.onchange = function () {
+      var v = this.value;
+      if (!renderAll()) {
+        alert('No hands for this filter.');
+        this.value = 'all';
+        return;
+      }
+      document.getElementById('stacks-filter').value = v;
+    };
+  }
+
   // Reset button
   document.getElementById('reset-btn').onclick = function () {
     document.getElementById('paste-wrap').style.display = 'block';
@@ -169,6 +252,8 @@ function render(d, hands, meta) {
     document.getElementById('table-filter').style.display = 'none';
     document.getElementById('players-filter').value = 'all';
     document.getElementById('players-filter').style.display = 'none';
+    var _sf = document.getElementById('stacks-filter');
+    if (_sf) { _sf.value = 'all'; _sf.style.display = 'none'; }
     State.clear();
     document.querySelectorAll('.tab').forEach(function (b, i) { b.classList.toggle('active', i === 0); });
     document.querySelectorAll('.panel').forEach(function (p, i) { p.classList.toggle('on', i === 0); });
@@ -216,6 +301,7 @@ function process(raw) {
   hands = State.allHands;
   try { fetch('https://script.google.com/macros/s/AKfycbyTtG1UMCpYXP15dgKQttFyG4Pe-BG8FoAftoW3oYtMBISS37Ws5lYhPPDJ0zl1GYxyQA/exec', { method: 'POST', body: JSON.stringify({ player: playerName, hands: hands.length }), mode: 'no-cors' }); } catch (_) { }
   var d = analyse(hands);
+  bucketizeAnalysis(d, hands);
   showImportLoader(hands.length, function () { render(d, hands, meta); });
 }
 

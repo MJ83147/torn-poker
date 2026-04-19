@@ -631,6 +631,161 @@ textarea#jin:focus {
   color: var(--amber);
 }
 
+/* HAND-TAGS (seats · flop bucket · stack depth) */
+.ht-tags {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+
+.ht-tag {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 3px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--dim);
+  white-space: nowrap;
+}
+
+.ht-tag.ht-seat {
+  color: var(--gold);
+  border-color: rgba(200, 169, 74, 0.35);
+  background: rgba(200, 169, 74, 0.06);
+}
+
+.ht-tag.ht-flop {
+  color: var(--text);
+}
+
+.ht-tag.ht-flop-HU {
+  color: #c08a4c;
+  border-color: rgba(192, 138, 76, 0.35);
+}
+
+.ht-tag.ht-flop-3_way {
+  color: var(--text);
+}
+
+.ht-tag.ht-flop-multiway {
+  color: #b0b5c8;
+}
+
+.ht-tag.ht-stack-short {
+  color: var(--red);
+  border-color: rgba(190, 45, 45, 0.35);
+  background: rgba(190, 45, 45, 0.08);
+}
+
+.ht-tag.ht-stack-medium {
+  color: var(--amber);
+  border-color: rgba(212, 132, 42, 0.35);
+  background: rgba(212, 132, 42, 0.06);
+}
+
+.ht-tag.ht-stack-standard {
+  color: var(--dim);
+}
+
+.ht-tag.ht-stack-deep {
+  color: #6fa0d9;
+  border-color: rgba(111, 160, 217, 0.35);
+  background: rgba(111, 160, 217, 0.06);
+}
+
+.ht-tag.ht-stack-unknown {
+  color: var(--muted);
+  border-style: dashed;
+}
+
+/* SESSION COMPOSITION STRIP */
+.composition-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  padding: 8px 32px 12px 32px;
+  font-size: 12px;
+  color: var(--dim);
+  border-bottom: 1px solid var(--border);
+}
+
+.composition-strip:empty {
+  display: none;
+}
+
+.composition-strip .comp-row {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.composition-strip .comp-label {
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 11px;
+}
+
+/* TABLE DYNAMICS REFERENCE (in MyGame panel) */
+.dynamics-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.dynamics-card {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 14px 16px;
+}
+
+.dynamics-card-head {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--gold);
+  margin-bottom: 6px;
+}
+
+.dynamics-card-note {
+  font-size: 12px;
+  color: var(--dim);
+  line-height: 1.45;
+  margin-bottom: 8px;
+}
+
+.dynamics-card-sub {
+  font-size: 12px;
+  color: var(--text);
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.dynamics-card-kv {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--dim);
+  padding: 3px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.dynamics-card-kv span:first-child {
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 11px;
+}
+
+.dynamics-card-kv span:last-child {
+  text-align: right;
+  max-width: 65%;
+}
+
 /* ENGINE NARRATIVE */
 .engine-narrative {
   font-size: 14px;

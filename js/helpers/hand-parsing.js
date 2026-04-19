@@ -112,6 +112,121 @@ function countHandPlayers(hand) {
   return Math.min(n, 9);
 }
 
+// Count players active at the start of each street.
+// Preflop = seat count. Flop/Turn/River = count who hadn't folded entering that street.
+// Streets the hand never reached return null (not 0).
+function countActivePerStreet(hand) {
+  var acts = parseActions(hand.actions);
+  var seats = countHandPlayers(hand);
+  var result = { preflop: seats, flop: null, turn: null, river: null };
+
+  var folded = {};
+  var activeCount = seats;
+  var seenAuthors = {};
+  var reachedFlop = false, reachedTurn = false, reachedRiver = false;
+
+  for (var i = 0; i < acts.length; i++) {
+    var a = acts[i];
+    if (a.street === 'Flop' && !reachedFlop) {
+      result.flop = activeCount;
+      reachedFlop = true;
+    }
+    if (a.street === 'Turn' && !reachedTurn) {
+      result.turn = activeCount;
+      reachedTurn = true;
+    }
+    if (a.street === 'River' && !reachedRiver) {
+      result.river = activeCount;
+      reachedRiver = true;
+    }
+    if (a.author && !seenAuthors[a.author]) seenAuthors[a.author] = true;
+    if (a.type === 'fold' && a.author && !folded[a.author]) {
+      folded[a.author] = true;
+      activeCount--;
+    }
+  }
+
+  // tableSize fallback: if seats came from tableSize but fewer unique authors were seen,
+  // trust the action-log count for activeCount baseline.
+  var uniqueAuthors = Object.keys(seenAuthors).length;
+  if (!reachedFlop && uniqueAuthors && uniqueAuthors < seats) {
+    // nothing to adjust — street counts remain null
+  }
+
+  return result;
+}
+
+// Estimate effective stack at start of hand, in BB.
+// Two regimes:
+//   (a) If any all-in action happened, player commitments reflect real stacks —
+//       effective stack = min of hero's commit and the largest villain commit.
+//   (b) Otherwise, commitments are only a lower bound; if they exceed a meaningful
+//       threshold (≥ 20 BB) we treat that as the likely effective stack, else null.
+// Returns null when the hand log lacks enough signal to infer depth.
+function estimateEffStackBB(hand) {
+  var bb = (typeof getHandBB === 'function') ? getHandBB(hand) : null;
+  if (!bb || bb <= 0) bb = hand.bigBlind || null;
+  if (!bb || bb <= 0) return null;
+
+  // Prefer explicit start-stack metadata if the tracker provides it.
+  if (hand.startStack && hand.startStack > 0) {
+    return Math.round((hand.startStack / bb) * 10) / 10;
+  }
+  if (hand.effStack && hand.effStack > 0) {
+    return Math.round((hand.effStack / bb) * 10) / 10;
+  }
+
+  var acts = parseActions(hand.actions);
+  if (!acts.length) return null;
+
+  var committed = {};
+  var folded = {};
+  var heroAuthor = null;
+  var sawAllIn = false;
+
+  for (var i = 0; i < acts.length; i++) {
+    var a = acts[i];
+    if (a.isMe) heroAuthor = a.author;
+    if (!a.author) continue;
+    if (a.type === 'fold') { folded[a.author] = true; continue; }
+    if (a.type === 'won') continue;
+    if (isAllInAction(acts, i)) sawAllIn = true;
+
+    // For "raised X to Y", amount is Y (the new total); otherwise it's the delta.
+    if (a.type === 'raise' && a.msg && a.msg.indexOf(' to ') !== -1) {
+      var m = a.msg.match(/to \$?([0-9,]+)/);
+      if (m) {
+        var total = parseInt(m[1].replace(/,/g, ''), 10);
+        if (!committed[a.author] || total > committed[a.author]) committed[a.author] = total;
+        continue;
+      }
+    }
+    if (a.amount > 0) {
+      committed[a.author] = (committed[a.author] || 0) + a.amount;
+    }
+  }
+
+  if (!heroAuthor || committed[heroAuthor] == null) return null;
+  var heroCommit = committed[heroAuthor];
+
+  var villainCommits = [];
+  for (var v in committed) {
+    if (v === heroAuthor) continue;
+    villainCommits.push(committed[v]);
+  }
+  if (!villainCommits.length) return null;
+  var villainMax = Math.max.apply(null, villainCommits);
+
+  // Effective stack is bounded below by min(hero, biggest villain commitment).
+  var effFloor = Math.min(heroCommit, villainMax);
+
+  // When no all-in occurred, commitments are only a lower bound. We only report
+  // depth if the floor crosses ~20 BB — below that the hand is ambiguous.
+  if (!sawAllIn && effFloor < bb * 20) return null;
+
+  return Math.round((effFloor / bb) * 10) / 10;
+}
+
 // Calculate how much the player invested in a hand from the action log
 function calcInvestmentFromActions(actions) {
   let total = 0;

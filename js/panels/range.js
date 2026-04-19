@@ -1,35 +1,54 @@
 // ── RANGE PANEL ───────────────────────────────────────────────────────────────
-
-// Recommended TAG opening ranges per position
-var RECOMMENDED_RANGES = {
-  'UTG': new Set(['AA','KK','QQ','JJ','TT','99','88','AKs','AQs','AJs','ATs','KQs','KJs','AKo','AQo']),
-  'UTG+1': new Set(['AA','KK','QQ','JJ','TT','99','88','77','AKs','AQs','AJs','ATs','KQs','KJs','KTs','QJs','AKo','AQo','AJo']),
-  'MP': new Set(['AA','KK','QQ','JJ','TT','99','88','77','66','AKs','AQs','AJs','ATs','A9s','KQs','KJs','KTs','QJs','QTs','JTs','T9s','AKo','AQo','AJo','KQo']),
-  'LJ': new Set(['AA','KK','QQ','JJ','TT','99','88','77','66','55','AKs','AQs','AJs','ATs','A9s','A8s','A7s','A6s','A5s','KQs','KJs','KTs','K9s','QJs','QTs','Q9s','JTs','J9s','T9s','98s','AKo','AQo','AJo','KQo']),
-  'HJ': new Set(['AA','KK','QQ','JJ','TT','99','88','77','66','55','44','AKs','AQs','AJs','ATs','A9s','A8s','A7s','A6s','A5s','A4s','A3s','A2s','KQs','KJs','KTs','K9s','K8s','QJs','QTs','Q9s','Q8s','JTs','J9s','T9s','T8s','98s','87s','AKo','AQo','AJo','KQo','KJo']),
-  'CO': new Set(['AA','KK','QQ','JJ','TT','99','88','77','66','55','44','33','22','AKs','AQs','AJs','ATs','A9s','A8s','A7s','A6s','A5s','A4s','A3s','A2s','KQs','KJs','KTs','K9s','K8s','K7s','K6s','K5s','K4s','K3s','K2s','QJs','QTs','Q9s','Q8s','JTs','J9s','J8s','T9s','T8s','98s','97s','87s','86s','76s','75s','65s','AKo','AQo','AJo','ATo','KQo','KJo','QJo','JTo']),
-  'BTN': new Set(['AA','KK','QQ','JJ','TT','99','88','77','66','55','44','33','22','AKs','AQs','AJs','ATs','A9s','A8s','A7s','A6s','A5s','A4s','A3s','A2s','KQs','KJs','KTs','K9s','K8s','K7s','K6s','K5s','K4s','K3s','K2s','QJs','QTs','Q9s','Q8s','Q7s','Q6s','Q5s','JTs','J9s','J8s','J7s','T9s','T8s','T7s','98s','97s','96s','87s','86s','76s','75s','65s','64s','54s','53s','43s','AKo','AQo','AJo','ATo','A9o','A8o','A7o','KQo','KJo','KTo','QJo','QTo','JTo','T9o']),
-  'SB': new Set(['AA','KK','QQ','JJ','TT','99','88','77','66','55','AKs','AQs','AJs','ATs','A9s','A8s','A5s','A4s','KQs','KJs','KTs','K9s','QJs','QTs','JTs','T9s','98s','87s','76s','AKo','AQo','AJo','ATo','KQo','KJo']),
-  'BB': new Set(['AA','KK','QQ','JJ','TT','99','88','77','66','55','44','33','22','AKs','AQs','AJs','ATs','A9s','A8s','A7s','A6s','A5s','A4s','A3s','A2s','KQs','KJs','KTs','K9s','K8s','K7s','K6s','K5s','K4s','QJs','QTs','Q9s','Q8s','Q7s','Q6s','Q5s','JTs','J9s','J8s','J7s','T9s','T8s','T7s','98s','97s','96s','87s','86s','76s','75s','65s','64s','54s','53s','43s','AKo','AQo','AJo','ATo','A9o','A8o','A7o','A6o','A5o','KQo','KJo','KTo','K9o','QJo','QTo','Q9o','JTo','J9o','T9o','98o','87o']),
-};
+// Ranges and VPIP guides are sourced from js/engine/matrix.js via adviceFor().
+// The panel auto-detects the dominant seat × stack bucket in the viewed hands
+// and benchmarks against that; user can pin a specific bucket via selectors.
 
 var _rangeVpipChart = null;
+
+// Pick the most common (seatBucket, stackBucket) pair across `hands`. Ties broken
+// by seat first, then by most-recent. Returns { seats, seatBucket, stackBucket }.
+function detectDominantBucket(hands) {
+  var counts = {};
+  for (var i = 0; i < hands.length; i++) {
+    var h = hands[i];
+    if (!h.seatBucket) continue;
+    var stk = h.stackBucket || 'unknown';
+    var key = h.seatBucket + '|' + stk;
+    counts[key] = (counts[key] || 0) + 1;
+  }
+  var best = null, bestN = 0;
+  for (var k in counts) {
+    if (counts[k] > bestN) { bestN = counts[k]; best = k; }
+  }
+  if (!best) return { seats: null, seatBucket: null, stackBucket: 'unknown', count: 0 };
+  var parts = best.split('|');
+  var seats = parseInt(parts[0], 10);
+  return { seats: seats, seatBucket: parts[0], stackBucket: parts[1], count: bestN };
+}
 
 function renderRange(container, d, hands) {
   var gridR = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2'];
   var rangePositions = ['All Positions', 'BB', 'SB', 'BTN', 'CO', 'HJ', 'LJ', 'MP', 'UTG', 'UTG+1'];
   var advisorOn = false;
-  var posGuide = {
-    'BTN': { ideal: '40-55%', tight: 35, loose: 60, desc: 'The button is your most profitable seat. You act last post-flop, so you can play a wide range — suited connectors, broadways, and most pairs are all profitable opens here.' },
-    'CO': { ideal: '25-35%', tight: 20, loose: 40, desc: 'Cutoff is the second-best position. You can open wide but be cautious of BTN 3-bets. Strong broadways, suited aces, and pairs down to 55 are standard opens.' },
-    'HJ': { ideal: '18-25%', tight: 14, loose: 30, desc: 'Hijack is a middle-late position. Start tightening up — focus on strong broadways, suited connectors T9s+, and pairs 66+. Drop weak suited aces.' },
-    'LJ': { ideal: '15-22%', tight: 12, loose: 27, desc: 'Lojack is where your range should start getting noticeably tighter. Stick to pairs 77+, strong broadways ATo+/KJo+, and suited connectors 89s+.' },
-    'MP': { ideal: '14-20%', tight: 10, loose: 25, desc: 'Middle position requires discipline. Focus on pairs 77+, AJo+, KQo, and suited broadways. Suited connectors below T9s become marginal.' },
-    'UTG': { ideal: '10-16%', tight: 8, loose: 20, desc: 'Under the gun is the tightest position. You have the whole table behind you — stick to pairs 88+, AQo+, AJs+, and KQs. Playing too loose here is a common leak.' },
-    'UTG+1': { ideal: '12-18%', tight: 9, loose: 22, desc: 'UTG+1 is nearly as tight as UTG. You can add a few more hands like 77, AJo, KJs, but keep it disciplined. Most of the table still acts after you.' },
-    'SB': { ideal: '25-40%', tight: 20, loose: 45, desc: 'Small blind is tricky — you put in half a blind but act first post-flop. Against a single raiser, 3-bet or fold is often better than calling. Defend wide vs BTN steals but tighten up against early position opens.' },
-    'BB': { ideal: '35-55%', tight: 25, loose: 60, desc: 'Big blind gets the best pot odds to defend. You should be calling or 3-betting a wide range, especially vs late position opens. However, you are out of position post-flop, so avoid calling with hands that play poorly without initiative.' }
-  };
+
+  // Dominant bucket for the current hand set (auto-benchmark context).
+  var currentBucket = detectDominantBucket(hands);
+  // User-selected overrides (null = auto).
+  var pinnedSeats = null;   // integer 2..9 or null
+  var pinnedStack = null;   // 'short' / 'medium' / 'standard' / 'deep' or null
+
+  function activeSeats()      { return pinnedSeats || currentBucket.seats || 6; }
+  function activeStackBucket(){ return pinnedStack || currentBucket.stackBucket || 'standard'; }
+
+  // Return { range: Set|null, guide: {ideal,tight,loose,desc}|null, advice: {...} }
+  // for a given position against the active (seats × stack) benchmark.
+  function benchmarkFor(position) {
+    return adviceFor({
+      seats: activeSeats(),
+      position: position,
+      stackBucket: activeStackBucket()
+    });
+  }
 
   function buildKey(ri, ci) {
     var r1 = gridR[Math.min(ri, ci)];
@@ -62,8 +81,13 @@ function renderRange(container, d, hands) {
       if (ratio <= 0.8) return '#3a7a42';
       return 'rgb(50, 170, 65)';
     }
-    // Advisor: determine recommended set for this position
-    var recSet = (advisorOn && posLabel && posLabel !== 'all') ? RECOMMENDED_RANGES[posLabel] : null;
+    // Advisor: determine recommended set for this position (from matrix, bucketed)
+    var recSet = null;
+    var activeBench = null;
+    if (advisorOn && posLabel && posLabel !== 'all') {
+      activeBench = benchmarkFor(posLabel);
+      recSet = activeBench.recommendedRange || null;
+    }
     var overplayed = [];
     var underplayed = [];
     var matchCount = 0;
@@ -144,7 +168,7 @@ function renderRange(container, d, hands) {
       Object.keys(rMap).forEach(function(k) { totalDealt += rMap[k].dealt; totalPlayedPos += rMap[k].played; totalWon += rMap[k].won; });
       var vpipPctPos = totalDealt > 0 ? Math.round(totalPlayedPos / totalDealt * 100) : 0;
       var wrPctPos = totalPlayedPos > 0 ? Math.round(totalWon / totalPlayedPos * 100) : 0;
-      var guide = posGuide[posLabel];
+      var guide = benchmarkFor(posLabel).vpipGuide;
       if (guide && totalDealt >= 3) {
         var exFolded = findExampleHand(function(h) {
           return (h.position || '?') === posLabel && h.outcome && h.outcome.result === 'folded';
@@ -224,7 +248,15 @@ function renderRange(container, d, hands) {
 
     for (var pi = 0; pi < posOrder.length; pi++) {
       var p = posOrder[pi];
-      var guide = posGuide[p];
+      var guide = benchmarkFor(p).vpipGuide;
+      if (!guide) {
+        // Seat size doesn't include this position — hide it from the chart.
+        idealData.push([0, 0]);
+        actualData.push(null);
+        actualColors.push(colors.dim + '22');
+        actualBorders.push(colors.dim + '22');
+        continue;
+      }
       idealData.push([guide.tight, guide.loose]);
 
       var pm = d.posMap[p];
@@ -311,19 +343,74 @@ function renderRange(container, d, hands) {
   var posOpts = rangePositions.map(function(p) {
     return '<option value="' + (p === 'All Positions' ? 'all' : p) + '">' + p + '</option>';
   }).join('');
+
+  // Seat & stack selectors for benchmark context.
+  var seatBucketCounts = {};
+  var stackBucketCounts = {};
+  for (var ri = 0; ri < hands.length; ri++) {
+    var rh = hands[ri];
+    if (rh.seatBucket) seatBucketCounts[rh.seatBucket] = (seatBucketCounts[rh.seatBucket] || 0) + 1;
+    if (rh.stackBucket) stackBucketCounts[rh.stackBucket] = (stackBucketCounts[rh.stackBucket] || 0) + 1;
+  }
+  var seatKeys = Object.keys(seatBucketCounts).sort();
+  var stackOrder = ['short', 'medium', 'standard', 'deep', 'unknown'];
+  var seatOpts = '<option value="auto">Auto (' + (currentBucket.seatBucket || '—') + ')</option>' +
+    seatKeys.map(function(k) { return '<option value="' + k + '">' + k + ' (' + seatBucketCounts[k] + ')</option>'; }).join('');
+  var stackOpts = '<option value="auto">Auto (' + (currentBucket.stackBucket || '—') + ')</option>' +
+    stackOrder.filter(function(s) { return stackBucketCounts[s]; }).map(function(s) {
+      return '<option value="' + s + '">' + s + ' (' + stackBucketCounts[s] + ')</option>';
+    }).join('');
+
   container.innerHTML =
     '<div class="panel-title">Range</div>' +
-    '<div class="panel-desc">Full 13x13 hand grid with win rate for every combo.</div>' +
+    '<div class="panel-desc">Full 13x13 hand grid with win rate for every combo, benchmarked against table size and stack depth.</div>' +
+    renderBucketBanner() +
     '<div class="p-row"><div class="flex-gap-6 mb-16">' +
     '<select id="range-pos-filter" class="table-filter">' + posOpts + '</select>' +
+    '<select id="range-seat-filter" class="table-filter">' + seatOpts + '</select>' +
+    '<select id="range-stack-filter" class="table-filter">' + stackOpts + '</select>' +
     '<button id="range-advisor-btn" class="advisor-btn" disabled>Advisor Off</button>' +
     '</div>' +
+    '<div id="range-bench-notes"></div>' +
     '<div id="range-vpip-chart-wrap">' +
     '<div class="sec-subtitle mt-0">VPIP by Position vs Ideal</div>' +
     '<canvas id="range-vpip-canvas" height="160"></canvas></div>' +
     '<div id="range-grids"></div></div>';
   renderRangeGrids(rc);
   renderVpipChart('all');
+  renderBenchNotes();
+
+  // Bucket banner (describes the auto-detected benchmark)
+  function renderBucketBanner() {
+    if (!currentBucket.seatBucket) return '';
+    var seatLbl = currentBucket.seatBucket;
+    var stkLbl = currentBucket.stackBucket || 'unknown';
+    var shareTxt = '';
+    if (hands.length > 0) {
+      var share = Math.round((currentBucket.count / hands.length) * 100);
+      shareTxt = ' · ' + share + '% of viewed hands';
+    }
+    return '<div class="p-row"><div class="filter-banner" id="range-bucket-banner">Benchmark: ' + seatLbl + ' · ' + stkLbl + ' stack' + shareTxt + '</div></div>';
+  }
+
+  // Notes block describing the active (seats, stack, position) advice
+  function renderBenchNotes() {
+    var notesEl = document.getElementById('range-bench-notes');
+    if (!notesEl) return;
+    var seats = activeSeats();
+    var stk = activeStackBucket();
+    var seatEntry = matrixForSeats(seats);
+    var stackEntry = matrixForStack(stk);
+    if (!seatEntry) { notesEl.innerHTML = ''; return; }
+    var parts = [];
+    parts.push('<div class="sec-subtitle mt-0">' + seats + '-handed · ' + stk + ' stacks</div>');
+    parts.push('<div class="desc-text">' + seatEntry.notes + '</div>');
+    if (stackEntry && stackEntry.notes) {
+      parts.push('<div class="desc-text" style="margin-top:6px;">' + stackEntry.notes + '</div>');
+    }
+    parts.push('<div class="desc-text" style="margin-top:6px;color:var(--muted);">Open ' + seatEntry.openRaise + ' · 3-bet ' + seatEntry.threeBet + ' · c-bet ' + seatEntry.cbetFreq + '</div>');
+    notesEl.innerHTML = '<div class="p-row">' + parts.join('') + '</div>';
+  }
 
   // Advisor toggle
   document.getElementById('range-advisor-btn').onclick = function() {
@@ -336,6 +423,22 @@ function renderRange(container, d, hands) {
   // Position filter change handler
   document.getElementById('range-pos-filter').onchange = function() {
     refreshRange();
+  };
+
+  // Seat bucket selector
+  document.getElementById('range-seat-filter').onchange = function() {
+    var v = this.value;
+    pinnedSeats = (v === 'auto') ? null : parseInt(v, 10);
+    refreshRange();
+    renderBenchNotes();
+  };
+
+  // Stack bucket selector
+  document.getElementById('range-stack-filter').onchange = function() {
+    var v = this.value;
+    pinnedStack = (v === 'auto') ? null : v;
+    refreshRange();
+    renderBenchNotes();
   };
 
   // Range cell click: show hand list for that combo

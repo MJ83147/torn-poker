@@ -120,5 +120,30 @@ function backfillHandData(hands) {
       }
     }
   }
+
+  // Second pass: annotate each hand with the three table-dynamics axes.
+  for (var ii = 0; ii < hands.length; ii++) {
+    annotateHandDynamics(hands[ii]);
+  }
+}
+
+// Attach seats / active-per-street / effStackBB + bucket tags to a hand.
+// Idempotent — safe to call multiple times. Call sites: backfillHandData (on
+// import) and analyse() (safety net for hands loaded from storage).
+function annotateHandDynamics(hand) {
+  if (hand._dyn) return hand; // already annotated this session
+
+  var seats = countHandPlayers(hand);
+  var active = countActivePerStreet(hand);
+  var effBB = estimateEffStackBB(hand);
+
+  hand.seats = seats;
+  hand.active = active;
+  hand.effStackBB = effBB;
+  hand.seatBucket = seatBucket(seats);
+  hand.flopBucket = flopBucket(active.flop);
+  hand.stackBucket = stackBucket(effBB);
+  hand._dyn = true;
+  return hand;
 }
 

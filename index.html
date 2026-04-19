@@ -85,12 +85,16 @@
             <select id="players-filter" style="display:none;" class="table-filter">
               <option value="all">All Sizes</option>
             </select>
+            <select id="stacks-filter" style="display:none;" class="table-filter">
+              <option value="all">All Depths</option>
+            </select>
             <div class="header-meta" id="page-meta" style="cursor:pointer;padding:4px 8px;border-radius:4px;border:1px solid transparent;transition:border-color .2s,color .2s;" onmouseover="this.style.borderColor='var(--border)';this.style.color='var(--gold)';" onmouseout="this.style.borderColor='transparent';this.style.color='';" onclick="switchTab('mygame')"></div>
             <button class="tour-btn" id="tour-btn" onclick="startGuidedTour()" title="Guided tour of this page">?</button>
             <button class="reset-btn" id="reset-btn">New session</button>
           </div>
         </div>
         <div class="hero-strip" id="hero-strip"></div>
+        <div class="composition-strip" id="composition-strip"></div>
         <div class="tab-nav" id="tab-nav">
           <div class="tab-menu">
             <button class="tab-menu-btn active" data-group="overview">Overview <span class="tab-arrow">&#9662;</span></button>

@@ -179,16 +179,36 @@ function renderResult(h, tag, baseClass) {
   return '<' + tag + ' class="' + baseClass + ' ' + pnl.cls + '">' + pnl.text + '</' + tag + '>';
 }
 
+// Render the three-axis table-dynamics chips for a hand:
+//   seats · flop-bucket · BB depth (colored by stackBucket).
+// Returns '' if the hand hasn't been annotated yet (e.g. called before analyse()).
+function handTagsHtml(h) {
+  if (!h || !h.seatBucket) return '';
+  var parts = [];
+  parts.push('<span class="ht-tag ht-seat">' + h.seatBucket + '</span>');
+  if (h.flopBucket) {
+    parts.push('<span class="ht-tag ht-flop ht-flop-' + h.flopBucket.replace('-', '_') + '">' + h.flopBucket + '</span>');
+  }
+  if (h.effStackBB != null && h.stackBucket && h.stackBucket !== 'unknown') {
+    parts.push('<span class="ht-tag ht-stack ht-stack-' + h.stackBucket + '">' + h.effStackBB + ' BB</span>');
+  } else if (h.stackBucket === 'unknown') {
+    parts.push('<span class="ht-tag ht-stack ht-stack-unknown">? BB</span>');
+  }
+  return '<span class="ht-tags">' + parts.join('') + '</span>';
+}
+
 // Render a single hand row (used in log and player hand lists)
 // opts.starHtml: optional star column HTML (for log panel)
 function renderHandRow(h, idx, opts) {
   var myActs = getActsSummary(h);
   var res = renderResult(h, 'td', 'hrow-res');
   var starCol = opts && opts.starHtml ? '<td class="hrow-star-col">' + opts.starHtml + '</td>' : '';
+  var tags = handTagsHtml(h);
   return '<tr class="hrow row-hover" data-hand-idx="' + idx + '">' +
     starCol +
     '<td class="hrow-pos">' + (h.position || '?') + '</td>' +
     '<td class="hrow-cards">' + (h.hole && h.hole.length ? h.hole.join(' ') : '?? ??') + '</td>' +
+    '<td class="hrow-tags">' + tags + '</td>' +
     '<td class="hrow-board">' + (h.board && h.board.length ? h.board.join(' ') : '—') + '</td>' +
     '<td class="hrow-pot">' + fmtBB(h.pot || 0, getHandBB(h)) + '</td>' +
     '<td class="hrow-acts">' + myActs + '</td>' +

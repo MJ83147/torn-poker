@@ -152,6 +152,8 @@ var State = {
     var self = this;
     var currentFilter = document.getElementById('table-filter').value;
     var playersFilter = document.getElementById('players-filter').value;
+    var stacksFilterEl = document.getElementById('stacks-filter');
+    var stacksFilter = stacksFilterEl ? stacksFilterEl.value : 'all';
     var filtered = self.allHands;
     if (currentFilter !== 'all') {
       filtered = filtered.filter(function(h) {
@@ -163,6 +165,12 @@ var State = {
       var pf = Number(playersFilter);
       filtered = filtered.filter(function(h) {
         return countHandPlayers(h) === pf;
+      });
+    }
+    if (stacksFilter !== 'all') {
+      filtered = filtered.filter(function(h) {
+        if (typeof annotateHandDynamics === 'function') annotateHandDynamics(h);
+        return h.stackBucket === stacksFilter;
       });
     }
     filtered = filtered.filter(function(h) {
