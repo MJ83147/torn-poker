@@ -88,43 +88,6 @@ function render(d, hands, meta) {
   var noteEl = document.getElementById('sample-note');
   if (noteEl) noteEl.innerHTML = sampleNote;
 
-  // Session composition (seat + stack distribution)
-  var compEl = document.getElementById('composition-strip');
-  if (compEl) {
-    var seatDist = {};
-    var stackDist = {};
-    var flopDist = {};
-    var totalAnn = 0;
-    for (var ci = 0; ci < hands.length; ci++) {
-      var ch = hands[ci];
-      if (typeof annotateHandDynamics === 'function') annotateHandDynamics(ch);
-      if (ch.seatBucket) { seatDist[ch.seatBucket] = (seatDist[ch.seatBucket] || 0) + 1; totalAnn++; }
-      if (ch.stackBucket) stackDist[ch.stackBucket] = (stackDist[ch.stackBucket] || 0) + 1;
-      if (ch.flopBucket) flopDist[ch.flopBucket] = (flopDist[ch.flopBucket] || 0) + 1;
-    }
-    function fmtDist(dist, totalHands, order) {
-      var keys = order || Object.keys(dist);
-      var parts = [];
-      for (var j = 0; j < keys.length; j++) {
-        var k = keys[j];
-        if (!dist[k]) continue;
-        var pp = totalHands > 0 ? Math.round(dist[k] / totalHands * 100) : 0;
-        parts.push(k + ' ' + pp + '%');
-      }
-      return parts.join(' · ');
-    }
-    var seatKeys = Object.keys(seatDist).sort();
-    var stackKeys = ['short','medium','standard','deep','unknown'];
-    var flopKeys = ['HU','3-way','multiway'];
-    var html = '';
-    if (totalAnn > 0) {
-      html += '<div class="comp-row"><span class="comp-label">Seats:</span> ' + fmtDist(seatDist, totalAnn, seatKeys) + '</div>';
-      html += '<div class="comp-row"><span class="comp-label">Stacks:</span> ' + fmtDist(stackDist, totalAnn, stackKeys) + '</div>';
-      html += '<div class="comp-row"><span class="comp-label">Flop:</span> ' + fmtDist(flopDist, totalAnn, flopKeys) + '</div>';
-    }
-    compEl.innerHTML = html;
-  }
-
   // Populate players-filter dropdown
   var pfEl = document.getElementById('players-filter');
   var pfVal = pfEl.value;
