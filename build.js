@@ -15,6 +15,7 @@ var files = [
   'js/helpers/migration.js',
   'js/stats.js',
   'js/engine/matrix.js',
+  'js/engine/verdict.js',
   'js/engine/rules.js',
   'js/engine/patterns.js',
   'js/engine/narrative.js',

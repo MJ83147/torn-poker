@@ -542,6 +542,132 @@ var STACK_MATRIX = {
   }
 };
 
+// ── PER-METRIC TARGET BANDS ─────────────────────────────────────────────────
+// Drives the layered-verdict engine. Each metric has a {tight, ideal, loose}
+// band per (seats, position) cell. VPIP comes straight from guideByPos; PFR
+// derives from VPIP (early position opens are nearly all raises, late
+// position adds limps); AF / cbet / foldToRaise are seats-driven defaults
+// that don't strongly vary by position.
+
+var _EARLY_POS = { UTG: 1, 'UTG+1': 1, MP: 1, LJ: 1 };
+
+var _AF_BY_SEATS = {
+  2: { tight: 35, ideal: 45, loose: 60 },
+  3: { tight: 30, ideal: 40, loose: 55 },
+  4: { tight: 28, ideal: 38, loose: 52 },
+  5: { tight: 25, ideal: 35, loose: 48 },
+  6: { tight: 22, ideal: 32, loose: 45 },
+  7: { tight: 20, ideal: 30, loose: 42 },
+  8: { tight: 18, ideal: 28, loose: 40 },
+  9: { tight: 18, ideal: 28, loose: 40 }
+};
+
+var _CBET_BY_SEATS = {
+  2: { tight: 55, ideal: 70, loose: 85 },
+  3: { tight: 50, ideal: 65, loose: 80 },
+  4: { tight: 45, ideal: 58, loose: 72 },
+  5: { tight: 42, ideal: 52, loose: 65 },
+  6: { tight: 40, ideal: 50, loose: 62 },
+  7: { tight: 38, ideal: 48, loose: 60 },
+  8: { tight: 35, ideal: 45, loose: 58 },
+  9: { tight: 35, ideal: 45, loose: 58 }
+};
+
+var _FTR_BY_SEATS = {
+  2: { tight: 30, ideal: 42, loose: 55 },
+  3: { tight: 32, ideal: 45, loose: 58 },
+  4: { tight: 33, ideal: 46, loose: 60 },
+  5: { tight: 33, ideal: 46, loose: 60 },
+  6: { tight: 35, ideal: 48, loose: 62 },
+  7: { tight: 35, ideal: 50, loose: 65 },
+  8: { tight: 35, ideal: 50, loose: 65 },
+  9: { tight: 35, ideal: 50, loose: 65 }
+};
+
+// Parse "15-20%" → midpoint number. Falls back to (tight+loose)/2 in metricTargets.
+function _parseIdealMid(s) {
+  if (!s) return null;
+  var m = String(s).match(/(\d+)\s*-\s*(\d+)/);
+  if (!m) return null;
+  return Math.round((parseInt(m[1], 10) + parseInt(m[2], 10)) / 2);
+}
+
+// Returns {vpip, pfr, af, cbet, foldToRaise} bands for one (seats, position)
+// cell, or null if the cell isn't in the matrix.
+function metricTargets(seats, position) {
+  var seatEntry = matrixForSeats(seats);
+  if (!seatEntry) return null;
+  var guide = seatEntry.guideByPos[position];
+  if (!guide) return null;
+
+  var vpipMid = _parseIdealMid(guide.ideal);
+  if (vpipMid == null) vpipMid = Math.round((guide.tight + guide.loose) / 2);
+  var vpip = { tight: guide.tight, ideal: vpipMid, loose: guide.loose };
+
+  // PFR ≈ ratio × VPIP. Early position is nearly all raises (0.85), late
+  // position adds limps and flats (0.7).
+  var ratio = _EARLY_POS[position] ? 0.85 : 0.7;
+  var pfr = {
+    tight: Math.max(0, Math.round(vpip.tight * ratio)),
+    ideal: Math.max(0, Math.round(vpip.ideal * ratio)),
+    loose: Math.max(0, Math.round(vpip.loose * ratio))
+  };
+
+  var clampedSeats = Math.max(2, Math.min(9, seats || 6));
+
+  return {
+    vpip: vpip,
+    pfr: pfr,
+    af: _AF_BY_SEATS[clampedSeats],
+    cbet: _CBET_BY_SEATS[clampedSeats],
+    foldToRaise: _FTR_BY_SEATS[clampedSeats]
+  };
+}
+
+// ── PLAYSTYLE OFFSETS ───────────────────────────────────────────────────────
+// Each style is an additive point shift applied at lookup time on top of the
+// matrix bands. TAG is the baseline (no shift). Numbers are starting points
+// — calibrate by eye.
+
+var STYLE_OFFSETS = {
+  TAG:     { vpip: 0,   pfr: 0,   af: 0,   cbet: 0,   foldToRaise: 0 },
+  LAG:     { vpip: 8,   pfr: 6,   af: 8,   cbet: 5,   foldToRaise: -5 },
+  Nit:     { vpip: -6,  pfr: -5,  af: -3,  cbet: -3,  foldToRaise: 6 },
+  Station: { vpip: 10,  pfr: -4,  af: -10, cbet: -8,  foldToRaise: -10 },
+  Maniac:  { vpip: 14,  pfr: 12,  af: 15,  cbet: 10,  foldToRaise: -10 }
+};
+
+var STYLE_LIST = ['TAG', 'LAG', 'Nit', 'Station', 'Maniac'];
+
+// Read the user's chosen style. Defaults to 'TAG'. Persisted in localStorage.
+function getUserStyle() {
+  if (typeof localStorage === 'undefined') return 'TAG';
+  var s = null;
+  try { s = localStorage.getItem('tc_user_style'); } catch (_) {}
+  return (s && STYLE_OFFSETS[s]) ? s : 'TAG';
+}
+
+function setUserStyle(style) {
+  if (!STYLE_OFFSETS[style]) return;
+  try { localStorage.setItem('tc_user_style', style); } catch (_) {}
+}
+
+// Leaf lookup: returns the {tight, ideal, loose} band for a single metric in
+// a single cell, with the user's playstyle offset applied. style optional —
+// defaults to the persisted user style.
+function matrixTarget(metric, position, seats, style) {
+  var targets = metricTargets(seats, position);
+  if (!targets || !targets[metric]) return null;
+  var base = targets[metric];
+  var styleKey = style || getUserStyle();
+  var off = (STYLE_OFFSETS[styleKey] || STYLE_OFFSETS.TAG)[metric] || 0;
+  return {
+    tight: Math.max(0, base.tight + off),
+    ideal: Math.max(0, base.ideal + off),
+    loose: Math.max(0, base.loose + off)
+  };
+}
+
 // ── BUCKET HELPERS ──────────────────────────────────────────────────────────
 
 // seatBucket: raw count 2-9 → '2p'..'9p'. Over 9 clamps to '9p'.

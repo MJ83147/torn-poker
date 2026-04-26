@@ -1,5 +1,12 @@
 // ── ANALYSE (pure data-in/data-out) ───────────────────────────────────────────
 
+// Sample-size gates for the layered-verdict engine. Slices below the gate are
+// still computed (so the renderer can display "(N hands)") but tagged
+// `gated: true` and excluded from weighted-target computation and verdicts.
+var MIN_AGGREGATE = 30;
+var MIN_AXIS = 20;
+var MIN_CELL = 10;
+
 function analyse(hands) {
   // Safety net: ensure every hand has the three-axis dynamics tags. Idempotent.
   if (typeof annotateHandDynamics === 'function') {
@@ -416,13 +423,17 @@ function analyse(hands) {
   };
 }
 
-// Group hands by the three dynamics axes and compute a sub-`d` per bucket.
-// Returns { bySeatBucket, byFlopBucket, byStackBucket, composition } attached
-// to the top-level `d` in render(). Sub-`d`s are regular analyse() results.
+// Group hands by the dynamics axes and compute a sub-`d` per bucket. Returns
+// { bySeatBucket, byFlopBucket, byStackBucket, byPosition, byPosSeat,
+//   composition, mixCells } attached to the top-level `d` in render().
+// Sub-`d`s are regular analyse() results so every metric is available at every
+// level of granularity.
 function bucketizeAnalysis(topD, hands) {
   var seatGroups = {};
   var flopGroups = {};
   var stackGroups = {};
+  var posGroups = {};
+  var posSeatGroups = {};
   var composition = {}; // { 'stack|seat': count }
 
   for (var i = 0; i < hands.length; i++) {
@@ -440,20 +451,43 @@ function bucketizeAnalysis(topD, hands) {
       var cKey = h.stackBucket + '|' + h.seatBucket;
       composition[cKey] = (composition[cKey] || 0) + 1;
     }
+    if (h.position) {
+      (posGroups[h.position] = posGroups[h.position] || []).push(h);
+    }
+    if (h.position && h.seatBucket) {
+      var psKey = h.position + '|' + h.seatBucket;
+      (posSeatGroups[psKey] = posSeatGroups[psKey] || []).push(h);
+    }
   }
 
-  function mapGroups(groups) {
+  function mapGroups(groups, gateMin) {
     var out = {};
     for (var k in groups) {
-      if (groups[k].length >= 1) out[k] = analyse(groups[k]);
+      var gd = analyse(groups[k]);
+      gd.gated = gateMin != null && gd.n < gateMin;
+      out[k] = gd;
     }
     return out;
   }
 
-  topD.bySeatBucket = mapGroups(seatGroups);
-  topD.byFlopBucket = mapGroups(flopGroups);
-  topD.byStackBucket = mapGroups(stackGroups);
+  topD.bySeatBucket = mapGroups(seatGroups, MIN_AXIS);
+  topD.byFlopBucket = mapGroups(flopGroups, null);
+  topD.byStackBucket = mapGroups(stackGroups, null);
+  topD.byPosition = mapGroups(posGroups, MIN_AXIS);
+  topD.byPosSeat = mapGroups(posSeatGroups, MIN_CELL);
   topD.stackSeatComposition = composition;
+
+  // Flat list of {position, seatBucket, hands} for every cell that passes the
+  // per-cell gate. Used by the verdict layer to compute weighted targets.
+  var mixCells = [];
+  for (var pk in topD.byPosSeat) {
+    var cell = topD.byPosSeat[pk];
+    if (cell.gated) continue;
+    var parts = pk.split('|');
+    mixCells.push({ position: parts[0], seatBucket: parts[1], seats: parseInt(parts[1], 10), hands: cell.n });
+  }
+  topD.mixCells = mixCells;
+  topD.gated = topD.n < MIN_AGGREGATE;
   return topD;
 }
 

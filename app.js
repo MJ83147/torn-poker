@@ -104,30 +104,6 @@ function render(d, hands, meta) {
   }
   pfEl.style.display = sizeKeys.length > 1 ? '' : 'none';
 
-  // Populate stacks-filter dropdown
-  var sfEl = document.getElementById('stacks-filter');
-  if (sfEl) {
-    var sfVal = sfEl.value;
-    var stackCounts = { short: 0, medium: 0, standard: 0, deep: 0, unknown: 0 };
-    for (var sti = 0; sti < State.allHands.length; sti++) {
-      var sth = State.allHands[sti];
-      if (typeof annotateHandDynamics === 'function') annotateHandDynamics(sth);
-      var sb = sth.stackBucket || 'unknown';
-      stackCounts[sb] = (stackCounts[sb] || 0) + 1;
-    }
-    var stackOrder = ['short', 'medium', 'standard', 'deep', 'unknown'];
-    var stackLabels = { short: '< 20 BB (short)', medium: '20-50 BB', standard: '50-100 BB', deep: '100+ BB (deep)', unknown: 'Unknown depth' };
-    sfEl.innerHTML = '<option value="all">All Depths</option>';
-    var visibleStacks = 0;
-    for (var stk = 0; stk < stackOrder.length; stk++) {
-      var sbName = stackOrder[stk];
-      if (!stackCounts[sbName]) continue;
-      visibleStacks++;
-      sfEl.innerHTML += '<option value="' + sbName + '"' + (sfVal === sbName ? ' selected' : '') + '>' + stackLabels[sbName] + ' (' + stackCounts[sbName] + ')</option>';
-    }
-    sfEl.style.display = visibleStacks > 1 ? '' : 'none';
-  }
-
   // Run insight engine
   InsightEngine.run(d, hands);
 
@@ -151,16 +127,12 @@ function render(d, hands, meta) {
   var filterEl = document.getElementById('table-filter');
   var filterVal = filterEl.value;
   var pfFilterVal = pfEl.value;
-  var sfFilterVal = sfEl ? sfEl.value : 'all';
   var bannerParts = [];
   if (filterVal && filterVal !== 'all') {
     bannerParts.push(filterVal === 'unknown' ? 'Unknown Table' : getTableLabel(Number(filterVal)));
   }
   if (pfFilterVal && pfFilterVal !== 'all') {
     bannerParts.push(pfFilterVal + '-player hands');
-  }
-  if (sfFilterVal && sfFilterVal !== 'all') {
-    bannerParts.push(sfFilterVal + '-stack hands');
   }
   if (bannerParts.length) {
     var bannerHtml = '<div class="filter-banner">Showing stats for ' + bannerParts.join(' · ') + '</div>';
@@ -192,16 +164,15 @@ function render(d, hands, meta) {
     document.getElementById('players-filter').value = v;
   };
 
-  // Stack depth filter handler
-  if (sfEl) {
-    sfEl.onchange = function () {
-      var v = this.value;
-      if (!renderAll()) {
-        alert('No hands for this filter.');
-        this.value = 'all';
-        return;
-      }
-      document.getElementById('stacks-filter').value = v;
+  // Style picker — drives matrix targets in the layered-verdict engine.
+  var stylePicker = document.getElementById('style-picker');
+  if (stylePicker) {
+    if (typeof getUserStyle === 'function') stylePicker.value = getUserStyle();
+    stylePicker.onchange = function () {
+      if (typeof setUserStyle === 'function') setUserStyle(this.value);
+      // Force fresh narrative + verdict cache by invalidating the engine key.
+      InsightEngine._cacheKey = null;
+      renderAll();
     };
   }
 
@@ -215,8 +186,6 @@ function render(d, hands, meta) {
     document.getElementById('table-filter').style.display = 'none';
     document.getElementById('players-filter').value = 'all';
     document.getElementById('players-filter').style.display = 'none';
-    var _sf = document.getElementById('stacks-filter');
-    if (_sf) { _sf.value = 'all'; _sf.style.display = 'none'; }
     State.clear();
     document.querySelectorAll('.tab').forEach(function (b, i) { b.classList.toggle('active', i === 0); });
     document.querySelectorAll('.panel').forEach(function (p, i) { p.classList.toggle('on', i === 0); });

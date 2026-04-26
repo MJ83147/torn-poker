@@ -57,6 +57,16 @@ function evaluateRules(d, hands) {
     });
   }
 
+  // Layered metric rules: each emits one insight per surfaced verdict from
+  // the verdict tree. Runs alongside the legacy rules above; existing rules
+  // continue to fire during the retrofit transition.
+  if (typeof evaluateMetricRules === 'function') {
+    var metricInsights = evaluateMetricRules(d, hands);
+    for (var mi = 0; mi < metricInsights.length; mi++) {
+      results.push(metricInsights[mi]);
+    }
+  }
+
   results.sort(function(a, b) { return b.score - a.score; });
   return results;
 }

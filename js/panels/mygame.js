@@ -283,10 +283,9 @@ function _vsRow(label, actualPct, actualDenom, targetText) {
 // the recommended targets for each bucket. Each card carries a clear verdict.
 function renderTableDynamicsReference(hands, d) {
   var h = '<div class="sec-subtitle mt-20">Table Dynamics — You vs Target</div>';
-  h += '<div class="desc-text mb-16">Your actual play at each table size, stack depth, and flop multiplicity, compared to the recommended benchmarks. <span class="v-ok">Green = on target</span>, <span class="v-low">amber = too low / too tight</span>, <span class="v-high">red = too high / too loose</span>.</div>';
+  h += '<div class="desc-text mb-16">Your actual play at each table size and flop multiplicity, compared to the recommended benchmarks. <span class="v-ok">Green = on target</span>, <span class="v-low">amber = too low / too tight</span>, <span class="v-high">red = too high / too loose</span>.</div>';
 
   var seatKeys = Object.keys(SEAT_MATRIX).map(Number).sort(function(a, b) { return a - b; });
-  var stackKeys = ['short', 'medium', 'standard', 'deep'];
 
   // ── Seat-size cards: per-position VPIP vs target ──
   h += '<div class="sec-subtitle mt-12">By Table Size</div>';
@@ -350,22 +349,6 @@ function renderTableDynamicsReference(hands, d) {
 
     h += '<div class="dynamics-card-kv"><span>Target sizing</span><span>' + fe.cbetSizing + '</span></div>';
     h += '<div class="dynamics-card-kv"><span>Continue</span><span>' + fe.continueRange + '</span></div>';
-    h += '</div>';
-  }
-  h += '</div>';
-
-  // ── Stack regime cards (context only — no per-bucket hero stat to compare) ──
-  h += '<div class="sec-subtitle mt-20">By Stack Depth</div>';
-  h += '<div class="desc-text mb-16">Regime notes — these describe what your play should look like at each depth. Stack depth is only inferred when an all-in occurs or commitments exceed 20 BB; otherwise hands are left as "unknown".</div>';
-  h += '<div class="dynamics-cards">';
-  for (var k = 0; k < stackKeys.length; k++) {
-    var sk = stackKeys[k];
-    var se = STACK_MATRIX[sk];
-    var subS = d && d.byStackBucket ? d.byStackBucket[sk] : null;
-    var nS = subS ? subS.n : 0;
-    h += '<div class="dynamics-card">';
-    h += '<div class="dynamics-card-head">' + sk + ' <span class="dim-label">(' + se.label + ' · ' + nS + ' hands)</span></div>';
-    h += '<div class="dynamics-card-note">' + se.notes + '</div>';
     h += '</div>';
   }
   h += '</div>';

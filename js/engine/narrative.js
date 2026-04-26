@@ -103,30 +103,65 @@ function abbreviate(text, maxLen) {
   return text.slice(0, cut) + '\u2026';
 }
 
+// Detect metric-rule insights produced by evaluateMetricRules() — they carry
+// the 'metric' tag plus a level-* tag.
+function _isMetricInsight(i) {
+  return i && i.tags && i.tags.indexOf('metric') >= 0;
+}
+
+function _hasLevelTag(i, level) {
+  return i && i.tags && i.tags.indexOf('level-' + level) >= 0;
+}
+
 function buildNarrative(panelInsights, panelName) {
   if (!panelInsights || !panelInsights.length) return null;
 
-  var topInsights = panelInsights.slice(0, 8);
+  var topInsights = panelInsights.slice(0, 12);
 
   // Separate by severity
   var leaks = topInsights.filter(function(i) { return i.sev === 'r' || i.sev === 'a'; });
   var strengths = topInsights.filter(function(i) { return i.sev === 'g'; });
   var patterns = topInsights.filter(function(i) { return i.tags && i.tags.indexOf('pattern') >= 0; });
 
+  // Layered metric insights split by level — used to thread mix-aware
+  // language through the narrative.
+  var metricInsights = topInsights.filter(_isMetricInsight);
+  var aggregateMetrics = metricInsights.filter(function(i) { return _hasLevelTag(i, 'aggregate'); });
+  var childMetrics = metricInsights.filter(function(i) { return !_hasLevelTag(i, 'aggregate'); });
+
   var contradictions = findContradictions(topInsights);
   var chains = findChains(topInsights);
 
   var sentences = [];
 
-  // Lead with the biggest finding
-  if (leaks.length > 0) {
-    var lead = leaks[0];
-    sentences.push(abbreviate(lead.text, 120));
+  // Lead with the most important aggregate metric verdict if one exists —
+  // it sets the framing the disagreement lines hang off of.
+  var leadMetric = null;
+  if (aggregateMetrics.length > 0) {
+    leadMetric = aggregateMetrics[0];
+    sentences.push(abbreviate(leadMetric.text, 160));
+  } else if (leaks.length > 0) {
+    sentences.push(abbreviate(leaks[0].text, 140));
   } else if (strengths.length > 0) {
-    sentences.push(abbreviate(strengths[0].text, 120));
+    sentences.push(abbreviate(strengths[0].text, 140));
   }
 
-  // Add chain if found
+  // Drill into the highest-scoring per-axis or per-cell disagreement so the
+  // reader sees where the deeper level departs from the broader picture.
+  if (childMetrics.length > 0) {
+    var lead = childMetrics[0];
+    if (lead !== leadMetric) sentences.push(abbreviate(lead.text, 160));
+  }
+
+  // Style note when the user has chosen a non-TAG style.
+  if (typeof getUserStyle === 'function') {
+    var style = getUserStyle();
+    if (style && style !== 'TAG' && metricInsights.length > 0) {
+      sentences.push('Targets shown are calibrated to ' + style + '.');
+    }
+  }
+
+  // Chain finding (causal connective tissue).
   if (chains.length > 0) {
     var chain = chains[0];
     var chainText = chain.text;
@@ -134,19 +169,19 @@ function buildNarrative(panelInsights, panelName) {
     sentences.push(chainText);
   }
 
-  // Add contradiction if found
+  // Contradiction finding.
   if (contradictions.length > 0) {
     sentences.push(contradictions[0].explanation);
   }
 
-  // Add a pattern discovery if present and we have room
-  if (sentences.length < 3 && patterns.length > 0) {
-    sentences.push(abbreviate(patterns[0].text, 100));
+  // A pattern discovery if there's still room.
+  if (sentences.length < 4 && patterns.length > 0) {
+    sentences.push(abbreviate(patterns[0].text, 120));
   }
 
-  // If only strengths and we have room
-  if (sentences.length < 2 && strengths.length > 1) {
-    sentences.push(abbreviate(strengths[1].text, 100));
+  // Fall back to a non-metric leak if we somehow have no sentences yet.
+  if (sentences.length === 0 && leaks.length > 0) {
+    sentences.push(abbreviate(leaks[0].text, 140));
   }
 
   return {
