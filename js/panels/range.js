@@ -1,29 +1,25 @@
 // ── RANGE PANEL ───────────────────────────────────────────────────────────────
 // Ranges and VPIP guides are sourced from js/engine/matrix.js via adviceFor().
-// The panel auto-detects the dominant seat × stack bucket in the viewed hands
-// and benchmarks against that; user can pin a specific bucket via selectors.
+// The panel auto-detects the dominant seat bucket in the viewed hands and
+// benchmarks against that; user can pin a specific seat via the selector.
 
 var _rangeVpipChart = null;
 
-// Pick the most common (seatBucket, stackBucket) pair across `hands`. Ties broken
-// by seat first, then by most-recent. Returns { seats, seatBucket, stackBucket }.
+// Pick the most common seatBucket across `hands`. Returns { seats, seatBucket, count }.
 function detectDominantBucket(hands) {
   var counts = {};
   for (var i = 0; i < hands.length; i++) {
     var h = hands[i];
     if (!h.seatBucket) continue;
-    var stk = h.stackBucket || 'unknown';
-    var key = h.seatBucket + '|' + stk;
-    counts[key] = (counts[key] || 0) + 1;
+    counts[h.seatBucket] = (counts[h.seatBucket] || 0) + 1;
   }
   var best = null, bestN = 0;
   for (var k in counts) {
     if (counts[k] > bestN) { bestN = counts[k]; best = k; }
   }
-  if (!best) return { seats: null, seatBucket: null, stackBucket: 'unknown', count: 0 };
-  var parts = best.split('|');
-  var seats = parseInt(parts[0], 10);
-  return { seats: seats, seatBucket: parts[0], stackBucket: parts[1], count: bestN };
+  if (!best) return { seats: null, seatBucket: null, count: 0 };
+  var seats = parseInt(best, 10);
+  return { seats: seats, seatBucket: best, count: bestN };
 }
 
 function renderRange(container, d, hands) {
@@ -35,18 +31,15 @@ function renderRange(container, d, hands) {
   var currentBucket = detectDominantBucket(hands);
   // User-selected overrides (null = auto).
   var pinnedSeats = null;   // integer 2..9 or null
-  var pinnedStack = null;   // 'short' / 'medium' / 'standard' / 'deep' or null
 
-  function activeSeats()      { return pinnedSeats || currentBucket.seats || 6; }
-  function activeStackBucket(){ return pinnedStack || currentBucket.stackBucket || 'standard'; }
+  function activeSeats() { return pinnedSeats || currentBucket.seats || 6; }
 
   // Return { range: Set|null, guide: {ideal,tight,loose,desc}|null, advice: {...} }
-  // for a given position against the active (seats × stack) benchmark.
+  // for a given position against the active seats benchmark.
   function benchmarkFor(position) {
     return adviceFor({
       seats: activeSeats(),
-      position: position,
-      stackBucket: activeStackBucket()
+      position: position
     });
   }
 
@@ -149,7 +142,7 @@ function renderRange(container, d, hands) {
     });
     if (bestKey) {
       var exBest = findExampleHand(function(h) { return parseHoleKey(h.hole) === bestKey && h.outcome && h.outcome.result === 'won'; });
-      rangeIns.push(insWithExample('g', 'Best Hand', 'Your strongest combo so far is ' + bestKey + ' at ' + bestWr + '% win rate. Sample size matters though.', [{ v: bestKey, hi: true }, { v: bestWr + '% win' }], exBest, 'Here is a hand where you won with ' + bestKey + '. This combo has been your most profitable — keep playing it confidently but watch for sample size.'));
+      rangeIns.push(insWithExample('g', 'Best Hand', 'Your strongest combo so far is ' + bestKey + ' at ' + bestWr + '% win rate. Sample size matters though.', [{ v: bestKey, hi: true }, { v: bestWr + '% win' }], exBest, 'Here is a hand where you won with ' + bestKey + '. This combo has been your most profitable - keep playing it confidently but watch for sample size.'));
     }
     if (worstKey && worstKey !== bestKey) {
       var exWorst = findExampleHand(function(h) { return parseHoleKey(h.hole) === worstKey && h.outcome && h.outcome.result !== 'won'; });
@@ -157,7 +150,7 @@ function renderRange(container, d, hands) {
     }
     if (mostPlayed) {
       var exMost = findExampleHand(function(h) { return parseHoleKey(h.hole) === mostPlayed; });
-      rangeIns.push(insWithExample('n', 'Most Dealt', 'You have been dealt ' + mostPlayed + ' the most (' + mostCount + ' times). ' + (rMap[mostPlayed].played < mostCount / 2 ? 'You fold it more than half the time.' : 'You play it frequently.'), [{ v: mostPlayed, hi: true }, { v: mostCount + ' dealt' }], exMost, 'Here is a hand where you were dealt ' + mostPlayed + '. ' + (rMap[mostPlayed].played < mostCount / 2 ? 'You fold this hand often — make sure you are not being too tight with it in good positions.' : 'You play this hand frequently — make sure you are not overvaluing it from bad positions.')));
+      rangeIns.push(insWithExample('n', 'Most Dealt', 'You have been dealt ' + mostPlayed + ' the most (' + mostCount + ' times). ' + (rMap[mostPlayed].played < mostCount / 2 ? 'You fold it more than half the time.' : 'You play it frequently.'), [{ v: mostPlayed, hi: true }, { v: mostCount + ' dealt' }], exMost, 'Here is a hand where you were dealt ' + mostPlayed + '. ' + (rMap[mostPlayed].played < mostCount / 2 ? 'You fold this hand often - make sure you are not being too tight with it in good positions.' : 'You play this hand frequently - make sure you are not overvaluing it from bad positions.')));
     }
     var coveragePct = Math.round(seen / totalCombos * 100);
     rangeIns.push(ins('n', 'Coverage', 'You have seen ' + seen + ' of ' + totalCombos + ' possible hand combos (' + coveragePct + '%). The more hands you play, the more complete this picture becomes.', [{ v: seen + '/' + totalCombos + ' combos' }]));
@@ -233,54 +226,68 @@ function renderRange(container, d, hands) {
       '</div><div class="divider"></div><div class="ins-grid">' + rc.rangeIns.join('') + '</div>';
   }
 
+  // Render a single bar chart: one bar per position showing the user's actual
+  // VPIP for that position at the active seat size. Bars are coloured by how
+  // far the actual sits from the target band (guide.tight..guide.loose):
+  //   green = within band, amber = close (within ~5 pts), red = significantly outside.
+  // The target band is drawn as a faint range bar behind each actual bar so the
+  // comparison is obvious without needing a separate chart per seat.
   function renderVpipChart(posLabel) {
     if (_rangeVpipChart) { _rangeVpipChart.destroy(); _rangeVpipChart = null; }
     var canvas = document.getElementById('range-vpip-canvas');
     if (!canvas) return;
 
-    var posOrder = ['UTG', 'UTG+1', 'MP', 'LJ', 'HJ', 'CO', 'BTN', 'SB', 'BB'];
+    var seats = activeSeats();
+    var seatEntry = matrixForSeats(seats);
+    var positions = seatEntry && seatEntry.positions ? seatEntry.positions.slice() : ['UTG', 'MP', 'CO', 'BTN', 'SB', 'BB'];
+
     var colors = getChartColors();
-    var idealData = [];
+    var labels = [];
     var actualData = [];
+    var bandData = [];
     var actualColors = [];
     var actualBorders = [];
-    var hasSelection = posLabel && posLabel !== 'all';
 
-    for (var pi = 0; pi < posOrder.length; pi++) {
-      var p = posOrder[pi];
-      var guide = benchmarkFor(p).vpipGuide;
-      if (!guide) {
-        // Seat size doesn't include this position — hide it from the chart.
-        idealData.push([0, 0]);
-        actualData.push(null);
-        actualColors.push(colors.dim + '22');
-        actualBorders.push(colors.dim + '22');
-        continue;
-      }
-      idealData.push([guide.tight, guide.loose]);
+    for (var pi = 0; pi < positions.length; pi++) {
+      var p = positions[pi];
+      var guide = seatEntry && seatEntry.guideByPos ? seatEntry.guideByPos[p] : null;
+      if (!guide) continue;
+      labels.push(p);
+      bandData.push([guide.tight, guide.loose]);
 
       var pm = d.posMap[p];
       var vpip = pm && pm.hands > 0 ? pct(pm.vpip, pm.hands) : null;
       actualData.push(vpip);
 
-      var inRange = vpip !== null && vpip >= guide.tight && vpip <= guide.loose;
-      var isSelected = hasSelection && p === posLabel;
-      var isDimmed = hasSelection && !isSelected;
-      if (isDimmed) {
-        actualColors.push(inRange ? colors.green + '33' : colors.red + '33');
-        actualBorders.push(inRange ? colors.green + '44' : colors.red + '44');
+      // Colour bands: green inside [tight, loose], amber within 5 pts of either
+      // edge, red further out. null = grey (no data).
+      var fill, border;
+      if (vpip === null) {
+        fill = colors.dim + '55';
+        border = colors.dim;
+      } else if (vpip >= guide.tight && vpip <= guide.loose) {
+        fill = colors.green + 'cc';
+        border = colors.green;
       } else {
-        actualColors.push(inRange ? colors.green + 'cc' : colors.red + 'cc');
-        actualBorders.push(inRange ? colors.green : colors.red);
+        var dist = vpip < guide.tight ? guide.tight - vpip : vpip - guide.loose;
+        if (dist <= 5) {
+          fill = colors.amber + 'cc';
+          border = colors.amber;
+        } else {
+          fill = colors.red + 'cc';
+          border = colors.red;
+        }
       }
+      actualColors.push(fill);
+      actualBorders.push(border);
     }
 
     _rangeVpipChart = createChart(canvas, 'bar', {
-      labels: posOrder,
+      labels: labels,
       datasets: [
         {
-          label: 'Ideal Range',
-          data: idealData,
+          label: 'Target Band',
+          data: bandData,
           backgroundColor: colors.dim + '33',
           borderColor: colors.border,
           borderWidth: 1,
@@ -307,7 +314,7 @@ function renderRange(container, d, hands) {
           label: function(ctx) {
             if (ctx.datasetIndex === 0) {
               var raw = ctx.raw;
-              return 'Ideal: ' + raw[0] + '–' + raw[1] + '%';
+              return 'Target: ' + raw[0] + '-' + raw[1] + '%';
             }
             return 'Your VPIP: ' + (ctx.raw !== null ? ctx.raw + '%' : 'no data');
           }
@@ -344,36 +351,28 @@ function renderRange(container, d, hands) {
     return '<option value="' + (p === 'All Positions' ? 'all' : p) + '">' + p + '</option>';
   }).join('');
 
-  // Seat & stack selectors for benchmark context.
+  // Seat selector for benchmark context.
   var seatBucketCounts = {};
-  var stackBucketCounts = {};
   for (var ri = 0; ri < hands.length; ri++) {
     var rh = hands[ri];
     if (rh.seatBucket) seatBucketCounts[rh.seatBucket] = (seatBucketCounts[rh.seatBucket] || 0) + 1;
-    if (rh.stackBucket) stackBucketCounts[rh.stackBucket] = (stackBucketCounts[rh.stackBucket] || 0) + 1;
   }
   var seatKeys = Object.keys(seatBucketCounts).sort();
-  var stackOrder = ['short', 'medium', 'standard', 'deep', 'unknown'];
-  var seatOpts = '<option value="auto">Auto (' + (currentBucket.seatBucket || '—') + ')</option>' +
+  var seatOpts = '<option value="auto">Auto (' + (currentBucket.seatBucket || '-') + ')</option>' +
     seatKeys.map(function(k) { return '<option value="' + k + '">' + k + ' (' + seatBucketCounts[k] + ')</option>'; }).join('');
-  var stackOpts = '<option value="auto">Auto (' + (currentBucket.stackBucket || '—') + ')</option>' +
-    stackOrder.filter(function(s) { return stackBucketCounts[s]; }).map(function(s) {
-      return '<option value="' + s + '">' + s + ' (' + stackBucketCounts[s] + ')</option>';
-    }).join('');
 
   container.innerHTML =
     '<div class="panel-title">Range</div>' +
-    '<div class="panel-desc">Full 13x13 hand grid with win rate for every combo, benchmarked against table size and stack depth.</div>' +
+    '<div class="panel-desc">Full 13x13 hand grid with win rate for every combo, benchmarked against table size.</div>' +
     renderBucketBanner() +
     '<div class="p-row"><div class="flex-gap-6 mb-16">' +
     '<select id="range-pos-filter" class="table-filter">' + posOpts + '</select>' +
     '<select id="range-seat-filter" class="table-filter">' + seatOpts + '</select>' +
-    '<select id="range-stack-filter" class="table-filter">' + stackOpts + '</select>' +
     '<button id="range-advisor-btn" class="advisor-btn" disabled>Advisor Off</button>' +
     '</div>' +
     '<div id="range-bench-notes"></div>' +
     '<div id="range-vpip-chart-wrap">' +
-    '<div class="sec-subtitle mt-0">VPIP by Position vs Ideal</div>' +
+    '<div class="sec-subtitle mt-0">VPIP by Position vs Target</div>' +
     '<canvas id="range-vpip-canvas" height="160"></canvas></div>' +
     '<div id="range-grids"></div></div>';
   renderRangeGrids(rc);
@@ -384,30 +383,24 @@ function renderRange(container, d, hands) {
   function renderBucketBanner() {
     if (!currentBucket.seatBucket) return '';
     var seatLbl = currentBucket.seatBucket;
-    var stkLbl = currentBucket.stackBucket || 'unknown';
     var shareTxt = '';
     if (hands.length > 0) {
       var share = Math.round((currentBucket.count / hands.length) * 100);
       shareTxt = ' · ' + share + '% of viewed hands';
     }
-    return '<div class="p-row"><div class="filter-banner" id="range-bucket-banner">Benchmark: ' + seatLbl + ' · ' + stkLbl + ' stack' + shareTxt + '</div></div>';
+    return '<div class="p-row"><div class="filter-banner" id="range-bucket-banner">Benchmark: ' + seatLbl + shareTxt + '</div></div>';
   }
 
-  // Notes block describing the active (seats, stack, position) advice
+  // Notes block describing the active (seats, position) advice
   function renderBenchNotes() {
     var notesEl = document.getElementById('range-bench-notes');
     if (!notesEl) return;
     var seats = activeSeats();
-    var stk = activeStackBucket();
     var seatEntry = matrixForSeats(seats);
-    var stackEntry = matrixForStack(stk);
     if (!seatEntry) { notesEl.innerHTML = ''; return; }
     var parts = [];
-    parts.push('<div class="sec-subtitle mt-0">' + seats + '-handed · ' + stk + ' stacks</div>');
+    parts.push('<div class="sec-subtitle mt-0">' + seats + '-handed</div>');
     parts.push('<div class="desc-text">' + seatEntry.notes + '</div>');
-    if (stackEntry && stackEntry.notes) {
-      parts.push('<div class="desc-text" style="margin-top:6px;">' + stackEntry.notes + '</div>');
-    }
     parts.push('<div class="desc-text" style="margin-top:6px;color:var(--muted);">Open ' + seatEntry.openRaise + ' · 3-bet ' + seatEntry.threeBet + ' · c-bet ' + seatEntry.cbetFreq + '</div>');
     notesEl.innerHTML = '<div class="p-row">' + parts.join('') + '</div>';
   }
@@ -429,14 +422,6 @@ function renderRange(container, d, hands) {
   document.getElementById('range-seat-filter').onchange = function() {
     var v = this.value;
     pinnedSeats = (v === 'auto') ? null : parseInt(v, 10);
-    refreshRange();
-    renderBenchNotes();
-  };
-
-  // Stack bucket selector
-  document.getElementById('range-stack-filter').onchange = function() {
-    var v = this.value;
-    pinnedStack = (v === 'auto') ? null : v;
     refreshRange();
     renderBenchNotes();
   };
@@ -478,7 +463,7 @@ function renderRange(container, d, hands) {
         '<div class="range-hand-row-side">' +
         '<span class="range-hand-row-pos">' + (h.position || '?') + '</span>' +
         '<span class="range-hand-row-hole">' + (h.hole ? h.hole.join(' ') : '??') + '</span>' +
-        '<span class="range-hand-row-board">' + (h.board && h.board.length ? h.board.join(' ') : '—') + '</span>' +
+        '<span class="range-hand-row-board">' + (h.board && h.board.length ? h.board.join(' ') : '-') + '</span>' +
         '</div>' +
         '<div class="range-hand-row-side">' +
         '<span class="range-hand-row-actions">' + myActs + '</span>' +

@@ -11,7 +11,7 @@ function _openDB(cb) {
   req.onupgradeneeded = function(e) {
     var db = e.target.result;
 
-    // v1 store — keep for migration source, don't delete yet
+    // v1 store - keep for migration source, don't delete yet
     if (!db.objectStoreNames.contains(DB_STORE)) {
       db.createObjectStore(DB_STORE);
     }
@@ -55,7 +55,7 @@ function initStorage(callback) {
       // Need to migrate. Try the v1 IDB blob first, then localStorage.
       _loadV1Blob(db, function(blob) {
         if (!blob) {
-          // Nothing to migrate — brand new user
+          // Nothing to migrate - brand new user
           callback();
           return;
         }
@@ -171,7 +171,7 @@ var State = {
     return filtered;
   },
 
-  // Save to IndexedDB (with localStorage fallback) — per-hand records
+  // Save to IndexedDB (with localStorage fallback) - per-hand records
   save: function(data) {
     _openDB(function(db) {
       if (!db) {

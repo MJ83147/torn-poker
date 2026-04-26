@@ -20,7 +20,7 @@
   function findEl(panel, sel) {
     var el = panel.querySelector(sel);
     if (!el) return null;
-    // Use getBoundingClientRect — works even when offsetParent is null (canvas, overflow, etc.)
+    // Use getBoundingClientRect - works even when offsetParent is null (canvas, overflow, etc.)
     var rect = el.getBoundingClientRect();
     if (rect.width === 0 && rect.height === 0) return null;
     return el;
@@ -56,7 +56,7 @@
       { element: '#bb-toggle', intro: '<strong>Dollar / BB Toggle</strong><br>Switch between dollar amounts and Big Blind units. BB mode normalises your stats so you can compare performance across different stakes.', position: 'bottom' },
       { element: '#table-filter', intro: '<strong>Table Filter</strong><br>Filter your entire analysis to a single table or stake level. All tabs update to show only hands from the selected table.', position: 'bottom' },
       { element: '#page-meta', intro: '<strong>Player Info</strong><br>Shows your name, export date, and hand count. Click it to view your player profile.', position: 'bottom' },
-      { element: '#tabs', intro: '<strong>Analysis Tabs</strong><br>Each tab dives deep into a different part of your game — hand types, position, betting patterns, opponents, and more.', position: 'bottom' },
+      { element: '#tabs', intro: '<strong>Analysis Tabs</strong><br>Each tab dives deep into a different part of your game - hand types, position, betting patterns, opponents, and more.', position: 'bottom' },
       { element: '.welcome-toc', intro: '<strong>Table of Contents</strong><br>Quick links to every analysis tab. Click any row to jump straight there.', position: 'top' },
       { element: '.welcome-tips', intro: '<strong>Tips</strong><br>Rotating tips to help you get the most out of the tool. Use the arrows to browse.', position: 'top' },
       { element: '#tour-btn', intro: '<strong>Page Help</strong><br>Every tab has this <strong>?</strong> button in the header. Click it on any tab to get a guided walkthrough of everything on that page.', position: 'left' }
@@ -77,7 +77,7 @@
 
   var tabTourSteps = {
     cards: [
-      { el: '.panel-title', intro: '<strong>Cards</strong><br>This tab breaks down your performance by starting hand category — pocket pairs, broadway, suited connectors, ace-rag, and more.', pos: 'bottom' },
+      { el: '.panel-title', intro: '<strong>Cards</strong><br>This tab breaks down your performance by starting hand category - pocket pairs, broadway, suited connectors, ace-rag, and more.', pos: 'bottom' },
       { el: '.ht-stack-legend', intro: '<strong>Legend</strong><br>The colour key: green = hands won, blue = hands played but lost, grey = hands dealt but folded preflop.', pos: 'bottom' },
       { el: '.ht-stack-item', intro: '<strong>Hand Type Bars</strong><br>Each bar shows a hand category. The wider the green segment, the better your win rate. The number on the right is your win percentage for that type.', pos: 'top' },
       { el: '.ins-grid', intro: '<strong>Insights</strong><br>Automated analysis of your hand type performance. Green = strength, red = leak, amber = caution. Click "See example hand" to view a real hand from your session.', pos: 'top',
@@ -145,11 +145,11 @@
       { el: '.hrow-star', intro: '<strong>Star Hands</strong><br>Click the star on any hand to save it for later review. Starred hands appear in the Saved Hands section at the top of this page.', pos: 'left' },
       { el: '.saved-section', intro: '<strong>Saved Hands</strong><br>Your starred hands for study. Each card shows hole cards, board, and result. Click to replay. Add notes to remember what you were thinking.', pos: 'top',
         fallback: '<strong>Saved Hands</strong><br>When you star hands using the star button, they appear in a saved section at the top of this page for easy review.' },
-      { el: null, intro: '<strong>Equity Simulation</strong><br>Inside any hand replay, look for the <strong>Run Equity Simulation</strong> button. It runs a Monte Carlo simulation calculating your equity (chance of winning) on each street against a random hand. It compares your actual calls, raises, and folds against the mathematical pot odds — showing whether each decision was profitable.' }
+      { el: null, intro: '<strong>Equity Simulation</strong><br>Inside any hand replay, look for the <strong>Run Equity Simulation</strong> button. It runs a Monte Carlo simulation calculating your equity (chance of winning) on each street against a random hand. It compares your actual calls, raises, and folds against the mathematical pot odds - showing whether each decision was profitable.' }
     ],
     allin: [
       { el: '.panel-title', intro: '<strong>All-In EV</strong><br>This tab finds every hand where you went all-in at showdown and calculates whether you ran lucky or unlucky. It compares your actual results against your mathematical expected value.', pos: 'bottom' },
-      { el: '#allin-run-btn', intro: '<strong>Run Equity Simulation</strong><br>Click this to calculate your equity (win probability) for each all-in hand using Monte Carlo simulation. The panel detects all-in hands automatically — this button runs the math.', pos: 'bottom',
+      { el: '#allin-run-btn', intro: '<strong>Run Equity Simulation</strong><br>Click this to calculate your equity (win probability) for each all-in hand using Monte Carlo simulation. The panel detects all-in hands automatically - this button runs the math.', pos: 'bottom',
         fallback: '<strong>Run Equity Simulation</strong><br>Once all-in hands are detected, a button appears to run equity calculations. After simulation, you\'ll see EV diff, fair share, and a cumulative graph.' },
       { el: '.allin-table-wrap', intro: '<strong>All-In Hands Table</strong><br>Every detected all-in showdown with your hole cards, opponent cards, board, street, pot size, and result. <strong>Click any row</strong> to replay the full hand.', pos: 'top',
         fallback: '<strong>All-In Hands Table</strong><br>A table listing every all-in showdown appears here when all-in hands are found in your data.' },
@@ -158,7 +158,7 @@
       { el: '#allin-ev-chart', intro: '<strong>EV Graph</strong><br>Gold line = your actual cumulative results. Dashed line = expected value based on equity. If gold is above the dashed line, you\'re running hot. Below means you\'re running cold.', pos: 'top',
         fallback: '<strong>EV Graph</strong><br>After simulation, a cumulative graph shows your actual results vs expected value over time. The gap between the lines is your variance.' },
       { el: '.ins-grid', intro: '<strong>EV Insights</strong><br>Flags whether you\'re running hot or cold, if you\'re frequently all-in as an underdog, or if negative variance is masking good play.', pos: 'top',
-        fallback: '<strong>EV Insights</strong><br>Insight cards appear after simulation when patterns are found — running hot/cold, underdog frequency, or variance masking good decisions.' }
+        fallback: '<strong>EV Insights</strong><br>Insight cards appear after simulation when patterns are found - running hot/cold, underdog frequency, or variance masking good decisions.' }
     ],
     players: [
       { el: '.panel-title', intro: '<strong>Players</strong><br>Stats on every opponent you\'ve faced, with watch lists and head-to-head comparison.', pos: 'bottom' },

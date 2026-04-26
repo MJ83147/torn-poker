@@ -1,4 +1,4 @@
-// ── INSIGHT ENGINE: LAYER 3 — NARRATIVE BUILDER ─────────────────────────────
+// ── INSIGHT ENGINE: LAYER 3 - NARRATIVE BUILDER ─────────────────────────────
 
 var CONTRADICTION_PAIRS = [
   {
@@ -37,7 +37,7 @@ var CHAIN_RULES = [
   {
     fromTag: 'passive',
     toTag: 'missed-value',
-    text: 'Passive play means missed value bets \u2014 you win the hand but leave money on the table.'
+    text: 'Passive play means missed value bets. You win the hand but leave money on the table.'
   },
   {
     fromTag: 'cbet-fold',
@@ -47,7 +47,7 @@ var CHAIN_RULES = [
   {
     fromTag: 'loose-ep',
     toTag: 'flop-fold',
-    text: 'Wide early-position opens lead to postflop folds when you miss \u2014 the worst combination for your stack.'
+    text: 'Wide early-position opens lead to postflop folds when you miss, the worst combination for your stack.'
   }
 ];
 
@@ -103,7 +103,7 @@ function abbreviate(text, maxLen) {
   return text.slice(0, cut) + '\u2026';
 }
 
-// Detect metric-rule insights produced by evaluateMetricRules() — they carry
+// Detect metric-rule insights produced by evaluateMetricRules() - they carry
 // the 'metric' tag plus a level-* tag.
 function _isMetricInsight(i) {
   return i && i.tags && i.tags.indexOf('metric') >= 0;
@@ -123,7 +123,7 @@ function buildNarrative(panelInsights, panelName) {
   var strengths = topInsights.filter(function(i) { return i.sev === 'g'; });
   var patterns = topInsights.filter(function(i) { return i.tags && i.tags.indexOf('pattern') >= 0; });
 
-  // Layered metric insights split by level — used to thread mix-aware
+  // Layered metric insights split by level - used to thread mix-aware
   // language through the narrative.
   var metricInsights = topInsights.filter(_isMetricInsight);
   var aggregateMetrics = metricInsights.filter(function(i) { return _hasLevelTag(i, 'aggregate'); });
@@ -134,7 +134,7 @@ function buildNarrative(panelInsights, panelName) {
 
   var sentences = [];
 
-  // Lead with the most important aggregate metric verdict if one exists —
+  // Lead with the most important aggregate metric verdict if one exists -
   // it sets the framing the disagreement lines hang off of.
   var leadMetric = null;
   if (aggregateMetrics.length > 0) {
@@ -153,11 +153,11 @@ function buildNarrative(panelInsights, panelName) {
     if (lead !== leadMetric) sentences.push(abbreviate(lead.text, 160));
   }
 
-  // Style note when the user has chosen a non-TAG style.
+  // Style note when the user has chosen a non-TAG target style.
   if (typeof getUserStyle === 'function') {
     var style = getUserStyle();
     if (style && style !== 'TAG' && metricInsights.length > 0) {
-      sentences.push('Targets shown are calibrated to ' + style + '.');
+      sentences.push('Targets reflect a ' + style + ' game plan.');
     }
   }
 

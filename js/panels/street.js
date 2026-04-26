@@ -18,7 +18,7 @@ function renderStreet(container, d, hands) {
     var ss2 = d.ss[s];
     var tot2 = ss2.f + ss2.ch + ss2.ca + ss2.ra;
     var fp2 = pct(ss2.f, tot2);
-    return barRow(s, fp2 || 0, 100, fp2 > 55 ? 'r' : 'g', (fp2 !== null ? fp2 + '%' : '—'), ss2.f + ' folds');
+    return barRow(s, fp2 || 0, 100, fp2 > 55 ? 'r' : 'g', (fp2 !== null ? fp2 + '%' : '-'), ss2.f + ' folds');
   }).join('') + '</div></div>';
   stHtml += '</div></div>';
 
@@ -61,11 +61,25 @@ function renderStreet(container, d, hands) {
     }
     var flopFoldP = pct(d.ss.Flop.f, d.ss.Flop.f + d.ss.Flop.ch + d.ss.Flop.ca + d.ss.Flop.ra);
     var turnFoldP = pct(d.ss.Turn.f, d.ss.Turn.f + d.ss.Turn.ch + d.ss.Turn.ca + d.ss.Turn.ra);
-    if (flopFoldP !== null && flopFoldP > 50) {
-      sIns.push(ins('a', 'Flop Folding', 'You fold ' + flopFoldP + '% on the flop.', [{ v: d.ss.Flop.f + ' flop folds' }]));
+
+    // Pick dominant flop bucket so the fold-rate ceiling tracks board
+    // multiplicity - HU folds should stay low, multiway folds run higher.
+    var _streetFb = null;
+    if (d && d.byFlopBucket) {
+      var _bestN = 0;
+      var _keys = ['HU', '3-way', 'multiway'];
+      for (var _ki = 0; _ki < _keys.length; _ki++) {
+        var _fd = d.byFlopBucket[_keys[_ki]];
+        if (_fd && (_fd.n || 0) > _bestN) { _bestN = _fd.n; _streetFb = _keys[_ki]; }
+      }
     }
-    if (turnFoldP !== null && turnFoldP > 55) {
-      sIns.push(ins('r', 'Turn Folding', 'Folding ' + turnFoldP + '% on the turn.', [{ v: d.ss.Turn.f + ' turn folds' }]));
+    var _flopCeil = _streetFb === 'HU' ? 38 : _streetFb === 'multiway' ? 60 : 50;
+    var _turnCeil = _streetFb === 'HU' ? 42 : _streetFb === 'multiway' ? 65 : 55;
+    if (flopFoldP !== null && flopFoldP > _flopCeil) {
+      sIns.push(ins('a', 'Flop Folding', 'You fold ' + flopFoldP + '% on the flop' + (_streetFb ? ' (' + _streetFb + ' flops; ceiling around ' + _flopCeil + '%)' : '') + '.', [{ v: d.ss.Flop.f + ' flop folds' }]));
+    }
+    if (turnFoldP !== null && turnFoldP > _turnCeil) {
+      sIns.push(ins('r', 'Turn Folding', 'Folding ' + turnFoldP + '% on the turn' + (_streetFb ? ' (' + _streetFb + '; ceiling around ' + _turnCeil + '%)' : '') + '.', [{ v: d.ss.Turn.f + ' turn folds' }]));
     }
     stHtml += '<div class="p-row">' + renderInsights(sIns, 'Streets', 'Keep building the sample for street-level patterns.') + '</div>';
   }

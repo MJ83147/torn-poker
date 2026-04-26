@@ -128,7 +128,7 @@ function backfillHandData(hands) {
 }
 
 // Attach seats / active-per-street / effStackBB + bucket tags to a hand.
-// Idempotent — safe to call multiple times. Call sites: backfillHandData (on
+// Idempotent - safe to call multiple times. Call sites: backfillHandData (on
 // import) and analyse() (safety net for hands loaded from storage).
 function annotateHandDynamics(hand) {
   if (hand._dyn) return hand; // already annotated this session

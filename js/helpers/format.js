@@ -34,7 +34,7 @@ function pct(a, b) {
 }
 
 // Standard poker aggression frequency: raises / (raises + calls + checks)
-// Excludes folds — folding is not an aggressive or passive action.
+// Excludes folds - folding is not an aggressive or passive action.
 function calcAggression(raises, calls, checks) {
   return pct(raises, raises + calls + checks);
 }

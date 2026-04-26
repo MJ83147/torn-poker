@@ -19,15 +19,35 @@ function renderMyGame(container, d, hands) {
 
   var smallSample = d.n < 30;
 
+  // Resolve dominant seat-count once so classification thresholds track table
+  // size - a 50% VPIP at 6-max is loose, but at HU it's tight.
+  var _domSeatsMG = (function() {
+    if (!d || !d.bySeatBucket) return null;
+    var best = null, bestN = 0;
+    for (var sb in d.bySeatBucket) {
+      var sd = d.bySeatBucket[sb];
+      if (!sd || (sd.n || 0) <= bestN) continue;
+      bestN = sd.n;
+      best = parseInt(sb, 10);
+    }
+    return best ? Math.max(2, Math.min(9, best)) : null;
+  })();
+  var _vpipBandMG = _domSeatsMG && typeof matrixTarget === 'function'
+    ? matrixTarget('vpip', _domSeatsMG === 2 ? 'BTN' : _domSeatsMG === 3 ? 'BTN' : 'CO', _domSeatsMG, getUserStyle()) : null;
+  var _afBandMG = _domSeatsMG && typeof matrixTarget === 'function'
+    ? matrixTarget('af', _domSeatsMG === 2 ? 'BTN' : _domSeatsMG === 3 ? 'BTN' : 'CO', _domSeatsMG, getUserStyle()) : null;
+  var _vpipTightCap = _vpipBandMG ? _vpipBandMG.ideal : 30;
+  var _aggCap = _afBandMG ? _afBandMG.tight : 25;
+
   var typeLabel = '', typeDesc = '';
   if (!smallSample) {
-    if (vpipVal <= 30 && aggVal >= 25) {
+    if (vpipVal <= _vpipTightCap && aggVal >= _aggCap) {
       typeLabel = 'Shark';
       typeDesc = 'Tight and aggressive. Picks spots well and applies pressure.';
-    } else if (vpipVal <= 30 && aggVal < 25) {
+    } else if (vpipVal <= _vpipTightCap && aggVal < _aggCap) {
       typeLabel = 'Rock';
       typeDesc = 'Tight and passive. Only plays premiums, rarely bets without the goods.';
-    } else if (vpipVal > 30 && aggVal >= 25) {
+    } else if (vpipVal > _vpipTightCap && aggVal >= _aggCap) {
       typeLabel = 'Cannon';
       typeDesc = 'Loose and aggressive. Plays lots of hands and fires often.';
     } else {
@@ -57,14 +77,48 @@ function renderMyGame(container, d, hands) {
   html += '</div>';
 
   // ── Section 2: Stat line ──
+  // Each metric's "good" band is a matrixTarget lookup when available so the
+  // colour reflects what's right for this player's table mix and style.
+  var _pfrBandMG = _domSeatsMG && typeof matrixTarget === 'function'
+    ? matrixTarget('pfr', _domSeatsMG === 2 ? 'BTN' : _domSeatsMG === 3 ? 'BTN' : 'CO', _domSeatsMG, getUserStyle()) : null;
+  var _cbetBandMG = _domSeatsMG && typeof matrixTarget === 'function'
+    ? matrixTarget('cbet', _domSeatsMG === 2 ? 'BTN' : _domSeatsMG === 3 ? 'BTN' : 'CO', _domSeatsMG, getUserStyle()) : null;
+  var _ftrBandMG = _domSeatsMG && typeof matrixTarget === 'function'
+    ? matrixTarget('foldToRaise', _domSeatsMG === 2 ? 'BTN' : _domSeatsMG === 3 ? 'BTN' : 'CO', _domSeatsMG, getUserStyle()) : null;
+  // Limps and WTSD aren't in the matrix; bound them by seat count.
+  var _limpCap = _domSeatsMG && _domSeatsMG <= 2 ? 60 : _domSeatsMG && _domSeatsMG <= 3 ? 35 : 15;
+  var _limpBad = _domSeatsMG && _domSeatsMG <= 2 ? 75 : _domSeatsMG && _domSeatsMG <= 3 ? 50 : 25;
+  var _wtsdLow = 20, _wtsdHigh = _domSeatsMG && _domSeatsMG <= 2 ? 45 : _domSeatsMG && _domSeatsMG <= 3 ? 42 : 38;
+  var _wtsdBad = _domSeatsMG && _domSeatsMG <= 2 ? 55 : 50;
+
   var statItems = [
-    { l: tipWrap('VPIP'),          v: vpipVal !== null ? vpipVal + '%' : '—',  c: sev(vpipVal, 15, 60, 20, 50) },
-    { l: tipWrap('PFR'),           v: pfrVal !== null ? pfrVal + '%' : '—',    c: sev(pfrVal, 5, 50, 10, 40) },
-    { l: 'Limp',                   v: limpVal !== null ? limpVal + '%' : '—',  c: sev(limpVal, -1, 25, -1, 15) },
-    { l: tipWrap('Aggression'),    v: aggVal !== null ? aggVal + '%' : '—',    c: sev(aggVal, 12, 60, 15, 45) },
-    { l: 'Fold to Raise',         v: ftrVal !== null ? ftrVal + '%' : '—',    c: sev(ftrVal, 20, 70, 25, 60) },
-    { l: tipWrap('C-Bet'),         v: cbetVal !== null ? cbetVal + '%' : '—',  c: sev(cbetVal, 30, 90, 40, 75) },
-    { l: 'WTSD',                   v: wtsdVal !== null ? wtsdVal + '%' : '—',  c: sev(wtsdVal, 20, 50, 25, 40) },
+    { l: tipWrap('VPIP'),          v: vpipVal !== null ? vpipVal + '%' : '-',  c: sev(vpipVal,
+        _vpipBandMG ? _vpipBandMG.tight : 15,
+        _vpipBandMG ? _vpipBandMG.loose + 10 : 60,
+        _vpipBandMG ? Math.max(0, _vpipBandMG.tight - 5) : 20,
+        _vpipBandMG ? _vpipBandMG.loose : 50) },
+    { l: tipWrap('PFR'),           v: pfrVal !== null ? pfrVal + '%' : '-',    c: sev(pfrVal,
+        _pfrBandMG ? _pfrBandMG.tight : 5,
+        _pfrBandMG ? _pfrBandMG.loose + 10 : 50,
+        _pfrBandMG ? Math.max(0, _pfrBandMG.tight - 5) : 10,
+        _pfrBandMG ? _pfrBandMG.loose : 40) },
+    { l: 'Limp',                   v: limpVal !== null ? limpVal + '%' : '-',  c: sev(limpVal, -1, _limpBad, -1, _limpCap) },
+    { l: tipWrap('Aggression'),    v: aggVal !== null ? aggVal + '%' : '-',    c: sev(aggVal,
+        _afBandMG ? _afBandMG.tight - 3 : 12,
+        _afBandMG ? _afBandMG.loose + 15 : 60,
+        _afBandMG ? _afBandMG.tight : 15,
+        _afBandMG ? _afBandMG.loose : 45) },
+    { l: 'Fold to Raise',         v: ftrVal !== null ? ftrVal + '%' : '-',    c: sev(ftrVal,
+        _ftrBandMG ? _ftrBandMG.tight - 5 : 20,
+        _ftrBandMG ? _ftrBandMG.loose + 20 : 70,
+        _ftrBandMG ? _ftrBandMG.tight : 25,
+        _ftrBandMG ? _ftrBandMG.loose : 60) },
+    { l: tipWrap('C-Bet'),         v: cbetVal !== null ? cbetVal + '%' : '-',  c: sev(cbetVal,
+        _cbetBandMG ? _cbetBandMG.tight - 10 : 30,
+        90,
+        _cbetBandMG ? _cbetBandMG.tight : 40,
+        _cbetBandMG ? _cbetBandMG.loose : 75) },
+    { l: 'WTSD',                   v: wtsdVal !== null ? wtsdVal + '%' : '-',  c: sev(wtsdVal, _wtsdLow, _wtsdBad, _wtsdLow + 5, _wtsdHigh) },
   ];
 
   var dimStyle = smallSample ? ' style="opacity:0.45"' : '';
@@ -138,13 +192,26 @@ function renderMyGame(container, d, hands) {
     // ── Section 6: Work on next ──
     html += '<div class="sec-subtitle mt-20">Work On Next</div>';
     var workOn = null;
-    // Priority order
-    if (!workOn && aggVal !== null && aggVal < 15) workOn = { sev: 'r', label: 'Too passive', desc: 'Only ' + aggVal + '% aggression. You check and call when you should be betting for value.', action: 'Next 20 hands: when you have a strong hand, raise instead of calling. Track whether your aggression % moves above 20%.' };
-    if (!workOn && limpVal !== null && limpVal > 25) workOn = { sev: 'r', label: 'Limping too much', desc: 'You limp ' + limpVal + '% of hands. Limping gives up initiative.', action: 'Next 20 hands: every time you want to limp, either raise or fold instead. No flat calls preflop without a raise in front.' };
-    if (!workOn && ftrVal !== null && ftrVal > 70 && d.facedRaise >= 5) workOn = { sev: 'r', label: 'Folding to pressure', desc: 'You fold ' + ftrVal + '% when raised.', action: 'Next session: when raised, pause and consider if your hand is strong enough to continue. Look for spots to call or re-raise instead of auto-folding.' };
-    if (!workOn && cbetVal !== null && cbetVal < 25 && d.cbetOpps >= 5) workOn = { sev: 'r', label: 'Low c-bet', desc: 'You only c-bet ' + cbetVal + '%.', action: 'Next session: when you raised preflop and the flop comes, bet at least half the time regardless of whether you connected. Maintaining aggression wins pots.' };
-    if (!workOn && wtsdVal !== null && wtsdVal > 50) workOn = { sev: 'r', label: 'Paying off too much', desc: 'WTSD at ' + wtsdVal + '%.', action: 'Next session: on the river facing a big bet, ask yourself if your hand beats their value range. If not, fold. Saving one big call per session adds up.' };
-    if (!workOn && epVpip !== null && epVpip > 55 && earlyHands >= 10) workOn = { sev: 'r', label: 'Too loose early', desc: 'EP VPIP at ' + epVpip + '%.', action: 'Next session: from UTG/MP, only play top 25% of hands. Fold marginal suited connectors and weak aces from these seats.' };
+    // Sample-aware thresholds for the work-on selector. Pull matrix bands so
+    // each leak fires only when the player is actually outside the expected
+    // range for their table mix.
+    var _workAggFloor = _afBandMG ? _afBandMG.tight - 3 : 15;
+    var _workLimpCeil = _domSeatsMG && _domSeatsMG <= 2 ? 70 : _domSeatsMG && _domSeatsMG <= 3 ? 45 : 22;
+    var _workFtrCeil = _ftrBandMG ? _ftrBandMG.loose + 15 : 70;
+    var _workCbetFloor = _cbetBandMG ? _cbetBandMG.tight - 10 : 25;
+    var _workWtsdCeil = _domSeatsMG && _domSeatsMG <= 2 ? 55 : 50;
+    var _workEpCeil = (function() {
+      if (!_domSeatsMG || _domSeatsMG <= 3) return null; // No EP at HU/3-handed.
+      var b = (typeof matrixTarget === 'function')
+        ? matrixTarget('vpip', 'UTG', _domSeatsMG, getUserStyle()) : null;
+      return b ? b.loose + 5 : 35;
+    })();
+    if (!workOn && aggVal !== null && aggVal < _workAggFloor) workOn = { sev: 'r', label: 'Too Passive', desc: 'Only ' + aggVal + '% aggression - expected floor around ' + Math.round(_workAggFloor) + '%. You check and call when you should be betting for value.', action: 'Next 20 hands: when you have a strong hand, raise instead of calling. Track whether your aggression % moves above ' + Math.round(_workAggFloor + 5) + '%.' };
+    if (!workOn && limpVal !== null && limpVal > _workLimpCeil) workOn = { sev: 'r', label: 'Limping Too Much', desc: 'You limp ' + limpVal + '% of hands at ' + (_domSeatsMG || '?') + '-max (ceiling around ' + _workLimpCeil + '%). Limping gives up initiative.', action: 'Next 20 hands: every time you want to limp, either raise or fold instead. No flat calls preflop without a raise in front.' };
+    if (!workOn && ftrVal !== null && ftrVal > _workFtrCeil && d.facedRaise >= 5) workOn = { sev: 'r', label: 'Folding To Pressure', desc: 'You fold ' + ftrVal + '% when raised - ceiling around ' + Math.round(_workFtrCeil) + '%.', action: 'Next session: when raised, pause and consider if your hand is strong enough to continue. Look for spots to call or re-raise instead of auto-folding.' };
+    if (!workOn && cbetVal !== null && cbetVal < _workCbetFloor && d.cbetOpps >= 5) workOn = { sev: 'r', label: 'Low C-Bet', desc: 'You only c-bet ' + cbetVal + '% - expected floor around ' + Math.round(_workCbetFloor) + '%.', action: 'Next session: when you raised preflop and the flop comes, bet at least half the time regardless of whether you connected. Maintaining aggression wins pots.' };
+    if (!workOn && wtsdVal !== null && wtsdVal > _workWtsdCeil) workOn = { sev: 'r', label: 'Paying Off Too Much', desc: 'WTSD at ' + wtsdVal + '% - ceiling around ' + _workWtsdCeil + '%.', action: 'Next session: on the river facing a big bet, ask whether your hand beats their value range. If not, fold. Saving one big call per session adds up.' };
+    if (!workOn && _workEpCeil && epVpip !== null && epVpip > _workEpCeil && earlyHands >= 10) workOn = { sev: 'r', label: 'Too Loose Early', desc: 'EP VPIP at ' + epVpip + '% - ceiling around ' + _workEpCeil + '%.', action: 'Next session: from UTG/MP, only play top 25% of hands. Fold marginal suited connectors and weak aces from these seats.' };
     if (!workOn && allLeaks.length) workOn = { sev: allLeaks[0].sev, label: allLeaks[0].label, desc: '', action: 'Focus on this pattern in your next session and track whether the stat improves.' };
 
     if (workOn) {
@@ -157,7 +224,7 @@ function renderMyGame(container, d, hands) {
       html += '</div>';
     } else {
       html += '<div class="ins" style="border-left:3px solid var(--green);padding-left:16px;margin:12px 0;">';
-      html += '<div class="ins-badge g"><div class="ins-dot"></div><div class="ins-word">Solid game</div></div>';
+      html += '<div class="ins-badge g"><div class="ins-dot"></div><div class="ins-word">Solid Game</div></div>';
       html += '<div class="ins-text">No major leaks detected from ' + d.n + ' hands. Keep playing to refine the picture.</div>';
       html += '</div>';
     }
@@ -200,7 +267,7 @@ function renderMyGame(container, d, hands) {
         var sessStart = s.startTs ? new Date(s.startTs).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
         var lastHand = s.hands[s.hands.length - 1];
         var sessEnd = (lastHand && lastHand.timestamp) ? new Date(lastHand.timestamp).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
-        var dateLabel = sessStart ? (sessStart === sessEnd ? sessStart : sessStart + ' – ' + sessEnd) : '';
+        var dateLabel = sessStart ? (sessStart === sessEnd ? sessStart : sessStart + ' - ' + sessEnd) : '';
 
         html += '<div style="padding:12px 16px;border:1px solid var(--border);border-radius:8px;">';
         html += '<div class="dim-label mb-12">' + sess.label + '</div>';
@@ -213,7 +280,7 @@ function renderMyGame(container, d, hands) {
 
         if (patterns.length) {
           var frameWord = sess.frame === 'right' ? 'what went right' : 'what went wrong';
-          html += '<div style="font-size:13px;color:var(--dim);margin-top:8px;font-style:italic;">Patterns — ' + frameWord + ':</div>';
+          html += '<div style="font-size:13px;color:var(--dim);margin-top:8px;font-style:italic;">Patterns - ' + frameWord + ':</div>';
           html += '<ul style="margin:4px 0 0 16px;padding:0;">';
           for (var pi2 = 0; pi2 < patterns.length; pi2++) {
             html += '<li style="font-size:13px;color:var(--dim);margin-bottom:4px;">' + patterns[pi2].text + '</li>';
@@ -269,7 +336,7 @@ function _verdict(actual, lo, hi) {
 // Render a "your X% vs target Y-Z% → verdict" row.
 function _vsRow(label, actualPct, actualDenom, targetText) {
   var rng = _parsePctRange(targetText);
-  var actualStr = (actualPct == null) ? '—' : actualPct + '%';
+  var actualStr = (actualPct == null) ? '-' : actualPct + '%';
   var sampleStr = actualDenom != null ? ' <span class="dim-label">(' + actualDenom + ' spots)</span>' : '';
   var v = rng ? _verdict(actualPct, rng[0], rng[1]) : { cls: 'v-na', label: '' };
   return '<div class="dynamics-vs ' + v.cls + '">' +
@@ -282,7 +349,7 @@ function _vsRow(label, actualPct, actualDenom, targetText) {
 // Table Dynamics: compares YOUR actual play (c-bet %, VPIP per position) against
 // the recommended targets for each bucket. Each card carries a clear verdict.
 function renderTableDynamicsReference(hands, d) {
-  var h = '<div class="sec-subtitle mt-20">Table Dynamics — You vs Target</div>';
+  var h = '<div class="sec-subtitle mt-20">Table Dynamics - You vs Target</div>';
   h += '<div class="desc-text mb-16">Your actual play at each table size and flop multiplicity, compared to the recommended benchmarks. <span class="v-ok">Green = on target</span>, <span class="v-low">amber = too low / too tight</span>, <span class="v-high">red = too high / too loose</span>.</div>';
 
   var seatKeys = Object.keys(SEAT_MATRIX).map(Number).sort(function(a, b) { return a - b; });
@@ -317,7 +384,7 @@ function renderTableDynamicsReference(hands, d) {
       var actPct = (pm && pm.hands > 0) ? pct(pm.vpip, pm.hands) : null;
       var rng = _parsePctRange(g.ideal);
       var cls = rng ? _verdict(actPct, rng[0], rng[1]).cls : 'v-na';
-      h += '<tr class="' + cls + '"><td>' + p + '</td><td>' + (actPct != null ? actPct + '%' : '—') + '</td><td class="dim-label">' + g.ideal + '</td><td class="dim-label">' + (pm ? pm.hands : 0) + '</td></tr>';
+      h += '<tr class="' + cls + '"><td>' + p + '</td><td>' + (actPct != null ? actPct + '%' : '-') + '</td><td class="dim-label">' + g.ideal + '</td><td class="dim-label">' + (pm ? pm.hands : 0) + '</td></tr>';
     }
     h += '</tbody></table>';
     h += '</div>';

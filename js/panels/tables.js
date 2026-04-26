@@ -66,14 +66,14 @@ function renderTables(container, hands, allHands, excludedTables, onRerender) {
       var isExcluded = excludedTables.has(String(r.tid));
       tablesHtml += '<tr' + (isExcluded ? ' style="opacity:0.35;"' : '') + '><td>' + r.label + '</td><td class="text-dim" style="font-size:10px;">' + r.blinds + '</td><td>' + r.n + '</td>';
       tablesHtml += '<td style="width:80px;"><span class="tbl-spark" style="width:' + barW + '%;background:var(--gold2);"></span></td>';
-      tablesHtml += '<td class="' + wrCls(r.wr) + '">' + (r.wr !== null ? r.wr + '%' : '—') + '</td>';
+      tablesHtml += '<td class="' + wrCls(r.wr) + '">' + (r.wr !== null ? r.wr + '%' : '-') + '</td>';
       tablesHtml += '<td class="' + pnlCls(r.net) + '">' + fmtPnl(r.net) + '</td>';
-      tablesHtml += '<td>' + (r.vpipP !== null ? r.vpipP + '%' : '—') + '</td>';
-      tablesHtml += '<td>' + (r.aggP !== null ? r.aggP + '%' : '—') + '</td>';
+      tablesHtml += '<td>' + (r.vpipP !== null ? r.vpipP + '%' : '-') + '</td>';
+      tablesHtml += '<td>' + (r.aggP !== null ? r.aggP + '%' : '-') + '</td>';
       var tblAvgPotDisp = r.tid !== 'unknown' && TABLE_META[r.tid]
         ? fmtBB(r.avgPot, TABLE_META[r.tid].bb)
         : fmt(r.avgPot);
-      tablesHtml += '<td class="text-dim">' + (r.avgPot > 0 ? tblAvgPotDisp : '—') + '</td>';
+      tablesHtml += '<td class="text-dim">' + (r.avgPot > 0 ? tblAvgPotDisp : '-') + '</td>';
       tablesHtml += '<td><button class="log-nav-btn exclude-btn exclude-table-btn" data-tid="' + r.tid + '">' + (isExcluded ? 'Include' : 'Exclude') + '</button></td></tr>';
     }
     tablesHtml += '</tbody></table></div></div>';

@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════════════════════════════
-   MOBILE RESPONSIVE — Zero horizontal scroll, everything stacks
+   MOBILE RESPONSIVE - Zero horizontal scroll, everything stacks
    ══════════════════════════════════════════════════════════════ */
 
 /* ── GLOBAL: constrain everything to viewport width ── */
@@ -48,7 +48,7 @@
   .hs-v { font-size: 18px; overflow: hidden; text-overflow: ellipsis; }
   .hs-l { font-size: 10px; letter-spacing: 2px; overflow: hidden; text-overflow: ellipsis; }
 
-  /* Tabs hidden at this width — dropdown is used instead */
+  /* Tabs hidden at this width - dropdown is used instead */
 
   /* Panels: flex column so all content stacks uniformly */
   .panel { padding: 24px 16px; }
@@ -191,7 +191,7 @@
   .hs-v { font-size: 16px; }
   .hs-l { font-size: 9px; letter-spacing: 1.5px; margin-bottom: 3px; }
 
-  /* Tab menus — smaller text on small screens */
+  /* Tab menus - smaller text on small screens */
   .tab-menu-btn { padding: 10px 14px; font-size: 10px; }
   .tab-item { padding: 9px 14px; font-size: 10px; }
 

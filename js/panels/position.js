@@ -20,7 +20,7 @@ function renderPosition(container, d, hands) {
     var avgPotDisplay = _displayBB && s.potBBCount > 0
       ? (s.potBB / s.potBBCount).toFixed(1) + ' BB'
       : fmt(avgPot);
-    return '<tr><td>' + tipWrap(p) + '</td><td>' + s.hands + '</td><td>' + (vp2 !== null ? vp2 + '%' : '—') + '</td><td>' + (fp2 !== null ? fp2 + '%' : '—') + '</td><td>' + (wr2 !== null ? wr2 + '%' : '—') + '</td><td style="color:' + pnlColor(s.pnl) + '">' + fmtPnl(s.pnl) + '</td><td>' + avgPotDisplay + '</td></tr>';
+    return '<tr><td>' + tipWrap(p) + '</td><td>' + s.hands + '</td><td>' + (vp2 !== null ? vp2 + '%' : '-') + '</td><td>' + (fp2 !== null ? fp2 + '%' : '-') + '</td><td>' + (wr2 !== null ? wr2 + '%' : '-') + '</td><td style="color:' + pnlColor(s.pnl) + '">' + fmtPnl(s.pnl) + '</td><td>' + avgPotDisplay + '</td></tr>';
   }).join('');
   posHtml += '</tbody></table></div></div>';
 
@@ -38,40 +38,78 @@ function renderPosition(container, d, hands) {
   var lateGroup = calcPositionGroupVpip(d.posMap, lateH);
   var lvp = lateGroup.vpip, lv = lateGroup.vpipCount, lh = lateGroup.hands;
 
-  if (evp !== null && evp > 55) {
+  // Resolve dominant seat-count once so we can pull matrix bands per zone.
+  var _domSeats = (function() {
+    if (!d || !d.bySeatBucket) return null;
+    var best = null, bestN = 0;
+    for (var sb in d.bySeatBucket) {
+      var sd = d.bySeatBucket[sb];
+      if (!sd || (sd.n || 0) <= bestN) continue;
+      bestN = sd.n;
+      best = parseInt(sb, 10);
+    }
+    return best ? Math.max(2, Math.min(9, best)) : null;
+  })();
+  function _domPos(candidates) {
+    if (!d || !d.byPosition) return candidates[0];
+    var best = null, bestN = 0;
+    for (var p in d.byPosition) {
+      if (candidates.indexOf(p) === -1) continue;
+      var pd = d.byPosition[p];
+      if (!pd || (pd.n || 0) <= bestN) continue;
+      bestN = pd.n;
+      best = p;
+    }
+    return best || candidates[0];
+  }
+  var _epBand = (typeof matrixTarget === 'function' && _domSeats)
+    ? matrixTarget('vpip', _domPos(earlyH), _domSeats, getUserStyle()) : null;
+  var _lpBand = (typeof matrixTarget === 'function' && _domSeats)
+    ? matrixTarget('vpip', _domPos(lateH), _domSeats, getUserStyle()) : null;
+  var _btnBand = (typeof matrixTarget === 'function' && _domSeats)
+    ? matrixTarget('vpip', 'BTN', _domSeats, getUserStyle()) : null;
+
+  // Skip the EP rule entirely for HU/3-handed - those tables don't have EP.
+  var hasEarly = !_domSeats || _domSeats > 3;
+
+  if (hasEarly && evp !== null && _epBand && evp > _epBand.loose + 5) {
     var exEarlyWide = findExampleHand(function(h) {
       return earlyH.indexOf(h.position) >= 0 && parseActions(h.actions).some(function(a) { return a.isMe && (a.type === 'call' || a.type === 'raise') && a.street === 'Preflop'; }) && h.outcome && h.outcome.result !== 'won';
     });
-    pIns.push(insWithExample('r', 'Early Position VPIP', 'Playing ' + evp + '% from UTG/MP. Act first on every street — keep it to top 15–20% of hands here.', [{
+    pIns.push(insWithExample('r', 'Early Position VPIP', 'Playing ' + evp + '% from UTG/MP at ' + _domSeats + '-max. Target band is ' + Math.round(_epBand.tight) + '-' + Math.round(_epBand.loose) + '%.', [{
       v: ev + '/' + eh + ' hands played',
-    }], exEarlyWide, 'This hand was played from early position and lost. From UTG/MP you act first on every street — only play premium hands here.'));
-  } else if (evp !== null) {
+    }], exEarlyWide, 'This hand was played from early position and lost. From UTG/MP you act first on every street - only play premium hands here.'));
+  } else if (hasEarly && evp !== null) {
     pIns.push(ins('g', 'Early Position VPIP', evp + '% from early position. Good discipline where you have the worst information.', [{
       v: ev + '/' + eh + ' hands',
     }]));
   }
-  if (lvp !== null && lvp < 40) {
+  if (lvp !== null && _lpBand && lvp < _lpBand.tight - 2) {
     var exLateTight = findExampleHand(function(h) {
       return lateH.indexOf(h.position) >= 0 && parseActions(h.actions).some(function(a) { return a.isMe && a.type === 'fold' && a.street === 'Preflop'; });
     });
-    pIns.push(insWithExample('a', 'Late Position VPIP', 'Only ' + lvp + '% from CO/BTN — you\'re leaving value behind. Attack the blinds, widen your range here.', [{
+    pIns.push(insWithExample('a', 'Late Position VPIP', 'Only ' + lvp + '% from CO/BTN - leaving value behind. Target band is ' + Math.round(_lpBand.tight) + '-' + Math.round(_lpBand.loose) + '%. Attack the blinds, widen your range here.', [{
       v: lv + '/' + lh + ' hands',
-    }], exLateTight, 'This hand was folded from late position. From CO/BTN you have positional advantage — widen your range to attack the blinds.'));
+    }], exLateTight, 'This hand was folded from late position. From CO/BTN you have positional advantage - widen your range to attack the blinds.'));
   } else if (lvp !== null) {
     pIns.push(ins('g', 'Late Position VPIP', lvp + '% from late position. Good use of positional advantage.', [{
       v: lv + '/' + lh + ' hands',
     }]));
   }
 
-  // BTN VPIP
+  // BTN VPIP - sample-aware threshold, matrix-aware floor.
   var btnP = d.posMap['BTN'];
-  if (btnP && btnP.hands >= 3 && pct(btnP.vpip, btnP.hands) < 40) {
-    var exBtnFold = findExampleHand(function(h) {
-      return h.position === 'BTN' && parseActions(h.actions).some(function(a) { return a.isMe && a.type === 'fold' && a.street === 'Preflop'; });
-    });
-    pIns.push(insWithExample('a', 'Button Range', 'From the button — best position — you only play ' + pct(btnP.vpip, btnP.hands) + '% of hands. Widen to 40–55% here.', [{
-      v: 'BTN VPIP: ' + pct(btnP.vpip, btnP.hands) + '%',
-    }], exBtnFold, 'This hand was folded from the button. You have the best position at the table here — widen your range to exploit positional advantage.'));
+  var minBtnHands = Math.max(5, Math.round(5 * Math.max(1, Math.sqrt(40 / Math.max(1, d.n)))));
+  if (btnP && btnP.hands >= minBtnHands && _btnBand) {
+    var btnVp = pct(btnP.vpip, btnP.hands);
+    if (btnVp !== null && btnVp < _btnBand.tight - 2) {
+      var exBtnFold = findExampleHand(function(h) {
+        return h.position === 'BTN' && parseActions(h.actions).some(function(a) { return a.isMe && a.type === 'fold' && a.street === 'Preflop'; });
+      });
+      pIns.push(insWithExample('a', 'Button Range', 'From the button - best position - you only play ' + btnVp + '%. Target band is ' + Math.round(_btnBand.tight) + '-' + Math.round(_btnBand.loose) + '%.', [{
+        v: 'BTN VPIP: ' + btnVp + '%',
+      }], exBtnFold, 'This hand was folded from the button. You have the best position at the table here - widen your range to exploit positional advantage.'));
+    }
   }
 
   // Position Win Rate Spread

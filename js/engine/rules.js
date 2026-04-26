@@ -1,4 +1,4 @@
-// ── INSIGHT ENGINE: LAYER 1 — RULE COMBINATOR ────────────────────────────────
+// ── INSIGHT ENGINE: LAYER 1 - RULE COMBINATOR ────────────────────────────────
 
 var INSIGHT_RULES = [];
 

@@ -9,6 +9,43 @@ function renderActions(container, d, hands) {
   var caPct = pct(d.calls, actTotal);
   var raPct = pct(d.raises, actTotal);
 
+  // ── Game-context lookups ─────────────────────────────────────────────────
+  // Find the seat-count and flop bucket the player has played most so the
+  // panel's thresholds track table size and board multiplicity.
+  var _domSeats = (function() {
+    if (!d || !d.bySeatBucket) return null;
+    var best = null, bestN = 0;
+    for (var sb in d.bySeatBucket) {
+      var sd = d.bySeatBucket[sb];
+      if (!sd || (sd.n || 0) <= bestN) continue;
+      bestN = sd.n;
+      best = parseInt(sb, 10);
+    }
+    return best ? Math.max(2, Math.min(9, best)) : null;
+  })();
+  var _domFb = (function() {
+    if (!d || !d.byFlopBucket) return null;
+    var keys = ['HU', '3-way', 'multiway'];
+    var best = null, bestN = 0;
+    for (var i = 0; i < keys.length; i++) {
+      var fd = d.byFlopBucket[keys[i]];
+      if (fd && (fd.n || 0) > bestN) { bestN = fd.n; best = keys[i]; }
+    }
+    return best;
+  })();
+  function _band(metric) {
+    if (typeof matrixTarget !== 'function' || !_domSeats) return null;
+    var pos = _domSeats === 2 ? 'BTN' : _domSeats === 3 ? 'BTN' : 'CO';
+    return matrixTarget(metric, pos, _domSeats, getUserStyle());
+  }
+  function _scaleN(base) {
+    if (!d || !d.n) return base;
+    return Math.max(base, Math.round(base * Math.max(1, Math.sqrt(40 / d.n))));
+  }
+  var _aggBand = _band('af');
+  var _cbetBand = _band('cbet');
+  var _ftrBand = _band('foldToRaise');
+
   var actHtml = '<div class="panel-title">Betting</div>';
   actHtml += '<div class="panel-desc">Action frequencies, bet sizing, and situational stats.</div>';
   actHtml += '<div class="p-row">' + renderMiniRow([
@@ -17,7 +54,7 @@ function renderActions(container, d, hands) {
     { l: 'Checks', v: d.checks, c: 'w' },
     { l: 'Calls', v: d.calls, c: 'a' },
     { l: 'Raises', v: d.raises, c: 'g' },
-    { l: 'Aggression', v: aggPct !== null ? aggPct + '%' : '—', c: aggPct > 25 ? 'g' : 'a' },
+    { l: 'Aggression', v: aggPct !== null ? aggPct + '%' : '-', c: aggPct > 25 ? 'g' : 'a' },
   ]) + '</div>';
 
   actHtml += '<div class="p-row">';
@@ -36,7 +73,7 @@ function renderActions(container, d, hands) {
     var ss2 = d.ss[s];
     var tot2 = ss2.f + ss2.ch + ss2.ca + ss2.ra;
     var ap = pct(ss2.ra, tot2);
-    return '<tr><td>' + tipWrap(s) + '</td><td>' + ss2.f + '</td><td>' + ss2.ch + '</td><td>' + ss2.ca + '</td><td>' + ss2.ra + '</td><td>' + (ap !== null ? ap + '%' : '—') + '</td></tr>';
+    return '<tr><td>' + tipWrap(s) + '</td><td>' + ss2.f + '</td><td>' + ss2.ch + '</td><td>' + ss2.ca + '</td><td>' + ss2.ra + '</td><td>' + (ap !== null ? ap + '%' : '-') + '</td></tr>';
   }).join('');
   actHtml += '</tbody></table></div></div>';
 
@@ -46,12 +83,25 @@ function renderActions(container, d, hands) {
 
   function sitStatColour(label, p) {
     if (p === null) return 'o';
+    var fbMod = _domFb === 'HU' ? 5 : _domFb === 'multiway' ? -10 : 0;
     switch (label) {
-      case 'C-Bet': return p >= 60 ? 'g' : p >= 40 ? 'o' : 'r';
+      case 'C-Bet': {
+        var hi = _cbetBand ? _cbetBand.ideal + fbMod : 60;
+        var lo = _cbetBand ? _cbetBand.tight + fbMod : 40;
+        return p >= hi ? 'g' : p >= lo ? 'o' : 'r';
+      }
       case 'Delayed C-Bet': return p >= 30 ? 'g' : 'o';
       case 'Donk Bet': return p > 30 ? 'a' : 'o';
-      case 'Fold to C-Bet': return p > 70 ? 'r' : p > 50 ? 'a' : 'g';
-      case 'Fold to 3-Bet': return p > 70 ? 'r' : p > 50 ? 'a' : 'g';
+      case 'Fold to C-Bet': {
+        var ceil = _ftrBand ? _ftrBand.loose + 15 + (_domFb === 'multiway' ? 5 : -5) : 70;
+        var soft = _ftrBand ? _ftrBand.ideal + 10 : 50;
+        return p > ceil ? 'r' : p > soft ? 'a' : 'g';
+      }
+      case 'Fold to 3-Bet': {
+        var ceil3 = _domSeats <= 2 ? 55 : _domSeats <= 4 ? 60 : 70;
+        var soft3 = _domSeats <= 2 ? 40 : _domSeats <= 4 ? 45 : 50;
+        return p > ceil3 ? 'r' : p > soft3 ? 'a' : 'g';
+      }
       case 'Fold to 4-Bet': return p > 80 ? 'a' : 'o';
       default: return 'o';
     }
@@ -72,7 +122,7 @@ function renderActions(container, d, hands) {
     var p = pct(s.done, s.opps);
     var cls = sitStatColour(s.label, p);
     var labelHtml = tipWrap(s.label);
-    actHtml += barRow(labelHtml, p || 0, 100, cls, (p !== null ? p + '%' : '—'), s.done + '/' + s.opps + ' spots');
+    actHtml += barRow(labelHtml, p || 0, 100, cls, (p !== null ? p + '%' : '-'), s.done + '/' + s.opps + ' spots');
   }
 
   actHtml += '</div></div>';
@@ -90,33 +140,37 @@ function renderActions(container, d, hands) {
       v: 'Raise: ' + raPct + '%',
     }], exCallHeavy, 'This hand was called when a raise could have taken down the pot or extracted more value. Passive play lets draws get there for free.'));
   }
-  if (aggPct !== null && aggPct < 15) {
+  var _aggLow = _aggBand ? _aggBand.tight - 3 : 15;
+  var _aggHigh = _aggBand ? _aggBand.loose + 3 : 40;
+  if (aggPct !== null && aggPct < _aggLow) {
     var exLowAgg = findExampleHand(function (h) {
       var ma = getHeroActions(h);
       return ma.some(function (a) { return a.type === 'call'; }) && !ma.some(function (a) { return a.type === 'raise' || a.type === 'bet'; });
     });
-    aIns.push(insWithExample('r', 'Low Aggression', 'Only ' + aggPct + '% aggression. Strong hands need to be bet, not called.', [{
+    aIns.push(insWithExample('r', 'Low Aggression', 'Only ' + aggPct + '% aggression - expected floor around ' + Math.round(_aggLow) + '%. Strong hands need to be bet, not called.', [{
       v: d.raises + ' raises from ' + actTotal + ' actions',
     }], exLowAgg, 'Only ' + aggPct + '% of actions are raises. Strong hands need to be bet for value. Checking and calling lets opponents draw cheaply and control the pot size.'));
-  } else if (aggPct !== null && aggPct <= 40) {
+  } else if (aggPct !== null && aggPct <= _aggHigh) {
     var exGoodAgg = findExampleHand(function (h) {
       return parseActions(h.actions).some(function (a) { return a.isMe && (a.type === 'raise' || a.type === 'bet'); });
     });
-    aIns.push(insWithExample('g', 'Aggression', aggPct + '% raise frequency is solid. Taking initiative without overdoing it.', [{
+    aIns.push(insWithExample('g', 'Aggression', aggPct + '% raise frequency is inside the expected band. Taking initiative without overdoing it.', [{
       v: d.raises + ' raises',
-    }], exGoodAgg, 'A well-timed raise like this one puts opponents on the defensive. Your aggression level is in a healthy range — enough to take initiative without overbluffing.'));
+    }], exGoodAgg, 'A well-timed raise like this one puts opponents on the defensive. Your aggression level is in a healthy range - enough to take initiative without overbluffing.'));
   } else if (aggPct !== null) {
     var exHighAgg = findExampleHand(function (h) {
       var ma = getHeroActions(h);
       return ma.filter(function (a) { return a.type === 'raise' || a.type === 'bet'; }).length >= 2;
     });
-    aIns.push(insWithExample('a', 'High Aggression', aggPct + '% is high. Be careful,  bluff raises cost real money.', [{
+    aIns.push(insWithExample('a', 'High Aggression', aggPct + '% is high - expected ceiling around ' + Math.round(_aggHigh) + '%. Bluff raises cost real money against players who call wide.', [{
       v: d.raises + ' raises',
-    }], exHighAgg, 'Multiple raises in this hand illustrate your aggressive tendencies. In situations where players call wide, each bluff raise is more likely to get looked up — save aggression for strong holdings.'));
+    }], exHighAgg, 'Multiple raises in this hand illustrate your aggressive tendencies. In situations where players call wide, each bluff raise is more likely to get looked up - save aggression for strong holdings.'));
   }
-  if (d.faced3bet >= 3) {
+  var _f3Min = _scaleN(3);
+  if (d.faced3bet >= _f3Min) {
     var f3 = pct(d.fold3bet, d.faced3bet);
-    if (f3 > 70) {
+    var _f3Ceil = _domSeats <= 2 ? 55 : _domSeats <= 4 ? 60 : 70;
+    if (f3 > _f3Ceil) {
       var ex3bet = findExampleHand(function (h) {
         var acts = parseActions(h.actions);
         var rc = 0;
@@ -127,13 +181,14 @@ function renderActions(container, d, hands) {
         }
         return false;
       });
-      aIns.push(insWithExample('r', '3-Bet Response', 'Folding to 3-bets ' + f3 + '% of the time. In TC players 3-bet light, so consider calling more with strong hands.', [{
+      aIns.push(insWithExample('r', '3-Bet Response', 'Folding to 3-bets ' + f3 + '% of the time at ' + (_domSeats || '?') + '-max - ceiling around ' + _f3Ceil + '%. Defend wider with strong hands.', [{
         v: d.fold3bet + '/' + d.faced3bet + ' situations',
       }], ex3bet, 'You folded here facing a 3-bet. Many 3-bets are light. With a decent holding, calling can be profitable given how often opponents are bluffing or semi-bluffing.'));
     }
   }
   // All-in insights
-  if (d.facedAllin >= 2) {
+  var _aiMin = _scaleN(2);
+  if (d.facedAllin >= _aiMin) {
     var afp = pct(d.foldAllin, d.facedAllin);
     var awp = pct(d.wonAllin, d.callAllin);
     if (afp > 75 && awp !== null && awp > 60) {
@@ -145,7 +200,7 @@ function renderActions(container, d, hands) {
         v: d.callAllin + ' calls, ' + d.wonAllin + ' won',
       }], exAllinFold, 'You folded to an all-in here. Given your high win rate when calling (' + awp + '%), you may be folding too many hands with good equity against all-in ranges.'));
     } else {
-      aIns.push(ins('n', 'All-in Profile', 'Fold rate: ' + afp + '%. Win rate when calling: ' + (awp !== null ? awp + '%' : '—') + '.', [{
+      aIns.push(ins('n', 'All-in Profile', 'Fold rate: ' + afp + '%. Win rate when calling: ' + (awp !== null ? awp + '%' : '-') + '.', [{
         v: d.facedAllin + ' situations',
       }]));
     }
@@ -191,7 +246,7 @@ function renderActions(container, d, hands) {
   }).filter(function (r) { return Math.abs(r.diff) > 10; });
   if (aggVsPassInsights.length > 0) {
     var best2 = aggVsPassInsights.sort(function (a, b) { return b.diff - a.diff; })[0];
-    aIns.push(ins(best2.diff > 0 ? 'g' : 'a', 'Aggression x Win Rate (' + best2.street + ')', 'When you raise on the ' + best2.street.toLowerCase() + ', you win ' + best2.aggWr + '% vs ' + best2.passWr + '% when passive. ' + (best2.diff > 0 ? 'Aggression pays off here.' : 'Passive play performs better — opponents may be calling your bluffs.'), [
+    aIns.push(ins(best2.diff > 0 ? 'g' : 'a', 'Aggression x Win Rate (' + best2.street + ')', 'When you raise on the ' + best2.street.toLowerCase() + ', you win ' + best2.aggWr + '% vs ' + best2.passWr + '% when passive. ' + (best2.diff > 0 ? 'Aggression pays off here.' : 'Passive play performs better - opponents may be calling your bluffs.'), [
       { v: 'Aggressive: ' + best2.aggWr + '%', hi: best2.diff > 0 },
       { v: 'Passive: ' + best2.passWr + '%' },
     ]));
@@ -224,7 +279,7 @@ function renderActions(container, d, hands) {
       if (!bo || !bo.t) return null;
       var fp2 = pct(bo.b, bo.t);
       var cls2 = fp2 < 25 ? 'r' : fp2 > 65 ? 'a' : 'g';
-      return barRow(s, fp2 || 0, 100, cls2, (fp2 !== null ? fp2 + '%' : '—'), bo.b + '/' + bo.t + ' opps');
+      return barRow(s, fp2 || 0, 100, cls2, (fp2 !== null ? fp2 + '%' : '-'), bo.b + '/' + bo.t + ' opps');
     }).filter(Boolean).join('') + '</div></div>';
   actHtml += '</div></div>';
 
@@ -235,9 +290,9 @@ function renderActions(container, d, hands) {
       return parseActions(h.actions).some(function(a) { return a.isMe && a.street === 'Flop' && (a.type === 'raise' || a.type === 'bet'); });
     });
     var flopDisp = fmtAvgAmount(d.betAmts.Flop, d.betAmtsBB ? d.betAmtsBB.Flop : []);
-    aIns.push(insWithExample('o', 'Flop Sizing', 'Average flop bet: ' + flopDisp + '. In TC, aim for 60–80% of pot. Everyone calls so bet for maximum value.', [{
+    aIns.push(insWithExample('o', 'Flop Sizing', 'Average flop bet: ' + flopDisp + '. In TC, aim for 60-80% of pot. Everyone calls so bet for maximum value.', [{
       v: 'Avg: ' + flopDisp, hi: true,
-    }], exFlopBet, 'This hand shows your typical flop bet sizing. In TC where players call wide, sizing between 60–80% of pot extracts maximum value from weaker hands chasing draws.'));
+    }], exFlopBet, 'This hand shows your typical flop bet sizing. In TC where players call wide, sizing between 60-80% of pot extracts maximum value from weaker hands chasing draws.'));
   }
   if (d.avgBetTurn > 0) {
     var bigger = d.avgBetTurn >= d.avgBetFlop;
@@ -247,9 +302,9 @@ function renderActions(container, d, hands) {
     });
     var turnDisp = fmtAvgAmount(d.betAmts.Turn, d.betAmtsBB ? d.betAmtsBB.Turn : []);
     var flopDispT = fmtAvgAmount(d.betAmts.Flop, d.betAmtsBB ? d.betAmtsBB.Flop : []);
-    aIns.push(insWithExample(bigger ? 'g' : 'a', 'Turn Sizing', bigger ? 'Turn bets (' + turnDisp + ') larger than flop — correct as the pot grows.' : 'Turn bets (' + turnDisp + ') smaller than flop (' + flopDispT + '). Size up on the turn.', [{
+    aIns.push(insWithExample(bigger ? 'g' : 'a', 'Turn Sizing', bigger ? 'Turn bets (' + turnDisp + ') larger than flop - correct as the pot grows.' : 'Turn bets (' + turnDisp + ') smaller than flop (' + flopDispT + '). Size up on the turn.', [{
       v: 'Avg: ' + turnDisp, hi: true,
-    }], exTurnBet, bigger ? 'Good turn sizing here — increasing your bet as the pot grows puts maximum pressure on drawing hands and builds value.' : 'Your turn bet here was smaller than your flop bet. As the pot grows, your bets should scale up to charge opponents for chasing.'));
+    }], exTurnBet, bigger ? 'Good turn sizing here - increasing your bet as the pot grows puts maximum pressure on drawing hands and builds value.' : 'Your turn bet here was smaller than your flop bet. As the pot grows, your bets should scale up to charge opponents for chasing.'));
   }
   if (d.avgBetRiver > 0) {
     var exRiverBet = findExampleHand(function(h) {
@@ -258,20 +313,22 @@ function renderActions(container, d, hands) {
       return parseActions(h.actions).some(function(a) { return a.isMe && a.street === 'River' && (a.type === 'raise' || a.type === 'bet'); });
     });
     var riverDisp = fmtAvgAmount(d.betAmts.River, d.betAmtsBB ? d.betAmtsBB.River : []);
-    aIns.push(insWithExample('o', 'River Sizing', 'Average river bet: ' + riverDisp + '. The river is where you get paid — bet big with the best hand.', [{
+    aIns.push(insWithExample('o', 'River Sizing', 'Average river bet: ' + riverDisp + '. The river is where you get paid - bet big with the best hand.', [{
       v: 'Avg: ' + riverDisp, hi: true,
-    }], exRiverBet, 'This winning hand shows the river paying off. Size up with strong hands — TC players will call with second-best hands more often than they should.'));
+    }], exRiverBet, 'This winning hand shows the river paying off. Size up with strong hands - TC players will call with second-best hands more often than they should.'));
   }
   var fbo = d.betOpps['Flop'];
-  if (fbo && fbo.t >= 3 && pct(fbo.b, fbo.t) < 30) {
+  var _flopBetMin = _scaleN(3);
+  var _flopBetFloor = _cbetBand ? _cbetBand.tight + (_domFb === 'HU' ? 10 : _domFb === 'multiway' ? -10 : 0) - 5 : 30;
+  if (fbo && fbo.t >= _flopBetMin && pct(fbo.b, fbo.t) < _flopBetFloor) {
     var exFlopPassive = findExampleHand(function(h) {
       if (!h.board || h.board.length < 3) return false;
       var ma2 = parseActions(h.actions).filter(function(a) { return a.isMe && a.street === 'Flop'; });
       return ma2.some(function(a) { return a.type === 'check' || a.type === 'call'; }) && !ma2.some(function(a) { return a.type === 'raise' || a.type === 'bet'; });
     });
-    aIns.push(insWithExample('r', 'Flop Passivity', 'Only betting the flop ' + pct(fbo.b, fbo.t) + '% of the time. Checking strong hands gives free cards to draws.', [{
+    aIns.push(insWithExample('r', 'Flop Passivity', 'Only betting the flop ' + pct(fbo.b, fbo.t) + '% of the time - expected floor around ' + Math.round(_flopBetFloor) + '%. Checking strong hands gives free cards to draws.', [{
       v: fbo.b + '/' + fbo.t + ' opportunities',
-    }], exFlopPassive, 'On this flop you checked or called instead of betting. Betting puts opponents on the defensive and charges draws. In TC where players call wide, you want to be the one setting the price.'));
+    }], exFlopPassive, 'On this flop you checked or called instead of betting. Betting puts opponents on the defensive and charges draws. Set the price for your value hands.'));
   }
 
   // Append engine insights (rules + patterns) to legacy insights

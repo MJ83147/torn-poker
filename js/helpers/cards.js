@@ -4,7 +4,7 @@
 const RANKS = ['2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A'];
 const SUITS = ['\u2660', '\u2665', '\u2666', '\u2663'];
 
-// Suit mappings — single source of truth for all card formatting
+// Suit mappings - single source of truth for all card formatting
 var SUIT_WORD = {
   'diamonds': '♦', 'hearts': '♥', 'spades': '♠', 'clubs': '♣',
   'diamond': '♦', 'heart': '♥', 'spade': '♠', 'club': '♣'

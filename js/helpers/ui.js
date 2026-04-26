@@ -179,8 +179,7 @@ function renderResult(h, tag, baseClass) {
   return '<' + tag + ' class="' + baseClass + ' ' + pnl.cls + '">' + pnl.text + '</' + tag + '>';
 }
 
-// Render the three-axis table-dynamics chips for a hand:
-//   seats · flop-bucket · BB depth (colored by stackBucket).
+// Render the table-dynamics chips for a hand: seats · flop-bucket.
 // Returns '' if the hand hasn't been annotated yet (e.g. called before analyse()).
 function handTagsHtml(h) {
   if (!h || !h.seatBucket) return '';
@@ -188,11 +187,6 @@ function handTagsHtml(h) {
   parts.push('<span class="ht-tag ht-seat">' + h.seatBucket + '</span>');
   if (h.flopBucket) {
     parts.push('<span class="ht-tag ht-flop ht-flop-' + h.flopBucket.replace('-', '_') + '">' + h.flopBucket + '</span>');
-  }
-  if (h.effStackBB != null && h.stackBucket && h.stackBucket !== 'unknown') {
-    parts.push('<span class="ht-tag ht-stack ht-stack-' + h.stackBucket + '">' + h.effStackBB + ' BB</span>');
-  } else if (h.stackBucket === 'unknown') {
-    parts.push('<span class="ht-tag ht-stack ht-stack-unknown">? BB</span>');
   }
   return '<span class="ht-tags">' + parts.join('') + '</span>';
 }
@@ -209,7 +203,7 @@ function renderHandRow(h, idx, opts) {
     '<td class="hrow-pos">' + (h.position || '?') + '</td>' +
     '<td class="hrow-cards">' + (h.hole && h.hole.length ? h.hole.join(' ') : '?? ??') + '</td>' +
     '<td class="hrow-tags">' + tags + '</td>' +
-    '<td class="hrow-board">' + (h.board && h.board.length ? h.board.join(' ') : '—') + '</td>' +
+    '<td class="hrow-board">' + (h.board && h.board.length ? h.board.join(' ') : '-') + '</td>' +
     '<td class="hrow-pot">' + fmtBB(h.pot || 0, getHandBB(h)) + '</td>' +
     '<td class="hrow-acts">' + myActs + '</td>' +
     res + '</tr>';

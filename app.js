@@ -56,8 +56,78 @@ function checkSavedSession() {
   });
 }
 
+// Render the header "You: <current> -> Target: <target>" display, with an
+// inline picker that lets the user swap the target playstyle.
+function _renderStyleDisplay(d) {
+  var host = document.getElementById('style-display');
+  if (!host) return;
+  var current = (typeof detectCurrentStyle === 'function' && d) ? detectCurrentStyle(d).name : null;
+  var target = (typeof getTargetStyle === 'function') ? getTargetStyle() : 'TAG';
+
+  var styles = ['TAG', 'LAG', 'Nit', 'Station', 'Maniac'];
+  var optionsHtml = '';
+  for (var i = 0; i < styles.length; i++) {
+    var s = styles[i];
+    optionsHtml += '<option value="' + s + '"' + (s === target ? ' selected' : '') + '>' + s + '</option>';
+  }
+
+  var youLabel = current ? current : '?';
+  host.innerHTML = '<span class="sd-you-label">You:</span>' +
+    '<span class="sd-you-val">' + youLabel + '</span>' +
+    '<span class="sd-arrow">&rarr;</span>' +
+    '<span class="sd-target-label">Target:</span>' +
+    '<select class="sd-target-pick" id="sd-target-pick">' + optionsHtml + '</select>';
+
+  var picker = host.querySelector('#sd-target-pick');
+  if (picker) {
+    picker.onchange = function() {
+      if (typeof setUserStyle === 'function') setUserStyle(this.value);
+      InsightEngine._cacheKey = null;
+      renderAll();
+    };
+  }
+}
+
+// First-time welcome screen guard. Returns true when the welcome screen was
+// shown (caller must NOT proceed to dashboard render).
+function _maybeShowStyleWelcome(d, hands, meta) {
+  var existing = null;
+  try { existing = localStorage.getItem('tc_user_style'); } catch (_) {}
+  if (existing) return false;
+
+  var welcomeHost = document.getElementById('style-welcome-host');
+  if (!welcomeHost) {
+    welcomeHost = document.createElement('div');
+    welcomeHost.id = 'style-welcome-host';
+    document.body.appendChild(welcomeHost);
+  }
+  welcomeHost.style.display = 'block';
+
+  // Hide dashboard / paste while welcome is up.
+  document.getElementById('paste-wrap').style.display = 'none';
+  document.getElementById('upload-wrap').style.display = 'none';
+  document.getElementById('dash').classList.remove('on');
+
+  if (typeof renderStyleWelcome === 'function') {
+    renderStyleWelcome(welcomeHost, d, hands, meta, function(/* picked */) {
+      welcomeHost.style.display = 'none';
+      welcomeHost.innerHTML = '';
+      // Force engine re-cache (style affects targets) and render dashboard.
+      InsightEngine._cacheKey = null;
+      _renderDashboard(d, hands, meta);
+    });
+  }
+  return true;
+}
+
 // ── MAIN RENDER (orchestrator) ──────────────────────────────────────────────
 function render(d, hands, meta) {
+  // First-time users see the style welcome screen instead of the dashboard.
+  if (_maybeShowStyleWelcome(d, hands, meta)) return;
+  _renderDashboard(d, hands, meta);
+}
+
+function _renderDashboard(d, hands, meta) {
   var activeTab = document.querySelector('.tab.active');
   var activeTabId = activeTab ? activeTab.dataset.tab : null;
 
@@ -79,11 +149,11 @@ function render(d, hands, meta) {
     : '';
   document.getElementById('hero-strip').innerHTML = [
     { l: 'Hands', v: d.n, c: 'o' },
-    { l: 'Win Rate', v: c.wr !== null ? c.wr + '%' : '—', c: c.wr >= 50 ? 'g' : 'r' },
+    { l: 'Win Rate', v: c.wr !== null ? c.wr + '%' : '-', c: c.wr >= 50 ? 'g' : 'r' },
     { l: 'Net P&L', v: fmtPnl(c.netPnl), c: c.netPnl >= 0 ? 'g' : 'r' },
-    { l: 'VPIP', v: c.vpipPct !== null ? c.vpipPct + '%' : '—', c: c.vpipPct > 55 ? 'a' : 'w' },
-    { l: 'Aggression', v: c.agg !== null ? c.agg + '%' : '—', c: c.agg > 25 ? 'g' : 'a' },
-    { l: 'vs All-in', v: c.allinFold !== null ? c.allinFold + '% fold' : '—', c: 'w' },
+    { l: 'VPIP', v: c.vpipPct !== null ? c.vpipPct + '%' : '-', c: c.vpipPct > 55 ? 'a' : 'w' },
+    { l: 'Aggression', v: c.agg !== null ? c.agg + '%' : '-', c: c.agg > 25 ? 'g' : 'a' },
+    { l: 'vs All-in', v: c.allinFold !== null ? c.allinFold + '% fold' : '-', c: 'w' },
   ].map(function (h) { return '<div class="hs"><div class="hs-l dim-label">' + tipWrap(h.l) + '</div><div class="hs-v serif-value ' + h.c + '">' + h.v + '</div></div>'; }).join('');
   var noteEl = document.getElementById('sample-note');
   if (noteEl) noteEl.innerHTML = sampleNote;
@@ -122,6 +192,11 @@ function render(d, hands, meta) {
   renderAllIn(document.getElementById('p-allin'), hands);
   renderPlayers(document.getElementById('p-players'), d, hands);
   renderMyGame(document.getElementById('p-mygame'), d, hands);
+  if (typeof renderStyleMap === 'function') {
+    var smHost = document.getElementById('p-styleMap');
+    if (smHost) renderStyleMap(smHost, d, hands);
+  }
+  _renderStyleDisplay(d);
 
   // Filter banners (cross-cutting)
   var filterEl = document.getElementById('table-filter');
@@ -136,7 +211,7 @@ function render(d, hands, meta) {
   }
   if (bannerParts.length) {
     var bannerHtml = '<div class="filter-banner">Showing stats for ' + bannerParts.join(' · ') + '</div>';
-    ['p-welcome', 'p-mygame', 'p-leaks', 'p-cards', 'p-position', 'p-street', 'p-actions', 'p-bets', 'p-range', 'p-trends', 'p-showdown', 'p-log', 'p-allin', 'p-players', 'p-compare'].forEach(function (id) {
+    ['p-welcome', 'p-mygame', 'p-leaks', 'p-cards', 'p-position', 'p-street', 'p-actions', 'p-bets', 'p-range', 'p-trends', 'p-showdown', 'p-log', 'p-allin', 'p-players', 'p-compare', 'p-styleMap'].forEach(function (id) {
       var el = document.getElementById(id);
       if (el) el.insertAdjacentHTML('afterbegin', bannerHtml);
     });
@@ -164,17 +239,7 @@ function render(d, hands, meta) {
     document.getElementById('players-filter').value = v;
   };
 
-  // Style picker — drives matrix targets in the layered-verdict engine.
-  var stylePicker = document.getElementById('style-picker');
-  if (stylePicker) {
-    if (typeof getUserStyle === 'function') stylePicker.value = getUserStyle();
-    stylePicker.onchange = function () {
-      if (typeof setUserStyle === 'function') setUserStyle(this.value);
-      // Force fresh narrative + verdict cache by invalidating the engine key.
-      InsightEngine._cacheKey = null;
-      renderAll();
-    };
-  }
+  // Style-display in header is wired via _renderStyleDisplay() above.
 
   // Reset button
   document.getElementById('reset-btn').onclick = function () {
@@ -392,9 +457,9 @@ function finishUpload(results) {
   for (var i = 0; i < results.length; i++) {
     var r = results[i];
     if (r.error) {
-      html += '<div class="desc-text" style="color:var(--red);margin-bottom:6px;">' + r.name + ' — error: ' + r.error + '</div>';
+      html += '<div class="desc-text" style="color:var(--red);margin-bottom:6px;">' + r.name + ' - error: ' + r.error + '</div>';
     } else if (r.count === 0) {
-      html += '<div class="desc-text" style="color:var(--muted);margin-bottom:6px;">' + r.name + ' — no valid hands found</div>';
+      html += '<div class="desc-text" style="color:var(--muted);margin-bottom:6px;">' + r.name + ' - no valid hands found</div>';
     } else {
       html += '<div class="desc-text" style="margin-bottom:6px;"><strong style="color:var(--gold);">' + r.count + '</strong> hands from ' + r.name + '</div>';
       _uploadedHands = _uploadedHands.concat(r.hands);

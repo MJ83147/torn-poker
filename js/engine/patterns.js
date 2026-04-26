@@ -1,4 +1,4 @@
-// ── INSIGHT ENGINE: LAYER 2 — PATTERN DETECTOR ──────────────────────────────
+// ── INSIGHT ENGINE: LAYER 2 - PATTERN DETECTOR ──────────────────────────────
 
 var PATTERN_DIMENSIONS = [
   {
@@ -62,46 +62,75 @@ var PATTERN_DIMENSIONS = [
   }
 ];
 
+// Each metric carries a baseline threshold (used as the floor) and a hard
+// minimum-N gate. The actual trigger threshold is scaled up when the smaller
+// segment is below 40 hands so noisy splits don't fire spurious patterns.
 var PATTERN_METRICS = [
   {
     id: 'win-rate',
     label: 'win rate',
     extract: function(d) { return pct(d.handsWon, d.handsWithOutcome); },
     unit: '%',
-    threshold: 15,
-    minN: 15
+    baseThreshold: 12,
+    minN: 30,
+    implication: function(higher, lower, sign) {
+      return 'You\'re winning more often in ' + higher + ' than in ' + lower + ' - keep doing what works there and look for what changes between segments.';
+    }
   },
   {
     id: 'vpip',
     label: 'VPIP',
     extract: function(d) { return pct(d.vpip, d.n); },
     unit: '%',
-    threshold: 12,
-    minN: 15
+    baseThreshold: 10,
+    minN: 20,
+    implication: function(higher, lower, sign) {
+      return 'You enter more pots in ' + higher + ' - make sure the wider range isn\'t bleeding chips on missed flops.';
+    }
   },
   {
     id: 'aggression',
     label: 'aggression',
     extract: function(d) { return calcAggression(d.raises, d.calls, d.checks); },
     unit: '%',
-    threshold: 10,
-    minN: 15
+    baseThreshold: 8,
+    minN: 20,
+    implication: function(higher, lower, sign) {
+      return 'You bet and raise more in ' + higher + ' - match that initiative in ' + lower + ' if the spots warrant it.';
+    }
+  },
+  {
+    id: 'pfr',
+    label: 'PFR',
+    extract: function(d) { return pct(d.pfrHands, d.n); },
+    unit: '%',
+    baseThreshold: 8,
+    minN: 20,
+    implication: function(higher, lower, sign) {
+      return 'You raise preflop more often in ' + higher + ' - your initiative shifts between segments.';
+    }
   },
   {
     id: 'cbet',
     label: 'c-bet rate',
     extract: function(d) { return pct(d.cbetDone, d.cbetOpps); },
     unit: '%',
-    threshold: 15,
-    minN: 8
+    baseThreshold: 12,
+    minN: 15,
+    implication: function(higher, lower, sign) {
+      return 'You follow up the flop more often in ' + higher + ' - failing to fire in ' + lower + ' gives up initiative.';
+    }
   },
   {
     id: 'fold-to-raise',
     label: 'fold-to-raise',
     extract: function(d) { return pct(d.foldedToRaise, d.facedRaise); },
     unit: '%',
-    threshold: 15,
-    minN: 8
+    baseThreshold: 12,
+    minN: 10,
+    implication: function(higher, lower, sign) {
+      return 'You fold to raises more in ' + higher + ' - opponents who notice can press you off pots cheaply there.';
+    }
   }
 ];
 
@@ -143,6 +172,7 @@ function detectPatterns(d, hands) {
         for (var mi = 0; mi < PATTERN_METRICS.length; mi++) {
           var metric = PATTERN_METRICS[mi];
 
+          // Hard minimum-N gate per metric - both segments must clear it.
           if (dA.n < metric.minN || dB.n < metric.minN) continue;
 
           var valA = metric.extract(dA);
@@ -153,7 +183,12 @@ function detectPatterns(d, hands) {
           var diff = valA - valB;
           var absDiff = Math.abs(diff);
 
-          if (absDiff < metric.threshold) continue;
+          // Dynamic trigger: scale the base threshold up when the smaller
+          // segment is small. Floor at base so big samples never relax.
+          var smallerN = Math.min(dA.n, dB.n);
+          var dynamicThresh = metric.baseThreshold * Math.max(1, Math.sqrt(40 / smallerN));
+
+          if (absDiff < dynamicThresh) continue;
 
           var overall = metric.extract(d);
           var significance = overall !== null && overall !== 0
@@ -169,8 +204,12 @@ function detectPatterns(d, hands) {
           var higherN = diff > 0 ? dA.n : dB.n;
           var lowerN = diff > 0 ? dB.n : dA.n;
 
-          var patSev = absDiff > metric.threshold * 2 ? 'r' : 'a';
+          var patSev = absDiff > dynamicThresh * 2 ? 'r' : 'a';
           var patScore = absDiff * significance * Math.min(higherN, lowerN) / 20;
+
+          var implication = typeof metric.implication === 'function'
+            ? metric.implication(higherLabel, lowerLabel, diff > 0 ? 1 : -1)
+            : '';
 
           patterns.push({
             id: 'pat-' + dim.id + '-' + metric.id,
@@ -180,11 +219,11 @@ function detectPatterns(d, hands) {
             tags: [dim.id, metric.id, 'pattern', 'auto-detected'],
             sev: patSev,
             score: patScore,
-            label: metric.label + ' gap: ' + higherLabel + ' vs ' + lowerLabel,
+            label: _titleCase(metric.label) + ' Gap: ' + higherLabel + ' Vs ' + lowerLabel,
             text: 'Your ' + metric.label + ' is ' + higherVal + metric.unit +
                   ' in ' + higherLabel + ' (' + higherN + ' hands) vs ' +
                   lowerVal + metric.unit + ' in ' + lowerLabel +
-                  ' (' + lowerN + ' hands). A ' + absDiff + '-point gap.',
+                  ' (' + lowerN + ' hands). ' + implication,
             chips: [
               { v: higherLabel + ': ' + higherVal + metric.unit, hi: true },
               { v: lowerLabel + ': ' + lowerVal + metric.unit }
@@ -211,4 +250,16 @@ function detectPatterns(d, hands) {
   }
 
   return deduped;
+}
+
+// Title-case a multi-word label, preserving hyphens. "fold-to-raise" →
+// "Fold-To-Raise"; "win rate" → "Win Rate".
+function _titleCase(s) {
+  if (!s) return s;
+  return String(s).split(' ').map(function(word) {
+    return word.split('-').map(function(part) {
+      if (!part) return part;
+      return part.charAt(0).toUpperCase() + part.slice(1);
+    }).join('-');
+  }).join(' ');
 }

@@ -1,5 +1,59 @@
 // ── WELCOME PANEL ─────────────────────────────────────────────────────────────
 
+// First-time welcome screen: shown before the user has picked a target style.
+// Replaces the dashboard until a target style is chosen.
+//
+//   container - element to render into (full-screen overlay or panel)
+//   d         - analyse() output for the loaded session
+//   hands     - hand list
+//   meta      - { player, exportedAt }
+//   onPicked  - callback(styleName) invoked when the user picks a target style
+function renderStyleWelcome(container, d, hands, meta, onPicked) {
+  if (!container) return;
+
+  var detected = (typeof detectCurrentStyle === 'function')
+    ? detectCurrentStyle(d)
+    : { name: 'Shark', reason: '', confidence: 'low' };
+
+  var targetCards = [
+    { key: 'TAG',     name: 'TAG',     desc: 'Tight-aggressive. The default winning style. Few hands, played hard.' },
+    { key: 'LAG',     name: 'LAG',     desc: 'Loose-aggressive. Wider ranges with relentless pressure.' },
+    { key: 'Nit',     name: 'Nit',     desc: 'Extremely tight. Premium hands only. Hard to bluff.' },
+    { key: 'Station', name: 'Station', desc: 'Loose-passive. Plenty of hands but rarely raises.' },
+    { key: 'Maniac',  name: 'Maniac',  desc: 'Hyper-aggressive. Raises everything, high variance.' }
+  ];
+
+  var html = '';
+  html += '<div class="style-welcome">';
+  html += '<div class="style-welcome-inner">';
+  html += '<div class="style-welcome-eyebrow">' + (meta && meta.player ? 'Welcome, ' + meta.player : 'Welcome') + '</div>';
+  html += '<div class="style-welcome-headline">You play like a ' + detected.name + '.</div>';
+  html += '<div class="style-welcome-sub">' + (detected.reason || '') + '</div>';
+  html += '<div class="style-welcome-prompt">Pick the style you want to target:</div>';
+  html += '<div class="style-welcome-cards">';
+  for (var i = 0; i < targetCards.length; i++) {
+    var c = targetCards[i];
+    html += '<button type="button" class="style-card" data-style="' + c.key + '">';
+    html += '<div class="style-card-name">' + c.name + '</div>';
+    html += '<div class="style-card-desc">' + c.desc + '</div>';
+    html += '</button>';
+  }
+  html += '</div>';
+  html += '</div>';
+  html += '</div>';
+
+  container.innerHTML = html;
+
+  var cards = container.querySelectorAll('.style-card');
+  cards.forEach(function(card) {
+    card.addEventListener('click', function() {
+      var style = this.getAttribute('data-style');
+      if (typeof setUserStyle === 'function') setUserStyle(style);
+      if (typeof onPicked === 'function') onPicked(style);
+    });
+  });
+}
+
 function renderWelcome(container, d, hands, meta) {
   var tabDescs = [
     { tab: 'mygame',   name: 'My Game',  desc: 'Scouting report, strengths, leak finder, and what to work on' },

@@ -86,14 +86,18 @@ function renderCompare(container, d, hands) {
   }
 
   function fmtStat(val, suffix) {
-    if (val === null) return '—';
+    if (val === null) return '-';
     return val + (suffix || '');
   }
 
-  function edgeText(stat, v1, v2) {
+  function edgeText(stat, v1, v2, n1, n2) {
     if (v1 === null || v2 === null) return '';
     var diff = v1 - v2;
-    if (Math.abs(diff) < 3) return '';
+    // Sample-scaled trigger gap: small samples need a wider gap before the
+    // edge surfaces.
+    var smaller = Math.min(n1 || 0, n2 || 0);
+    var gate = 3 * Math.max(1, Math.sqrt(40 / Math.max(1, smaller)));
+    if (Math.abs(diff) < gate) return '';
     switch (stat) {
       case 'vpip': return (v1 > v2 ? 'P1' : 'P2') + ' is looser';
       case 'pfr': return (v1 > v2 ? 'P1' : 'P2') + ' more aggressive pre';
@@ -139,7 +143,7 @@ function renderCompare(container, d, hands) {
       var sr = statRows[i];
       var v1 = s1[sr.key];
       var v2 = s2[sr.key];
-      var edge = edgeText(sr.key, v1, v2);
+      var edge = edgeText(sr.key, v1, v2, s1.hands, s2.hands);
       var better1 = (v1 !== null && v2 !== null && v1 > v2 && sr.key !== 'foldToRaise' && sr.key !== 'limp') ||
                     (sr.key === 'foldToRaise' && v1 !== null && v2 !== null && v1 < v2) ||
                     (sr.key === 'limp' && v1 !== null && v2 !== null && v1 < v2);
@@ -190,28 +194,61 @@ function renderCompare(container, d, hands) {
     }
     h2hHtml += '</div>';
 
-    // Exploit tips
+    // ── Exploit tips ────────────────────────────────────────────────────
     var exploits = [];
     var targetName = (p2Name !== heroName) ? p2Name : p1Name;
     var targetStats = (targetName === p1Name) ? s1 : s2;
 
-    if (targetStats.foldToRaise !== null && targetStats.foldToRaise >= 60) {
-      exploits.push(targetName + ' folds to raises ' + targetStats.foldToRaise + '% — raise wide against them.');
+    // Dominant seat-count for the table mix where these two players overlap;
+    // drives the exploit thresholds (HU expects different numbers from
+    // 6-max).
+    var _seatsCmp = (function() {
+      if (!d || !d.bySeatBucket) return null;
+      var best = null, bestN = 0;
+      for (var sb in d.bySeatBucket) {
+        var sd = d.bySeatBucket[sb];
+        if (!sd || (sd.n || 0) <= bestN) continue;
+        bestN = sd.n;
+        best = parseInt(sb, 10);
+      }
+      return best ? Math.max(2, Math.min(9, best)) : null;
+    })();
+    // Pull what we know about the opponent's positional tendencies from the
+    // shared opponent cache. Used to qualify the "from late position" tips.
+    var _oppProf = (typeof _opponentCache !== 'undefined' && targetName)
+      ? _opponentCache[targetName] : null;
+    var _oppLatePosBias = _oppProf && _oppProf.raw && typeof _oppProf.raw.latePos === 'number'
+      ? _oppProf.raw.latePos : null;
+
+    // Dynamic thresholds: HU/3-handed compress everything (defenders fold
+    // less, openers play wider), so adjust gates by table size.
+    var _ftrGate = _seatsCmp && _seatsCmp <= 2 ? 50 : _seatsCmp && _seatsCmp <= 4 ? 55 : 60;
+    var _cbetGate = _seatsCmp && _seatsCmp <= 2 ? 55 : _seatsCmp && _seatsCmp <= 4 ? 45 : 35;
+    var _wtsdGate = _seatsCmp && _seatsCmp <= 2 ? 45 : 40;
+    var _limpGate = _seatsCmp && _seatsCmp <= 3 ? 35 : 20;
+    var _aggGate = 15;
+    var _vpipGate = _seatsCmp && _seatsCmp <= 2 ? 75 : _seatsCmp && _seatsCmp <= 3 ? 60 : 50;
+
+    if (targetStats.foldToRaise !== null && targetStats.foldToRaise >= _ftrGate) {
+      var lateNote = _oppLatePosBias && _oppLatePosBias > 0.55
+        ? ' Especially in late position where they open even wider.'
+        : '';
+      exploits.push(targetName + ' folds to raises ' + targetStats.foldToRaise + '% - raise wide against them.' + lateNote);
     }
-    if (targetStats.cbet !== null && targetStats.cbet <= 35) {
-      exploits.push(targetName + ' rarely c-bets — float their checks on the flop.');
+    if (targetStats.cbet !== null && targetStats.cbet <= _cbetGate) {
+      exploits.push(targetName + ' c-bets only ' + targetStats.cbet + '% - float their checks on the flop and bet when they show weakness.');
     }
-    if (targetStats.wtsd !== null && targetStats.wtsd >= 40) {
-      exploits.push(targetName + ' goes to showdown often — value bet thin, they call down.');
+    if (targetStats.wtsd !== null && targetStats.wtsd >= _wtsdGate) {
+      exploits.push(targetName + ' goes to showdown ' + targetStats.wtsd + '% - value bet thin, they call down.');
     }
-    if (targetStats.limp !== null && targetStats.limp >= 20) {
-      exploits.push(targetName + ' limps ' + targetStats.limp + '% — raise their limps with a wide range.');
+    if (targetStats.limp !== null && targetStats.limp >= _limpGate) {
+      exploits.push(targetName + ' limps ' + targetStats.limp + '% - raise their limps with a wide range.');
     }
-    if (targetStats.agg !== null && targetStats.agg <= 15) {
-      exploits.push(targetName + ' is passive (' + targetStats.agg + '% agg) — their bets mean strength, fold more to them.');
+    if (targetStats.agg !== null && targetStats.agg <= _aggGate) {
+      exploits.push(targetName + ' is passive (' + targetStats.agg + '% agg) - their bets mean strength, fold more to them.');
     }
-    if (targetStats.vpip !== null && targetStats.vpip >= 50) {
-      exploits.push(targetName + ' plays too many hands (' + targetStats.vpip + '% VPIP) — tighten up and value bet relentlessly.');
+    if (targetStats.vpip !== null && targetStats.vpip >= _vpipGate) {
+      exploits.push(targetName + ' plays ' + targetStats.vpip + '% of hands at this table size - tighten up and value bet relentlessly.');
     }
 
     var exploitHtml = '';

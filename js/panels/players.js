@@ -1,5 +1,105 @@
 // ── PLAYERS PANEL ─────────────────────────────────────────────────────────────
 
+// Long-form labels for opponent type abbreviations. Always use these in
+// user-visible copy so people don't have to decode "PA" or "LAG".
+var OPPONENT_TYPE_LABELS = {
+  LAG: 'loose aggressive',
+  LAP: 'loose passive',
+  TAG: 'tight aggressive',
+  TAP: 'tight passive',
+  AG:  'aggressive',
+  PA:  'passive aggressive',
+  Unknown: 'mixed'
+};
+
+function expandOpponentType(typeKey) {
+  if (!typeKey) return '';
+  return OPPONENT_TYPE_LABELS[typeKey] || typeKey;
+}
+
+// Replace any opponent-type abbreviation tokens (LAG/LAP/TAG/TAP/PA/AG) in
+// a free-text string with their long-form equivalents. Word-boundary safe.
+function expandOpponentTypesInText(text) {
+  if (!text || typeof text !== 'string') return text;
+  return text
+    .replace(/\bLAG\b/g, 'loose aggressive')
+    .replace(/\bLAP\b/g, 'loose passive')
+    .replace(/\bTAG\b/g, 'tight aggressive')
+    .replace(/\bTAP\b/g, 'tight passive')
+    .replace(/\bPA\b/g,  'passive aggressive')
+    .replace(/\bAG\b/g,  'aggressive');
+}
+
+// Build a concrete adjustment string from an opponent profile, used to
+// replace generic "don't bluff them" copy.
+function concreteAdjustment(prof) {
+  if (!prof) return '';
+  if (prof.foldToRaise !== null && prof.foldToRaise <= 25) {
+    return 'they call wide so value-bet thin instead of bluffing';
+  }
+  if (prof.wtsd !== null && prof.wtsd >= 55) {
+    return 'they go to showdown often so bet for value on every street';
+  }
+  if (prof.foldToRaise !== null && prof.foldToRaise >= 60) {
+    return 'they fold to raises ' + prof.foldToRaise + '% of the time so apply pressure';
+  }
+  if (prof.cbet !== null && prof.cbet >= 75) {
+    return 'they auto c-bet so raise their flop bets';
+  }
+  if (prof.agg !== null && prof.agg < 15) {
+    return 'they play passively so take the initiative with bets and raises';
+  }
+  return 'avoid bluffing thin spots and value-bet your strong hands harder';
+}
+
+// Post-process an engine rule insight result before rendering: expands
+// opponent-type abbreviations in label/text/chips and rewrites generic
+// "don't try to bluff them" copy with a concrete adjustment.
+function refineOpponentInsight(result) {
+  if (!result) return result;
+  var prof = null;
+  if (result.ctx && result.ctx.name && _opponentCache[result.ctx.name]) {
+    prof = _opponentCache[result.ctx.name];
+  }
+  // Clone shallowly so we don't mutate engine cache.
+  var out = {};
+  for (var k in result) out[k] = result[k];
+
+  // Label / text expansion.
+  out.label = expandOpponentTypesInText(out.label);
+  out.text  = expandOpponentTypesInText(out.text);
+
+  // Replace generic anti-bluff copy with concrete adjustment.
+  if (out.text && /Don'?t try to bluff them/i.test(out.text)) {
+    var concrete = concreteAdjustment(prof);
+    out.text = out.text.replace(/Don'?t try to bluff them\.?/i, concrete.charAt(0).toUpperCase() + concrete.slice(1) + '.');
+  }
+
+  // Replace bare "N exploits" chips with the actual list joined inline.
+  if (Array.isArray(out.chips)) {
+    out.chips = out.chips.map(function(c) {
+      if (!c || typeof c.v !== 'string') return c;
+      var m = c.v.match(/^(\d+)\s+exploits?$/i);
+      if (m && prof && prof.adjustments && prof.adjustments.length) {
+        var newChip = {};
+        for (var ck in c) newChip[ck] = c[ck];
+        newChip.v = prof.adjustments.join(' · ');
+        return newChip;
+      }
+      // Expand any inline abbreviations in chip text too.
+      var expanded = expandOpponentTypesInText(c.v);
+      if (expanded !== c.v) {
+        var nc = {};
+        for (var ck2 in c) nc[ck2] = c[ck2];
+        nc.v = expanded;
+        return nc;
+      }
+      return c;
+    });
+  }
+  return out;
+}
+
 // ── Opponent Profile Cache ────────────────────────────────────────────────
 var _opponentCache = {};
 
@@ -37,12 +137,12 @@ function cacheOpponentProfiles(hands) {
 
     // Exploitation adjustments
     var adjustments = [];
-    if (foldToRaise !== null && foldToRaise >= 60) adjustments.push('Folds to raises ' + foldToRaise + '% — bluff more');
-    if (foldToRaise !== null && foldToRaise <= 25) adjustments.push('Rarely folds to raises — value bet only');
-    if (vpip !== null && vpip >= 55) adjustments.push('Plays too many hands — tighten up and value bet');
-    if (cbet !== null && cbet >= 75) adjustments.push('Auto c-bets — raise their flop bets');
-    if (agg !== null && agg < 15) adjustments.push('Very passive — steal pots with aggression');
-    if (wtsd !== null && wtsd >= 55) adjustments.push('Calls to showdown — bet every street for value');
+    if (foldToRaise !== null && foldToRaise >= 60) adjustments.push('Folds to raises ' + foldToRaise + '% - bluff more');
+    if (foldToRaise !== null && foldToRaise <= 25) adjustments.push('Rarely folds to raises - value bet only');
+    if (vpip !== null && vpip >= 55) adjustments.push('Plays too many hands - tighten up and value bet');
+    if (cbet !== null && cbet >= 75) adjustments.push('Auto c-bets - raise their flop bets');
+    if (agg !== null && agg < 15) adjustments.push('Very passive - steal pots with aggression');
+    if (wtsd !== null && wtsd >= 55) adjustments.push('Calls to showdown - bet every street for value');
 
     _opponentCache[name] = {
       name: name, hands: s.hands, vpip: vpip, pfr: pfr, agg: agg,
@@ -243,7 +343,7 @@ function generateExploitInsights(s, playerName, hands) {
   // VPIP
   if (vpip !== null) {
     if (vpip >= 55) {
-      insights.push(insWithExample('r', 'Very Loose', playerName + ' plays ' + vpip + '% of hands. They enter pots with weak holdings constantly.', [{ v: 'VPIP: ' + vpip + '%' }], examples.vpip, 'This hand shows ' + playerName + ' entering the pot — typical of their loose play style.'));
+      insights.push(insWithExample('r', 'Very Loose', playerName + ' plays ' + vpip + '% of hands. They enter pots with weak holdings constantly.', [{ v: 'VPIP: ' + vpip + '%' }], examples.vpip, 'This hand shows ' + playerName + ' entering the pot - typical of their loose play style.'));
     } else if (vpip >= 40) {
       insights.push(insWithExample('a', 'Loose', playerName + ' plays ' + vpip + '% of hands. Wider than average, often with marginal cards.', [{ v: 'VPIP: ' + vpip + '%' }], examples.vpip, 'Here ' + playerName + ' enters the pot with a marginal holding.'));
     } else if (vpip <= 18) {
@@ -253,7 +353,7 @@ function generateExploitInsights(s, playerName, hands) {
 
   // Limp
   if (limp !== null && limp >= 30) {
-    insights.push(insWithExample('r', 'Limps Often', playerName + ' limps ' + limp + '% of hands. They rarely open-raise, preferring cheap flops.', [{ v: 'Limp: ' + limp + '%' }], examples.limp, playerName + ' limps in here instead of raising — a common pattern for them.'));
+    insights.push(insWithExample('r', 'Limps Often', playerName + ' limps ' + limp + '% of hands. They rarely open-raise, preferring cheap flops.', [{ v: 'Limp: ' + limp + '%' }], examples.limp, playerName + ' limps in here instead of raising - a common pattern for them.'));
   }
 
   // Aggression
@@ -268,18 +368,18 @@ function generateExploitInsights(s, playerName, hands) {
   // Fold to raise
   if (foldToRaise !== null && s.facedRaise >= 5) {
     if (foldToRaise >= 65) {
-      insights.push(insWithExample('r', 'Folds to Pressure', playerName + ' folds ' + foldToRaise + '% when raised. Aggression prints money against them.', [{ v: 'Fold to raise: ' + foldToRaise + '%' }], examples.foldToRaise, playerName + ' folds here when facing a raise — very exploitable.'));
+      insights.push(insWithExample('r', 'Folds to Pressure', playerName + ' folds ' + foldToRaise + '% when raised. Aggression prints money against them.', [{ v: 'Fold to raise: ' + foldToRaise + '%' }], examples.foldToRaise, playerName + ' folds here when facing a raise - very exploitable.'));
     } else if (foldToRaise <= 25) {
-      insights.push(insWithExample('a', 'Calls Everything', playerName + ' only folds ' + foldToRaise + '% to raises. Bluffing them is expensive.', [{ v: 'Fold to raise: ' + foldToRaise + '%' }], examples.callsRaise, playerName + ' calls the raise here — they almost never fold to aggression.'));
+      insights.push(insWithExample('a', 'Calls Everything', playerName + ' only folds ' + foldToRaise + '% to raises. Bluffing them is expensive.', [{ v: 'Fold to raise: ' + foldToRaise + '%' }], examples.callsRaise, playerName + ' calls the raise here - they almost never fold to aggression.'));
     }
   }
 
   // C-bet
   if (cbet !== null && s.cbetOpps >= 5) {
     if (cbet >= 75) {
-      insights.push(insWithExample('a', 'Auto C-Bets', playerName + ' continuation bets ' + cbet + '% of the time. Their flop bets often mean nothing.', [{ v: 'C-bet: ' + cbet + '%' }], examples.cbet, playerName + ' fires a c-bet on the flop after raising preflop — they do this almost automatically.'));
+      insights.push(insWithExample('a', 'Auto C-Bets', playerName + ' continuation bets ' + cbet + '% of the time. Their flop bets often mean nothing.', [{ v: 'C-bet: ' + cbet + '%' }], examples.cbet, playerName + ' fires a c-bet on the flop after raising preflop - they do this almost automatically.'));
     } else if (cbet <= 30) {
-      insights.push(insWithExample('o', 'Honest C-Bets', playerName + ' only c-bets ' + cbet + '%. When they bet the flop after raising pre, believe them.', [{ v: 'C-bet: ' + cbet + '%' }], examples.cbet, playerName + ' c-bets here — when they do this, they usually have a real hand.'));
+      insights.push(insWithExample('o', 'Honest C-Bets', playerName + ' only c-bets ' + cbet + '%. When they bet the flop after raising pre, believe them.', [{ v: 'C-bet: ' + cbet + '%' }], examples.cbet, playerName + ' c-bets here - when they do this, they usually have a real hand.'));
     }
   }
 
@@ -288,7 +388,7 @@ function generateExploitInsights(s, playerName, hands) {
     if (wtsd >= 55) {
       insights.push(insWithExample('a', 'Showdown Bound', playerName + ' goes to showdown ' + wtsd + '% of the time. They hate folding post-flop.', [{ v: 'WTSD: ' + wtsd + '%' }], examples.showdown, playerName + ' hangs on all the way to showdown in this hand.'));
     } else if (wtsd <= 25) {
-      insights.push(insWithExample('o', 'Gives Up Easy', playerName + ' only reaches showdown ' + wtsd + '%. Pressure on later streets works well.', [{ v: 'WTSD: ' + wtsd + '%' }], examples.foldPostFlop, playerName + ' gives up post-flop here — sustained pressure works against them.'));
+      insights.push(insWithExample('o', 'Gives Up Easy', playerName + ' only reaches showdown ' + wtsd + '%. Pressure on later streets works well.', [{ v: 'WTSD: ' + wtsd + '%' }], examples.foldPostFlop, playerName + ' gives up post-flop here - sustained pressure works against them.'));
     }
   }
 
@@ -296,9 +396,9 @@ function generateExploitInsights(s, playerName, hands) {
   if (s.reveals >= 5) {
     var weakPct = pct(s.showdownWeak, s.reveals);
     if (weakPct >= 60) {
-      insights.push(insWithExample('r', 'Weak at Showdown', playerName + ' shows weak hands ' + weakPct + '% of the time. They call down light.', [{ v: weakPct + '% weak reveals' }], examples.weakReveal, playerName + ' reveals a weak hand here — they call down too light.'));
+      insights.push(insWithExample('r', 'Weak at Showdown', playerName + ' shows weak hands ' + weakPct + '% of the time. They call down light.', [{ v: weakPct + '% weak reveals' }], examples.weakReveal, playerName + ' reveals a weak hand here - they call down too light.'));
     } else if (weakPct <= 25) {
-      insights.push(insWithExample('o', 'Strong at Showdown', playerName + ' shows strong hands ' + (100 - weakPct) + '% of the time. Respect their river calls.', [{ v: (100 - weakPct) + '% strong reveals' }], examples.strongReveal, playerName + ' shows a strong hand — respect their showdown range.'));
+      insights.push(insWithExample('o', 'Strong at Showdown', playerName + ' shows strong hands ' + (100 - weakPct) + '% of the time. Respect their river calls.', [{ v: (100 - weakPct) + '% strong reveals' }], examples.strongReveal, playerName + ' shows a strong hand - respect their showdown range.'));
     }
   }
 
@@ -561,7 +661,7 @@ function renderPlayers(container, d, hands) {
         html += '<td class="watch-star watched" data-watch="' + o.name + '" title="Unwatch player">&#9733;</td>';
         html += '<td>' + o.name + '</td><td>' + o.hands + '</td>';
         html += '<td style="width:80px;"><span class="tbl-spark" style="width:' + barW + '%;background:var(--gold2);"></span></td>';
-        html += '<td class="' + wrCls(wr) + '">' + (wr !== null ? wr + '%' : '—') + '</td>';
+        html += '<td class="' + wrCls(wr) + '">' + (wr !== null ? wr + '%' : '-') + '</td>';
         html += '<td class="' + pnlCls(o.profit) + '">' + fmtPnl(o.profit) + '</td></tr>';
       }
       html += '</tbody></table></div></div>';
@@ -585,13 +685,13 @@ function renderPlayers(container, d, hands) {
     if (best) {
       var bestWr = pct(best.won, best.won + best.lost);
       var bestProf = _opponentCache[best.name];
-      var bestExtra = bestProf ? ' They play a ' + bestProf.type + ' style' + (bestProf.vpip !== null ? ' (' + bestProf.vpip + '% VPIP)' : '') + '.' : '';
+      var bestExtra = bestProf ? ' They play a ' + expandOpponentType(bestProf.type) + ' style' + (bestProf.vpip !== null ? ' (' + bestProf.vpip + '% VPIP)' : '') + '.' : '';
       pIns.push(ins('g', 'Best Record: ' + best.name, 'You win ' + bestWr + '% across ' + (best.won + best.lost) + ' contested hands.' + bestExtra, [{ v: best.name, hi: true }, { v: bestWr + '% win' }, { v: fmtPnl(best.profit) }]));
     }
     if (worst && worst !== best) {
       var worstWr = pct(worst.won, worst.won + worst.lost);
       var worstProf = _opponentCache[worst.name];
-      var worstExtra = worstProf ? ' They\'re a ' + worstProf.type + (worstProf.agg !== null && worstProf.agg >= 30 ? ' \u2014 consider tightening up and trapping.' : worstProf.vpip !== null && worstProf.vpip >= 50 ? ' \u2014 value bet them harder, cut the bluffs.' : '.') : '.';
+      var worstExtra = worstProf ? ' They\'re ' + expandOpponentType(worstProf.type) + (worstProf.agg !== null && worstProf.agg >= 30 ? ' \u2014 consider tightening up and trapping.' : worstProf.vpip !== null && worstProf.vpip >= 50 ? ' \u2014 value bet them harder, cut the bluffs.' : '.') : '.';
       pIns.push(ins('r', 'Toughest: ' + worst.name, 'Only ' + worstWr + '% win rate across ' + (worst.won + worst.lost) + ' contested hands.' + worstExtra, [{ v: worst.name, hi: true }, { v: worstWr + '% win' }, { v: fmtPnl(worst.profit) }]));
     }
     if (mostProfitable && mostProfitable !== best) {
@@ -610,9 +710,12 @@ function renderPlayers(container, d, hands) {
       if (!oppData) continue;
       var heroVsWr = pct(oppData.won, oppData.won + oppData.lost);
       if (heroVsWr !== null && heroVsWr < 40 && (oppData.won + oppData.lost) >= 5) {
+        var exploitList = oppProf.adjustments.length
+          ? oppProf.adjustments.join(' · ')
+          : 'no clear leaks identified yet';
         pIns.push(ins('a', 'Adjust vs ' + oppName,
           'You\'re losing (' + heroVsWr + '% WR) against ' + oppName + ' despite their leaks: ' + oppProf.adjustments.slice(0, 2).join('. ') + '.',
-          [{ v: heroVsWr + '% WR', hi: true }, { v: oppProf.type }, { v: oppProf.adjustments.length + ' exploits' }]));
+          [{ v: heroVsWr + '% WR', hi: true }, { v: expandOpponentType(oppProf.type) }, { v: exploitList }]));
         break; // Only show the most important one
       }
     }
@@ -620,17 +723,19 @@ function renderPlayers(container, d, hands) {
     // ── Engine insights (pool composition, fish, shark, etc.) ──
     var enginePlrIns = InsightEngine.forPanel('players', 6);
     for (var epi = 0; epi < enginePlrIns.length; epi++) {
+      var refined = refineOpponentInsight(enginePlrIns[epi]);
       var dupPlr = false;
       for (var pi2 = 0; pi2 < pIns.length; pi2++) {
-        if (pIns[pi2].indexOf(enginePlrIns[epi].label) !== -1) { dupPlr = true; break; }
+        if (pIns[pi2].indexOf(refined.label) !== -1) { dupPlr = true; break; }
       }
-      if (!dupPlr) pIns.push(renderRuleInsight(enginePlrIns[epi]));
+      if (!dupPlr) pIns.push(renderRuleInsight(refined));
     }
 
     // ── Engine narrative for players ──
     var plrNarrative = InsightEngine.narrativeFor('players', 6);
-    if (plrNarrative) {
-      html += '<div class="p-row"><div class="engine-narrative">' + plrNarrative + '</div></div>';
+    if (plrNarrative && plrNarrative.narrative) {
+      var narrText = expandOpponentTypesInText(plrNarrative.narrative);
+      html += '<div class="p-row"><div class="engine-narrative">' + narrText + '</div></div>';
     }
 
     if (pIns.length) html += '<div class="p-row" style="margin-top:8px;"><div class="ins-grid">' + pIns.join('') + '</div></div>';
@@ -651,7 +756,7 @@ function renderPlayers(container, d, hands) {
       html += '<td class="watch-star' + (isWatched ? ' watched' : '') + '" data-watch="' + o2.name + '" title="' + (isWatched ? 'Unwatch' : 'Watch') + ' player">' + (isWatched ? '&#9733;' : '&#9734;') + '</td>';
       html += '<td>' + o2.name + '</td><td>' + o2.hands + '</td>';
       html += '<td style="width:80px;"><span class="tbl-spark" style="width:' + barW2 + '%;background:var(--gold2);"></span></td>';
-      html += '<td class="' + wrCls(wr2) + '">' + (wr2 !== null ? wr2 + '%' : '—') + '</td>';
+      html += '<td class="' + wrCls(wr2) + '">' + (wr2 !== null ? wr2 + '%' : '-') + '</td>';
       html += '<td class="' + pnlCls(o2.profit) + '">' + fmtPnl(o2.profit) + '</td></tr>';
     }
     html += '</tbody></table></div></div>';
@@ -730,7 +835,7 @@ function renderPlayers(container, d, hands) {
       var ph = '<div class="flex-between mb-16">';
       ph += '<div><button class="log-nav-btn mr-12" id="players-back">&laquo; All Players</button>';
       ph += '<span class="player-detail-name">' + playerName + '</span></div>';
-      ph += '<div class="meta-text">' + opp.hands + ' hands · ' + (wr !== null ? wr + '% win' : '—') + ' · ' + fmtPnl(opp.profit) + '</div></div>';
+      ph += '<div class="meta-text">' + opp.hands + ' hands · ' + (wr !== null ? wr + '% win' : '-') + ' · ' + fmtPnl(opp.profit) + '</div></div>';
 
       // ── Opponent tendency minis with severity ──
       var vpip = pct(oppStats.vpipHands, oppStats.hands);
@@ -746,14 +851,14 @@ function renderPlayers(container, d, hands) {
 
       if (oppStats.hands >= 5) {
         var minis = [
-          { l: tipWrap('VPIP'),       v: vpip !== null ? vpip + '%' : '—',     c: sev(vpip, -1, 55, 18, 40) },
-          { l: tipWrap('PFR'),          v: pfr !== null ? pfr + '%' : '—',       c: sev(pfr, 8, 999, 8, 35) },
-          { l: tipWrap('Limp'),         v: limp !== null ? limp + '%' : '—',     c: sev(limp, -1, 30, -1, 20) },
-          { l: tipWrap('Aggression'),   v: aggPct !== null ? aggPct + '%' : '—', c: sev(aggPct, 15, 999, 15, 50) },
-          { l: tipWrap('Fold to Raise'),v: ftr !== null ? ftr + '%' : '—',       c: sev(ftr, 25, 65, 25, 65) },
-          { l: tipWrap('C-Bet'),        v: cbet !== null ? cbet + '%' : '—',     c: sev(cbet, -1, 999, -1, 75) },
-          { l: tipWrap('WTSD'),         v: wtsd !== null ? wtsd + '%' : '—',     c: sev(wtsd, 25, 55, 25, 55) },
-          { l: tipWrap('WSD'),          v: wsd !== null ? wsd + '%' : '—',       c: sev(wsd, 35, 999, 35, 60) },
+          { l: tipWrap('VPIP'),       v: vpip !== null ? vpip + '%' : '-',     c: sev(vpip, -1, 55, 18, 40) },
+          { l: tipWrap('PFR'),          v: pfr !== null ? pfr + '%' : '-',       c: sev(pfr, 8, 999, 8, 35) },
+          { l: tipWrap('Limp'),         v: limp !== null ? limp + '%' : '-',     c: sev(limp, -1, 30, -1, 20) },
+          { l: tipWrap('Aggression'),   v: aggPct !== null ? aggPct + '%' : '-', c: sev(aggPct, 15, 999, 15, 50) },
+          { l: tipWrap('Fold to Raise'),v: ftr !== null ? ftr + '%' : '-',       c: sev(ftr, 25, 65, 25, 65) },
+          { l: tipWrap('C-Bet'),        v: cbet !== null ? cbet + '%' : '-',     c: sev(cbet, -1, 999, -1, 75) },
+          { l: tipWrap('WTSD'),         v: wtsd !== null ? wtsd + '%' : '-',     c: sev(wtsd, 25, 55, 25, 55) },
+          { l: tipWrap('WSD'),          v: wsd !== null ? wsd + '%' : '-',       c: sev(wsd, 35, 999, 35, 60) },
         ];
 
         ph += '<div class="sec-subtitle mt-0">Tendencies</div>';

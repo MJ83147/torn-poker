@@ -3,7 +3,7 @@
 var _allinChart = null;
 var _allinHands = null;
 
-// ── Card normalisation — uses shared normCardCode from helpers.js ─────────────
+// ── Card normalisation - uses shared normCardCode from helpers.js ─────────────
 function normCardAllIn(c) {
   return normCardCode(c);
 }
@@ -29,11 +29,11 @@ function parseReveals(actions) {
       var rank = m[1];
       var suitPart = m[2];
       if (rank === '10') rank = 'T';
-      // Already a Unicode suit symbol — use directly
+      // Already a Unicode suit symbol - use directly
       if (suitPart.length === 1 && '♠♥♦♣'.indexOf(suitPart) !== -1) {
         cards.push(rank + suitPart);
       } else {
-        // Raw suit word — convert via SUIT_WORD
+        // Raw suit word - convert via SUIT_WORD
         var suit = SUIT_WORD[suitPart.toLowerCase()];
         if (suit) cards.push(rank + suit);
       }
@@ -51,7 +51,7 @@ function parseReveals(actions) {
   return results;
 }
 
-// ── Detect all-in hands (fast — no equity calc) ─────────────────────────────
+// ── Detect all-in hands (fast - no equity calc) ─────────────────────────────
 function detectAllInCandidates(hands) {
   var results = [];
 
@@ -228,9 +228,9 @@ function calcMultiwayEquity(heroHole, opponentHoles, boardAtAllIn) {
   }
 }
 
-// ── Card display — uses shared displayCard/displayCards from helpers.js ───────
+// ── Card display - uses shared displayCard/displayCards from helpers.js ───────
 
-// ── Render panel (instant — no simulation) ───────────────────────────────────
+// ── Render panel (instant - no simulation) ───────────────────────────────────
 function renderAllIn(container, hands) {
   if (_allinChart) { _allinChart.destroy(); _allinChart = null; }
 
@@ -358,24 +358,35 @@ function showAllInResults(container) {
 
   // Insights
   var insArr = [];
-  if (allInHands.length >= 3) {
-    if (totalEvDiff > 0) {
-      insArr.push(ins('o', 'Running Hot', 'You\'re running ' + fmt(totalEvDiff) + ' above expectation across ' + allInHands.length + ' all-in hands. The actual results line will tend to converge toward the EV line over time.', [
+  // Variance flags (running hot/cold) need a minimum of 10 all-ins before
+  // surfacing - anything below is pure noise, not signal.
+  var _aiN = allInHands.length;
+  var _aiVarianceMin = 10;
+  var _aiCountMin = 3;
+  // Scale the EV-diff threshold by sample size: small samples need a bigger
+  // absolute swing before we call it hot or cold.
+  var _evGate = 0;
+  if (_aiN >= _aiVarianceMin) {
+    _evGate = 1; // any nonzero diff at 10+ is meaningful enough to surface.
+  }
+  if (_aiN >= _aiCountMin) {
+    if (_aiN >= _aiVarianceMin && totalEvDiff > _evGate) {
+      insArr.push(ins('o', 'Running Hot', 'You\'re running ' + fmt(totalEvDiff) + ' above expectation across ' + _aiN + ' all-in hands. Actual results will converge toward the EV line over time.', [
         { v: 'EV Diff: +' + fmt(totalEvDiff), hi: true }
       ]));
-    } else if (totalEvDiff < 0) {
-      insArr.push(ins('n', 'Running Cold', 'You\'re running ' + fmt(Math.abs(totalEvDiff)) + ' below expectation. Your play at the all-in point has been correct more often than results suggest.', [
+    } else if (_aiN >= _aiVarianceMin && totalEvDiff < -_evGate) {
+      insArr.push(ins('n', 'Running Cold', 'You\'re running ' + fmt(Math.abs(totalEvDiff)) + ' below expectation across ' + _aiN + ' all-in hands. Your play at the all-in point has been correct more often than results suggest.', [
         { v: 'EV Diff: -' + fmt(Math.abs(totalEvDiff)), hi: true }
       ]));
     }
-    if (equityWinRate >= 55 && actualWinRate !== null && actualWinRate < equityWinRate - 10) {
+    if (_aiN >= _aiVarianceMin && equityWinRate >= 55 && actualWinRate !== null && actualWinRate < equityWinRate - 10) {
       insArr.push(ins('n', 'Negative Variance', 'You\'re getting your chips in good (favourite ' + equityWinRate + '% of the time) but results haven\'t followed. Classic negative variance.', [
         { v: 'Favourite: ' + equityWinRate + '%' },
         { v: 'Won: ' + actualWinRate + '%' }
       ]));
     }
     if (equityWinRate !== null && equityWinRate < 45) {
-      insArr.push(ins('a', 'Underdog All-Ins', 'You\'re frequently all-in as an underdog (' + equityWinRate + '% favourite rate). Review whether these spots are +EV given pot odds, or if tighter selection would help.', [
+      insArr.push(ins('a', 'Underdog All-Ins', 'You\'re frequently all-in as an underdog (' + equityWinRate + '% favourite rate). Look at whether these spots are +EV given pot odds, or if tighter selection helps.', [
         { v: 'Favourite rate: ' + equityWinRate + '%', hi: true }
       ]));
     }

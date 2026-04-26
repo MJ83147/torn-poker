@@ -1,11 +1,11 @@
 // ── INSIGHT ENGINE: LAYERED VERDICT TREE ─────────────────────────────────────
-// Evaluates each metric at four levels of granularity (aggregate, per-position,
-// per-player-count, per-cell), each compared to a matrix-derived target
-// weighted by the player's actual mix. Per-cell verdicts only surface when
-// they meaningfully disagree with the parent level.
+// Evaluates each metric at three levels of granularity (aggregate, per-position,
+// per-player-count). Per-cell verdicts are computed for downstream context but
+// no longer surfaced as their own insights - they fold into the per-position
+// narrative instead.
 
 // Direction in which a metric being above target counts as a strength rather
-// than a leak. null means there's no strength side — on-target is the goal.
+// than a leak. null means there's no strength side - on-target is the goal.
 var STRENGTH_SIDE = {
   vpip: null,
   pfr: 'high',
@@ -107,7 +107,7 @@ function classify(actual, target, metric) {
 
 // Surface a child level only when its VERDICT meaningfully differs from its
 // parent's. We compare verdict severity (not raw rates), because the same raw
-// rate can be on-target at one level and a leak at another — that's the whole
+// rate can be on-target at one level and a leak at another - that's the whole
 // point of layered evaluation. Filter out edge-flapping by requiring the
 // child to be at least 0.3 band-widths past its own band boundary.
 var _VERDICT_RANK = { 'strength': 0, 'on-target': 0, 'slight-leak': 1, 'significant-leak': 2 };
@@ -233,15 +233,9 @@ function buildVerdictTree(metric, d, style) {
       cVerdict.seats = cSeats;
       byCell[ck] = cVerdict;
 
-      var posParent = byPosition[cPos];
-      var seatParent = byPlayerCount[cSeatBucket];
-      var posDisagree = disagrees(posParent, cVerdict);
-      var seatDisagree = disagrees(seatParent, cVerdict);
-      // A cell surfaces only when it disagrees with BOTH its parent slices —
-      // otherwise the per-axis verdict already captures the story.
-      if (posDisagree && seatDisagree) {
-        surfaced.push(cVerdict);
-      }
+      // Cells are computed but no longer surfaced as their own insights;
+      // they remain on the tree so panel overviews and tooltips can read
+      // the per-cell rate when needed.
     }
   }
 
@@ -310,48 +304,85 @@ function _verdictToSev(verdict) {
   return 'g'; // on-target
 }
 
-// Phrasing helpers — make verdicts read naturally.
+// Phrasing helpers - make verdicts read naturally.
 function _verdictWord(verdict, direction) {
   if (verdict === 'on-target') return 'on target';
-  if (verdict === 'strength') return 'strength';
+  if (verdict === 'strength') return 'a strength';
   if (verdict === 'significant-leak') return direction === 'high' ? 'too high' : 'too low';
   if (verdict === 'slight-leak') return direction === 'high' ? 'slightly high' : 'slightly low';
   return verdict;
 }
 
+// Headline-style level label. Capitalised where appropriate.
 function _levelLabel(v) {
-  if (v.level === 'aggregate') return 'overall';
+  if (v.level === 'aggregate') return 'Overall';
   if (v.level === 'position') return v.position;
   if (v.level === 'playerCount') return v.seats + '-handed';
   if (v.level === 'cell') return v.position + ' at ' + v.seats + '-handed';
   return v.level;
 }
 
+// Title Case-ish descriptive verb form for the headline.
+function _verdictHeadlineWord(verdict, direction, metric) {
+  if (verdict === 'on-target') return 'On Target';
+  if (verdict === 'strength') return 'Strength';
+  if (verdict === 'significant-leak' || verdict === 'slight-leak') {
+    if (metric === 'vpip' || metric === 'pfr') {
+      return direction === 'high' ? 'Loose' : 'Tight';
+    }
+    if (metric === 'af' || metric === 'cbet') {
+      return direction === 'high' ? 'Hyper-Aggressive' : 'Passive';
+    }
+    if (metric === 'foldToRaise') {
+      return direction === 'high' ? 'Folds Too Often' : 'Calls Too Often';
+    }
+    return direction === 'high' ? 'High' : 'Low';
+  }
+  return '';
+}
+
 function _fmtBand(b) {
   if (!b) return '';
-  return Math.round(b.tight) + '–' + Math.round(b.loose) + '%';
+  return Math.round(b.tight) + '-' + Math.round(b.loose) + '%';
+}
+
+// Build a headline phrase like "Loose VPIP from UTG" or "Tight PFR Overall".
+function _composeLabel(spec, v) {
+  var word = _verdictHeadlineWord(v.verdict, v.direction, spec.metric);
+  if (v.level === 'aggregate') {
+    return word + ' ' + spec.label + ' Overall';
+  }
+  if (v.level === 'position') {
+    return word + ' ' + spec.label + ' from ' + v.position;
+  }
+  if (v.level === 'playerCount') {
+    return word + ' ' + spec.label + ' ' + v.seats + '-handed';
+  }
+  return word + ' ' + spec.label;
 }
 
 function _composeText(spec, v, aggregate) {
   var actual = Math.round(v.actual * 10) / 10;
   var band = _fmtBand(v.target);
   var word = _verdictWord(v.verdict, v.direction);
-  var levelStr = _levelLabel(v);
 
   if (v.level === 'aggregate') {
-    return 'Your ' + spec.label + ' is ' + actual + '%, ' + word + ' against your weighted target of ' + band + ' (calibrated to your mix of player counts).';
+    // "Your VPIP is 36%, too high for the games you play (target 18-28%)."
+    return 'Your ' + spec.label + ' is ' + actual + '%, ' + word + ' for the games you play (target ' + band + ').';
   }
 
   if (v.level === 'position') {
-    return 'From ' + levelStr + ' your ' + spec.label + ' is ' + actual + '% (' + v.hands + ' hands), ' + word + ' against the target of ' + band + '. This stands out compared to your overall ' + Math.round(aggregate.actual * 10) / 10 + '%.';
+    // "From UTG you're at 41% over 552 hands. That's loose against the 15-26% target."
+    return 'From ' + v.position + " you're at " + actual + '% over ' + v.hands + ' hands. That\'s ' + word + ' against the ' + band + ' target.';
   }
 
   if (v.level === 'playerCount') {
-    return 'When playing ' + levelStr + ' your ' + spec.label + ' is ' + actual + '% (' + v.hands + ' hands), ' + word + ' against the target of ' + band + '. Different from your overall ' + Math.round(aggregate.actual * 10) / 10 + '%.';
+    // "At 6-handed tables you're at 32% over 410 hands. That's slightly high against the 22-32% target."
+    return 'At ' + v.seats + '-handed tables you\'re at ' + actual + '% over ' + v.hands + ' hands. That\'s ' + word + ' against the ' + band + ' target.';
   }
 
-  // cell
-  return 'In ' + levelStr + ' specifically your ' + spec.label + ' is ' + actual + '% (' + v.hands + ' hands), ' + word + ' against ' + band + '. This cell is doing something different from both your overall ' + levelStr.split(' at ')[0] + ' play and your overall ' + levelStr.split(' at ')[1] + ' play.';
+  // Cell-level no longer produces its own narrative.
+  return null;
 }
 
 // Score a verdict so the engine can rank insights cross-metric.
@@ -383,8 +414,10 @@ function evaluateMetricRules(d, hands) {
     for (var j = 0; j < tree.surfaced.length; j++) {
       var v = tree.surfaced[j];
       var sev = _verdictToSev(v.verdict);
-      var label = spec.label + ' — ' + _levelLabel(v) + ' ' + _verdictWord(v.verdict, v.direction);
       var text = _composeText(spec, v, tree.aggregate);
+      // Cell-level returns null; skip - those verdicts fold into per-position context.
+      if (text == null) continue;
+      var label = _composeLabel(spec, v);
       var chips = [{ v: spec.label + ': ' + Math.round(v.actual * 10) / 10 + '%', hi: v.verdict !== 'on-target' && v.verdict !== 'strength' }];
 
       var tags = (spec.tags || []).slice();

@@ -80,7 +80,7 @@ function inferTable(hand) {
     if (bb && BB_TO_TABLES[bb]) {
       const candidates = BB_TO_TABLES[bb];
       if (candidates.length === 1) return candidates[0].id;
-      // Disambiguate by player count — pick smallest max that fits
+      // Disambiguate by player count - pick smallest max that fits
       const playerCount = players.size;
       const sorted = candidates.slice().sort((a, b) => a.max - b.max);
       const match = sorted.find(c => c.max >= playerCount);

@@ -34,7 +34,7 @@ function renderLog(container, hands) {
     var savedHtml = renderSavedSection();
 
     var logHtml = '<div class="panel-title">Hand Log</div>';
-    logHtml += '<div class="panel-desc">Every hand played — click any row to replay.</div>';
+    logHtml += '<div class="panel-desc">Every hand played - click any row to replay.</div>';
     logHtml += savedHtml;
     logHtml += '<div class="flex-between mb-12">' +
       '<div class="meta-text">' + sortedHands.length + ' hands total · showing ' + (start + 1) + '-' + end + '</div>' +

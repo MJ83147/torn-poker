@@ -30,7 +30,7 @@ function renderBets(container, d, hands) {
       if (!bo || !bo.t) return null;
       var fp2 = pct(bo.b, bo.t);
       var cls = fp2 < 25 ? 'r' : fp2 > 65 ? 'a' : 'g';
-      return barRow(s, fp2 || 0, 100, cls, (fp2 !== null ? fp2 + '%' : '—'), bo.b + '/' + bo.t + ' opps');
+      return barRow(s, fp2 || 0, 100, cls, (fp2 !== null ? fp2 + '%' : '-'), bo.b + '/' + bo.t + ' opps');
     }).filter(Boolean).join('') + '</div></div>';
   betHtml += '</div></div>';
 
@@ -41,10 +41,10 @@ function renderBets(container, d, hands) {
       return parseActions(h.actions).some(function(a) { return a.isMe && a.street === 'Flop' && (a.type === 'raise' || a.type === 'bet'); });
     });
     var flopDisp = fmtAvgAmount(d.betAmts.Flop, d.betAmtsBB ? d.betAmtsBB.Flop : []);
-    bIns.push(insWithExample('o', 'Flop Sizing', 'Average flop bet: ' + flopDisp + '. In TC, aim for 60–80% of pot. Everyone calls so bet for maximum value.', [{
+    bIns.push(insWithExample('o', 'Flop Sizing', 'Average flop bet: ' + flopDisp + '. In TC, aim for 60-80% of pot. Everyone calls so bet for maximum value.', [{
       v: 'Avg: ' + flopDisp,
       hi: true,
-    }], exFlopBet, 'This hand shows your typical flop bet sizing. In TC where players call wide, sizing between 60–80% of pot extracts maximum value from weaker hands chasing draws.'));
+    }], exFlopBet, 'This hand shows your typical flop bet sizing. In TC where players call wide, sizing between 60-80% of pot extracts maximum value from weaker hands chasing draws.'));
   }
   if (d.avgBetTurn > 0) {
     var bigger = d.avgBetTurn >= d.avgBetFlop;
@@ -54,10 +54,10 @@ function renderBets(container, d, hands) {
     });
     var turnDisp = fmtAvgAmount(d.betAmts.Turn, d.betAmtsBB ? d.betAmtsBB.Turn : []);
     var flopDispT = fmtAvgAmount(d.betAmts.Flop, d.betAmtsBB ? d.betAmtsBB.Flop : []);
-    bIns.push(insWithExample(bigger ? 'g' : 'a', 'Turn Sizing', bigger ? 'Turn bets (' + turnDisp + ') larger than flop — correct as the pot grows.' : 'Turn bets (' + turnDisp + ') smaller than flop (' + flopDispT + '). Size up on the turn.', [{
+    bIns.push(insWithExample(bigger ? 'g' : 'a', 'Turn Sizing', bigger ? 'Turn bets (' + turnDisp + ') larger than flop - correct as the pot grows.' : 'Turn bets (' + turnDisp + ') smaller than flop (' + flopDispT + '). Size up on the turn.', [{
       v: 'Avg: ' + turnDisp,
       hi: true,
-    }], exTurnBet, bigger ? 'Good turn sizing here — increasing your bet as the pot grows puts maximum pressure on drawing hands and builds value.' : 'Your turn bet here was smaller than your flop bet. As the pot grows, your bets should scale up to charge opponents for chasing.'));
+    }], exTurnBet, bigger ? 'Good turn sizing here - increasing your bet as the pot grows puts maximum pressure on drawing hands and builds value.' : 'Your turn bet here was smaller than your flop bet. As the pot grows, your bets should scale up to charge opponents for chasing.'));
   }
   if (d.avgBetRiver > 0) {
     var exRiverBet = findExampleHand(function(h) {
@@ -66,10 +66,10 @@ function renderBets(container, d, hands) {
       return parseActions(h.actions).some(function(a) { return a.isMe && a.street === 'River' && (a.type === 'raise' || a.type === 'bet'); });
     });
     var riverDisp = fmtAvgAmount(d.betAmts.River, d.betAmtsBB ? d.betAmtsBB.River : []);
-    bIns.push(insWithExample('o', 'River Sizing', 'Average river bet: ' + riverDisp + '. The river is where you get paid — bet big with the best hand.', [{
+    bIns.push(insWithExample('o', 'River Sizing', 'Average river bet: ' + riverDisp + '. The river is where you get paid - bet big with the best hand.', [{
       v: 'Avg: ' + riverDisp,
       hi: true,
-    }], exRiverBet, 'This winning hand shows the river paying off. Size up with strong hands — TC players will call with second-best hands more often than they should.'));
+    }], exRiverBet, 'This winning hand shows the river paying off. Size up with strong hands - TC players will call with second-best hands more often than they should.'));
   }
   var fbo = d.betOpps['Flop'];
   if (fbo && fbo.t >= 3 && pct(fbo.b, fbo.t) < 30) {

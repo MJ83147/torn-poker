@@ -86,29 +86,36 @@ function renderShowdown(container, hands, meta) {
   var insHtml = '<div class="ins-grid">';
   var hasInsight = false;
 
-  if (sdTotal >= 10 && nsdTotal >= 10) {
-    if (cumSd > 0 && cumNsd < 0 && Math.abs(cumNsd) > cumSd * 0.3) {
-      insHtml += ins('a', 'Red Line Leak', 'You win at showdown but bleed chips in non-showdown pots. Opponents may be exploiting your folds — consider defending more or bluffing less.', [
+  // Sample-scale the line minimums and the red-line gap.
+  var _sdMin = Math.max(10, Math.round(10 * Math.max(1, Math.sqrt(40 / Math.max(1, cash.length)))));
+  var _sdHardMin = Math.max(25, Math.round(25 * Math.max(1, Math.sqrt(40 / Math.max(1, cash.length)))));
+  var _nsdGap = 0.3 * Math.max(1, Math.sqrt(40 / Math.max(1, Math.min(sdTotal, nsdTotal))));
+
+  if (sdTotal >= _sdMin && nsdTotal >= _sdMin) {
+    if (cumSd > 0 && cumNsd < 0 && Math.abs(cumNsd) > cumSd * _nsdGap) {
+      insHtml += ins('a', 'Non-Showdown Loss', 'You win at showdown but lose chips in pots that don\'t go to showdown. Defend more on later streets, or bluff less when you don\'t have it.', [
         { v: 'SD: ' + fmtPnl(cumSd), hi: true },
         { v: 'NSD: ' + fmtPnl(cumNsd), hi: true },
       ]);
       hasInsight = true;
     }
     if (cumNsd > 0) {
-      insHtml += ins('g', 'Winning Without Showdown', 'Your non-showdown line is positive — you are taking down pots with aggression and well-timed bets.', [
+      insHtml += ins('g', 'Winning Without Showdown', 'Your non-showdown line is positive - you are taking down pots with aggression and well-timed bets.', [
         { v: 'NSD: ' + fmtPnl(cumNsd), hi: true },
       ]);
       hasInsight = true;
     }
-    if (cumSd < 0 && sdTotal >= 15) {
-      insHtml += ins('r', 'Showdown Weakness', 'You are losing money at showdown. This may mean you are calling too wide or not value-betting enough with strong hands.', [
+    // Hard gate the showdown-weakness rule at 25+ showdowns so a few unlucky
+    // showdowns don't read as a leak.
+    if (cumSd < 0 && sdTotal >= _sdHardMin) {
+      insHtml += ins('r', 'Showdown Weakness', 'You are losing money at showdown across ' + sdTotal + ' showdowns. Either you call too wide on the river, or you don\'t value-bet enough with strong hands.', [
         { v: 'SD: ' + fmt(cumSd), hi: true },
         { v: sdWinRate + '% win rate', hi: false },
       ]);
       hasInsight = true;
     }
     if (cumSd > 0 && cumNsd >= 0) {
-      insHtml += ins('g', 'Solid Across the Board', 'Both your showdown and non-showdown lines are positive. You are winning with strong hands and also taking down pots without needing to show.', [
+      insHtml += ins('g', 'Solid Across The Board', 'Both your showdown and non-showdown lines are positive. You win with strong hands and also take down pots without needing to show.', [
         { v: 'SD: ' + fmtPnl(cumSd) },
         { v: 'NSD: ' + fmtPnl(cumNsd) },
       ]);
@@ -156,7 +163,7 @@ function renderShowdown(container, hands, meta) {
 
   potHtml += '<div class="mini">';
   potHtml += '<div class="mini-l dim-label">Win/Loss Pot Ratio</div>';
-  potHtml += '<div class="serif-value" style="color:' + (winLossRatio !== null ? pnlColor(winLossRatio - 1) : 'var(--red)') + ';">' + (winLossRatio !== null ? winLossRatio + 'x' : '—') + '</div>';
+  potHtml += '<div class="serif-value" style="color:' + (winLossRatio !== null ? pnlColor(winLossRatio - 1) : 'var(--red)') + ';">' + (winLossRatio !== null ? winLossRatio + 'x' : '-') + '</div>';
   potHtml += '<div class="mini-meta">Target: above 1.0x</div>';
   potHtml += '</div>';
 
@@ -165,18 +172,21 @@ function renderShowdown(container, hands, meta) {
   // Pot size insights
   var potInsHtml = '<div class="ins-grid">';
   var hasPotInsight = false;
-  var minSample = 5;
+  var minSample = Math.max(5, Math.round(5 * Math.max(1, Math.sqrt(40 / Math.max(1, cash.length)))));
+  // Sample-scaled ratio gates: when pot counts are small, demand a larger gap.
+  var _ratioGateSd = 1.3 * Math.max(1, Math.sqrt(40 / Math.max(1, Math.min(potSdLoss.length, potSdWin.length))));
+  var _ratioGateNsd = 1.5 * Math.max(1, Math.sqrt(40 / Math.max(1, potNsdLoss.length)));
 
   if (potSdLoss.length >= minSample && potSdWin.length >= minSample) {
-    if (avgPotSdLoss > avgPotSdWin * 1.3) {
-      potInsHtml += ins('r', 'Big Showdown Losses', 'Your average losing showdown pot (' + fmt(avgPotSdLoss) + ') is significantly larger than your winning pot (' + fmt(avgPotSdWin) + '). You may be calling too much in big pots with second-best hands, or not folding when the action tells you to.', [
+    if (avgPotSdLoss > avgPotSdWin * _ratioGateSd) {
+      potInsHtml += ins('r', 'Big Showdown Losses', 'Your average losing showdown pot (' + fmt(avgPotSdLoss) + ') is significantly larger than your winning pot (' + fmt(avgPotSdWin) + '). Fold earlier on the river when the action says you\'re beaten.', [
         { v: 'Win: ' + fmt(avgPotSdWin), hi: false },
         { v: 'Loss: ' + fmt(avgPotSdLoss), hi: true },
       ]);
       hasPotInsight = true;
     }
-    if (avgPotSdWin > avgPotSdLoss * 1.3) {
-      potInsHtml += ins('g', 'Extracting Value at Showdown', 'Your winning showdown pots (' + fmt(avgPotSdWin) + ') are larger than your losing ones (' + fmt(avgPotSdLoss) + '). You are building bigger pots when you have the best hand — strong value betting.', [
+    if (avgPotSdWin > avgPotSdLoss * _ratioGateSd) {
+      potInsHtml += ins('g', 'Extracting Value At Showdown', 'Your winning showdown pots (' + fmt(avgPotSdWin) + ') are larger than your losing ones (' + fmt(avgPotSdLoss) + '). Strong value betting.', [
         { v: 'Win: ' + fmt(avgPotSdWin), hi: true },
         { v: 'Loss: ' + fmt(avgPotSdLoss), hi: false },
       ]);
@@ -185,8 +195,8 @@ function renderShowdown(container, hands, meta) {
   }
 
   if (potNsdLoss.length >= minSample) {
-    if (avgPotNsdLoss > avgPotNsdWin * 1.5 && avgPotNsdLoss > avgPotSdLoss * 0.6) {
-      potInsHtml += ins('a', 'Expensive Folds', 'Your average non-showdown loss pot is ' + fmt(avgPotNsdLoss) + '. You are investing heavily then folding. Consider pot-controlling more or folding earlier when you do not intend to continue.', [
+    if (avgPotNsdLoss > avgPotNsdWin * _ratioGateNsd && avgPotNsdLoss > avgPotSdLoss * 0.6) {
+      potInsHtml += ins('a', 'Expensive Folds', 'Your average non-showdown loss pot is ' + fmt(avgPotNsdLoss) + '. You invest heavily then fold. Pot-control sooner or fold earlier when you don\'t plan to continue.', [
         { v: 'NSD Loss: ' + fmt(avgPotNsdLoss), hi: true },
       ]);
       hasPotInsight = true;
@@ -194,12 +204,12 @@ function renderShowdown(container, hands, meta) {
   }
 
   if (winLossRatio !== null && winLossRatio >= 1.2 && (potSdWin.length + potNsdWin.length) >= minSample) {
-    potInsHtml += ins('g', 'Winning Bigger Than Losing', 'Your win/loss pot ratio is ' + winLossRatio + 'x — you win more when you win than you lose when you lose. This is the hallmark of a solid strategy.', [
+    potInsHtml += ins('g', 'Winning Bigger Than Losing', 'Your win/loss pot ratio is ' + winLossRatio + 'x - you win more when you win than you lose when you lose. Hallmark of a solid strategy.', [
       { v: winLossRatio + 'x ratio', hi: true },
     ]);
     hasPotInsight = true;
   } else if (winLossRatio !== null && winLossRatio < 0.8 && (potSdLoss.length + potNsdLoss.length) >= minSample) {
-    potInsHtml += ins('r', 'Losing Bigger Than Winning', 'Your win/loss pot ratio is ' + winLossRatio + 'x — your average losing pot is bigger than your average winning pot. This means the pots you lose are more expensive than the ones you take down.', [
+    potInsHtml += ins('r', 'Losing Bigger Than Winning', 'Your win/loss pot ratio is ' + winLossRatio + 'x - your average losing pot is bigger than your average winning pot. The pots you lose cost more than the ones you take down.', [
       { v: winLossRatio + 'x ratio', hi: true },
     ]);
     hasPotInsight = true;

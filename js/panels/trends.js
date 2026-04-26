@@ -82,10 +82,10 @@ function renderTrends(container, hands, meta) {
     var pt = points[pi];
     var wrCol2 = pt.sessionWr !== null ? pnlColor(pt.sessionWr - 50) : 'var(--dim)';
     tHtml += '<tr><td>' + pt.label + '</td><td>' + pt.hands + '</td>' +
-      '<td style="color:' + wrCol2 + '">' + (pt.sessionWr !== null ? pt.sessionWr + '%' : '—') + '</td>' +
-      '<td>' + (pt.wr !== null ? pt.wr + '%' : '—') + '</td>' +
-      '<td>' + (pt.vpip !== null ? pt.vpip + '%' : '—') + '</td>' +
-      '<td>' + (pt.agg !== null ? pt.agg + '%' : '—') + '</td></tr>';
+      '<td style="color:' + wrCol2 + '">' + (pt.sessionWr !== null ? pt.sessionWr + '%' : '-') + '</td>' +
+      '<td>' + (pt.wr !== null ? pt.wr + '%' : '-') + '</td>' +
+      '<td>' + (pt.vpip !== null ? pt.vpip + '%' : '-') + '</td>' +
+      '<td>' + (pt.agg !== null ? pt.agg + '%' : '-') + '</td></tr>';
   }
   tHtml += '</tbody></table></div></div>';
 
@@ -93,19 +93,24 @@ function renderTrends(container, hands, meta) {
   if (points.length >= 3) {
     var last = points[points.length - 1];
     var mid = points[Math.floor(points.length / 2)];
+    // Scale the swing gate by the smaller half's hand count so a few sessions
+    // don't trigger spurious shifts.
+    var _smallHalfN = Math.min(last.cumHands - mid.cumHands, mid.cumHands);
+    var _wrGate = 5 * Math.max(1, Math.sqrt(40 / Math.max(1, _smallHalfN)));
+    var _vpipGate = 8 * Math.max(1, Math.sqrt(40 / Math.max(1, _smallHalfN)));
     if (last.wr !== null && mid.wr !== null) {
       var diff = last.wr - mid.wr;
-      if (diff > 5) {
+      if (diff > _wrGate) {
         var exRecentWin = findExampleHand(function(h) { return h.outcome && h.outcome.result === 'won' && (h.timestamp || 0) >= (sorted[Math.floor(sorted.length / 2)].timestamp || 0); });
-        tIns.push(insWithExample('g', 'Win Rate Improving', 'Your cumulative win rate has climbed ' + diff + ' percentage points over the second half of your sessions.', [{ v: mid.wr + '% → ' + last.wr + '%', hi: true }], exRecentWin, 'A recent winning hand from your improving stretch. Whatever adjustments you have made are paying off — keep it up.'));
-      } else if (diff < -5) {
+        tIns.push(insWithExample('g', 'Win Rate Improving', 'Your cumulative win rate has climbed ' + diff + ' percentage points over the second half of your sessions.', [{ v: mid.wr + '% → ' + last.wr + '%', hi: true }], exRecentWin, 'A recent winning hand from your improving stretch. Whatever adjustments you have made are paying off - keep it up.'));
+      } else if (diff < -_wrGate) {
         var exRecentLoss = findExampleHand(function(h) { return h.outcome && h.outcome.result !== 'won' && (h.timestamp || 0) >= (sorted[Math.floor(sorted.length / 2)].timestamp || 0); });
-        tIns.push(insWithExample('a', 'Win Rate Declining', 'Your cumulative win rate has dropped ' + Math.abs(diff) + ' percentage points. Check for recent leaks or tilt.', [{ v: mid.wr + '% → ' + last.wr + '%', hi: true }], exRecentLoss, 'A recent losing hand during your downswing. Review whether you are tilting, calling too wide, or facing tougher competition.'));
+        tIns.push(insWithExample('a', 'Win Rate Declining', 'Your cumulative win rate has dropped ' + Math.abs(diff) + ' percentage points. Look for recent leaks or tilt.', [{ v: mid.wr + '% → ' + last.wr + '%', hi: true }], exRecentLoss, 'A recent losing hand during your downswing. Review whether you are tilting, calling too wide, or facing tougher competition.'));
       } else tIns.push(ins('n', 'Win Rate Stable', 'Consistent at around ' + last.wr + '% across sessions.', [{ v: last.wr + '%' }]));
     }
     if (last.vpip !== null && mid.vpip !== null) {
       var vdiff = last.vpip - mid.vpip;
-      if (Math.abs(vdiff) > 8) {
+      if (Math.abs(vdiff) > _vpipGate) {
         var exVpipShift = findExampleHand(function(h) {
           if (!h.timestamp || h.timestamp < (sorted[Math.floor(sorted.length / 2)].timestamp || 0)) return false;
           var ma = parseActions(h.actions).filter(function(a) { return a.isMe && a.street === 'Preflop'; });
@@ -113,7 +118,7 @@ function renderTrends(container, hands, meta) {
             ? ma.some(function(a) { return a.type === 'call' || a.type === 'raise'; })
             : ma.some(function(a) { return a.type === 'fold'; });
         });
-        tIns.push(insWithExample('a', 'VPIP Shift', 'Your VPIP has moved ' + (vdiff > 0 ? 'up' : 'down') + ' by ' + Math.abs(vdiff) + ' points. Check if your hand selection has changed intentionally.', [{ v: mid.vpip + '% → ' + last.vpip + '%', hi: true }], exVpipShift, vdiff > 0 ? 'A recent hand where you voluntarily entered the pot. Your VPIP has increased — make sure you are not playing too many marginal hands.' : 'A recent hand where you folded preflop. Your VPIP has dropped — make sure you are not being too tight and missing value.'));
+        tIns.push(insWithExample('a', 'VPIP Shift', 'Your VPIP has moved ' + (vdiff > 0 ? 'up' : 'down') + ' by ' + Math.abs(vdiff) + ' points. Check if your hand selection has changed intentionally.', [{ v: mid.vpip + '% → ' + last.vpip + '%', hi: true }], exVpipShift, vdiff > 0 ? 'A recent hand where you voluntarily entered the pot. Your VPIP has increased - make sure you are not playing too many marginal hands.' : 'A recent hand where you folded preflop. Your VPIP has dropped - make sure you are not being too tight and missing value.'));
       }
     }
   }

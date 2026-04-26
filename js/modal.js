@@ -144,7 +144,7 @@ function buildHandRow(h, idx) {
       '<div class="range-hand-row-side">' +
         '<span class="range-hand-row-pos">' + (h.position || '?') + '</span>' +
         '<span class="range-hand-row-hole">' + (h.hole ? h.hole.join(' ') : '??') + '</span>' +
-        '<span class="range-hand-row-board">' + (h.board && h.board.length ? h.board.join(' ') : '—') + '</span>' +
+        '<span class="range-hand-row-board">' + (h.board && h.board.length ? h.board.join(' ') : '-') + '</span>' +
       '</div>' +
       '<div class="range-hand-row-side">' + res + '</div>' +
     '</div>' +

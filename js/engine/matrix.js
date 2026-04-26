@@ -30,7 +30,7 @@ function _rangeSet(/* ...arrays */) {
 // ── SEAT_MATRIX ─────────────────────────────────────────────────────────────
 // Keyed 2..9. Each entry:
 //   positions:     ordered list of seats (earliest → latest)
-//   rangesByPos:   { POS: Set<combo> }        — recommended open range at standard depth
+//   rangesByPos:   { POS: Set<combo> }        - recommended open range at standard depth
 //   guideByPos:    { POS: { ideal, tight, loose, desc } }
 //   openRaise:     preflop sizing text
 //   threeBet:      suggested 3-bet frequency text
@@ -58,14 +58,14 @@ SEAT_MATRIX[2] = {
     )
   },
   guideByPos: {
-    BTN: { ideal: '80-90%', tight: 65, loose: 92, desc: 'In heads-up, the button is everything. You have position every street — play most hands, fold only complete trash (72o, 83o, 94o).' },
-    BB:  { ideal: '70-85%', tight: 55, loose: 90, desc: 'Defend the big blind wide heads-up. The BTN will open ~80% of hands — call or 3-bet back with anything reasonable.' }
+    BTN: { ideal: '80-90%', tight: 65, loose: 92, desc: 'In heads-up, the button is everything. You have position every street - play most hands, fold only complete trash (72o, 83o, 94o).' },
+    BB:  { ideal: '70-85%', tight: 55, loose: 90, desc: 'Defend the big blind wide heads-up. The BTN will open ~80% of hands - call or 3-bet back with anything reasonable.' }
   },
   openRaise:  '2-3x',
   threeBet:   'BB 3-bets 20-25% vs BTN',
   cbetFreq:   '70-80% of flops in position',
   aggression: 'Extremely aggressive. Fold equity is everything.',
-  notes:      'Button is massive — you act first preflop but have position postflop. Play 80-90% of hands on the BTN, defend the BB wide. Postflop bet 33-66% pot, polarise to 75-100% on turn/river.'
+  notes:      'Button is massive - you act first preflop but have position postflop. Play 80-90% of hands on the BTN, defend the BB wide. Postflop bet 33-66% pot, polarise to 75-100% on turn/river.'
 };
 
 // 3-handed
@@ -95,9 +95,9 @@ SEAT_MATRIX[3] = {
     )
   },
   guideByPos: {
-    BTN: { ideal: '60-70%', tight: 50, loose: 75, desc: 'Button is dominant 3-handed. Raise 60-70% — any pair, most suited cards, any broadway.' },
-    SB:  { ideal: '40-50%', tight: 30, loose: 55, desc: 'Worst seat 3-handed — first to act preflop and postflop. 3-bet or fold vs BTN opens. Open 40-50% when folded to.' },
-    BB:  { ideal: '50-65%', tight: 40, loose: 75, desc: 'Defend wide. Call or 3-bet vs BTN opens — pot odds favour defending most playable hands.' }
+    BTN: { ideal: '60-70%', tight: 50, loose: 75, desc: 'Button is dominant 3-handed. Raise 60-70% - any pair, most suited cards, any broadway.' },
+    SB:  { ideal: '40-50%', tight: 30, loose: 55, desc: 'Worst seat 3-handed - first to act preflop and postflop. 3-bet or fold vs BTN opens. Open 40-50% when folded to.' },
+    BB:  { ideal: '50-65%', tight: 40, loose: 75, desc: 'Defend wide. Call or 3-bet vs BTN opens - pot odds favour defending most playable hands.' }
   },
   openRaise:  '2.5-3x',
   threeBet:   'Blinds 3-bet 15-20%',
@@ -138,8 +138,8 @@ SEAT_MATRIX[4] = {
     )
   },
   guideByPos: {
-    CO: { ideal: '40-50%', tight: 30, loose: 55, desc: 'Cutoff opens 40-50% 4-handed — suited aces, broadways, pairs down to 22, suited connectors 65s+.' },
-    BTN: { ideal: '50-60%', tight: 40, loose: 65, desc: 'Button still strong. Raise 50-60% — add wider suited cards, more suited connectors, a few extra offsuit broadways.' },
+    CO: { ideal: '40-50%', tight: 30, loose: 55, desc: 'Cutoff opens 40-50% 4-handed - suited aces, broadways, pairs down to 22, suited connectors 65s+.' },
+    BTN: { ideal: '50-60%', tight: 40, loose: 65, desc: 'Button still strong. Raise 50-60% - add wider suited cards, more suited connectors, a few extra offsuit broadways.' },
     SB: { ideal: '30-40%', tight: 22, loose: 45, desc: 'Still painful out of position. 3-bet or fold vs opens; raise 30-40% when folded to.' },
     BB: { ideal: '35-45%', tight: 25, loose: 55, desc: 'Defend 35-45% vs button, tighter vs earlier positions. Avoid calling hands that flop weak out of position.' }
   },
@@ -190,7 +190,7 @@ SEAT_MATRIX[5] = {
   guideByPos: {
     HJ: { ideal: '25-35%', tight: 18, loose: 38, desc: 'Hijack at 5-handed opens 25-35%. Pairs 55+, strong broadways, suited connectors T9s+.' },
     CO: { ideal: '35-45%', tight: 27, loose: 48, desc: 'Cutoff opens 35-45%. Wider suited aces, more suited connectors, pairs down to 22.' },
-    BTN: { ideal: '45-55%', tight: 35, loose: 60, desc: 'Button opens 45-55% — the widest range at the table.' },
+    BTN: { ideal: '45-55%', tight: 35, loose: 60, desc: 'Button opens 45-55% - the widest range at the table.' },
     SB: { ideal: '28-38%', tight: 20, loose: 42, desc: '3-bet or fold vs opens. When folded to, open 28-38%.' },
     BB: { ideal: '30-40%', tight: 22, loose: 45, desc: 'Defend 30-40% vs button, 25-35% vs earlier positions.' }
   },
@@ -244,10 +244,10 @@ SEAT_MATRIX[6] = {
     )
   },
   guideByPos: {
-    UTG: { ideal: '15-20%', tight: 10, loose: 24, desc: 'Under the gun at 6-max opens 15-20%. Pairs 77+, AQ+, AJs+, KQs — keep it tight.' },
+    UTG: { ideal: '15-20%', tight: 10, loose: 24, desc: 'Under the gun at 6-max opens 15-20%. Pairs 77+, AQ+, AJs+, KQs - keep it tight.' },
     HJ: { ideal: '20-30%', tight: 15, loose: 32, desc: 'Hijack opens 20-30%. Add pairs to 55, more suited broadways, suited connectors T9s+.' },
     CO: { ideal: '30-40%', tight: 22, loose: 42, desc: 'Cutoff opens 30-40%. Any pair, suited aces, suited connectors 65s+.' },
-    BTN: { ideal: '40-50%', tight: 32, loose: 55, desc: 'Button opens 40-50% — attack the blinds.' },
+    BTN: { ideal: '40-50%', tight: 32, loose: 55, desc: 'Button opens 40-50% - attack the blinds.' },
     SB: { ideal: '25-35%', tight: 18, loose: 40, desc: '3-bet or fold vs opens. Open 25-35% when folded to.' },
     BB: { ideal: '25-35%', tight: 18, loose: 40, desc: 'Defend 25-35% vs button, tighter vs earlier positions.' }
   },
@@ -258,7 +258,7 @@ SEAT_MATRIX[6] = {
   notes:      'Early position tight. Need strong hands (JJ+, AQ+, suited broadway) to open UTG. Postflop 50-75% pot, turn/river 75-100%.'
 };
 
-// 7-handed (extrapolated — add UTG+1)
+// 7-handed (extrapolated - add UTG+1)
 SEAT_MATRIX[7] = {
   positions: ['UTG', 'UTG+1', 'HJ', 'CO', 'BTN', 'SB', 'BB'],
   rangesByPos: {
@@ -305,8 +305,8 @@ SEAT_MATRIX[7] = {
     )
   },
   guideByPos: {
-    UTG:    { ideal: '10-15%', tight: 7,  loose: 18, desc: '7-handed UTG is tight — premium pairs, AQ+, AJs+, KQs.' },
-    'UTG+1':{ ideal: '12-18%', tight: 9,  loose: 22, desc: 'Slightly wider than UTG — add 77, KJs, QJs, AJo.' },
+    UTG:    { ideal: '10-15%', tight: 7,  loose: 18, desc: '7-handed UTG is tight - premium pairs, AQ+, AJs+, KQs.' },
+    'UTG+1':{ ideal: '12-18%', tight: 9,  loose: 22, desc: 'Slightly wider than UTG - add 77, KJs, QJs, AJo.' },
     HJ:     { ideal: '18-25%', tight: 13, loose: 28, desc: 'Hijack opens 18-25% at 7-handed.' },
     CO:     { ideal: '25-35%', tight: 18, loose: 38, desc: 'Cutoff opens 25-35%.' },
     BTN:    { ideal: '35-45%', tight: 27, loose: 50, desc: 'Button opens 35-45%.' },
@@ -320,7 +320,7 @@ SEAT_MATRIX[7] = {
   notes:      'Adds UTG+1. Early position very disciplined; late position still attacks.'
 };
 
-// 8-handed (extrapolated — add MP)
+// 8-handed (extrapolated - add MP)
 SEAT_MATRIX[8] = {
   positions: ['UTG', 'UTG+1', 'MP', 'HJ', 'CO', 'BTN', 'SB', 'BB'],
   rangesByPos: {
@@ -371,8 +371,8 @@ SEAT_MATRIX[8] = {
     )
   },
   guideByPos: {
-    UTG:    { ideal: '8-12%',  tight: 6,  loose: 15, desc: '8-handed UTG is very tight — premium pairs and AK.' },
-    'UTG+1':{ ideal: '10-15%', tight: 7,  loose: 18, desc: 'Still tight — AJs+, KJs+, 88+, AQo+.' },
+    UTG:    { ideal: '8-12%',  tight: 6,  loose: 15, desc: '8-handed UTG is very tight - premium pairs and AK.' },
+    'UTG+1':{ ideal: '10-15%', tight: 7,  loose: 18, desc: 'Still tight - AJs+, KJs+, 88+, AQo+.' },
     MP:     { ideal: '12-18%', tight: 9,  loose: 22, desc: 'Middle position opens 12-18%.' },
     HJ:     { ideal: '16-24%', tight: 12, loose: 28, desc: 'Hijack opens 16-24%.' },
     CO:     { ideal: '22-30%', tight: 16, loose: 35, desc: 'Cutoff opens 22-30%.' },
@@ -387,7 +387,7 @@ SEAT_MATRIX[8] = {
   notes:      'Full-ring territory. Early position demands premium hands.'
 };
 
-// 9-handed (extrapolated — add LJ)
+// 9-handed (extrapolated - add LJ)
 SEAT_MATRIX[9] = {
   positions: ['UTG', 'UTG+1', 'MP', 'LJ', 'HJ', 'CO', 'BTN', 'SB', 'BB'],
   rangesByPos: {
@@ -443,7 +443,7 @@ SEAT_MATRIX[9] = {
     )
   },
   guideByPos: {
-    UTG:    { ideal: '7-10%',  tight: 5,  loose: 13, desc: '9-handed UTG is extremely tight — top pairs, AKs, AQs, AKo only.' },
+    UTG:    { ideal: '7-10%',  tight: 5,  loose: 13, desc: '9-handed UTG is extremely tight - top pairs, AKs, AQs, AKo only.' },
     'UTG+1':{ ideal: '8-13%',  tight: 6,  loose: 16, desc: 'Barely wider than UTG.' },
     MP:     { ideal: '10-15%', tight: 7,  loose: 18, desc: 'Middle position opens 10-15%.' },
     LJ:     { ideal: '12-18%', tight: 9,  loose: 22, desc: 'Lojack opens 12-18%.' },
@@ -467,7 +467,7 @@ var FLOP_MATRIX = {
   HU: {
     cbetFreq:      '65-75%',
     cbetSizing:    '33-50% pot on dry boards, 66%+ on wet or polarised',
-    continueRange: 'Defend wide — any pair, any draw, any overcards with backdoors',
+    continueRange: 'Defend wide - any pair, any draw, any overcards with backdoors',
     showdownBar:   'Bottom pair, ace-high can be enough',
     notes:         'Heads-up postflop is about fold equity. C-bet often, barrel turn on good equity, value-bet thin.'
   },
@@ -475,12 +475,12 @@ var FLOP_MATRIX = {
     cbetFreq:      '45-55%',
     cbetSizing:    '50-66% pot as default; smaller when range-betting dry boards',
     continueRange: 'Top pair good kicker or better usually best; draws fine for one bet',
-    showdownBar:   'Top pair decent kicker — pay off less often',
+    showdownBar:   'Top pair decent kicker - pay off less often',
     notes:         '3-way pots play closer to GTO. One opponent usually has something. Fire value bets, fold marginal hands more often.'
   },
   multiway: {
     cbetFreq:      '25-35%',
-    cbetSizing:    '66-100% pot — protect against draws and extract from made hands',
+    cbetSizing:    '66-100% pot - protect against draws and extract from made hands',
     continueRange: 'Top pair top kicker or better; draws need pot odds',
     showdownBar:   'Two pair+ is the bar; top pair is often just a bluff-catcher',
     notes:         'Multiway pots demand strong hands. C-bet less often, size bigger when you do, avoid bluffing into 3+ opponents.'
@@ -494,7 +494,7 @@ var STACK_MATRIX = {
   short: {
     label:             '< 20 BB',
     rangeMultiplier:   null, // push/fold overrides the seat matrix
-    cbetAdjustment:    -20,  // c-bet much less — low SPR, commit or check
+    cbetAdjustment:    -20,  // c-bet much less - low SPR, commit or check
     sizingAdjustment:  'Shove-or-check. Avoid min-bets that commit you without fold equity.',
     threeBetAdjustment:'3-bets become jams. Min 3-bets are dead money.',
     jamGuide: {
@@ -508,15 +508,15 @@ var STACK_MATRIX = {
     label:             '20-50 BB',
     rangeMultiplier:   0.8,  // tighten 20%
     cbetAdjustment:    -5,
-    sizingAdjustment:  'Smaller c-bets (33-50%). 3-bets commit you — size and hand matter.',
+    sizingAdjustment:  'Smaller c-bets (33-50%). 3-bets commit you - size and hand matter.',
     threeBetAdjustment:'3-bet as a commitment decision. Avoid light 3-bets out of position.',
-    notes: 'Squeeze-conscious. Suited connectors and small pairs lose implied-odds value. Tighten opens by ~20%. 3-bets become commitment decisions — pick your spots.'
+    notes: 'Squeeze-conscious. Suited connectors and small pairs lose implied-odds value. Tighten opens by ~20%. 3-bets become commitment decisions - pick your spots.'
   },
   standard: {
     label:             '50-100 BB',
     rangeMultiplier:   1.0,
     cbetAdjustment:    0,
-    sizingAdjustment:  'Standard NLHE sizing — see flop-bucket guidance.',
+    sizingAdjustment:  'Standard NLHE sizing - see flop-bucket guidance.',
     threeBetAdjustment:'Standard 3-bet frequencies per seat.',
     notes: 'Full NLHE regime. The seat matrix applies directly. Play value hands, balance with bluffs, exploit reads.'
   },
@@ -530,13 +530,13 @@ var STACK_MATRIX = {
       ['33','22','98s','97s','87s','76s','65s','54s','J9s','T8s','Q9s','K9s'],
       ['J8s','T7s','96s','86s']
     ),
-    notes: 'Deep-stack regime. Implied odds reward suited connectors, small pairs, suited gappers. Thin river value and hero calls get harder — disguised hands win more.'
+    notes: 'Deep-stack regime. Implied odds reward suited connectors, small pairs, suited gappers. Thin river value and hero calls get harder - disguised hands win more.'
   },
   unknown: {
     label:             'unknown',
     rangeMultiplier:   1.0,
     cbetAdjustment:    0,
-    sizingAdjustment:  'Insufficient stack info — defaulting to standard.',
+    sizingAdjustment:  'Insufficient stack info - defaulting to standard.',
     threeBetAdjustment:'Defaulting to standard 3-bet frequencies.',
     notes: 'Effective stack could not be determined from the hand log. Falling back to standard guidance.'
   }
@@ -627,7 +627,7 @@ function metricTargets(seats, position) {
 // ── PLAYSTYLE OFFSETS ───────────────────────────────────────────────────────
 // Each style is an additive point shift applied at lookup time on top of the
 // matrix bands. TAG is the baseline (no shift). Numbers are starting points
-// — calibrate by eye.
+// - calibrate by eye.
 
 var STYLE_OFFSETS = {
   TAG:     { vpip: 0,   pfr: 0,   af: 0,   cbet: 0,   foldToRaise: 0 },
@@ -652,8 +652,12 @@ function setUserStyle(style) {
   try { localStorage.setItem('tc_user_style', style); } catch (_) {}
 }
 
+// The persisted style now serves as the player's target playstyle. Alias
+// getUserStyle so callers can read it under the clearer name.
+function getTargetStyle() { return getUserStyle(); }
+
 // Leaf lookup: returns the {tight, ideal, loose} band for a single metric in
-// a single cell, with the user's playstyle offset applied. style optional —
+// a single cell, with the user's playstyle offset applied. style optional -
 // defaults to the persisted user style.
 function matrixTarget(metric, position, seats, style) {
   var targets = metricTargets(seats, position);

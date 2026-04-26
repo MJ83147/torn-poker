@@ -194,7 +194,7 @@ function analyse(hands) {
         else if (a.type === 'raise' || a.type === 'bet') raises++;
       }
 
-      // Track which streets the hero reached (exclude blind posts — they don't indicate voluntary street play)
+      // Track which streets the hero reached (exclude blind posts - they don't indicate voluntary street play)
       if (a.isMe && a.type !== 'sb' && a.type !== 'bb' && !heroSeenStreets.has(a.street)) {
         heroSeenStreets.add(a.street);
         if (ss[a.street]) ss[a.street].seen++;
@@ -367,7 +367,7 @@ function analyse(hands) {
     }
   }
 
-  // Derived percentages — single source of truth for all panels
+  // Derived percentages - single source of truth for all panels
   var core = {
     wr:        pct(handsWon, handsWithOutcome),
     vpipPct:   pct(vpip, n),

@@ -150,7 +150,7 @@ function countActivePerStreet(hand) {
   // trust the action-log count for activeCount baseline.
   var uniqueAuthors = Object.keys(seenAuthors).length;
   if (!reachedFlop && uniqueAuthors && uniqueAuthors < seats) {
-    // nothing to adjust — street counts remain null
+    // nothing to adjust - street counts remain null
   }
 
   return result;
@@ -158,7 +158,7 @@ function countActivePerStreet(hand) {
 
 // Estimate effective stack at start of hand, in BB.
 // Two regimes:
-//   (a) If any all-in action happened, player commitments reflect real stacks —
+//   (a) If any all-in action happened, player commitments reflect real stacks -
 //       effective stack = min of hero's commit and the largest villain commit.
 //   (b) Otherwise, commitments are only a lower bound; if they exceed a meaningful
 //       threshold (≥ 20 BB) we treat that as the likely effective stack, else null.
@@ -221,7 +221,7 @@ function estimateEffStackBB(hand) {
   var effFloor = Math.min(heroCommit, villainMax);
 
   // When no all-in occurred, commitments are only a lower bound. We only report
-  // depth if the floor crosses ~20 BB — below that the hand is ambiguous.
+  // depth if the floor crosses ~20 BB - below that the hand is ambiguous.
   if (!sawAllIn && effFloor < bb * 20) return null;
 
   return Math.round((effFloor / bb) * 10) / 10;
