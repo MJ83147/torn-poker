@@ -217,12 +217,29 @@ function _vsRow(label, actualPct, actualDenom, targetText) {
     '</div>';
 }
 
+// Format a {tight, ideal, loose} matrix band as "X-Y%". Used to render target
+// bands sourced from matrixTarget so the user's chosen style offset is applied.
+function _fmtBand(band) {
+  if (!band) return '-';
+  return Math.round(band.tight) + '-' + Math.round(band.loose) + '%';
+}
+
 // Table Dynamics: compares YOUR actual play (c-bet %, VPIP per position) against
 // the recommended targets for each bucket. Each card carries a clear verdict.
+//
+// Targets come from matrixTarget(metric, position, seats) so the user's chosen
+// style (TAG/LAG/Nit/etc) is applied via STYLE_OFFSETS - reading the static
+// SEAT_MATRIX / FLOP_MATRIX entries directly would skip the style offset.
+//
+// Each card has three explicit zones, in this order:
+//   1. ANALYSIS    - your numbers vs target band, with a verdict
+//   2. CONTEXT     - one-line description of the regime (general advice)
+//   3. COACHING    - what to actually do (general advice)
 function renderTableDynamicsReference(hands, d) {
   var h = '<div class="sec-subtitle mt-20">Table Dynamics - You vs Target</div>';
-  h += '<div class="desc-text mb-16">Your actual play at each table size and flop multiplicity, compared to the recommended benchmarks. <span class="v-ok">Green = on target</span>, <span class="v-low">amber = too low / too tight</span>, <span class="v-high">red = too high / too loose</span>.</div>';
+  h += '<div class="desc-text mb-16">Your actual play at each table size and flop multiplicity, compared to the recommended benchmarks for your target style. <span class="v-ok">Green = on target</span>, <span class="v-low">amber = too low / too tight</span>, <span class="v-high">red = too high / too loose</span>.</div>';
 
+  var styleKey = (typeof getUserStyle === 'function') ? getUserStyle() : 'TAG';
   var seatKeys = Object.keys(SEAT_MATRIX).map(Number).sort(function(a, b) { return a - b; });
 
   // ── Seat-size cards: per-position VPIP vs target ──
@@ -243,21 +260,25 @@ function renderTableDynamicsReference(hands, d) {
       h += '</div>';
       continue;
     }
-    h += '<div class="dynamics-card-note">' + entry.notes + '</div>';
 
-    // Per-position VPIP comparison
-    h += '<table class="tbl mt-8 dynamics-pos-tbl"><thead><tr><th>Pos</th><th>You</th><th>Target</th><th>Hands</th></tr></thead><tbody>';
+    // ANALYSIS zone: per-position VPIP vs style-adjusted matrix target
+    h += '<div class="dynamics-zone-label dim-label">Your play</div>';
+    h += '<table class="tbl dynamics-pos-tbl"><thead><tr><th>Pos</th><th>You</th><th>Target</th><th>Hands</th></tr></thead><tbody>';
     for (var pi = 0; pi < entry.positions.length; pi++) {
       var p = entry.positions[pi];
-      var g = entry.guideByPos[p];
-      if (!g) continue;
+      if (!entry.guideByPos[p]) continue;
       var pm = subD.posMap[p];
       var actPct = (pm && pm.hands > 0) ? pct(pm.vpip, pm.hands) : null;
-      var rng = _parsePctRange(g.ideal);
-      var cls = rng ? _verdict(actPct, rng[0], rng[1]).cls : 'v-na';
-      h += '<tr class="' + cls + '"><td>' + p + '</td><td>' + (actPct != null ? actPct + '%' : '-') + '</td><td class="dim-label">' + g.ideal + '</td><td class="dim-label">' + (pm ? pm.hands : 0) + '</td></tr>';
+      // Use matrixTarget so the user's style offset (TAG/LAG/Nit/etc) is applied
+      var band = matrixTarget('vpip', p, seats, styleKey);
+      var cls = band ? _verdict(actPct, Math.round(band.tight), Math.round(band.loose)).cls : 'v-na';
+      h += '<tr class="' + cls + '"><td>' + p + '</td><td>' + (actPct != null ? actPct + '%' : '-') + '</td><td class="dim-label">' + _fmtBand(band) + '</td><td class="dim-label">' + (pm ? pm.hands : 0) + '</td></tr>';
     }
     h += '</tbody></table>';
+
+    // CONTEXT + COACHING zone: clearly labelled as general advice
+    h += '<div class="dynamics-zone-label dim-label dynamics-coaching-head">Coaching</div>';
+    h += '<div class="dynamics-coaching">' + entry.notes + '</div>';
     h += '</div>';
   }
   h += '</div>';
@@ -267,6 +288,12 @@ function renderTableDynamicsReference(hands, d) {
   h += '<div class="dynamics-cards">';
   var flopKeys = ['HU', '3-way', 'multiway'];
   var flopLabels = { HU: 'Heads-up flop', '3-way': '3-way flop', multiway: 'Multiway flop (4+)' };
+  // Flop bucket modifies the seat-based c-bet target: HU rewards more c-betting,
+  // multiway demands less. Mirrors the Betting panel's situational-stat logic.
+  var flopCbetMod = { HU: 5, '3-way': 0, multiway: -10 };
+  var ctx = getGameContext(d);
+  var domSeats = ctx.seats;
+  var domPos = ctx.defaultPos;
   for (var fk = 0; fk < flopKeys.length; fk++) {
     var bk = flopKeys[fk];
     var fe = FLOP_MATRIX[bk];
@@ -280,13 +307,24 @@ function renderTableDynamicsReference(hands, d) {
       h += '</div>';
       continue;
     }
-    h += '<div class="dynamics-card-note">' + fe.notes + '</div>';
 
+    // ANALYSIS zone: c-bet vs style-adjusted matrix target with bucket modifier
+    h += '<div class="dynamics-zone-label dim-label">Your play</div>';
     var cbetActual = subF.cbetOpps > 0 ? pct(subF.cbetDone, subF.cbetOpps) : null;
-    h += _vsRow('C-bet', cbetActual, subF.cbetOpps, fe.cbetFreq);
+    var cbetSeatBand = matrixTarget('cbet', domPos, domSeats, styleKey);
+    var cbetMod = flopCbetMod[bk] || 0;
+    var cbetBand = cbetSeatBand ? {
+      tight: Math.max(0, cbetSeatBand.tight + cbetMod),
+      ideal: Math.max(0, cbetSeatBand.ideal + cbetMod),
+      loose: Math.max(0, cbetSeatBand.loose + cbetMod)
+    } : null;
+    h += _vsRow('C-bet', cbetActual, subF.cbetOpps, _fmtBand(cbetBand));
 
-    h += '<div class="dynamics-card-kv"><span>Target sizing</span><span>' + fe.cbetSizing + '</span></div>';
-    h += '<div class="dynamics-card-kv"><span>Continue</span><span>' + fe.continueRange + '</span></div>';
+    // CONTEXT + COACHING zone
+    h += '<div class="dynamics-zone-label dim-label dynamics-coaching-head">Coaching</div>';
+    h += '<div class="dynamics-coaching">' + fe.notes + '</div>';
+    h += '<div class="dynamics-card-kv"><span>Bet sizing</span><span>' + fe.cbetSizing + '</span></div>';
+    h += '<div class="dynamics-card-kv"><span>Continue with</span><span>' + fe.continueRange + '</span></div>';
     h += '</div>';
   }
   h += '</div>';
