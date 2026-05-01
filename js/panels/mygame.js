@@ -276,9 +276,6 @@ function renderTableDynamicsReference(hands, d) {
     }
     h += '</tbody></table>';
 
-    // CONTEXT + COACHING zone: clearly labelled as general advice
-    h += '<div class="dynamics-zone-label dim-label dynamics-coaching-head">Coaching</div>';
-    h += '<div class="dynamics-coaching">' + entry.notes + '</div>';
     h += '</div>';
   }
   h += '</div>';
