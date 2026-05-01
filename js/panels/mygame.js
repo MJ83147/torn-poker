@@ -242,6 +242,20 @@ function renderTableDynamicsReference(hands, d) {
   var styleKey = (typeof getUserStyle === 'function') ? getUserStyle() : 'TAG';
   var seatKeys = Object.keys(SEAT_MATRIX).map(Number).sort(function(a, b) { return a - b; });
 
+  // Standalone per-seat-count coaching. SEAT_MATRIX.notes are written as deltas
+  // from the previous seat count ("Adds UTG+1") so they read as nonsense in
+  // isolation. These replacements stand on their own.
+  var seatCoaching = {
+    2: 'Heads-up: defend the BB very wide and open 80%+ from the button. Postflop is about fold equity - c-bet often, double-barrel turns where you have equity.',
+    3: '3-handed plays like heads-up with one extra seat. BTN opens 60-70%. SB defends wide vs BTN steals. Aggression and position dominate.',
+    4: '4-max: the cutoff joins late position. BTN still opens 50-60%. SB and BB need wider defends than full-ring - calling 3-bets light is fine in position.',
+    5: '5-max: the hijack starts to feel early. Late position is still where you make most of your money - BTN opens 45-55%, CO opens 30-40%.',
+    6: '6-max: UTG is the only true early seat. CO and BTN should be your most-played positions for opens, 3-bets, and steals. Tighten UTG to premiums only.',
+    7: '7-handed adds UTG+1. Early position needs to be tight (premiums and broadway). Late position keeps attacking the blinds aggressively.',
+    8: 'Full-ring 8-max. Tighten UTG and UTG+1 to premiums only. Widen CO/BTN to attack the blinds when folded to.',
+    9: 'Full-ring 9-max. Very disciplined early position - JJ+, AKs/AKo, AQs only from UTG. Exploit weak limps and small opens from the blinds when folded to.'
+  };
+
   // ── Seat-size cards: per-position VPIP vs target ──
   h += '<div class="sec-subtitle mt-12">By Table Size</div>';
   h += '<div class="dynamics-cards">';
@@ -261,9 +275,10 @@ function renderTableDynamicsReference(hands, d) {
       continue;
     }
 
-    // ANALYSIS zone: per-position VPIP vs style-adjusted matrix target
-    h += '<div class="dynamics-zone-label dim-label">Your play</div>';
-    h += '<table class="tbl dynamics-pos-tbl"><thead><tr><th>Pos</th><th>You</th><th>Target</th><th>Hands</th></tr></thead><tbody>';
+    // ANALYSIS zone: per-position VPIP vs style-adjusted matrix target.
+    // Header explicitly says "Your VPIP" so the % has a name attached.
+    h += '<div class="dynamics-zone-label dim-label">Your play - VPIP by position</div>';
+    h += '<table class="tbl dynamics-pos-tbl"><thead><tr><th>Pos</th><th>Your VPIP</th><th>Target</th><th>Hands</th></tr></thead><tbody>';
     for (var pi = 0; pi < entry.positions.length; pi++) {
       var p = entry.positions[pi];
       if (!entry.guideByPos[p]) continue;
@@ -276,6 +291,11 @@ function renderTableDynamicsReference(hands, d) {
     }
     h += '</tbody></table>';
 
+    // COACHING zone: standalone per-seat-count text (not the matrix delta notes)
+    if (seatCoaching[seats]) {
+      h += '<div class="dynamics-zone-label dim-label dynamics-coaching-head">Coaching</div>';
+      h += '<div class="dynamics-coaching">' + seatCoaching[seats] + '</div>';
+    }
     h += '</div>';
   }
   h += '</div>';
