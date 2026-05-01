@@ -109,11 +109,25 @@ function renderTrends(container, hands, meta, overallData) {
       var diff = last.wr - mid.wr;
       if (diff > _wrGate) {
         var exRecentWin = findExampleHand(function(h) { return h.outcome && h.outcome.result === 'won' && (h.timestamp || 0) >= (sorted[Math.floor(sorted.length / 2)].timestamp || 0); });
-        tIns.push(insWithExample('g', 'Win Rate Improving', 'Your cumulative win rate has climbed ' + diff + ' percentage points over the second half of your sessions.', [{ v: mid.wr + '% → ' + last.wr + '%', hi: true }], exRecentWin, 'A recent winning hand from your improving stretch. Whatever adjustments you have made are paying off - keep it up.'));
+        tIns.push(insWithExample('g', 'Win Rate Improving',
+          'Your cumulative win rate has climbed ' + diff + ' points over the second half of your sessions.',
+          [{ v: mid.wr + '% → ' + last.wr + '%', hi: true }],
+          exRecentWin,
+          'A recent winning hand from your improving stretch. Whatever adjustments you have made are paying off - keep it up.',
+          'Whatever you changed is working. Keep playing the same way and resist the urge to "mix it up" while you are in a winning rhythm.'));
       } else if (diff < -_wrGate) {
         var exRecentLoss = findExampleHand(function(h) { return h.outcome && h.outcome.result !== 'won' && (h.timestamp || 0) >= (sorted[Math.floor(sorted.length / 2)].timestamp || 0); });
-        tIns.push(insWithExample('a', 'Win Rate Declining', 'Your cumulative win rate has dropped ' + Math.abs(diff) + ' percentage points. Look for recent leaks or tilt.', [{ v: mid.wr + '% → ' + last.wr + '%', hi: true }], exRecentLoss, 'A recent losing hand during your downswing. Review whether you are tilting, calling too wide, or facing tougher competition.'));
-      } else tIns.push(ins('n', 'Win Rate Stable', 'Consistent at around ' + last.wr + '% across sessions.', [{ v: last.wr + '%' }]));
+        tIns.push(insWithExample('a', 'Win Rate Declining',
+          'Your cumulative win rate has dropped ' + Math.abs(diff) + ' points over the second half of your sessions.',
+          [{ v: mid.wr + '% → ' + last.wr + '%', hi: true }],
+          exRecentLoss,
+          'A recent losing hand during your downswing. Review whether you are tilting, calling too wide, or facing tougher competition.',
+          'Downswings are usually one of three things: variance, a leak that opened up recently, or tougher opponents. Filter the hand log to recent sessions and look for patterns before assuming variance.'));
+      } else {
+        tIns.push(ins('n', 'Win Rate Stable',
+          'Consistent at around ' + last.wr + '% across sessions.',
+          [{ v: last.wr + '%' }]));
+      }
     }
     if (last.vpip !== null && mid.vpip !== null) {
       var vdiff = last.vpip - mid.vpip;
@@ -125,7 +139,14 @@ function renderTrends(container, hands, meta, overallData) {
             ? ma.some(function(a) { return a.type === 'call' || a.type === 'raise'; })
             : ma.some(function(a) { return a.type === 'fold'; });
         });
-        tIns.push(insWithExample('a', 'VPIP Shift', 'Your VPIP has moved ' + (vdiff > 0 ? 'up' : 'down') + ' by ' + Math.abs(vdiff) + ' points. Check if your hand selection has changed intentionally.', [{ v: mid.vpip + '% → ' + last.vpip + '%', hi: true }], exVpipShift, vdiff > 0 ? 'A recent hand where you voluntarily entered the pot. Your VPIP has increased - make sure you are not playing too many marginal hands.' : 'A recent hand where you folded preflop. Your VPIP has dropped - make sure you are not being too tight and missing value.'));
+        tIns.push(insWithExample('a', 'VPIP Shift',
+          'Your VPIP has moved ' + (vdiff > 0 ? 'up' : 'down') + ' by ' + Math.abs(vdiff) + ' points across the second half of your sessions.',
+          [{ v: mid.vpip + '% → ' + last.vpip + '%', hi: true }],
+          exVpipShift,
+          vdiff > 0 ? 'A recent hand where you voluntarily entered the pot. Your VPIP has increased - make sure you are not playing too many marginal hands.' : 'A recent hand where you folded preflop. Your VPIP has dropped - make sure you are not being too tight and missing value.',
+          vdiff > 0
+            ? 'A creeping VPIP usually means you are playing more marginal hands - especially from early position or when bored. Tighten back up if your win rate has not also climbed.'
+            : 'A dropping VPIP can mean you are folding hands that play well in position. Check whether you are still opening enough from CO and BTN.'));
       }
     }
   }

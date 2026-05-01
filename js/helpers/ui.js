@@ -192,7 +192,17 @@ function tipWrap(label) {
   return '<span class="tooltip">' + label + ' <span class="tip-q">?</span><span class="tip-box">' + def + '</span></span>';
 }
 
-function ins(sev, label, text, chips) {
+// Render an insight card.
+//   sev      - 'g' | 'r' | 'a' | 'n' | 'o'  (good / leak / warning / note / info)
+//   label    - title shown under the badge
+//   text     - the ANALYSIS line. What the player actually did from their data.
+//              Keep this strictly observational ("you fold 60% to 3-bets").
+//   chips    - optional [{ v, hi }] chips
+//   coaching - optional. The COACHING line. General poker advice independent
+//              of the player's specific hands ("defend wider with strong hands
+//              against 3-bets"). Renders below the analysis with a clear
+//              divider so the user knows which is which.
+function ins(sev, label, text, chips, coaching) {
   const words = { g: 'Good', r: 'Leak', a: 'Warning', n: 'Note', o: 'Info' };
   const chipHtml = chips && chips.length
     ? '<div class="ins-chips">' + chips.map(c => {
@@ -201,13 +211,19 @@ function ins(sev, label, text, chips) {
       return '<span class="' + cls + '">' + c.v + '</span>';
     }).join('') + '</div>'
     : '';
-  return '<div class="ins"><div class="ins-badge ' + sev + '"><div class="ins-dot"></div><div class="ins-word">' + words[sev] + '</div></div><div class="ins-label">' + label + '</div><div class="ins-text">' + text + '</div>' + chipHtml + '</div>';
+  const coachingHtml = coaching
+    ? '<div class="ins-coaching"><div class="ins-coaching-head dim-label">Coaching</div><div class="ins-coaching-text">' + coaching + '</div></div>'
+    : '';
+  return '<div class="ins"><div class="ins-badge ' + sev + '"><div class="ins-dot"></div><div class="ins-word">' + words[sev] + '</div></div><div class="ins-label">' + label + '</div><div class="ins-text">' + text + '</div>' + chipHtml + coachingHtml + '</div>';
 }
 
 // Insight helper that injects a "See example hands" button and wires its click.
 // exampleHands can be a single hand or an array of hands.
-function insWithExample(sev, label, text, chips, exampleHands, coachingNote) {
-  const base = ins(sev, label, text, chips);
+//   coachingNote - shown in the example-hand modal (can reference "this hand").
+//   coaching     - optional general-advice line shown inline on the card
+//                  (independent of any specific hand).
+function insWithExample(sev, label, text, chips, exampleHands, coachingNote, coaching) {
+  const base = ins(sev, label, text, chips, coaching);
   // Normalise to array
   var handsList = !exampleHands ? [] : Array.isArray(exampleHands) ? exampleHands : [exampleHands];
   if (!handsList.length) return base;

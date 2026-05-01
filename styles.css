@@ -605,6 +605,28 @@ textarea#jin:focus {
   border-top: 1px solid var(--border);
 }
 
+/* Coaching zone on insight cards: clearly separated from the analysis text
+   above so the user knows which sentences describe their play vs which give
+   general advice. */
+.ins-coaching {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.ins-coaching-head {
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  color: var(--gold);
+  margin-bottom: 4px;
+}
+
+.ins-coaching-text {
+  font-size: 14px;
+  color: var(--dim);
+  line-height: 1.6;
+}
+
 .chip {
   background: none;
   border: none;

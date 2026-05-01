@@ -102,11 +102,12 @@ function renderActions(container, d, hands) {
       var ma = getHeroActions(h);
       return ma.some(function (a) { return a.type === 'call'; }) && !ma.some(function (a) { return a.type === 'raise' || a.type === 'bet'; }) && h.outcome && h.outcome.result !== 'won';
     });
-    aIns.push(insWithExample('a', 'Call-Heavy', 'You call ' + caPct + '% but raise only ' + raPct + '% of the time. Where everyone calls anyway, raising more extracts more value.', [{
-      v: 'Call: ' + caPct + '%',
-    }, {
-      v: 'Raise: ' + raPct + '%',
-    }], exCallHeavy, 'This hand was called when a raise could have taken down the pot or extracted more value. Passive play lets draws get there for free.'));
+    aIns.push(insWithExample('a', 'Call-Heavy',
+      'You call ' + caPct + '% of actions but raise only ' + raPct + '%.',
+      [{ v: 'Call: ' + caPct + '%' }, { v: 'Raise: ' + raPct + '%' }],
+      exCallHeavy,
+      'This hand was called when a raise could have taken down the pot or extracted more value. Passive play lets draws get there for free.',
+      'Calling lets the opponent control the pot. Raising charges draws, narrows their range, and gives you fold equity. Default to raising when you have a strong hand or a good draw.'));
   }
   var _aggLow = _aggBand ? _aggBand.tight - 3 : 15;
   var _aggHigh = _aggBand ? _aggBand.loose + 3 : 40;
@@ -115,24 +116,33 @@ function renderActions(container, d, hands) {
       var ma = getHeroActions(h);
       return ma.some(function (a) { return a.type === 'call'; }) && !ma.some(function (a) { return a.type === 'raise' || a.type === 'bet'; });
     });
-    aIns.push(insWithExample('r', 'Low Aggression', 'Only ' + aggPct + '% aggression - expected floor around ' + Math.round(_aggLow) + '%. Strong hands need to be bet, not called.', [{
-      v: d.raises + ' raises from ' + actTotal + ' actions',
-    }], exLowAgg, 'Only ' + aggPct + '% of actions are raises. Strong hands need to be bet for value. Checking and calling lets opponents draw cheaply and control the pot size.'));
+    aIns.push(insWithExample('r', 'Low Aggression',
+      'You raise on ' + aggPct + '% of actions. Floor for your style is around ' + Math.round(_aggLow) + '%.',
+      [{ v: d.raises + ' raises from ' + actTotal + ' actions' }],
+      exLowAgg,
+      'Only ' + aggPct + '% of actions are raises. Strong hands need to be bet for value. Checking and calling lets opponents draw cheaply and control the pot size.',
+      'Strong hands need to be bet for value, not slowplayed. When you have top pair or better, default to betting. Checking strong hands gives free cards and caps your range.'));
   } else if (aggPct !== null && aggPct <= _aggHigh) {
     var exGoodAgg = findExampleHand(function (h) {
       return parseActions(h.actions).some(function (a) { return a.isMe && (a.type === 'raise' || a.type === 'bet'); });
     });
-    aIns.push(insWithExample('g', 'Aggression', aggPct + '% raise frequency is inside the expected band. Taking initiative without overdoing it.', [{
-      v: d.raises + ' raises',
-    }], exGoodAgg, 'A well-timed raise like this one puts opponents on the defensive. Your aggression level is in a healthy range - enough to take initiative without overbluffing.'));
+    aIns.push(insWithExample('g', 'Aggression',
+      aggPct + '% raise frequency is inside the expected band for your style.',
+      [{ v: d.raises + ' raises' }],
+      exGoodAgg,
+      'A well-timed raise like this one puts opponents on the defensive. Your aggression level is in a healthy range - enough to take initiative without overbluffing.',
+      'Keep this balance. Aggression in the expected band means you take initiative without spewing chips on light bluffs.'));
   } else if (aggPct !== null) {
     var exHighAgg = findExampleHand(function (h) {
       var ma = getHeroActions(h);
       return ma.filter(function (a) { return a.type === 'raise' || a.type === 'bet'; }).length >= 2;
     });
-    aIns.push(insWithExample('a', 'High Aggression', aggPct + '% is high - expected ceiling around ' + Math.round(_aggHigh) + '%. Bluff raises cost real money against players who call wide.', [{
-      v: d.raises + ' raises',
-    }], exHighAgg, 'Multiple raises in this hand illustrate your aggressive tendencies. In situations where players call wide, each bluff raise is more likely to get looked up - save aggression for strong holdings.'));
+    aIns.push(insWithExample('a', 'High Aggression',
+      aggPct + '% raise frequency. Ceiling for your style is around ' + Math.round(_aggHigh) + '%.',
+      [{ v: d.raises + ' raises' }],
+      exHighAgg,
+      'Multiple raises in this hand illustrate your aggressive tendencies. In situations where players call wide, each bluff raise is more likely to get looked up - save aggression for strong holdings.',
+      'Calling stations punish bluff raises. Cut bluffs against loose-passive opponents and only bet/raise with hands that beat their calling range.'));
   }
   var _f3Min = _scaleN(3);
   if (d.faced3bet >= _f3Min) {
@@ -149,9 +159,12 @@ function renderActions(container, d, hands) {
         }
         return false;
       });
-      aIns.push(insWithExample('r', '3-Bet Response', 'Folding to 3-bets ' + f3 + '% of the time at ' + (_domSeats || '?') + '-max - ceiling around ' + _f3Ceil + '%. Defend wider with strong hands.', [{
-        v: d.fold3bet + '/' + d.faced3bet + ' situations',
-      }], ex3bet, 'You folded here facing a 3-bet. Many 3-bets are light. With a decent holding, calling can be profitable given how often opponents are bluffing or semi-bluffing.'));
+      aIns.push(insWithExample('r', '3-Bet Response',
+        'You fold to 3-bets ' + f3 + '% of the time at ' + (_domSeats || '?') + '-max. Ceiling around ' + _f3Ceil + '%.',
+        [{ v: d.fold3bet + '/' + d.faced3bet + ' situations' }],
+        ex3bet,
+        'You folded here facing a 3-bet. Many 3-bets are light. With a decent holding, calling can be profitable given how often opponents are bluffing or semi-bluffing.',
+        'Many 3-bets are light bluffs and merge raises. Defend with mid pairs, suited broadways, and suited connectors against frequent 3-bettors. 4-bet your premiums to fight back.'));
     }
   }
   // All-in insights
@@ -164,21 +177,28 @@ function renderActions(container, d, hands) {
         var acts2 = parseActions(h.actions);
         return acts2.some(function (a) { return !a.isMe && (a.type === 'raise' || a.type === 'bet') && a.msg && a.msg.indexOf(' to ') === -1; }) && acts2.some(function (a) { return a.isMe && a.type === 'fold'; });
       });
-      aIns.push(insWithExample('r', 'All-in Folds x Win Rate', 'Folding all-ins ' + afp + '% of the time but winning ' + awp + '% when you do call. You\'re folding good equity.', [{
-        v: d.callAllin + ' calls, ' + d.wonAllin + ' won',
-      }], exAllinFold, 'You folded to an all-in here. Given your high win rate when calling (' + awp + '%), you may be folding too many hands with good equity against all-in ranges.'));
+      aIns.push(insWithExample('r', 'All-in Folds x Win Rate',
+        'You fold all-ins ' + afp + '% of the time but win ' + awp + '% when you call.',
+        [{ v: d.callAllin + ' calls, ' + d.wonAllin + ' won' }],
+        exAllinFold,
+        'You folded to an all-in here. Given your high win rate when calling (' + awp + '%), you may be folding too many hands with good equity against all-in ranges.',
+        'A high win rate when you do call means your folding range contains too many hands that beat the typical all-in range. Call wider with mid pairs and broadways when stacks justify the equity.'));
     } else {
-      aIns.push(ins('n', 'All-in Profile', 'Fold rate: ' + afp + '%. Win rate when calling: ' + (awp !== null ? awp + '%' : '-') + '.', [{
-        v: d.facedAllin + ' situations',
-      }]));
+      aIns.push(ins('n', 'All-in Profile',
+        'Fold rate: ' + afp + '%. Win rate when calling: ' + (awp !== null ? awp + '%' : '-') + '.',
+        [{ v: d.facedAllin + ' situations' }]));
     }
   }
   // Preflop Fold Rate
   var pfFoldPct = pct(d.ss.Preflop.f, d.ss.Preflop.seen);
   if (pfFoldPct !== null) {
-    aIns.push(ins(pfFoldPct > 65 ? 'a' : 'n', 'Preflop Fold Rate', 'You fold preflop ' + pfFoldPct + '% of hands.' + (pfFoldPct > 65 ? ' That\'s tight, which is fine, but make sure you\'re not folding playable hands from position.' : ' Reasonable.'), [{
-      v: d.ss.Preflop.f + ' folds',
-    }]));
+    var tight = pfFoldPct > 65;
+    aIns.push(ins(tight ? 'a' : 'n', 'Preflop Fold Rate',
+      'You fold preflop ' + pfFoldPct + '% of the hands you see.',
+      [{ v: d.ss.Preflop.f + ' folds' }],
+      tight
+        ? 'Tight is fine, but check your late-position fold rate too. From CO and BTN you should be opening or 3-betting more, not folding marginal playable hands.'
+        : 'A reasonable preflop fold rate. Keep tightening from early position and loosening from late position to maximise positional EV.'));
   }
   // Street Aggression x Win Rate
   var streetAggWins = {};
@@ -258,9 +278,12 @@ function renderActions(container, d, hands) {
       return parseActions(h.actions).some(function(a) { return a.isMe && a.street === 'Flop' && (a.type === 'raise' || a.type === 'bet'); });
     });
     var flopDisp = fmtAvgAmount(d.betAmts.Flop, d.betAmtsBB ? d.betAmtsBB.Flop : []);
-    aIns.push(insWithExample('o', 'Flop Sizing', 'Average flop bet: ' + flopDisp + '. In TC, aim for 60-80% of pot. Everyone calls so bet for maximum value.', [{
-      v: 'Avg: ' + flopDisp, hi: true,
-    }], exFlopBet, 'This hand shows your typical flop bet sizing. In TC where players call wide, sizing between 60-80% of pot extracts maximum value from weaker hands chasing draws.'));
+    aIns.push(insWithExample('o', 'Flop Sizing',
+      'Your average flop bet is ' + flopDisp + '.',
+      [{ v: 'Avg: ' + flopDisp, hi: true }],
+      exFlopBet,
+      'This hand shows your typical flop bet sizing. In TC where players call wide, sizing between 60-80% of pot extracts maximum value from weaker hands chasing draws.',
+      'TC players call wide. Aim for 60-80% pot on the flop to extract maximum value from weak made hands and charge draws their proper price.'));
   }
   if (d.avgBetTurn > 0) {
     var bigger = d.avgBetTurn >= d.avgBetFlop;
@@ -270,9 +293,12 @@ function renderActions(container, d, hands) {
     });
     var turnDisp = fmtAvgAmount(d.betAmts.Turn, d.betAmtsBB ? d.betAmtsBB.Turn : []);
     var flopDispT = fmtAvgAmount(d.betAmts.Flop, d.betAmtsBB ? d.betAmtsBB.Flop : []);
-    aIns.push(insWithExample(bigger ? 'g' : 'a', 'Turn Sizing', bigger ? 'Turn bets (' + turnDisp + ') larger than flop - correct as the pot grows.' : 'Turn bets (' + turnDisp + ') smaller than flop (' + flopDispT + '). Size up on the turn.', [{
-      v: 'Avg: ' + turnDisp, hi: true,
-    }], exTurnBet, bigger ? 'Good turn sizing here - increasing your bet as the pot grows puts maximum pressure on drawing hands and builds value.' : 'Your turn bet here was smaller than your flop bet. As the pot grows, your bets should scale up to charge opponents for chasing.'));
+    aIns.push(insWithExample(bigger ? 'g' : 'a', 'Turn Sizing',
+      bigger ? 'Your turn bets (' + turnDisp + ') are larger than your flop bets.' : 'Your turn bets (' + turnDisp + ') are smaller than your flop bets (' + flopDispT + ').',
+      [{ v: 'Avg: ' + turnDisp, hi: true }],
+      exTurnBet,
+      bigger ? 'Good turn sizing here - increasing your bet as the pot grows puts maximum pressure on drawing hands and builds value.' : 'Your turn bet here was smaller than your flop bet. As the pot grows, your bets should scale up to charge opponents for chasing.',
+      'Bets should scale with the pot. As the pot grows from flop to turn to river, bet sizes should grow too - same percentage of a bigger pot equals more chips, charging draws and building value.'));
   }
   if (d.avgBetRiver > 0) {
     var exRiverBet = findExampleHand(function(h) {
@@ -281,9 +307,12 @@ function renderActions(container, d, hands) {
       return parseActions(h.actions).some(function(a) { return a.isMe && a.street === 'River' && (a.type === 'raise' || a.type === 'bet'); });
     });
     var riverDisp = fmtAvgAmount(d.betAmts.River, d.betAmtsBB ? d.betAmtsBB.River : []);
-    aIns.push(insWithExample('o', 'River Sizing', 'Average river bet: ' + riverDisp + '. The river is where you get paid - bet big with the best hand.', [{
-      v: 'Avg: ' + riverDisp, hi: true,
-    }], exRiverBet, 'This winning hand shows the river paying off. Size up with strong hands - TC players will call with second-best hands more often than they should.'));
+    aIns.push(insWithExample('o', 'River Sizing',
+      'Your average river bet is ' + riverDisp + '.',
+      [{ v: 'Avg: ' + riverDisp, hi: true }],
+      exRiverBet,
+      'This winning hand shows the river paying off. Size up with strong hands - TC players will call with second-best hands more often than they should.',
+      'The river is where you get paid. With value hands, size up to 75-100% of pot - TC players call too wide on the end with second-best hands.'));
   }
   var fbo = d.betOpps['Flop'];
   var _flopBetMin = _scaleN(3);
@@ -294,9 +323,12 @@ function renderActions(container, d, hands) {
       var ma2 = parseActions(h.actions).filter(function(a) { return a.isMe && a.street === 'Flop'; });
       return ma2.some(function(a) { return a.type === 'check' || a.type === 'call'; }) && !ma2.some(function(a) { return a.type === 'raise' || a.type === 'bet'; });
     });
-    aIns.push(insWithExample('r', 'Flop Passivity', 'Only betting the flop ' + pct(fbo.b, fbo.t) + '% of the time - expected floor around ' + Math.round(_flopBetFloor) + '%. Checking strong hands gives free cards to draws.', [{
-      v: fbo.b + '/' + fbo.t + ' opportunities',
-    }], exFlopPassive, 'On this flop you checked or called instead of betting. Betting puts opponents on the defensive and charges draws. Set the price for your value hands.'));
+    aIns.push(insWithExample('r', 'Flop Passivity',
+      'You bet the flop only ' + pct(fbo.b, fbo.t) + '% of the time when given the option. Floor around ' + Math.round(_flopBetFloor) + '%.',
+      [{ v: fbo.b + '/' + fbo.t + ' opportunities' }],
+      exFlopPassive,
+      'On this flop you checked or called instead of betting. Betting puts opponents on the defensive and charges draws. Set the price for your value hands.',
+      'C-bet the flop the majority of the time when you raised preflop. It maintains range advantage, denies free cards, and folds out unimproved high cards.'));
   }
 
   // Append engine insights (rules + patterns) to legacy insights

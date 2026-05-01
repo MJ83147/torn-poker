@@ -66,11 +66,12 @@ function renderCards(container, d, hands) {
       var key = parseHoleKey(h.hole);
       return key && classifyKey(key) === 'Pocket Pairs' && h.outcome && h.outcome.result === (w < 45 ? 'lost' : 'won');
     });
-    cIns.push(insWithExample(w < 45 ? 'r' : 'g', 'Pocket Pairs', w < 45 ? 'Winning only ' + w + '% with pairs (' + ps.played + ' played of ' + ps.dealt + ' dealt). Bet hard preflop and charge draws - don\'t slow play.' : 'Good ' + w + '% win rate with pairs (' + ps.played + ' played of ' + ps.dealt + ' dealt). Keep betting them aggressively.', [{
-      v: w + '% win',
-    }, {
-      v: ps.dealt + ' dealt · ' + ps.played + ' played',
-    }], exPair, w < 45 ? 'This pocket pair hand was lost. With pairs, aggression preflop builds the pot and charges draws. Slow playing lets opponents catch up cheaply.' : 'This pocket pair hand was won. Pairs are strong - keep betting them aggressively and charging draws.'));
+    cIns.push(insWithExample(w < 45 ? 'r' : 'g', 'Pocket Pairs',
+      'You win ' + w + '% with pairs (' + ps.played + ' played of ' + ps.dealt + ' dealt).',
+      [{ v: w + '% win' }, { v: ps.dealt + ' dealt · ' + ps.played + ' played' }],
+      exPair,
+      w < 45 ? 'This pocket pair hand was lost. With pairs, aggression preflop builds the pot and charges draws. Slow playing lets opponents catch up cheaply.' : 'This pocket pair hand was won. Pairs are strong - keep betting them aggressively and charging draws.',
+      'Pocket pairs flop a set roughly 1 in 8 times. Set-mine cheaply with small pairs in position; play big pairs aggressively preflop and bet hard postflop to charge draws.'));
   }
   if (bw && bw.dealt >= minBw) {
     var w2 = pct(bw.won, bw.played || 1);
@@ -78,12 +79,12 @@ function renderCards(container, d, hands) {
       var key = parseHoleKey(h.hole);
       return key && classifyKey(key) === 'Broadway' && h.outcome && h.outcome.result === (w2 < 45 ? 'lost' : 'won');
     });
-    cIns.push(insWithExample(w2 < 45 ? 'a' : 'g', 'Broadway', w2 + '% win rate across ' + bw.played + ' played broadway hands (' + bw.dealt + ' dealt). These are premium hands - if you\'re losing with them, check your postflop bet sizing.', [{
-      v: bw.dealt + ' dealt · ' + bw.played + ' played',
-      hi: true,
-    }, {
-      v: w2 + '% win',
-    }], exBw, w2 < 45 ? 'This broadway hand was lost. Broadway hands are premium - ensure you are betting for value and not letting opponents draw cheaply.' : 'This broadway hand was won. Premium hands like these should be your bread and butter.'));
+    cIns.push(insWithExample(w2 < 45 ? 'a' : 'g', 'Broadway',
+      'You win ' + w2 + '% across ' + bw.played + ' played broadway hands (' + bw.dealt + ' dealt).',
+      [{ v: bw.dealt + ' dealt · ' + bw.played + ' played', hi: true }, { v: w2 + '% win' }],
+      exBw,
+      w2 < 45 ? 'This broadway hand was lost. Broadway hands are premium - ensure you are betting for value and not letting opponents draw cheaply.' : 'This broadway hand was won. Premium hands like these should be your bread and butter.',
+      'Broadway hands (TJ-AK, suited or off) are premiums. Open them, 3-bet them in position, and value-bet relentlessly when you flop top pair or better.'));
   }
   if (as2 && as2.dealt >= minAR) {
     var w3 = pct(as2.won, as2.played || 1);
@@ -91,11 +92,12 @@ function renderCards(container, d, hands) {
       var key = parseHoleKey(h.hole);
       return key && classifyKey(key) === 'Ace-Rag' && h.outcome && h.outcome.result === 'lost';
     });
-    cIns.push(insWithExample('a', 'Ace-Rag', 'Dealt ' + as2.dealt + ' times, played ' + as2.played + '. An ace with a weak side card loses to any better ace - be careful calling raises.', [{
-      v: w3 !== null ? w3 + '% win' : '?',
-    }, {
-      v: as2.dealt + ' dealt · ' + as2.played + ' played',
-    }], exAceRag, 'This ace-rag hand was lost. Ace with a weak side card is dominated by any better ace. Avoid calling raises with these unless you have strong position.'));
+    cIns.push(insWithExample('a', 'Ace-Rag',
+      'Dealt ' + as2.dealt + ' times, played ' + as2.played + '. Win rate: ' + (w3 !== null ? w3 + '%' : '?') + '.',
+      [{ v: w3 !== null ? w3 + '% win' : '?' }, { v: as2.dealt + ' dealt · ' + as2.played + ' played' }],
+      exAceRag,
+      'This ace-rag hand was lost. Ace with a weak side card is dominated by any better ace. Avoid calling raises with these unless you have strong position.',
+      'An ace with a weak kicker (A2-A9 offsuit) is dominated by any better ace. Fold to opens and 3-bets; only play these from late position when nobody has shown strength.'));
   }
   if (ts && ts.dealt >= minTrash) {
     var exTrash = findExampleHand(function(h) {
@@ -105,11 +107,12 @@ function renderCards(container, d, hands) {
       var ma = getHeroActions(h);
       return ma.some(function(a) { return a.type === 'call' || a.type === 'raise' || a.type === 'bet'; });
     });
-    cIns.push(insWithExample(ts.played > 0 ? 'r' : 'n', 'Offsuit Trash', 'Dealt ' + ts.dealt + ' offsuit trash hands, played ' + ts.played + '. At full-ring tables these are nearly always folds preflop.', [{
-      v: ts.dealt + ' dealt',
-    }, {
-      v: ts.played + ' played',
-    }], exTrash, 'This offsuit trash hand was played and lost. These hands cost chips over time - fold them preflop.'));
+    cIns.push(insWithExample(ts.played > 0 ? 'r' : 'n', 'Offsuit Trash',
+      'Dealt ' + ts.dealt + ' offsuit trash hands, played ' + ts.played + '.',
+      [{ v: ts.dealt + ' dealt' }, { v: ts.played + ' played' }],
+      exTrash,
+      'This offsuit trash hand was played and lost. These hands cost chips over time - fold them preflop.',
+      'Non-connected, non-suited weak cards (like 92o or 73o) almost never win enough to justify the chips. Fold preflop unless checking from the big blind.'));
   }
   if (scs && scs.dealt >= minSC) {
     var w4 = pct(scs.won, scs.played || 1);
@@ -117,9 +120,12 @@ function renderCards(container, d, hands) {
       var key = parseHoleKey(h.hole);
       return key && classifyKey(key) === 'Suited Connectors';
     });
-    cIns.push(insWithExample(w4 >= 50 ? 'g' : 'a', 'Suited Connectors', w4 + '% win rate (' + scs.played + ' played of ' + scs.dealt + ' dealt). Play these in position where you have the most ways to win.', [{
-      v: scs.dealt + ' dealt · ' + scs.played + ' played',
-    }], exSC, 'Suited connectors play best in position with implied odds. They are drawing hands - you want to see flops cheaply and hit straights or flushes.'));
+    cIns.push(insWithExample(w4 >= 50 ? 'g' : 'a', 'Suited Connectors',
+      'You win ' + w4 + '% (' + scs.played + ' played of ' + scs.dealt + ' dealt).',
+      [{ v: scs.dealt + ' dealt · ' + scs.played + ' played' }],
+      exSC,
+      'Suited connectors play best in position with implied odds. They are drawing hands - you want to see flops cheaply and hit straights or flushes.',
+      'Suited connectors are implied-odds hands. Play them in position, see cheap flops, and only continue when you flop a strong draw or pair-plus-draw.'));
   }
   // Hand Type Performance summary card removed - it just recapped the per-bucket
   // insights above (Pocket Pairs / Broadway / Suited Connectors etc.), which

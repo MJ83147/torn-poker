@@ -66,25 +66,33 @@ function renderPosition(container, d, hands) {
     var exEarlyWide = findExampleHand(function(h) {
       return earlyH.indexOf(h.position) >= 0 && parseActions(h.actions).some(function(a) { return a.isMe && (a.type === 'call' || a.type === 'raise') && a.street === 'Preflop'; }) && h.outcome && h.outcome.result !== 'won';
     });
-    pIns.push(insWithExample('r', 'Early Position VPIP', 'Playing ' + evp + '% from UTG/MP at ' + _domSeats + '-max. Target band is ' + Math.round(_epBand.tight) + '-' + Math.round(_epBand.loose) + '%.', [{
-      v: ev + '/' + eh + ' hands played',
-    }], exEarlyWide, 'This hand was played from early position and lost. From UTG/MP you act first on every street - only play premium hands here.'));
+    pIns.push(insWithExample('r', 'Early Position VPIP',
+      'You play ' + evp + '% from UTG/MP at ' + _domSeats + '-max. Target band is ' + Math.round(_epBand.tight) + '-' + Math.round(_epBand.loose) + '%.',
+      [{ v: ev + '/' + eh + ' hands played' }],
+      exEarlyWide,
+      'This hand was played from early position and lost. From UTG/MP you act first on every street - only play premium hands here.',
+      'From UTG/MP you act first on every street with no information. Tighten up to premium pairs, broadway, and AKs/AQs only.'));
   } else if (hasEarly && evp !== null) {
-    pIns.push(ins('g', 'Early Position VPIP', evp + '% from early position. Good discipline where you have the worst information.', [{
-      v: ev + '/' + eh + ' hands',
-    }]));
+    pIns.push(ins('g', 'Early Position VPIP',
+      evp + '% from early position.',
+      [{ v: ev + '/' + eh + ' hands' }],
+      'Good discipline. Early position has the worst information so a tight range here is correct.'));
   }
   if (lvp !== null && _lpBand && lvp < _lpBand.tight - 2) {
     var exLateTight = findExampleHand(function(h) {
       return lateH.indexOf(h.position) >= 0 && parseActions(h.actions).some(function(a) { return a.isMe && a.type === 'fold' && a.street === 'Preflop'; });
     });
-    pIns.push(insWithExample('a', 'Late Position VPIP', 'Only ' + lvp + '% from CO/BTN - leaving value behind. Target band is ' + Math.round(_lpBand.tight) + '-' + Math.round(_lpBand.loose) + '%. Attack the blinds, widen your range here.', [{
-      v: lv + '/' + lh + ' hands',
-    }], exLateTight, 'This hand was folded from late position. From CO/BTN you have positional advantage - widen your range to attack the blinds.'));
+    pIns.push(insWithExample('a', 'Late Position VPIP',
+      'You play ' + lvp + '% from CO/BTN. Target band is ' + Math.round(_lpBand.tight) + '-' + Math.round(_lpBand.loose) + '%.',
+      [{ v: lv + '/' + lh + ' hands' }],
+      exLateTight,
+      'This hand was folded from late position. From CO/BTN you have positional advantage - widen your range to attack the blinds.',
+      'CO and BTN are your highest-EV seats. Open wider here to attack the blinds and play more pots in position.'));
   } else if (lvp !== null) {
-    pIns.push(ins('g', 'Late Position VPIP', lvp + '% from late position. Good use of positional advantage.', [{
-      v: lv + '/' + lh + ' hands',
-    }]));
+    pIns.push(ins('g', 'Late Position VPIP',
+      lvp + '% from late position.',
+      [{ v: lv + '/' + lh + ' hands' }],
+      'Good use of positional advantage. Late position lets you see how others act before you commit chips.'));
   }
 
   // BTN VPIP - sample-aware threshold, matrix-aware floor.
@@ -96,9 +104,12 @@ function renderPosition(container, d, hands) {
       var exBtnFold = findExampleHand(function(h) {
         return h.position === 'BTN' && parseActions(h.actions).some(function(a) { return a.isMe && a.type === 'fold' && a.street === 'Preflop'; });
       });
-      pIns.push(insWithExample('a', 'Button Range', 'From the button - best position - you only play ' + btnVp + '%. Target band is ' + Math.round(_btnBand.tight) + '-' + Math.round(_btnBand.loose) + '%.', [{
-        v: 'BTN VPIP: ' + btnVp + '%',
-      }], exBtnFold, 'This hand was folded from the button. You have the best position at the table here - widen your range to exploit positional advantage.'));
+      pIns.push(insWithExample('a', 'Button Range',
+        'You play ' + btnVp + '% from the button. Target band is ' + Math.round(_btnBand.tight) + '-' + Math.round(_btnBand.loose) + '%.',
+        [{ v: 'BTN VPIP: ' + btnVp + '%' }],
+        exBtnFold,
+        'This hand was folded from the button. You have the best position at the table here - widen your range to exploit positional advantage.',
+        'The button is the best seat at the table. Open the widest range here - any pair, any suited ace or king, any broadway, all suited connectors and most one-gappers.'));
     }
   }
 
@@ -110,10 +121,13 @@ function renderPosition(container, d, hands) {
     var bestPos = posWinRates[0];
     var worstPos = posWinRates[posWinRates.length - 1];
     if (bestPos.wr !== null && worstPos.wr !== null && bestPos.wr - worstPos.wr > 15) {
-      pIns.push(ins('o', 'Win Rate Spread', 'Your best position is ' + bestPos.pos + ' (' + bestPos.wr + '% win) and worst is ' + worstPos.pos + ' (' + worstPos.wr + '% win). A ' + (bestPos.wr - worstPos.wr) + ' point gap suggests position-specific leaks.', [
-        { v: bestPos.pos + ': ' + bestPos.wr + '%', hi: true },
-        { v: worstPos.pos + ': ' + worstPos.wr + '%' },
-      ]));
+      pIns.push(ins('o', 'Win Rate Spread',
+        'Your best position is ' + bestPos.pos + ' (' + bestPos.wr + '% win) and worst is ' + worstPos.pos + ' (' + worstPos.wr + '% win). A ' + (bestPos.wr - worstPos.wr) + ' point gap.',
+        [
+          { v: bestPos.pos + ': ' + bestPos.wr + '%', hi: true },
+          { v: worstPos.pos + ': ' + worstPos.wr + '%' },
+        ],
+        'A spread this wide usually means a leak in the worse seat - too loose, too passive, or too fold-heavy. Drill into your hand log filtered to ' + worstPos.pos + ' to see the pattern.'));
     }
   }
 
@@ -125,10 +139,13 @@ function renderPosition(container, d, hands) {
     var mostProfit = posPnlSorted[0];
     var mostLoss = posPnlSorted[posPnlSorted.length - 1];
     if (mostProfit.pnl > 0 && mostLoss.pnl < 0) {
-      pIns.push(ins('o', 'Position P&L', 'Most profitable: ' + mostProfit.pos + ' (' + fmtPnl(mostProfit.pnl) + ' over ' + mostProfit.hands + ' hands). Biggest loss: ' + mostLoss.pos + ' (' + fmtPnl(mostLoss.pnl) + ' over ' + mostLoss.hands + ' hands).', [
-        { v: mostProfit.pos + ': ' + fmtPnl(mostProfit.pnl), hi: true },
-        { v: mostLoss.pos + ': ' + fmtPnl(mostLoss.pnl) },
-      ]));
+      pIns.push(ins('o', 'Position P&L',
+        'Most profitable: ' + mostProfit.pos + ' (' + fmtPnl(mostProfit.pnl) + ' over ' + mostProfit.hands + ' hands). Biggest loss: ' + mostLoss.pos + ' (' + fmtPnl(mostLoss.pnl) + ' over ' + mostLoss.hands + ' hands).',
+        [
+          { v: mostProfit.pos + ': ' + fmtPnl(mostProfit.pnl), hi: true },
+          { v: mostLoss.pos + ': ' + fmtPnl(mostLoss.pnl) },
+        ],
+        'Play more pots from ' + mostProfit.pos + ' and tighten up from ' + mostLoss.pos + '. Position drives win rate more than starting hand selection at most stakes.'));
     }
   }
   // Append engine insights (patterns + multi-factor) to legacy insights
