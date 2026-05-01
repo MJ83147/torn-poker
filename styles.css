@@ -767,6 +767,12 @@ textarea#jin:focus {
   background: rgba(255, 255, 255, 0.02);
 }
 
+.dynamics-vs-stat {
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  margin-bottom: 4px;
+}
+
 .dynamics-vs-top {
   display: flex;
   justify-content: space-between;

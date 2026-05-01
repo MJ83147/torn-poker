@@ -437,6 +437,10 @@ function renderLeaks(container, d, hands) {
 
   // ── 12. Not Adjusting to Villains ──────────────────────────────────────
   (function() {
+    // Collect per-opponent "Not Exploiting" candidates first, then cap to the
+    // top 3 by cost. Without this cap, a session with many opponents floods
+    // the leak list (and My Game, which embeds it) with one card per villain.
+    var notExploitingCandidates = [];
     for (var name in _opponentCache) {
       var prof = _opponentCache[name];
       if (prof.hands < 20) continue;
@@ -461,14 +465,20 @@ function renderLeaks(container, d, hands) {
       }
       if (handsVs < 20 || heroTotalVs < 10) continue;
       var heroAgg = pct(heroRaisesVs, heroTotalVs);
+      var cardCost = Math.round(handsVs * 0.5);
       // Flag if villain folds a lot but hero isn't raising enough
       if (prof.foldToRaise !== null && prof.foldToRaise >= 60 && heroAgg !== null && heroAgg < 30) {
-        leaks.push({ cost: Math.round(handsVs * 0.5), html: ins('a', 'Not Exploiting ' + name, name + ' folds to raises ' + prof.foldToRaise + '% but you only raise ' + heroAgg + '% against them. Increase aggression to exploit this tendency.', [{ v: 'vs ' + name + ' (' + handsVs + ' hands)' }]) });
+        notExploitingCandidates.push({ cost: cardCost, html: ins('a', 'Not Exploiting ' + name, name + ' folds to raises ' + prof.foldToRaise + '% but you only raise ' + heroAgg + '% against them. Increase aggression to exploit this tendency.', [{ v: 'vs ' + name + ' (' + handsVs + ' hands)' }]) });
       }
       // Flag if villain is loose but hero isn't value-betting
       if (prof.vpip !== null && prof.vpip >= 55 && prof.foldToRaise !== null && prof.foldToRaise < 30 && heroAgg !== null && heroAgg < 25) {
-        leaks.push({ cost: Math.round(handsVs * 0.5), html: ins('a', 'Not Exploiting ' + name, name + ' plays ' + prof.vpip + '% of hands and rarely folds. Value bet relentlessly - don\'t bluff, just bet your good hands.', [{ v: 'vs ' + name + ' (' + handsVs + ' hands)' }]) });
+        notExploitingCandidates.push({ cost: cardCost, html: ins('a', 'Not Exploiting ' + name, name + ' plays ' + prof.vpip + '% of hands and rarely folds. Value bet relentlessly - don\'t bluff, just bet your good hands.', [{ v: 'vs ' + name + ' (' + handsVs + ' hands)' }]) });
       }
+    }
+    // Cap to top 3 by cost - keep this list digestible.
+    notExploitingCandidates.sort(function(a, b) { return b.cost - a.cost; });
+    for (var ne = 0; ne < Math.min(3, notExploitingCandidates.length); ne++) {
+      leaks.push(notExploitingCandidates[ne]);
     }
   })();
 

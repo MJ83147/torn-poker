@@ -200,13 +200,17 @@ function _verdict(actual, lo, hi) {
   return { cls: 'v-ok', label: 'on target' };
 }
 
-// Render a "your X% vs target Y-Z% → verdict" row.
+// Render a "your X% vs target Y-Z% → verdict" row. The label tells the user
+// WHICH stat they are looking at (e.g. "C-bet") - without it the value is
+// just a naked percentage with no context.
 function _vsRow(label, actualPct, actualDenom, targetText) {
   var rng = _parsePctRange(targetText);
   var actualStr = (actualPct == null) ? '-' : actualPct + '%';
   var sampleStr = actualDenom != null ? ' <span class="dim-label">(' + actualDenom + ' spots)</span>' : '';
   var v = rng ? _verdict(actualPct, rng[0], rng[1]) : { cls: 'v-na', label: '' };
+  var labelHtml = label ? '<div class="dynamics-vs-stat dim-label">' + label + '</div>' : '';
   return '<div class="dynamics-vs ' + v.cls + '">' +
+    labelHtml +
     '<div class="dynamics-vs-top"><span>You: <strong>' + actualStr + '</strong>' + sampleStr + '</span>' +
     '<span class="dim-label">Target: ' + targetText + '</span></div>' +
     (v.label ? '<div class="dynamics-vs-verdict">' + v.label + '</div>' : '') +

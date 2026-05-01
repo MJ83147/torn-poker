@@ -301,10 +301,10 @@ function renderActions(container, d, hands) {
 
   // Append engine insights (rules + patterns) to legacy insights
   appendEngineInsights('actions', aIns, { limit: 6 });
-  // Engine narrative
+  // Engine narrative (returns { narrative, ... } - guard against the object accessor)
   var actNarrative = InsightEngine.narrativeFor('actions', 6);
-  if (actNarrative) {
-    actHtml += '<div class="p-row"><div class="engine-narrative">' + actNarrative + '</div></div>';
+  if (actNarrative && actNarrative.narrative) {
+    actHtml += '<div class="p-row"><div class="engine-narrative">' + actNarrative.narrative + '</div></div>';
   }
   actHtml += '<div class="p-row">' + renderInsights(aIns, 'Betting', 'Keep building data for betting pattern insights.') + '</div>';
   container.innerHTML = actHtml;
