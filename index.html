@@ -12,7 +12,21 @@
   <link rel="stylesheet" href="mobile-styles.css?v=5">
 </head>
 
-<body>
+<body class="maintenance">
+  <script>
+    // Maintenance bypass: visit once with ?dev to stash a localStorage flag,
+    // then this browser skips the maintenance overlay on every subsequent visit.
+    // Clear with: localStorage.removeItem('tcp-bypass')
+    (function () {
+      try {
+        var qs = new URLSearchParams(location.search);
+        if (qs.has('dev')) localStorage.setItem('tcp-bypass', '1');
+        if (localStorage.getItem('tcp-bypass') === '1') {
+          document.body.classList.remove('maintenance');
+        }
+      } catch (e) {}
+    })();
+  </script>
 
   <div id="maintenance">
     <div class="m-eyebrow">TC Poker Analysis</div>
