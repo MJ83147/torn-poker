@@ -10,51 +10,24 @@ function renderActions(container, d, hands) {
   var raPct = pct(d.raises, actTotal);
 
   // ── Game-context lookups ─────────────────────────────────────────────────
-  // Find the seat-count and flop bucket the player has played most so the
-  // panel's thresholds track table size and board multiplicity.
-  var _domSeats = (function() {
-    if (!d || !d.bySeatBucket) return null;
-    var best = null, bestN = 0;
-    for (var sb in d.bySeatBucket) {
-      var sd = d.bySeatBucket[sb];
-      if (!sd || (sd.n || 0) <= bestN) continue;
-      bestN = sd.n;
-      best = parseInt(sb, 10);
-    }
-    return best ? Math.max(2, Math.min(9, best)) : null;
-  })();
-  var _domFb = (function() {
-    if (!d || !d.byFlopBucket) return null;
-    var keys = ['HU', '3-way', 'multiway'];
-    var best = null, bestN = 0;
-    for (var i = 0; i < keys.length; i++) {
-      var fd = d.byFlopBucket[keys[i]];
-      if (fd && (fd.n || 0) > bestN) { bestN = fd.n; best = keys[i]; }
-    }
-    return best;
-  })();
-  function _band(metric) {
-    if (typeof matrixTarget !== 'function' || !_domSeats) return null;
-    var pos = _domSeats === 2 ? 'BTN' : _domSeats === 3 ? 'BTN' : 'CO';
-    return matrixTarget(metric, pos, _domSeats, getUserStyle());
-  }
-  function _scaleN(base) {
-    if (!d || !d.n) return base;
-    return Math.max(base, Math.round(base * Math.max(1, Math.sqrt(40 / d.n))));
-  }
-  var _aggBand = _band('af');
-  var _cbetBand = _band('cbet');
-  var _ftrBand = _band('foldToRaise');
+  var ctx = getGameContext(d);
+  var _domSeats = ctx.seats;
+  var _domFb = ctx.flopBucket;
+  function _scaleN(base) { return ctx.scaleN(base); }
+  var _aggBand = ctx.band('af');
+  var _cbetBand = ctx.band('cbet');
+  var _ftrBand = ctx.band('foldToRaise');
 
   var actHtml = '<div class="panel-title">Betting</div>';
-  actHtml += '<div class="panel-desc">Action frequencies, bet sizing, and situational stats.</div>';
+  actHtml += '<div class="panel-desc">How you size your bets and choose your actions.</div>';
+  // Aggression mini-box dropped - the header hero strip already shows your
+  // headline aggression number always.
   actHtml += '<div class="p-row">' + renderMiniRow([
     { l: 'Total Actions', v: actTotal, c: 'o' },
     { l: 'Folds', v: d.folds, c: 'r' },
     { l: 'Checks', v: d.checks, c: 'w' },
     { l: 'Calls', v: d.calls, c: 'a' },
     { l: 'Raises', v: d.raises, c: 'g' },
-    { l: 'Aggression', v: aggPct !== null ? aggPct + '%' : '-', c: aggPct > 25 ? 'g' : 'a' },
   ]) + '</div>';
 
   actHtml += '<div class="p-row">';
@@ -68,14 +41,9 @@ function renderActions(container, d, hands) {
   actHtml += '<div class="stack-bar">' + segs.map(function (s) { return '<div class="stack-seg" style="width:' + s.p + '%;background:' + s.c + ';"></div>'; }).join('') + '</div>';
   actHtml += '<div class="stack-labels">' + segs.map(function (s) { return '<div class="stack-li"><div class="stack-dot" style="background:' + s.c + ';"></div>' + s.l + '</div>'; }).join('') + '</div>';
 
-  actHtml += '<div class="sec-subtitle">By street</div><div class="overflow-x"><table class="tbl"><thead><tr><th>Street</th><th>' + tipWrap('Fold') + '</th><th>' + tipWrap('Check') + '</th><th>' + tipWrap('Call') + '</th><th>' + tipWrap('Raise') + '</th><th>' + tipWrap('Aggression') + '</th></tr></thead><tbody>';
-  actHtml += streets.map(function (s) {
-    var ss2 = d.ss[s];
-    var tot2 = ss2.f + ss2.ch + ss2.ca + ss2.ra;
-    var ap = pct(ss2.ra, tot2);
-    return '<tr><td>' + tipWrap(s) + '</td><td>' + ss2.f + '</td><td>' + ss2.ch + '</td><td>' + ss2.ca + '</td><td>' + ss2.ra + '</td><td>' + (ap !== null ? ap + '%' : '-') + '</td></tr>';
-  }).join('');
-  actHtml += '</tbody></table></div></div>';
+  // "By street" table dropped - the Streets panel owns action-mix-by-street
+  // (it's the panel's whole job; richer stacked-bar chart there).
+  actHtml += '</div>';
 
   // Situational stats
   actHtml += '<div class="p-row"><div class="sec-subtitle mt-0">Situational stats</div>';
@@ -332,14 +300,7 @@ function renderActions(container, d, hands) {
   }
 
   // Append engine insights (rules + patterns) to legacy insights
-  var engineActIns = InsightEngine.forPanel('actions', 6);
-  for (var eai = 0; eai < engineActIns.length; eai++) {
-    var dupAct = false;
-    for (var ai2 = 0; ai2 < aIns.length; ai2++) {
-      if (aIns[ai2].indexOf(engineActIns[eai].label) !== -1) { dupAct = true; break; }
-    }
-    if (!dupAct) aIns.push(renderRuleInsight(engineActIns[eai]));
-  }
+  appendEngineInsights('actions', aIns, { limit: 6 });
   // Engine narrative
   var actNarrative = InsightEngine.narrativeFor('actions', 6);
   if (actNarrative) {

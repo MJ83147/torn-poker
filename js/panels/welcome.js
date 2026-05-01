@@ -27,9 +27,9 @@ function renderStyleWelcome(container, d, hands, meta, onPicked) {
   html += '<div class="style-welcome">';
   html += '<div class="style-welcome-inner">';
   html += '<div class="style-welcome-eyebrow">' + (meta && meta.player ? 'Welcome, ' + meta.player : 'Welcome') + '</div>';
-  html += '<div class="style-welcome-headline">You play like a ' + detected.name + '.</div>';
-  html += '<div class="style-welcome-sub">' + (detected.reason || '') + '</div>';
-  html += '<div class="style-welcome-prompt">Pick the style you want to target:</div>';
+  // Player-type label removed - the header style picker, My Game and Style Map
+  // already surface this. Welcome's job is target selection.
+  html += '<div class="style-welcome-headline">Pick the style you want to target.</div>';
   html += '<div class="style-welcome-cards">';
   for (var i = 0; i < targetCards.length; i++) {
     var c = targetCards[i];

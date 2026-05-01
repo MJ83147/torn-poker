@@ -8,25 +8,40 @@ function renderPosition(container, d, hands) {
   var posOrder = ['UTG', 'UTG+1', 'MP', 'HJ', 'CO', 'BTN', 'SB', 'BB'];
   var activePosOrder = posOrder.filter(function(p) { return d.posMap[p] && d.posMap[p].hands > 0; });
 
+  var ctx = getGameContext(d);
+
   var posHtml = '<div class="panel-title">Position</div>';
-  posHtml += '<div class="panel-desc">How you perform from each seat at the table.</div>';
-  posHtml += '<div class="p-row"><div class="overflow-x"><table class="tbl"><thead><tr><th>Position</th><th>Hands</th><th>' + tipWrap('VPIP') + '</th><th>' + tipWrap('Fold Pre') + '</th><th>' + tipWrap('Win Rate') + '</th><th>' + tipWrap('Net P&L') + '</th><th>' + tipWrap('Avg Pot') + '</th></tr></thead><tbody>';
+  posHtml += '<div class="panel-desc">Which seats make and lose you money.</div>';
+  posHtml += '<div class="p-row"><div class="overflow-x"><table class="tbl"><thead><tr><th>Position</th><th>Hands</th><th>' + tipWrap('Fold Pre') + '</th><th>VPIP &Delta; vs target</th><th>' + tipWrap('Net P&L') + '</th><th>' + tipWrap('Avg Pot') + '</th></tr></thead><tbody>';
   posHtml += activePosOrder.map(function(p) {
     var s = d.posMap[p];
-    var vp2 = pct(s.vpip, s.hands);
     var fp2 = pct(s.foldPre, s.hands);
-    var wr2 = pct(s.won, s.hands);
+    var vp2 = pct(s.vpip, s.hands);
     var avgPot = Math.round(s.pot / s.hands);
     var avgPotDisplay = _displayBB && s.potBBCount > 0
       ? (s.potBB / s.potBBCount).toFixed(1) + ' BB'
       : fmt(avgPot);
-    return '<tr><td>' + tipWrap(p) + '</td><td>' + s.hands + '</td><td>' + (vp2 !== null ? vp2 + '%' : '-') + '</td><td>' + (fp2 !== null ? fp2 + '%' : '-') + '</td><td>' + (wr2 !== null ? wr2 + '%' : '-') + '</td><td style="color:' + pnlColor(s.pnl) + '">' + fmtPnl(s.pnl) + '</td><td>' + avgPotDisplay + '</td></tr>';
+    // Δ vs target VPIP: positive means looser than target band, negative means tighter.
+    var band = ctx.band('vpip', p);
+    var deltaCell = '-';
+    if (band && vp2 !== null) {
+      var lo = Math.round(band.tight);
+      var hi = Math.round(band.loose);
+      var delta = vp2 < lo ? vp2 - lo : (vp2 > hi ? vp2 - hi : 0);
+      var deltaStr = delta === 0
+        ? '<span style="color:var(--green)">on target</span>'
+        : (delta > 0
+          ? '<span style="color:var(--amber)">+' + delta + '%</span>'
+          : '<span style="color:var(--amber)">' + delta + '%</span>');
+      deltaCell = deltaStr + ' <span class="dim-label">(' + lo + '-' + hi + '%)</span>';
+    }
+    return '<tr><td>' + tipWrap(p) + '</td><td>' + s.hands + '</td><td>' + (fp2 !== null ? fp2 + '%' : '-') + '</td><td>' + deltaCell + '</td><td style="color:' + pnlColor(s.pnl) + '">' + fmtPnl(s.pnl) + '</td><td>' + avgPotDisplay + '</td></tr>';
   }).join('');
   posHtml += '</tbody></table></div></div>';
 
-  // Chart: Win Rate & VPIP by Position
+  // Chart: Net P&L by Position - this panel's job is "which seats make money"
   if (activePosOrder.length >= 2) {
-    posHtml += '<div class="p-row"><div class="sec-subtitle mt-0">Win Rate & VPIP by Position</div>';
+    posHtml += '<div class="p-row"><div class="sec-subtitle mt-0">Net P&L by Position</div>';
     posHtml += '<div class="chart-wrap-full"><canvas id="position-chart"></canvas></div></div>';
   }
 
@@ -38,36 +53,11 @@ function renderPosition(container, d, hands) {
   var lateGroup = calcPositionGroupVpip(d.posMap, lateH);
   var lvp = lateGroup.vpip, lv = lateGroup.vpipCount, lh = lateGroup.hands;
 
-  // Resolve dominant seat-count once so we can pull matrix bands per zone.
-  var _domSeats = (function() {
-    if (!d || !d.bySeatBucket) return null;
-    var best = null, bestN = 0;
-    for (var sb in d.bySeatBucket) {
-      var sd = d.bySeatBucket[sb];
-      if (!sd || (sd.n || 0) <= bestN) continue;
-      bestN = sd.n;
-      best = parseInt(sb, 10);
-    }
-    return best ? Math.max(2, Math.min(9, best)) : null;
-  })();
-  function _domPos(candidates) {
-    if (!d || !d.byPosition) return candidates[0];
-    var best = null, bestN = 0;
-    for (var p in d.byPosition) {
-      if (candidates.indexOf(p) === -1) continue;
-      var pd = d.byPosition[p];
-      if (!pd || (pd.n || 0) <= bestN) continue;
-      bestN = pd.n;
-      best = p;
-    }
-    return best || candidates[0];
-  }
-  var _epBand = (typeof matrixTarget === 'function' && _domSeats)
-    ? matrixTarget('vpip', _domPos(earlyH), _domSeats, getUserStyle()) : null;
-  var _lpBand = (typeof matrixTarget === 'function' && _domSeats)
-    ? matrixTarget('vpip', _domPos(lateH), _domSeats, getUserStyle()) : null;
-  var _btnBand = (typeof matrixTarget === 'function' && _domSeats)
-    ? matrixTarget('vpip', 'BTN', _domSeats, getUserStyle()) : null;
+  // Pull matrix bands per zone using the shared game context.
+  var _domSeats = ctx.seats;
+  var _epBand = ctx.band('vpip', ctx.domPos(earlyH));
+  var _lpBand = ctx.band('vpip', ctx.domPos(lateH));
+  var _btnBand = ctx.band('vpip', 'BTN');
 
   // Skip the EP rule entirely for HU/3-handed - those tables don't have EP.
   var hasEarly = !_domSeats || _domSeats > 3;
@@ -142,58 +132,43 @@ function renderPosition(container, d, hands) {
     }
   }
   // Append engine insights (patterns + multi-factor) to legacy insights
-  var enginePosIns = InsightEngine.forPanel('position', 4);
-  for (var epi = 0; epi < enginePosIns.length; epi++) {
-    // Avoid duplicates: skip if engine label matches an existing legacy insight label
-    var dupFound = false;
-    for (var pi2 = 0; pi2 < pIns.length; pi2++) {
-      if (pIns[pi2].indexOf(enginePosIns[epi].label) !== -1) { dupFound = true; break; }
-    }
-    if (!dupFound) pIns.push(renderRuleInsight(enginePosIns[epi]));
-  }
+  appendEngineInsights('position', pIns, { limit: 4 });
   posHtml += '<div class="p-row">' + renderInsights(pIns, 'Position', 'More hands needed for positional patterns.') + '</div>';
   container.innerHTML = posHtml;
 
-  // ── Render Chart.js chart ──
+  // ── Render Chart.js chart: Net P&L by position ──
   var canvas = document.getElementById('position-chart');
   if (!canvas || activePosOrder.length < 2) return;
 
   var colors = getChartColors();
 
-  var wrData = activePosOrder.map(function(p) { return pct(d.posMap[p].won, d.posMap[p].hands) || 0; });
-  var vpipData = activePosOrder.map(function(p) { return pct(d.posMap[p].vpip, d.posMap[p].hands) || 0; });
+  var pnlData = activePosOrder.map(function(p) { return d.posMap[p].pnl; });
   var handCounts = activePosOrder.map(function(p) { return d.posMap[p].hands; });
+  var bgColors = pnlData.map(function(v) { return (v >= 0 ? colors.green : colors.red) + '99'; });
+  var borderColors = pnlData.map(function(v) { return v >= 0 ? colors.green : colors.red; });
 
   _positionChart = createChart(canvas, 'bar', {
     labels: activePosOrder,
     datasets: [
       {
-        label: 'Win Rate',
-        data: wrData,
-        backgroundColor: colors.green + '99',
-        borderColor: colors.green,
-        borderWidth: 1,
-        borderRadius: 4,
-      },
-      {
-        label: 'VPIP',
-        data: vpipData,
-        backgroundColor: colors.gold + '99',
-        borderColor: colors.gold,
+        label: 'Net P&L',
+        data: pnlData,
+        backgroundColor: bgColors,
+        borderColor: borderColors,
         borderWidth: 1,
         borderRadius: 4,
       },
     ],
   }, {
-    legend: chartLegend(colors),
+    legend: chartLegend(colors, false),
     tooltip: chartTooltip(colors, {
-      label: function(ctx) {
-        return ' ' + ctx.dataset.label + ': ' + ctx.parsed.y + '% (' + handCounts[ctx.dataIndex] + ' hands)';
+      label: function(c) {
+        return ' Net P&L: ' + fmtPnl(c.parsed.y) + ' (' + handCounts[c.dataIndex] + ' hands)';
       },
     }),
     scales: {
       x: chartXScale(colors),
-      y: chartYScale(colors, { tickCallback: function(val) { return val + '%'; } }),
+      y: chartYScale(colors, { tickCallback: function(val) { return fmtPnl(val); } }),
     },
   });
 }

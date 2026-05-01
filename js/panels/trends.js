@@ -9,7 +9,7 @@ function destroyTrendsCharts() {
   _trendsCharts = [];
 }
 
-function renderTrends(container, hands, meta) {
+function renderTrends(container, hands, meta, overallData) {
   destroyTrendsCharts();
 
   var sorted = hands.slice().sort(function(a, b) { return (a.timestamp || 0) - (b.timestamp || 0); });
@@ -76,16 +76,23 @@ function renderTrends(container, hands, meta) {
   }
   tHtml += '</div></div>';
 
+  // Best & Worst Sessions block (moved from My Game; this is the natural home
+  // for "session over time" content).
+  if (overallData) {
+    var bwHtml = renderBestWorstSessions(hands, overallData);
+    if (bwHtml) tHtml += '<div class="p-row">' + bwHtml + '</div>';
+  }
+
   tHtml += '<div class="p-row"><div class="sec-subtitle mt-0">Session Breakdown</div>';
-  tHtml += '<div class="overflow-x"><table class="tbl"><thead><tr><th>Date</th><th>Hands</th><th>Session ' + tipWrap('Win Rate') + '</th><th>Cumulative ' + tipWrap('Win Rate') + '</th><th>' + tipWrap('VPIP') + '</th><th>' + tipWrap('Aggression') + '</th></tr></thead><tbody>';
+  // VPIP and Aggression columns dropped - they're already shown as cumulative
+  // line charts above; restating them as columns is a duplicate.
+  tHtml += '<div class="overflow-x"><table class="tbl"><thead><tr><th>Date</th><th>Hands</th><th>Session ' + tipWrap('Win Rate') + '</th><th>Cumulative ' + tipWrap('Win Rate') + '</th></tr></thead><tbody>';
   for (var pi = points.length - 1; pi >= 0; pi--) {
     var pt = points[pi];
     var wrCol2 = pt.sessionWr !== null ? pnlColor(pt.sessionWr - 50) : 'var(--dim)';
     tHtml += '<tr><td>' + pt.label + '</td><td>' + pt.hands + '</td>' +
       '<td style="color:' + wrCol2 + '">' + (pt.sessionWr !== null ? pt.sessionWr + '%' : '-') + '</td>' +
-      '<td>' + (pt.wr !== null ? pt.wr + '%' : '-') + '</td>' +
-      '<td>' + (pt.vpip !== null ? pt.vpip + '%' : '-') + '</td>' +
-      '<td>' + (pt.agg !== null ? pt.agg + '%' : '-') + '</td></tr>';
+      '<td>' + (pt.wr !== null ? pt.wr + '%' : '-') + '</td></tr>';
   }
   tHtml += '</tbody></table></div></div>';
 
@@ -123,14 +130,7 @@ function renderTrends(container, hands, meta) {
     }
   }
   // Append engine insights (patterns: session-half, tilt) to legacy
-  var engineTrendIns = InsightEngine.forPanel('trends', 4);
-  for (var eti = 0; eti < engineTrendIns.length; eti++) {
-    var dupTrend = false;
-    for (var ti2 = 0; ti2 < tIns.length; ti2++) {
-      if (tIns[ti2].indexOf(engineTrendIns[eti].label) !== -1) { dupTrend = true; break; }
-    }
-    if (!dupTrend) tIns.push(renderRuleInsight(engineTrendIns[eti]));
-  }
+  appendEngineInsights('trends', tIns, { limit: 4 });
   tHtml += '<div class="p-row">' + renderInsights(tIns, 'Trends', 'Keep tracking to build up enough data points for trend insights.') + '</div>';
   container.innerHTML = tHtml;
 

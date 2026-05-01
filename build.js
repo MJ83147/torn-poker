@@ -23,6 +23,7 @@ var files = [
   'js/engine/narrative.js',
   'js/engine/engine.js',
   'js/engine/ruleset.js',
+  'js/helpers/context.js',
   'js/loader.js',
   'js/state.js',
   'js/modal.js',

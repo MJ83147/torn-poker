@@ -801,6 +801,51 @@ textarea#jin:focus {
 .dynamics-pos-tbl tr.v-low  td:nth-child(2) { color: var(--amber); font-weight: 600; }
 .dynamics-pos-tbl tr.v-high td:nth-child(2) { color: var(--red);   font-weight: 600; }
 
+/* BEST & WORST SESSIONS (in Trends panel) */
+.best-worst-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 12px;
+}
+
+.best-worst-card {
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.best-worst-meta {
+  font-size: 13px;
+  color: var(--dim);
+  margin-bottom: 4px;
+}
+
+.best-worst-pnl {
+  font-size: 16px;
+}
+
+.best-worst-patterns-head {
+  font-size: 13px;
+  color: var(--dim);
+  margin-top: 8px;
+  font-style: italic;
+}
+
+.best-worst-patterns {
+  margin: 4px 0 0 16px;
+  padding: 0;
+}
+
+.best-worst-patterns li {
+  font-size: 13px;
+  color: var(--dim);
+  margin-bottom: 4px;
+}
+
+.best-worst-btn {
+  margin-top: 8px;
+}
+
 /* ENGINE NARRATIVE */
 .engine-narrative {
   font-size: 14px;

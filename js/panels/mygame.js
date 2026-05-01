@@ -19,23 +19,12 @@ function renderMyGame(container, d, hands) {
 
   var smallSample = d.n < 30;
 
-  // Resolve dominant seat-count once so classification thresholds track table
-  // size - a 50% VPIP at 6-max is loose, but at HU it's tight.
-  var _domSeatsMG = (function() {
-    if (!d || !d.bySeatBucket) return null;
-    var best = null, bestN = 0;
-    for (var sb in d.bySeatBucket) {
-      var sd = d.bySeatBucket[sb];
-      if (!sd || (sd.n || 0) <= bestN) continue;
-      bestN = sd.n;
-      best = parseInt(sb, 10);
-    }
-    return best ? Math.max(2, Math.min(9, best)) : null;
-  })();
-  var _vpipBandMG = _domSeatsMG && typeof matrixTarget === 'function'
-    ? matrixTarget('vpip', _domSeatsMG === 2 ? 'BTN' : _domSeatsMG === 3 ? 'BTN' : 'CO', _domSeatsMG, getUserStyle()) : null;
-  var _afBandMG = _domSeatsMG && typeof matrixTarget === 'function'
-    ? matrixTarget('af', _domSeatsMG === 2 ? 'BTN' : _domSeatsMG === 3 ? 'BTN' : 'CO', _domSeatsMG, getUserStyle()) : null;
+  // Resolve table-mix context once. Classification thresholds track table size:
+  // a 50% VPIP at 6-max is loose, but at HU it's tight.
+  var ctx = getGameContext(d);
+  var _domSeatsMG = ctx.seats;
+  var _vpipBandMG = ctx.band('vpip');
+  var _afBandMG = ctx.band('af');
   var _vpipTightCap = _vpipBandMG ? _vpipBandMG.ideal : 30;
   var _aggCap = _afBandMG ? _afBandMG.tight : 25;
 
@@ -76,61 +65,15 @@ function renderMyGame(container, d, hands) {
   }
   html += '</div>';
 
-  // ── Section 2: Stat line ──
-  // Each metric's "good" band is a matrixTarget lookup when available so the
-  // colour reflects what's right for this player's table mix and style.
-  var _pfrBandMG = _domSeatsMG && typeof matrixTarget === 'function'
-    ? matrixTarget('pfr', _domSeatsMG === 2 ? 'BTN' : _domSeatsMG === 3 ? 'BTN' : 'CO', _domSeatsMG, getUserStyle()) : null;
-  var _cbetBandMG = _domSeatsMG && typeof matrixTarget === 'function'
-    ? matrixTarget('cbet', _domSeatsMG === 2 ? 'BTN' : _domSeatsMG === 3 ? 'BTN' : 'CO', _domSeatsMG, getUserStyle()) : null;
-  var _ftrBandMG = _domSeatsMG && typeof matrixTarget === 'function'
-    ? matrixTarget('foldToRaise', _domSeatsMG === 2 ? 'BTN' : _domSeatsMG === 3 ? 'BTN' : 'CO', _domSeatsMG, getUserStyle()) : null;
-  // Limps and WTSD aren't in the matrix; bound them by seat count.
-  var _limpCap = _domSeatsMG && _domSeatsMG <= 2 ? 60 : _domSeatsMG && _domSeatsMG <= 3 ? 35 : 15;
-  var _limpBad = _domSeatsMG && _domSeatsMG <= 2 ? 75 : _domSeatsMG && _domSeatsMG <= 3 ? 50 : 25;
-  var _wtsdLow = 20, _wtsdHigh = _domSeatsMG && _domSeatsMG <= 2 ? 45 : _domSeatsMG && _domSeatsMG <= 3 ? 42 : 38;
-  var _wtsdBad = _domSeatsMG && _domSeatsMG <= 2 ? 55 : 50;
-
-  var statItems = [
-    { l: tipWrap('VPIP'),          v: vpipVal !== null ? vpipVal + '%' : '-',  c: sev(vpipVal,
-        _vpipBandMG ? _vpipBandMG.tight : 15,
-        _vpipBandMG ? _vpipBandMG.loose + 10 : 60,
-        _vpipBandMG ? Math.max(0, _vpipBandMG.tight - 5) : 20,
-        _vpipBandMG ? _vpipBandMG.loose : 50) },
-    { l: tipWrap('PFR'),           v: pfrVal !== null ? pfrVal + '%' : '-',    c: sev(pfrVal,
-        _pfrBandMG ? _pfrBandMG.tight : 5,
-        _pfrBandMG ? _pfrBandMG.loose + 10 : 50,
-        _pfrBandMG ? Math.max(0, _pfrBandMG.tight - 5) : 10,
-        _pfrBandMG ? _pfrBandMG.loose : 40) },
-    { l: 'Limp',                   v: limpVal !== null ? limpVal + '%' : '-',  c: sev(limpVal, -1, _limpBad, -1, _limpCap) },
-    { l: tipWrap('Aggression'),    v: aggVal !== null ? aggVal + '%' : '-',    c: sev(aggVal,
-        _afBandMG ? _afBandMG.tight - 3 : 12,
-        _afBandMG ? _afBandMG.loose + 15 : 60,
-        _afBandMG ? _afBandMG.tight : 15,
-        _afBandMG ? _afBandMG.loose : 45) },
-    { l: 'Fold to Raise',         v: ftrVal !== null ? ftrVal + '%' : '-',    c: sev(ftrVal,
-        _ftrBandMG ? _ftrBandMG.tight - 5 : 20,
-        _ftrBandMG ? _ftrBandMG.loose + 20 : 70,
-        _ftrBandMG ? _ftrBandMG.tight : 25,
-        _ftrBandMG ? _ftrBandMG.loose : 60) },
-    { l: tipWrap('C-Bet'),         v: cbetVal !== null ? cbetVal + '%' : '-',  c: sev(cbetVal,
-        _cbetBandMG ? _cbetBandMG.tight - 10 : 30,
-        90,
-        _cbetBandMG ? _cbetBandMG.tight : 40,
-        _cbetBandMG ? _cbetBandMG.loose : 75) },
-    { l: 'WTSD',                   v: wtsdVal !== null ? wtsdVal + '%' : '-',  c: sev(wtsdVal, _wtsdLow, _wtsdBad, _wtsdLow + 5, _wtsdHigh) },
-  ];
-
-  var dimStyle = smallSample ? ' style="opacity:0.45"' : '';
-
-  html += '<div class="sec-subtitle mt-20">Stat Line</div>';
+  // Stat values still computed below for the leak/work-on rules. The raw
+  // stat-line mini-row was removed - the Table Dynamics block further down
+  // shows the same numbers WITH a verdict (on target / too low / too high),
+  // and the header hero strip already shows the headline numbers.
+  var _ftrBandMG = ctx.band('foldToRaise');
+  var _cbetBandMG = ctx.band('cbet');
   if (smallSample) {
-    html += '<div style="font-size:13px;color:var(--dim);margin-bottom:12px;">Stats from ' + d.n + ' hands. These become reliable around 100+ hands.</div>';
+    html += '<div class="meta-text mt-8 mb-12">Stats from ' + d.n + ' hands. These become reliable around 100+ hands.</div>';
   }
-  html += '<div class="mini-row"' + dimStyle + '>' + statItems.map(function(m) {
-    var color = m.c;
-    return '<div class="mini"><div class="mini-l dim-label">' + m.l + '</div><div class="serif-value" style="color:var(--' + color + ')">' + m.v + '</div></div>';
-  }).join('') + '</div>';
 
   // Skip strengths/leaks/sessions for small samples
   if (!smallSample) {
@@ -229,84 +172,8 @@ function renderMyGame(container, d, hands) {
       html += '</div>';
     }
 
-    // ── Section 7: Best and worst session ──
-    var sessions = buildSessions(hands);
-    if (sessions.length >= 3) {
-      // Compute P&L for each session
-      for (var si = 0; si < sessions.length; si++) {
-        sessions[si].pnl = sessionPnl(sessions[si]);
-      }
-      sessions.sort(function(a, b) { return b.pnl - a.pnl; });
-
-      // Handle ties: prefer more hands
-      var best = sessions[0];
-      var worst = sessions[sessions.length - 1];
-      for (var bi = 1; bi < sessions.length; bi++) {
-        if (sessions[bi].pnl === best.pnl && sessions[bi].hands.length > best.hands.length) best = sessions[bi];
-      }
-      for (var wi = sessions.length - 2; wi >= 0; wi--) {
-        if (sessions[wi].pnl === worst.pnl && sessions[wi].hands.length > worst.hands.length) worst = sessions[wi];
-      }
-
-      html += '<div class="sec-subtitle mt-20">Best & Worst Sessions</div>';
-      html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;">';
-
-      var sessionPairs = [
-        { session: best, label: 'Best Session', frame: 'right' },
-        { session: worst, label: 'Worst Session', frame: 'wrong' },
-      ];
-
-      for (var sp = 0; sp < sessionPairs.length; sp++) {
-        var sess = sessionPairs[sp];
-        var s = sess.session;
-        var tableName = s.tableId ? getTableLabel(s.tableId) : 'Unknown Table';
-        var isTourney = s.hands.some(function(h) { return !isCashHand(h); });
-        var pnlDisplay = isTourney ? 'Tournament' : fmtPnl(s.pnl);
-        var pnlCol = isTourney ? 'var(--text)' : pnlColor(s.pnl);
-
-        var sessStart = s.startTs ? new Date(s.startTs).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
-        var lastHand = s.hands[s.hands.length - 1];
-        var sessEnd = (lastHand && lastHand.timestamp) ? new Date(lastHand.timestamp).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
-        var dateLabel = sessStart ? (sessStart === sessEnd ? sessStart : sessStart + ' - ' + sessEnd) : '';
-
-        html += '<div style="padding:12px 16px;border:1px solid var(--border);border-radius:8px;">';
-        html += '<div class="dim-label mb-12">' + sess.label + '</div>';
-        if (dateLabel) html += '<div style="font-size:13px;color:var(--dim);margin-bottom:4px;">' + dateLabel + '</div>';
-        html += '<div style="font-size:13px;color:var(--dim);">' + tableName + ' &middot; ' + s.hands.length + ' hands &middot; <span class="serif-value" style="font-size:16px;color:' + pnlCol + ';">' + pnlDisplay + '</span></div>';
-
-        // Pattern detection
-        var sessionData = analyse(s.hands);
-        var patterns = detectSessionPatterns(sessionData, d);
-
-        if (patterns.length) {
-          var frameWord = sess.frame === 'right' ? 'what went right' : 'what went wrong';
-          html += '<div style="font-size:13px;color:var(--dim);margin-top:8px;font-style:italic;">Patterns - ' + frameWord + ':</div>';
-          html += '<ul style="margin:4px 0 0 16px;padding:0;">';
-          for (var pi2 = 0; pi2 < patterns.length; pi2++) {
-            html += '<li style="font-size:13px;color:var(--dim);margin-bottom:4px;">' + patterns[pi2].text + '</li>';
-          }
-          html += '</ul>';
-        } else if (sess.frame === 'wrong') {
-          html += '<div style="font-size:13px;color:var(--dim);margin-top:8px;">No clear pattern detected. Review the hands below for specific spots.</div>';
-        }
-
-        var seeHandsBtnId = 'see-sess-' + Math.random().toString(36).slice(2, 8);
-        var sessTitle = sess.label + ' Hands';
-        html += '<button class="example-hand-btn" id="' + seeHandsBtnId + '" style="margin-top:8px;">Show hands played</button>';
-        setTimeout((function(id, title, h2) {
-          return function() {
-            var el = document.getElementById(id);
-            if (el) el.onclick = function() { showExampleHandListModal(title, h2); };
-          };
-        })(seeHandsBtnId, sessTitle, s.hands), 50);
-
-        html += '</div>';
-      }
-      html += '</div>';
-    } else if (sessions.length > 0) {
-      html += '<div class="sec-subtitle mt-20">Sessions</div>';
-      html += '<div class="meta-text">Not enough separate table sessions to compare patterns. Keep playing.</div>';
-    }
+    // Best & Worst Sessions used to live here. It now lives in Trends, which
+    // is the natural home for "session over time" content.
 
   } // end !smallSample
 
@@ -423,69 +290,5 @@ function renderTableDynamicsReference(hands, d) {
   return h;
 }
 
-// ── Session helpers ────────────────────────────────────────────────────────
-// buildSessions() lives in js/helpers/sessions.js so the insight engine can use it.
-
-function sessionPnl(session) {
-  var pnl = 0;
-  for (var i = 0; i < session.hands.length; i++) {
-    var h = session.hands[i];
-    if (!isCashHand(h) || !h.outcome) continue;
-    pnl += getHandPnlValue(h);
-  }
-  return pnl;
-}
-
-function detectSessionPatterns(sessionData, overallData) {
-  var patterns = [];
-  var sVpip = pct(sessionData.vpip, sessionData.n);
-  var oVpip = pct(overallData.vpip, overallData.n);
-  var sAgg = calcAggression(sessionData.raises, sessionData.calls, sessionData.checks);
-  var oAgg = calcAggression(overallData.raises, overallData.calls, overallData.checks);
-  var sLimp = pct(sessionData.limpHands, sessionData.n);
-  var oLimp = pct(overallData.limpHands, overallData.n);
-  var sPfr = pct(sessionData.pfrHands, sessionData.n);
-  var oPfr = pct(overallData.pfrHands, overallData.n);
-  var sCbet = pct(sessionData.cbetDone, sessionData.cbetOpps);
-  var oCbet = pct(overallData.cbetDone, overallData.cbetOpps);
-  var sWtsd = pct(sessionData.wentToShowdown, sessionData.sawFlop);
-  var oWtsd = pct(overallData.wentToShowdown, overallData.sawFlop);
-
-  var earlyPos = ['UTG', 'UTG+1', 'MP'];
-  var sEpGroup = calcPositionGroupVpip(sessionData.posMap, earlyPos);
-  var sEpVpip = sEpGroup.vpip;
-  var sEarlyHands = sEpGroup.hands;
-  var oEpVpip = calcPositionGroupVpip(overallData.posMap, earlyPos).vpip;
-
-  var THRESH = 10;
-
-  if (sVpip !== null && oVpip !== null && sVpip - oVpip >= THRESH) {
-    patterns.push({ stat: 'VPIP', session: sVpip, overall: oVpip, dir: 'up', text: 'Played looser than usual (' + sVpip + '% vs your average ' + oVpip + '%). More hands entered, more exposure.' });
-  }
-  if (sVpip !== null && oVpip !== null && oVpip - sVpip >= THRESH) {
-    patterns.push({ stat: 'VPIP', session: sVpip, overall: oVpip, dir: 'down', text: 'Played tighter than usual (' + sVpip + '% vs your average ' + oVpip + '%). Fewer hands, less risk.' });
-  }
-  if (sAgg !== null && oAgg !== null && oAgg - sAgg >= THRESH) {
-    patterns.push({ stat: 'Aggression', session: sAgg, overall: oAgg, dir: 'down', text: 'Aggression dropped to ' + sAgg + '% (average ' + oAgg + '%). More checking and calling, less betting.' });
-  }
-  if (sAgg !== null && oAgg !== null && sAgg - oAgg >= THRESH) {
-    patterns.push({ stat: 'Aggression', session: sAgg, overall: oAgg, dir: 'up', text: 'Aggression spiked to ' + sAgg + '% (average ' + oAgg + '%). More raising, possibly over-bluffing.' });
-  }
-  if (sLimp !== null && oLimp !== null && sLimp - oLimp >= THRESH) {
-    patterns.push({ stat: 'Limp', session: sLimp, overall: oLimp, dir: 'up', text: 'Limping spiked to ' + sLimp + '% (average ' + oLimp + '%). Entering pots without initiative.' });
-  }
-  if (sPfr !== null && oPfr !== null && oPfr - sPfr >= THRESH) {
-    patterns.push({ stat: 'PFR', session: sPfr, overall: oPfr, dir: 'down', text: 'Preflop raise rate dropped to ' + sPfr + '% (average ' + oPfr + '%). Less initiative preflop.' });
-  }
-  if (sCbet !== null && oCbet !== null && oCbet - sCbet >= 15) {
-    patterns.push({ stat: 'C-Bet', session: sCbet, overall: oCbet, dir: 'down', text: 'C-bet dropped to ' + sCbet + '% (average ' + oCbet + '%). Gave up flop initiative more often.' });
-  }
-  if (sWtsd !== null && oWtsd !== null && sWtsd - oWtsd >= THRESH) {
-    patterns.push({ stat: 'WTSD', session: sWtsd, overall: oWtsd, dir: 'up', text: 'Went to showdown ' + sWtsd + '% (average ' + oWtsd + '%). Called down more often than usual.' });
-  }
-  if (sEpVpip !== null && oEpVpip !== null && sEpVpip - oEpVpip >= 15 && sEarlyHands >= 3) {
-    patterns.push({ stat: 'EP VPIP', session: sEpVpip, overall: oEpVpip, dir: 'up', text: 'Early position VPIP was ' + sEpVpip + '% (average ' + oEpVpip + '%). Played too wide from bad seats.' });
-  }
-
-  return patterns;
-}
+// sessionPnl, detectSessionPatterns, renderBestWorstSessions all live in
+// js/helpers/sessions.js so Trends and the insight engine can share them.

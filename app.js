@@ -185,7 +185,7 @@ function _renderDashboard(d, hands, meta) {
   renderActions(document.getElementById('p-actions'), d, hands);
   renderRange(document.getElementById('p-range'), d, hands);
   renderTables(document.getElementById('p-tables'), hands, State.allHands, State.excludedTables, renderAll);
-  renderTrends(document.getElementById('p-trends'), hands, meta);
+  renderTrends(document.getElementById('p-trends'), hands, meta, d);
   renderShowdown(document.getElementById('p-showdown'), hands, meta);
   renderLog(document.getElementById('p-log'), hands);
   // saved hands now rendered inside log panel

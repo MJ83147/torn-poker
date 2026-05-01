@@ -118,12 +118,72 @@ function _toggleBackdrop(show) {
   });
 })();
 
-// Render a row of mini stat boxes
-function renderMiniRow(items) {
-  return '<div class="mini-row">' + items.map(function(m) {
+// Render a row of mini stat boxes.
+//   items: [{ l, v, c, dot }] - label, value, colour key (g/r/a/text/var-name), optional dot class
+//   opts:  { columns, dim }   - optional grid-template-columns override; dim=true applies opacity 0.45
+function renderMiniRow(items, opts) {
+  opts = opts || {};
+  var rowAttrs = '';
+  if (opts.columns) rowAttrs += ' style="grid-template-columns:' + opts.columns + ';"';
+  else if (opts.dim) rowAttrs += ' style="opacity:0.45"';
+  if (opts.columns && opts.dim) rowAttrs = ' style="grid-template-columns:' + opts.columns + ';opacity:0.45;"';
+  return '<div class="mini-row"' + rowAttrs + '>' + items.map(function(m) {
     var color = m.c === 'g' ? 'green' : m.c === 'r' ? 'red' : m.c === 'a' ? 'amber' : m.c || 'text';
-    return '<div class="mini"><div class="mini-l dim-label">' + m.l + '</div><div class="serif-value" style="color:var(--' + color + ')">' + m.v + '</div></div>';
+    var dot = m.dot ? '<span class="line-dot ' + m.dot + '"></span> ' : '';
+    return '<div class="mini"><div class="mini-l dim-label">' + dot + m.l + '</div><div class="serif-value" style="color:var(--' + color + ')">' + m.v + '</div></div>';
   }).join('') + '</div>';
+}
+
+// Render a stats table with consistent header / row structure.
+//   columns: [{ key, label, fmt?, cls?, tip? }]
+//     key:   the property name on each row OR a function(row, idx) returning the cell value
+//     label: header text (passed through tipWrap if tip option set)
+//     fmt:   optional function(cellValue, row, idx) returning HTML for the cell
+//     cls:   optional cell class
+//     tip:   true → wrap header label in a tooltip via tipWrap
+//   rows:    array of objects (rendered in order; sort upstream)
+//   opts:    { tableClass, wrapClass } - default 'tbl', 'overflow-x'
+function renderStatsTable(rows, columns, opts) {
+  opts = opts || {};
+  var wrapClass = opts.wrapClass || 'overflow-x';
+  var tableClass = opts.tableClass || 'tbl';
+  var head = '<thead><tr>' + columns.map(function(c) {
+    return '<th>' + (c.tip ? tipWrap(c.label) : c.label) + '</th>';
+  }).join('') + '</tr></thead>';
+  var body = '<tbody>' + rows.map(function(row, idx) {
+    return '<tr>' + columns.map(function(c) {
+      var val = (typeof c.key === 'function') ? c.key(row, idx) : row[c.key];
+      var cell = c.fmt ? c.fmt(val, row, idx) : (val == null ? '-' : val);
+      return '<td' + (c.cls ? ' class="' + c.cls + '"' : '') + '>' + cell + '</td>';
+    }).join('') + '</tr>';
+  }).join('') + '</tbody>';
+  return '<div class="' + wrapClass + '"><table class="' + tableClass + '">' + head + body + '</table></div>';
+}
+
+// Run the engine for a given panel and append the resulting insight cards to a
+// legacy insight-array, deduping by label.
+//   panelId:    string passed to InsightEngine.forPanel
+//   legacyArr:  array of HTML strings already produced by the panel's hand-rolled rules
+//   opts:       { limit, refine, filter }
+//     limit:    maximum engine insights to consider (default 4)
+//     refine:   function(insight) → insight  - mutate before render (used by Players)
+//     filter:   function(insight) → boolean  - drop insights whose category doesn't fit this panel
+function appendEngineInsights(panelId, legacyArr, opts) {
+  opts = opts || {};
+  if (typeof InsightEngine === 'undefined') return legacyArr;
+  var limit = opts.limit != null ? opts.limit : 4;
+  var engineIns = InsightEngine.forPanel(panelId, limit);
+  for (var i = 0; i < engineIns.length; i++) {
+    var ins = engineIns[i];
+    if (opts.filter && !opts.filter(ins)) continue;
+    if (opts.refine) ins = opts.refine(ins) || ins;
+    var dup = false;
+    for (var j = 0; j < legacyArr.length; j++) {
+      if (legacyArr[j].indexOf(ins.label) !== -1) { dup = true; break; }
+    }
+    if (!dup) legacyArr.push(renderRuleInsight(ins));
+  }
+  return legacyArr;
 }
 
 function tipWrap(label) {

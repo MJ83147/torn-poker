@@ -121,28 +121,12 @@ function renderCards(container, d, hands) {
       v: scs.dealt + ' dealt · ' + scs.played + ' played',
     }], exSC, 'Suited connectors play best in position with implied odds. They are drawing hands - you want to see flops cheaply and hit straights or flushes.'));
   }
-  // Hand Type Performance
-  var minPlayedHt = Math.max(3, Math.round(3 * Math.max(1, Math.sqrt(40 / Math.max(1, totalN)))));
-  var htWinRates = htOrder.filter(function(ht) { return d.htMap[ht] && d.htMap[ht].played >= minPlayedHt; }).map(function(ht) {
-    return { ht: ht, wr: pct(d.htMap[ht].won, d.htMap[ht].played), played: d.htMap[ht].played };
-  }).sort(function(a, b) { return (b.wr || 0) - (a.wr || 0); });
-  if (htWinRates.length >= 2) {
-    var bestHT = htWinRates[0];
-    var worstHT = htWinRates[htWinRates.length - 1];
-    cIns.push(ins('o', 'Hand Type Performance', 'Best category: ' + bestHT.ht + ' at ' + bestHT.wr + '% win rate (' + bestHT.played + ' played). Worst: ' + worstHT.ht + ' at ' + worstHT.wr + '% (' + worstHT.played + ' played).', [
-      { v: bestHT.ht + ': ' + bestHT.wr + '%', hi: true },
-      { v: worstHT.ht + ': ' + worstHT.wr + '%' },
-    ]));
-  }
+  // Hand Type Performance summary card removed - it just recapped the per-bucket
+  // insights above (Pocket Pairs / Broadway / Suited Connectors etc.), which
+  // already tell the user which buckets they crush vs bleed.
+
   // Append engine insights (patterns: hand-strength) to legacy
-  var engineCardIns = InsightEngine.forPanel('cards', 4);
-  for (var eci = 0; eci < engineCardIns.length; eci++) {
-    var dupCard = false;
-    for (var ci2 = 0; ci2 < cIns.length; ci2++) {
-      if (cIns[ci2].indexOf(engineCardIns[eci].label) !== -1) { dupCard = true; break; }
-    }
-    if (!dupCard) cIns.push(renderRuleInsight(engineCardIns[eci]));
-  }
+  appendEngineInsights('cards', cIns, { limit: 4 });
   cardsHtml += '</div>';
   cardsHtml += '<div class="p-row">' + renderInsights(cIns, 'Cards', 'More hands needed for card-type breakdowns.') + '</div>';
   container.innerHTML = cardsHtml;
