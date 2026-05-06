@@ -42,7 +42,15 @@ function calcAggression(raises, calls, checks) {
 // Severity rating: maps a value to 'red'/'amber'/'green'/'text' based on thresholds.
 // rLo/rHi = red thresholds (outside = red), aLo/aHi = amber thresholds (outside = amber).
 // Aggregate VPIP across a group of positions from posMap.
-// Returns { vpip: pct, hands: totalHands }
+// Returns:
+//   {
+//     vpip: number|null,   // pct(vpipCount, hands), null when hands===0
+//     hands: number,       // total hands across the listed positions
+//     vpipCount: number,   // raw vpip count (for further aggregation)
+//   }
+// All three keys are always set. Callers that destructure must list all keys
+// they need - the Position panel had a regression because it destructured
+// only `vpip` and left other variable names referencing undefined.
 function calcPositionGroupVpip(posMap, positions) {
   var v = 0, h = 0;
   for (var i = 0; i < positions.length; i++) {

@@ -521,7 +521,7 @@ function renderRange(container, d, hands) {
       summary + '<div class="mt-12">' + rows + '</div>';
     overlay.appendChild(box);
     document.body.appendChild(overlay);
-    requestAnimationFrame(function() { overlay.classList.add('show'); });
+    requestAnimationFrame(function() { overlay.classList.add(CSS.SHOW); });
     document.getElementById('modal-close-btn').onclick = closeModal;
     box.querySelectorAll('.range-hand-row').forEach(function(row) {
       row.onclick = function() {

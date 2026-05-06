@@ -113,6 +113,16 @@ function _hasLevelTag(i, level) {
   return i && i.tags && i.tags.indexOf('level-' + level) >= 0;
 }
 
+// Returns null if there are no insights, otherwise:
+//   {
+//     narrative: string,            // joined sentence string for the panel
+//     cards: Insight[],             // top 12 input insights (unchanged)
+//     contradictions: object[],     // see findContradictions() output
+//     chains: object[]              // see findChains() output
+//   }
+// Callers must access result.narrative (not result directly). The Betting
+// panel had a bug where it printed "[object Object]" because it used the
+// whole return value where it meant .narrative.
 function buildNarrative(panelInsights, panelName) {
   if (!panelInsights || !panelInsights.length) return null;
 

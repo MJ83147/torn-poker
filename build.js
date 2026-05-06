@@ -16,6 +16,7 @@ function listJs(dir) {
 // root standalones). Panels are auto-discovered because their order does not
 // matter and forgetting to add one used to silently break the build.
 var helperOrder = [
+  'js/helpers/css-classes.js',
   'js/helpers/cards.js',
   'js/helpers/tables.js',
   'js/helpers/format.js',

@@ -1,4 +1,24 @@
 // ── INSIGHT ENGINE: LAYER 1 - RULE COMBINATOR ────────────────────────────────
+//
+// Insight result shape (returned by evaluateRules and consumed by panels and
+// renderRuleInsight):
+//   {
+//     id: string,                          // rule id (e.g. 'cbet-low')
+//     panels: string[],                    // panels this insight surfaces in
+//     tags: string[],                      // tags (e.g. 'metric', 'pattern')
+//     sev: 'r'|'a'|'g'|'o'|'n',            // severity colour
+//     score: number,                       // sort weight
+//     label: string,                       // short headline
+//     text: string,                        // body copy
+//     chips: { v: string, hi?: bool }[],   // optional metric chips
+//     costBB: number|null,                 // estimated cost in BB
+//     ctx: object,                         // rule-specific free-form context
+//     _rule: Rule,                         // back-reference to defining rule
+//     _hands: Hand[]                       // hands the rule ran against
+//   }
+// IMPORTANT: insight renderers must guard optional fields. renderRuleInsight
+// has had regressions where _rule.examples was assumed to exist on every
+// result. Always check before dereferencing.
 
 var INSIGHT_RULES = [];
 
@@ -6,7 +26,8 @@ function defineRule(rule) {
   INSIGHT_RULES.push(rule);
 }
 
-// Evaluate all rules against the current data
+// Evaluate all rules against the current data.
+// Returns Insight[] (shape documented at the top of this file).
 function evaluateRules(d, hands) {
   var results = [];
 
@@ -86,7 +107,16 @@ function getInsightsForPanel(results, panelName, maxCount) {
 }
 
 // Render a rule result into ins() HTML
+// Render one Insight as HTML. Defensive about missing fields - if the result
+// is malformed (no severity, no label, no text), it skips the card and logs
+// a console warning rather than crashing the whole panel.
 function renderRuleInsight(result) {
+  if (!result || !result.sev || !result.label || typeof result.text !== 'string') {
+    if (typeof console !== 'undefined' && console.warn) {
+      console.warn('renderRuleInsight: skipping malformed insight', result);
+    }
+    return '';
+  }
   var rule = result._rule;
   if (rule && rule.examples && result._hands) {
     var exHands;

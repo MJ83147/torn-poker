@@ -237,15 +237,15 @@ function renderPlayers(container, d, hands) {
         var closeBtn = document.createElement('button');
         closeBtn.className = 'modal-close';
         closeBtn.innerHTML = '&times;';
-        closeBtn.onclick = function() { overlay.classList.remove('show'); setTimeout(function() { overlay.remove(); }, 200); };
-        overlay.onclick = function(e) { if (e.target === overlay) { overlay.classList.remove('show'); setTimeout(function() { overlay.remove(); }, 200); } };
+        closeBtn.onclick = function() { overlay.classList.remove(CSS.SHOW); setTimeout(function() { overlay.remove(); }, 200); };
+        overlay.onclick = function(e) { if (e.target === overlay) { overlay.classList.remove(CSS.SHOW); setTimeout(function() { overlay.remove(); }, 200); } };
         box.appendChild(closeBtn);
         var cmpContent = document.createElement('div');
         renderCompare(cmpContent, d, hands);
         box.appendChild(cmpContent);
         overlay.appendChild(box);
         document.body.appendChild(overlay);
-        requestAnimationFrame(function() { overlay.classList.add('show'); });
+        requestAnimationFrame(function() { overlay.classList.add(CSS.SHOW); });
       };
     }
   }

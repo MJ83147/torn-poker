@@ -45,7 +45,11 @@ var InsightEngine = {
     return all;
   },
 
-  // Get narrative for a panel (builds on first call, caches)
+  // Get narrative for a panel (builds on first call, caches).
+  // Returns the buildNarrative() output:
+  //   null  -> no insights for this panel
+  //   else  -> { narrative, cards, contradictions, chains }
+  // Callers should read result.narrative for the text.
   narrativeFor: function(panelName, maxInsights) {
     if (this._narratives[panelName]) return this._narratives[panelName];
     var insights = this.forPanel(panelName, maxInsights || 8);

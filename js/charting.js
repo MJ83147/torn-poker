@@ -2,7 +2,11 @@
 
 /**
  * Read CSS custom properties used by all charts.
- * Returns an object with color strings.
+ * Returns:
+ *   { dim, border, green, gold, red, amber }   // all colour strings
+ * All keys are always set (with hex fallbacks if the variables are missing).
+ * The trends panel had a regression where the caller used `styles` for what
+ * this helper returns as `colors` - watch for that name drift.
  */
 function getChartColors() {
   var s = getComputedStyle(document.documentElement);

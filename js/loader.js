@@ -5,7 +5,7 @@
 
   function deal() {
     if (i < cs.length) {
-      cs[i].classList.add('show');
+      cs[i].classList.add(CSS.SHOW);
       i++;
       setTimeout(deal, 165);
     } else {
@@ -17,10 +17,10 @@
     const loader = document.getElementById('loader');
     const app = document.getElementById('app');
     if (!loader || !app) return;
-    loader.classList.add('out');
+    loader.classList.add(CSS.OUT);
     setTimeout(() => {
       loader.style.display = 'none';
-      app.classList.add('on');
+      app.classList.add(CSS.ON);
       // After the intro animation, check for a saved session to restore
       if (typeof checkSavedSession === 'function') {
         checkSavedSession();
@@ -46,15 +46,15 @@ function showImportLoader(count, callback) {
   // Reset state
   num.textContent = '0';
   prog.style.width = '0%';
-  cs.forEach(c => c.classList.remove('show'));
+  cs.forEach(c => c.classList.remove(CSS.SHOW));
   loader.style.display = 'flex';
-  loader.classList.remove('out');
-  app.classList.remove('on');
+  loader.classList.remove(CSS.OUT);
+  app.classList.remove(CSS.ON);
   let i = 0;
 
   function deal() {
     if (i < cs.length) {
-      cs[i].classList.add('show');
+      cs[i].classList.add(CSS.SHOW);
       i++;
       setTimeout(deal, 120);
     } else {
@@ -75,10 +75,10 @@ function showImportLoader(count, callback) {
         num.textContent = count;
         prog.style.width = '100%';
         setTimeout(() => {
-          loader.classList.add('out');
+          loader.classList.add(CSS.OUT);
           setTimeout(() => {
             loader.style.display = 'none';
-            app.classList.add('on');
+            app.classList.add(CSS.ON);
             if (typeof callback === 'function') {
               callback();
             }

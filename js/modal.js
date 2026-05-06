@@ -82,7 +82,7 @@ function showExampleHandModal(hand, coachingNote) {
   box.innerHTML = closeBtn + starBtn + title + subtitle + metaHtml + equitySlot + actionsHtml + coaching + notesSection;
   overlay.appendChild(box);
   document.body.appendChild(overlay);
-  requestAnimationFrame(function() { overlay.classList.add('show'); });
+  requestAnimationFrame(function() { overlay.classList.add(CSS.SHOW); });
 
   if (typeof injectEquityButton === 'function') {
     injectEquityButton(box, hand);
@@ -92,10 +92,10 @@ function showExampleHandModal(hand, coachingNote) {
   document.getElementById('modal-star-btn').onclick = function() {
     var nowStarred = toggleStarHand(hand);
     this.innerHTML = nowStarred ? '&#9733;' : '&#9734;';
-    this.classList.toggle('starred', nowStarred);
+    this.classList.toggle(CSS.STARRED, nowStarred);
     this.title = nowStarred ? 'Unsave hand' : 'Save hand';
     var notesEl = document.getElementById('modal-notes');
-    if (notesEl) notesEl.classList.toggle('show', nowStarred);
+    if (notesEl) notesEl.classList.toggle(CSS.SHOW, nowStarred);
     // refresh saved hands section in log panel
     renderSavedHands();
   };
@@ -121,7 +121,7 @@ function showExampleHandModal(hand, coachingNote) {
 function closeModal() {
   var m = document.getElementById('example-hand-modal');
   if (m) {
-    m.classList.remove('show');
+    m.classList.remove(CSS.SHOW);
     setTimeout(function() { m.remove(); }, 200);
   }
 }
@@ -218,7 +218,7 @@ function showExampleHandListModal(title, handsList, coachingNote) {
 
   overlay.appendChild(box);
   document.body.appendChild(overlay);
-  requestAnimationFrame(function() { overlay.classList.add('show'); });
+  requestAnimationFrame(function() { overlay.classList.add(CSS.SHOW); });
   document.getElementById('modal-close-btn').onclick = closeModal;
 
   loadBatch();
