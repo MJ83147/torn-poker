@@ -1914,6 +1914,18 @@ textarea#jin:focus {
   font-size: var(--fs-10);
 }
 
+/* Players panel: fixed-width spark column for the inline hand-count bar */
+.spark-cell {
+  width: 80px;
+}
+
+/* Compare-players modal sizing */
+.modal-box-compare {
+  max-width: 700px;
+  max-height: 85vh;
+  overflow: auto;
+}
+
 /* Mini-row column overrides (used by showdown panel) */
 .mini-row-2col {
   grid-template-columns: repeat(2, 1fr);

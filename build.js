@@ -26,6 +26,9 @@ var helperOrder = [
   'js/helpers/ui.js',
   'js/helpers/migration.js',
   'js/helpers/panel-shared.js',
+  'js/helpers/opponent-stats.js',
+  'js/helpers/opponent-examples.js',
+  'js/helpers/opponent-profile.js',
 ];
 
 var engineOrder = [
