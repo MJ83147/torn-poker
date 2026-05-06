@@ -81,38 +81,86 @@ function renderRange(container, d, hands) {
       activeBench = benchmarkFor(posLabel);
       recSet = activeBench.recommendedRange || null;
     }
-    var overplayed = [];
-    var underplayed = [];
-    var matchCount = 0;
 
+    // ── Pure data: build the per-cell metadata up front, no DOM strings yet ──
+    // Each cell ends up shaped:
+    //   { key, status: 'played'|'unplayed-dealt'|'undealt', advCls,
+    //     wrBg, freqBg, wrTip, freqTip, played, dealt, won, wrPct }
+    function buildCellData() {
+      var cells = [];
+      var overplayed = [];
+      var underplayed = [];
+      var matchCount = 0;
+      for (var r = 0; r < 13; r++) {
+        for (var c = 0; c < 13; c++) {
+          var key = buildKey(r, c);
+          var data = rMap[key];
+          var advCls = '';
+          if (recSet) {
+            var didPlay = data && data.played > 0;
+            var inRec = recSet.has(key);
+            if (didPlay && !inRec) { advCls = ' rc-over'; overplayed.push(key); }
+            else if (!didPlay && inRec) { advCls = ' rc-under'; underplayed.push(key); }
+            else if (didPlay && inRec) { advCls = ' rc-match'; matchCount++; }
+          }
+          if (data && data.played > 0) {
+            var wrPct = pct(data.won, data.played);
+            cells.push({
+              key: key,
+              status: 'played',
+              advCls: advCls,
+              wrBg: wrPct !== null ? wrColor(wrPct) : '#1e3020',
+              freqBg: playedColor(data.played),
+              wrTip: key + ' | Win: ' + (wrPct !== null ? wrPct + '%' : 'n/a') + ' (' + data.won + '/' + data.played + ' played, ' + data.dealt + ' dealt) · click to see hands',
+              freqTip: key + ' | Played ' + data.played + ' of ' + data.dealt + ' dealt · click to see hands',
+            });
+          } else if (data && data.dealt > 0) {
+            cells.push({
+              key: key,
+              status: 'unplayed-dealt',
+              advCls: advCls,
+              wrTip: key + ' | Dealt ' + data.dealt + ' times but never played · click to see hands',
+              freqTip: key + ' | Dealt ' + data.dealt + ' times but never played · click to see hands',
+            });
+          } else {
+            var cellLabel = (r === c) ? 'Pair' : (r < c) ? 'Suited' : 'Offsuit';
+            cells.push({
+              key: key,
+              status: 'undealt',
+              advCls: advCls,
+              wrTip: key + ' | Not yet dealt (' + cellLabel + ')',
+              freqTip: key + ' | Not yet dealt (' + cellLabel + ')',
+            });
+          }
+        }
+      }
+      return {
+        cells: cells,
+        overplayed: overplayed,
+        underplayed: underplayed,
+        matchCount: matchCount,
+      };
+    }
+
+    var cellInfo = buildCellData();
+    var overplayed = cellInfo.overplayed;
+    var underplayed = cellInfo.underplayed;
+    var matchCount = cellInfo.matchCount;
+
+    // ── Render the data into HTML ──
     var wrGrid = '';
     var freqGrid = '';
-    for (var r = 0; r < 13; r++) {
-      for (var c = 0; c < 13; c++) {
-        var key = buildKey(r, c);
-        var data = rMap[key];
-        var advCls = '';
-        if (recSet) {
-          var played = data && data.played > 0;
-          var inRec = recSet.has(key);
-          if (played && !inRec) { advCls = ' rc-over'; overplayed.push(key); }
-          else if (!played && inRec) { advCls = ' rc-under'; underplayed.push(key); }
-          else if (played && inRec) { advCls = ' rc-match'; matchCount++; }
-        }
-        if (data && data.played > 0) {
-          var wr2 = pct(data.won, data.played);
-          var wrBg = (wr2 !== null ? wrColor(wr2) : '#1e3020');
-          wrGrid += '<div class="rc' + advCls + '" style="background:' + wrBg + ';cursor:pointer;" data-key="' + key + '" data-tip="' + key + ' | Win: ' + (wr2 !== null ? wr2 + '%' : 'n/a') + ' (' + data.won + '/' + data.played + ' played, ' + data.dealt + ' dealt) · click to see hands"><span>' + key + '</span></div>';
-          freqGrid += '<div class="rc' + advCls + '" style="background:' + playedColor(data.played) + ';cursor:pointer;" data-key="' + key + '" data-tip="' + key + ' | Played ' + data.played + ' of ' + data.dealt + ' dealt · click to see hands"><span>' + key + '</span></div>';
-        } else if (data && data.dealt > 0) {
-          wrGrid += '<div class="rc rc-unseen' + advCls + '" data-key="' + key + '" data-tip="' + key + ' | Dealt ' + data.dealt + ' times but never played · click to see hands"><span>' + key + '</span></div>';
-          freqGrid += '<div class="rc rc-unseen' + advCls + '" data-key="' + key + '" data-tip="' + key + ' | Dealt ' + data.dealt + ' times but never played · click to see hands"><span>' + key + '</span></div>';
-        } else {
-          var cellType = (r === c) ? 'pair' : (r < c) ? 'suited' : 'offsuit';
-          var cellLabel = cellType === 'pair' ? 'Pair' : cellType === 'suited' ? 'Suited' : 'Offsuit';
-          wrGrid += '<div class="rc rc-unseen' + advCls + '" data-tip="' + key + ' | Not yet dealt (' + cellLabel + ')"><span>' + key + '</span></div>';
-          freqGrid += '<div class="rc rc-unseen' + advCls + '" data-tip="' + key + ' | Not yet dealt (' + cellLabel + ')"><span>' + key + '</span></div>';
-        }
+    for (var ci = 0; ci < cellInfo.cells.length; ci++) {
+      var cell = cellInfo.cells[ci];
+      if (cell.status === 'played') {
+        wrGrid += '<div class="rc' + cell.advCls + '" style="background:' + cell.wrBg + ';cursor:pointer;" data-key="' + cell.key + '" data-tip="' + cell.wrTip + '"><span>' + cell.key + '</span></div>';
+        freqGrid += '<div class="rc' + cell.advCls + '" style="background:' + cell.freqBg + ';cursor:pointer;" data-key="' + cell.key + '" data-tip="' + cell.freqTip + '"><span>' + cell.key + '</span></div>';
+      } else if (cell.status === 'unplayed-dealt') {
+        wrGrid += '<div class="rc rc-unseen' + cell.advCls + '" data-key="' + cell.key + '" data-tip="' + cell.wrTip + '"><span>' + cell.key + '</span></div>';
+        freqGrid += '<div class="rc rc-unseen' + cell.advCls + '" data-key="' + cell.key + '" data-tip="' + cell.freqTip + '"><span>' + cell.key + '</span></div>';
+      } else {
+        wrGrid += '<div class="rc rc-unseen' + cell.advCls + '" data-tip="' + cell.wrTip + '"><span>' + cell.key + '</span></div>';
+        freqGrid += '<div class="rc rc-unseen' + cell.advCls + '" data-tip="' + cell.freqTip + '"><span>' + cell.key + '</span></div>';
       }
     }
     var seen = Object.keys(rMap).filter(function(k) { return rMap[k].dealt > 0; }).length;

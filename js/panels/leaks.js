@@ -1,4 +1,14 @@
 // ── LEAK FINDER PANEL ─────────────────────────────────────────────────────────
+//
+// Structure: each leak rule is its own self-contained IIFE block. That keeps
+// the calculation (does this leak exist? how big is it?) and the rendering
+// (the ins() / insWithExample() call) co-located per rule, while still
+// isolating one rule from another. After all rules run, the bottom of the
+// function appends engine leaks and renders the sorted list.
+//
+// The split between calculation and rendering happens inside each IIFE: the
+// data scan produces a leak score and example list, then ins() formats the
+// HTML. ins() / insWithExample() are the rendering layer.
 
 function renderLeaks(container, d, hands) {
   var leaks = [];
