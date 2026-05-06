@@ -645,7 +645,7 @@ function renderPlayers(container, d, hands) {
     var watchedOpps = filtered.filter(function(o) { return watched.indexOf(o.name) >= 0; });
     var html = '<div class="panel-title">Players</div>';
     html += '<div class="panel-desc">Opponent records, head-to-head stats, and watch list.</div>';
-    html += '<div style="margin-bottom:16px;"><button class="example-hand-btn" id="open-compare-btn">Compare Players</button></div>';
+    html += '<div class="mb-16"><button class="example-hand-btn" id="open-compare-btn">Compare Players</button></div>';
 
     if (watchedOpps.length) {
       html += '<div class="p-row"><div class="sec-subtitle mt-0">Watched Players</div>';
@@ -738,7 +738,7 @@ function renderPlayers(container, d, hands) {
       html += '<div class="p-row"><div class="engine-narrative">' + narrText + '</div></div>';
     }
 
-    if (pIns.length) html += '<div class="p-row" style="margin-top:8px;"><div class="ins-grid">' + pIns.join('') + '</div></div>';
+    if (pIns.length) html += '<div class="p-row mt-8"><div class="ins-grid">' + pIns.join('') + '</div></div>';
 
     html += '<div class="p-row"><div class="flex-between"><div class="sec-subtitle mt-0">All Opponents</div>';
     html += '<input type="text" id="player-search" class="player-search" placeholder="Search players\u2026" value="' + (_playerSearch || '').replace(/"/g, '&quot;') + '"></div>';
@@ -876,7 +876,7 @@ function renderPlayers(container, d, hands) {
       // ── Hand list ──
       ph += '<div class="sec-subtitle">Shared Hands</div>';
       if (totalPages > 1) {
-        ph += '<div class="flex-gap-6 mb-8" style="justify-content:flex-end;">' +
+        ph += '<div class="flex-gap-6 mb-8 flex-end">' +
           renderPagination(phPage, playerHands.length, PH_SIZE, 'ph-prev', 'ph-next') + '</div>';
       }
       ph += '<div class="overflow-x"><table class="tbl hlog-tbl"><thead><tr><th>Pos</th><th>Cards</th><th>Board</th><th>Pot</th><th>Actions</th><th>Result</th></tr></thead><tbody>';

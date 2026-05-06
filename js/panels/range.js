@@ -401,7 +401,7 @@ function renderRange(container, d, hands) {
     var parts = [];
     parts.push('<div class="sec-subtitle mt-0">' + seats + '-handed</div>');
     parts.push('<div class="desc-text">' + seatEntry.notes + '</div>');
-    parts.push('<div class="desc-text" style="margin-top:6px;color:var(--muted);">Open ' + seatEntry.openRaise + ' · 3-bet ' + seatEntry.threeBet + ' · c-bet ' + seatEntry.cbetFreq + '</div>');
+    parts.push('<div class="desc-text mt-6 text-muted">Open ' + seatEntry.openRaise + ' · 3-bet ' + seatEntry.threeBet + ' · c-bet ' + seatEntry.cbetFreq + '</div>');
     notesEl.innerHTML = '<div class="p-row">' + parts.join('') + '</div>';
   }
 

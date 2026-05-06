@@ -29,7 +29,7 @@ function renderCards(container, d, hands) {
       '</span>' +
       '</div>' +
       '<div class="ht-stack-track" style="width:' + outerPct + '%;">' +
-      '<div class="ht-stack-inner" style="width:100%;">' +
+      '<div class="ht-stack-inner w-100">' +
       '<div class="ht-seg-won" style="width:' + wonPct + '%;"></div>' +
       '<div class="ht-seg-played" style="width:' + playedNotWonPct + '%;"></div>' +
       '<div class="ht-seg-unplayed" style="width:' + unplayedPct + '%;"></div>' +

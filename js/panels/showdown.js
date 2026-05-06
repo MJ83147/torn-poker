@@ -64,7 +64,7 @@ function renderShowdown(container, hands, meta) {
   var sdWinRate = pct(sdWon, sdTotal);
   var nsdWinRate = pct(nsdWon, nsdTotal);
 
-  var statsHtml = '<div class="mini-row" style="grid-template-columns:repeat(2,1fr);">';
+  var statsHtml = '<div class="mini-row mini-row-2col">';
 
   statsHtml += '<div class="mini">';
   statsHtml += '<div class="mini-label-dot dim-label">' +
@@ -147,7 +147,7 @@ function renderShowdown(container, hands, meta) {
   var winLossRatio = avgLossPot > 0 ? (avgWinPot / avgLossPot).toFixed(2) : null;
 
   potHtml += '<div class="two-col"><div><div class="chart-wrap"><canvas id="pot-size-chart"></canvas></div></div><div>';
-  potHtml += '<div class="mini-row" style="grid-template-columns:repeat(3,1fr);">';
+  potHtml += '<div class="mini-row mini-row-3col">';
 
   potHtml += '<div class="mini">';
   potHtml += '<div class="mini-l dim-label">Avg Pot Won</div>';

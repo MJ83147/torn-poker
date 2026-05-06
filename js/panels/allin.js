@@ -247,11 +247,11 @@ function renderAllIn(container, hands) {
   html += '<div class="panel-desc">Compares actual results vs expected value at all-in showdowns to measure variance.</div>';
 
   // Pre-simulation: show hand count and button
-  html += '<div class="p-row"><div class="p-section" style="text-align:center;padding:32px 16px;">';
-  html += '<div style="font-size:32px;font-family:Cormorant Garamond,serif;color:var(--text);margin-bottom:8px;">' + _allinHands.length + '</div>';
+  html += '<div class="p-row"><div class="p-section cta-block">';
+  html += '<div class="cta-count">' + _allinHands.length + '</div>';
   html += '<div class="dim-label mb-16">all-in showdown hands detected</div>';
-  html += '<button class="example-hand-btn" id="allin-run-btn" style="font-size:13px;padding:10px 28px;">Run Equity Simulation</button>';
-  html += '<div class="dim-label" style="margin-top:12px;font-size:10px;">Calculates equity for each hand using Monte Carlo simulation</div>';
+  html += '<button class="example-hand-btn cta-btn-lg" id="allin-run-btn">Run Equity Simulation</button>';
+  html += '<div class="dim-label cta-note">Calculates equity for each hand using Monte Carlo simulation</div>';
   html += '</div></div>';
 
   // Preview table (without equity columns)

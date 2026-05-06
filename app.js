@@ -145,7 +145,7 @@ function _renderDashboard(d, hands, meta) {
 
   // Hero strip
   var sampleNote = d.n < 50
-    ? '<div style="padding:12px 32px;font-size:12px;color:var(--amber);background:rgba(212,132,42,0.08);border-bottom:1px solid var(--border);">⚠ Small sample: ' + d.n + ' hands. The more hands you play and track, the more accurate these stats become. Aim for 100+ hands for reliable patterns.</div>'
+    ? '<div class="sample-warning">⚠ Small sample: ' + d.n + ' hands. The more hands you play and track, the more accurate these stats become. Aim for 100+ hands for reliable patterns.</div>'
     : '';
   document.getElementById('hero-strip').innerHTML = [
     { l: 'Hands', v: d.n, c: 'o' },
@@ -457,11 +457,11 @@ function finishUpload(results) {
   for (var i = 0; i < results.length; i++) {
     var r = results[i];
     if (r.error) {
-      html += '<div class="desc-text" style="color:var(--red);margin-bottom:6px;">' + r.name + ' - error: ' + r.error + '</div>';
+      html += '<div class="desc-text upload-row upload-row-error">' + r.name + ' - error: ' + r.error + '</div>';
     } else if (r.count === 0) {
-      html += '<div class="desc-text" style="color:var(--muted);margin-bottom:6px;">' + r.name + ' - no valid hands found</div>';
+      html += '<div class="desc-text upload-row upload-row-empty">' + r.name + ' - no valid hands found</div>';
     } else {
-      html += '<div class="desc-text" style="margin-bottom:6px;"><strong style="color:var(--gold);">' + r.count + '</strong> hands from ' + r.name + '</div>';
+      html += '<div class="desc-text upload-row"><strong class="text-gold">' + r.count + '</strong> hands from ' + r.name + '</div>';
       _uploadedHands = _uploadedHands.concat(r.hands);
     }
   }
@@ -469,7 +469,7 @@ function finishUpload(results) {
   listEl.innerHTML = html;
 
   if (_uploadedHands.length > 0) {
-    var total = '<div class="desc-text" style="margin-top:12px;"><strong style="color:var(--text);">' + _uploadedHands.length + '</strong> total hands across ' + results.filter(function (r) { return r.count > 0; }).length + ' file(s)</div>';
+    var total = '<div class="desc-text mt-12"><strong class="text-strong">' + _uploadedHands.length + '</strong> total hands across ' + results.filter(function (r) { return r.count > 0; }).length + ' file(s)</div>';
     listEl.innerHTML += total;
     analyseBtn.classList.remove('hidden');
   } else {

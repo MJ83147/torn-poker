@@ -45,22 +45,22 @@ function renderMyGame(container, d, hands) {
     }
   }
 
-  html += '<div style="display:flex;flex-wrap:wrap;gap:16px 40px;margin-bottom:20px;align-items:flex-start;">';
+  html += '<div class="profile-row">';
   // Left: identity
   html += '<div>';
   html += '<div class="dim-label mb-12">MY GAME</div>';
-  html += '<div class="profile-name" style="margin:0;">' + playerName + '</div>';
-  html += '<div style="font-size:14px;color:var(--dim);margin-top:4px;">';
+  html += '<div class="profile-name">' + playerName + '</div>';
+  html += '<div class="profile-meta">';
   if (exportDate) html += exportDate + ' &middot; ';
   html += d.n + ' hands';
   html += '</div>';
   html += '</div>';
   // Right: player type
   if (typeLabel) {
-    html += '<div style="flex:1;min-width:220px;">';
+    html += '<div class="profile-type-block">';
     html += '<div class="dim-label mb-12">PLAYER TYPE</div>';
-    html += '<div style="font-family:\'Cormorant Garamond\',serif;font-size:28px;font-weight:700;color:var(--gold);line-height:1;">' + typeLabel + '</div>';
-    html += '<div style="font-size:13px;color:var(--dim);margin-top:6px;">' + typeDesc + '</div>';
+    html += '<div class="profile-type-label">' + typeLabel + '</div>';
+    html += '<div class="profile-type-desc">' + typeDesc + '</div>';
     html += '</div>';
   }
   html += '</div>';

@@ -1676,6 +1676,14 @@ textarea#jin:focus {
   border-top: none;
 }
 
+.mb-0 {
+  margin-bottom: 0;
+}
+
+.mt-6 {
+  margin-top: var(--sp-6);
+}
+
 .mt-8 {
   margin-top: var(--sp-8);
 }
@@ -1760,6 +1768,115 @@ textarea#jin:focus {
   color: var(--gold);
 }
 
+/* Upload-merge file list rows */
+.upload-row {
+  margin-bottom: var(--sp-6);
+}
+
+.upload-row-error {
+  color: var(--red);
+}
+
+.upload-row-empty {
+  color: var(--muted);
+}
+
+/* Small-sample warning strip shown above the dashboard when n < 50 */
+.sample-warning {
+  padding: var(--sp-12) var(--sp-32);
+  font-size: var(--fs-12);
+  color: var(--amber);
+  background: rgba(212, 132, 42, 0.08);
+  border-bottom: 1px solid var(--border);
+}
+
+/* Centered call-to-action block (used by all-in panel runner) */
+.cta-block {
+  text-align: center;
+  padding: var(--sp-32) var(--sp-16);
+}
+
+.cta-count {
+  font-size: var(--fs-32);
+  font-family: 'Cormorant Garamond', serif;
+  color: var(--text);
+  margin-bottom: var(--sp-8);
+}
+
+.cta-btn-lg {
+  font-size: var(--fs-13);
+  padding: var(--sp-10) var(--sp-28);
+}
+
+.cta-note {
+  margin-top: var(--sp-12);
+  font-size: var(--fs-10);
+}
+
+/* Saved-section divider (hand log) */
+.saved-section-divider {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: var(--sp-16);
+}
+
+/* Modal notes header (label + status pair) */
+.modal-notes-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--sp-6);
+}
+
+.modal-notes-status {
+  font-size: var(--fs-11);
+  color: var(--muted);
+  transition: color .3s;
+}
+
+/* Layout helpers for mygame profile section */
+.profile-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-16) var(--sp-32);
+  margin-bottom: var(--sp-20);
+  align-items: flex-start;
+}
+
+.profile-meta {
+  font-size: var(--fs-14);
+  color: var(--dim);
+  margin-top: var(--sp-4);
+}
+
+.profile-type-block {
+  flex: 1;
+  min-width: 220px;
+}
+
+.profile-type-label {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--gold);
+  line-height: 1;
+}
+
+.profile-type-desc {
+  font-size: var(--fs-13);
+  color: var(--dim);
+  margin-top: var(--sp-6);
+}
+
+/* Right-aligned flex group inside player rows */
+.flex-end {
+  justify-content: flex-end;
+}
+
+/* Full-width helper */
+.w-100 {
+  width: 100%;
+}
+
 .overflow-x {
   overflow-x: auto;
 }
@@ -1778,6 +1895,32 @@ textarea#jin:focus {
 
 .text-gold {
   color: var(--gold);
+}
+
+.text-muted {
+  color: var(--muted);
+}
+
+.text-dim {
+  color: var(--dim);
+}
+
+/* Tables panel: dimmed row when a table is excluded from analysis */
+.excluded-row {
+  opacity: 0.35;
+}
+
+.blinds-cell {
+  font-size: var(--fs-10);
+}
+
+/* Mini-row column overrides (used by showdown panel) */
+.mini-row-2col {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.mini-row-3col {
+  grid-template-columns: repeat(3, 1fr);
 }
 
 .meta-text {

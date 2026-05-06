@@ -64,7 +64,7 @@ function renderTables(container, hands, allHands, excludedTables, onRerender) {
       var r = tableRows[ri];
       var barW = Math.round(r.n / maxHands * 100);
       var isExcluded = excludedTables.has(String(r.tid));
-      tablesHtml += '<tr' + (isExcluded ? ' style="opacity:0.35;"' : '') + '><td>' + r.label + '</td><td class="text-dim" style="font-size:10px;">' + r.blinds + '</td><td>' + r.n + '</td>';
+      tablesHtml += '<tr' + (isExcluded ? ' class="excluded-row"' : '') + '><td>' + r.label + '</td><td class="text-dim blinds-cell">' + r.blinds + '</td><td>' + r.n + '</td>';
       tablesHtml += '<td style="width:80px;"><span class="tbl-spark" style="width:' + barW + '%;background:var(--gold2);"></span></td>';
       tablesHtml += '<td class="' + wrCls(r.wr) + '">' + (r.wr !== null ? r.wr + '%' : '-') + '</td>';
       tablesHtml += '<td class="' + pnlCls(r.net) + '">' + fmtPnl(r.net) + '</td>';
