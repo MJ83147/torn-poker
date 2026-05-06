@@ -1676,6 +1676,18 @@ textarea#jin:focus {
   border-top: none;
 }
 
+.mt-8 {
+  margin-top: var(--sp-8);
+}
+
+.mt-12 {
+  margin-top: var(--sp-12);
+}
+
+.mt-16 {
+  margin-top: var(--sp-16);
+}
+
 .mt-20 {
   margin-top: var(--sp-20);
 }
@@ -1706,6 +1718,46 @@ textarea#jin:focus {
 
 .mr-12 {
   margin-right: var(--sp-12);
+}
+
+/* Visibility */
+.hidden {
+  display: none;
+}
+
+/* Cursor */
+.cursor-pointer {
+  cursor: pointer;
+}
+
+/* Type weight */
+.fw-600 {
+  font-weight: 600;
+}
+
+/* Inline links inside descriptive text */
+.link-gold {
+  color: var(--gold);
+  text-decoration: underline;
+}
+
+/* Strong text inside dim copy (used in How-it-works footer) */
+.text-strong {
+  color: var(--text);
+}
+
+/* Header meta link: subtle hover affordance pointing to My Game */
+.page-meta-link {
+  cursor: pointer;
+  padding: var(--sp-4) var(--sp-8);
+  border-radius: var(--sp-4);
+  border: 1px solid transparent;
+  transition: border-color .2s, color .2s;
+}
+
+.page-meta-link:hover {
+  border-color: var(--border);
+  color: var(--gold);
 }
 
 .overflow-x {

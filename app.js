@@ -104,8 +104,8 @@ function _maybeShowStyleWelcome(d, hands, meta) {
   welcomeHost.style.display = 'block';
 
   // Hide dashboard / paste while welcome is up.
-  document.getElementById('paste-wrap').style.display = 'none';
-  document.getElementById('upload-wrap').style.display = 'none';
+  document.getElementById('paste-wrap').classList.add('hidden');
+  document.getElementById('upload-wrap').classList.add('hidden');
   document.getElementById('dash').classList.remove('on');
 
   if (typeof renderStyleWelcome === 'function') {
@@ -132,8 +132,8 @@ function _renderDashboard(d, hands, meta) {
   var activeTabId = activeTab ? activeTab.dataset.tab : null;
 
   State.modalHands = hands;
-  document.getElementById('paste-wrap').style.display = 'none';
-  document.getElementById('upload-wrap').style.display = 'none';
+  document.getElementById('paste-wrap').classList.add('hidden');
+  document.getElementById('upload-wrap').classList.add('hidden');
   document.getElementById('dash').classList.add('on');
 
   var c = d.core;
@@ -172,7 +172,7 @@ function _renderDashboard(d, hands, meta) {
     var sk = sizeKeys[ski];
     pfEl.innerHTML += '<option value="' + sk + '"' + (pfVal == sk ? ' selected' : '') + '>' + sk + ' Players (' + sizeCounts[sk] + ')</option>';
   }
-  pfEl.style.display = sizeKeys.length > 1 ? '' : 'none';
+  pfEl.classList.toggle('hidden', sizeKeys.length <= 1);
 
   // Run insight engine
   InsightEngine.run(d, hands);
@@ -243,14 +243,14 @@ function _renderDashboard(d, hands, meta) {
 
   // Reset button
   document.getElementById('reset-btn').onclick = function () {
-    document.getElementById('paste-wrap').style.display = 'block';
-    document.getElementById('upload-wrap').style.display = 'none';
+    document.getElementById('paste-wrap').classList.remove('hidden');
+    document.getElementById('upload-wrap').classList.add('hidden');
     document.getElementById('jin').value = '';
     document.getElementById('dash').classList.remove('on');
     document.getElementById('table-filter').value = 'all';
-    document.getElementById('table-filter').style.display = 'none';
+    document.getElementById('table-filter').classList.add('hidden');
     document.getElementById('players-filter').value = 'all';
-    document.getElementById('players-filter').style.display = 'none';
+    document.getElementById('players-filter').classList.add('hidden');
     State.clear();
     document.querySelectorAll('.tab').forEach(function (b, i) { b.classList.toggle('active', i === 0); });
     document.querySelectorAll('.panel').forEach(function (p, i) { p.classList.toggle('on', i === 0); });
@@ -392,16 +392,16 @@ window.addEventListener('resize', function () {
 var _uploadedHands = [];
 
 document.getElementById('upload-nav-btn').onclick = function () {
-  document.getElementById('paste-wrap').style.display = 'none';
-  document.getElementById('upload-wrap').style.display = 'block';
+  document.getElementById('paste-wrap').classList.add('hidden');
+  document.getElementById('upload-wrap').classList.remove('hidden');
 };
 
 document.getElementById('upload-back-btn').onclick = function () {
-  document.getElementById('upload-wrap').style.display = 'none';
-  document.getElementById('paste-wrap').style.display = 'block';
+  document.getElementById('upload-wrap').classList.add('hidden');
+  document.getElementById('paste-wrap').classList.remove('hidden');
   _uploadedHands = [];
   document.getElementById('upload-file-list').innerHTML = '';
-  document.getElementById('upload-analyse-btn').style.display = 'none';
+  document.getElementById('upload-analyse-btn').classList.add('hidden');
   document.getElementById('upload-error').style.display = 'none';
 };
 
@@ -471,11 +471,11 @@ function finishUpload(results) {
   if (_uploadedHands.length > 0) {
     var total = '<div class="desc-text" style="margin-top:12px;"><strong style="color:var(--text);">' + _uploadedHands.length + '</strong> total hands across ' + results.filter(function (r) { return r.count > 0; }).length + ' file(s)</div>';
     listEl.innerHTML += total;
-    analyseBtn.style.display = 'block';
+    analyseBtn.classList.remove('hidden');
   } else {
     errEl.textContent = 'No valid hands found in the uploaded files.';
     errEl.style.display = 'block';
-    analyseBtn.style.display = 'none';
+    analyseBtn.classList.add('hidden');
   }
 }
 

@@ -8,7 +8,7 @@
   <link rel="icon" type="image/png" href="favicon.png">
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intro.js@7.2.0/minified/introjs.min.css">
-  <link rel="stylesheet" href="styles.css?v=11">
+  <link rel="stylesheet" href="styles.css?v=12">
   <link rel="stylesheet" href="mobile-styles.css?v=6">
 </head>
 
@@ -70,7 +70,7 @@
         <div class="paste-title">Analyse your session</div>
         <div class="desc-text mb-24">Click below to paste your tracked session data from the TC Poker Tracker</div>
         <button class="go-btn go-btn-primary" id="paste-btn">Paste from Clipboard</button>
-        <button class="go-btn go-btn-secondary" id="upload-nav-btn" style="margin-top:8px;">Upload .json files instead</button>
+        <button class="go-btn go-btn-secondary mt-8" id="upload-nav-btn">Upload .json files instead</button>
         <div id="paste-error" class="paste-error"></div>
         <div class="paste-manual">
           <div class="dim-label mb-12">Or paste manually:</div>
@@ -84,18 +84,18 @@
       </div>
     </div>
 
-    <div id="upload-wrap" style="display:none;">
+    <div id="upload-wrap" class="hidden">
       <div class="paste-box">
         <div class="paste-suit">♣</div>
         <div class="paste-title">Upload hand files</div>
         <div class="desc-text mb-24">Use the Download Hands button in the TC Poker Tracker to save your hand data as a .json file, then upload it here. You can upload multiple files to merge sessions from different devices.</div>
-        <input type="file" id="upload-input" accept=".json" multiple style="display:none;">
+        <input type="file" id="upload-input" accept=".json" multiple class="hidden">
         <button class="go-btn go-btn-primary" id="upload-pick-btn">Choose .json files</button>
-        <div id="upload-file-list" style="margin-top:16px;"></div>
+        <div id="upload-file-list" class="mt-16"></div>
         <div id="upload-error" class="paste-error"></div>
-        <button class="go-btn go-btn-secondary" id="upload-analyse-btn" style="display:none;margin-top:12px;">Analyse merged hands</button>
-        <div style="margin-top:20px;">
-          <span id="upload-back-btn" class="paste-nav-link" style="cursor:pointer;">&larr; Back to paste</span>
+        <button class="go-btn go-btn-secondary hidden mt-12" id="upload-analyse-btn">Analyse merged hands</button>
+        <div class="mt-20">
+          <span id="upload-back-btn" class="paste-nav-link cursor-pointer">&larr; Back to paste</span>
         </div>
       </div>
     </div>
@@ -106,15 +106,15 @@
           <div class="header-title">TC Poker Analysis</div>
           <div class="header-controls">
             <div id="bb-toggle" class="bb-toggle" title="Toggle between dollar amounts and Big Blinds"><span class="bb-opt active" data-mode="dollar">$</span><span class="bb-opt" data-mode="bb">BB</span></div>
-            <select id="table-filter" style="display:none;" class="table-filter">
+            <select id="table-filter" class="table-filter hidden">
               <option value="all">All Tables</option>
             </select>
-            <select id="players-filter" style="display:none;" class="table-filter">
+            <select id="players-filter" class="table-filter hidden">
               <option value="all">All Sizes</option>
             </select>
             <div id="style-display" class="style-display" title="Your detected style and your target style"></div>
-            <div class="header-meta" id="page-meta" style="cursor:pointer;padding:4px 8px;border-radius:4px;border:1px solid transparent;transition:border-color .2s,color .2s;" onmouseover="this.style.borderColor='var(--border)';this.style.color='var(--gold)';" onmouseout="this.style.borderColor='transparent';this.style.color='';" onclick="switchTab('mygame')"></div>
-            <button class="tour-btn" id="tour-btn" onclick="startGuidedTour()" title="Guided tour of this page">?</button>
+            <div class="header-meta page-meta-link" id="page-meta"></div>
+            <button class="tour-btn" id="tour-btn" title="Guided tour of this page">?</button>
             <button class="reset-btn" id="reset-btn">New session</button>
           </div>
         </div>
@@ -181,33 +181,33 @@
         <button class="modal-close" id="hiw-close">&times;</button>
 
         <div class="modal-title">TC Poker Analysis</div>
-        <div class="desc-text" style="margin-bottom:24px;">A free, private analysis tool for Torn City poker. It reads your hand history and breaks down how you play, where you leak chips, and what to work on. Everything runs in your browser. No accounts, no servers, no data leaves your device.</div>
+        <div class="desc-text mb-24">A free, private analysis tool for Torn City poker. It reads your hand history and breaks down how you play, where you leak chips, and what to work on. Everything runs in your browser. No accounts, no servers, no data leaves your device.</div>
 
         <div class="dim-label mt-32 mb-16">How it works</div>
         <div class="hiw-steps">
           <div class="hiw-step">
             <div class="hiw-num">1</div>
-            <div style="font-weight:600">Install Tampermonkey</div>
-            <div class="desc-text">You need the <a href="https://www.tampermonkey.net/" target="_blank" rel="noopener" style="color:var(--gold);text-decoration:underline;">Tampermonkey</a> browser extension first. It's free and available for Chrome, Firefox, Edge, and Safari. This is what runs the tracking script.</div>
+            <div class="fw-600">Install Tampermonkey</div>
+            <div class="desc-text">You need the <a href="https://www.tampermonkey.net/" target="_blank" rel="noopener" class="link-gold">Tampermonkey</a> browser extension first. It's free and available for Chrome, Firefox, Edge, and Safari. This is what runs the tracking script.</div>
           </div>
           <div class="hiw-step">
             <div class="hiw-num">2</div>
-            <div style="font-weight:600">Install the TC Poker Export script</div>
-            <div class="desc-text">Install it from <a href="https://greasyfork.org/en/scripts/569290-tc-poker-export" target="_blank" rel="noopener" style="color:var(--gold);text-decoration:underline;">Greasy Fork</a>. Once installed, a small tracker button appears next to the Poker header on Torn's poker page.</div>
+            <div class="fw-600">Install the TC Poker Export script</div>
+            <div class="desc-text">Install it from <a href="https://greasyfork.org/en/scripts/569290-tc-poker-export" target="_blank" rel="noopener" class="link-gold">Greasy Fork</a>. Once installed, a small tracker button appears next to the Poker header on Torn's poker page.</div>
           </div>
           <div class="hiw-step">
             <div class="hiw-num">3</div>
-            <div style="font-weight:600">Play poker on Torn</div>
+            <div class="fw-600">Play poker on Torn</div>
             <div class="desc-text">Play as normal. The script silently captures every hand in the background and stores it in your browser's local storage. Nothing is sent anywhere.</div>
           </div>
           <div class="hiw-step">
             <div class="hiw-num">4</div>
-            <div style="font-weight:600">Export your session</div>
+            <div class="fw-600">Export your session</div>
             <div class="desc-text">Click the TC Poker Tracker button on the poker page, then hit Analyse Session. Your hand data is copied to your clipboard.</div>
           </div>
           <div class="hiw-step">
             <div class="hiw-num">5</div>
-            <div style="font-weight:600">Paste and analyse</div>
+            <div class="fw-600">Paste and analyse</div>
             <div class="desc-text">Come here and click Paste from Clipboard. Your full session is broken down instantly.</div>
           </div>
         </div>
@@ -227,9 +227,9 @@
         </div>
 
         <div class="hiw-footer desc-text">
-          <div style="margin-bottom:8px;"><strong style="color:var(--text);">Same device, same browser.</strong> Hand data is stored locally in the browser you play on. If you switch devices or browsers, your data won't carry over.</div>
-          <div style="margin-bottom:8px;"><strong style="color:var(--text);">Nothing is stored externally.</strong> No accounts, no servers, no data collection. Everything lives in your browser.</div>
-          <div><strong style="color:var(--text);">Minimum hands.</strong> The tool works with any number, but aim for 100+ for reliable patterns. Under 50, stats will be noisy.</div>
+          <div class="mb-8"><strong class="text-strong">Same device, same browser.</strong> Hand data is stored locally in the browser you play on. If you switch devices or browsers, your data won't carry over.</div>
+          <div class="mb-8"><strong class="text-strong">Nothing is stored externally.</strong> No accounts, no servers, no data collection. Everything lives in your browser.</div>
+          <div><strong class="text-strong">Minimum hands.</strong> The tool works with any number, but aim for 100+ for reliable patterns. Under 50, stats will be noisy.</div>
         </div>
       </div>
     </div>
@@ -242,7 +242,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 
   <!-- App (bundled + minified) -->
-  <script src="app.min.js?v=26"></script>
+  <script src="app.min.js?v=27"></script>
 </body>
 
 </html>

@@ -49,7 +49,7 @@ var files = []
   .concat(['js/helpers/context.js'])
   .concat(['js/loader.js', 'js/state.js', 'js/modal.js', 'js/charting.js'])
   .concat(panels)
-  .concat(['js/equity.js', 'js/tour.js', 'app.js']);
+  .concat(['js/equity.js', 'js/tour.js', 'js/ui-bindings.js', 'app.js']);
 
 // Sanity 1: every file we plan to read must exist.
 files.forEach(function(f) {

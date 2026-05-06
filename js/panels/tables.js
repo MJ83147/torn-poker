@@ -27,7 +27,7 @@ function renderTables(container, hands, allHands, excludedTables, onRerender) {
   if (allTableGroups['unknown'] && allTableGroups['unknown'].length) {
     filterEl.innerHTML += '<option value="unknown">Unknown (' + allTableGroups['unknown'].length + ')</option>';
   }
-  filterEl.style.display = Object.keys(allTableGroups).length > 1 ? '' : 'none';
+  filterEl.classList.toggle('hidden', Object.keys(allTableGroups).length <= 1);
   filterEl.value = prevVal;
 
   var tablesHtml = '';
