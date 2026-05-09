@@ -18,7 +18,7 @@
 
 defineRule({
   id: 'limp-too-much',
-  panels: ['mygame', 'actions', 'leaks'],
+  panels: ['mygame', 'actions'],
   minSample: { n: 30 },
   test: function(d) {
     var rate = pct(d.limpHands, d.n);
@@ -123,7 +123,7 @@ defineRule({
 
 defineRule({
   id: 'too-passive',
-  panels: ['mygame', 'actions', 'leaks'],
+  panels: ['mygame', 'actions'],
   minSample: { n: 30 },
   test: function(d) {
     var agg = calcAggression(d.raises, d.calls, d.checks);
@@ -192,7 +192,7 @@ defineRule({
 
 defineRule({
   id: 'folding-to-pressure',
-  panels: ['mygame', 'actions', 'leaks'],
+  panels: ['mygame', 'actions'],
   minSample: { facedRaise: 5 },
   test: function(d) {
     var ftr = pct(d.foldedToRaise, d.facedRaise);
@@ -242,7 +242,7 @@ defineRule({
 
 defineRule({
   id: 'low-cbet',
-  panels: ['mygame', 'actions', 'leaks'],
+  panels: ['mygame', 'actions'],
   minSample: { cbetOpps: 5 },
   test: function(d) {
     var cb = pct(d.cbetDone, d.cbetOpps);
@@ -268,7 +268,7 @@ defineRule({
 
 defineRule({
   id: 'overfolds-to-cbets',
-  panels: ['mygame', 'actions', 'leaks'],
+  panels: ['mygame', 'actions'],
   minSample: { foldToCbetOpps: 5 },
   test: function(d) {
     var fcb = pct(d.foldToCbetDone, d.foldToCbetOpps);
@@ -346,7 +346,7 @@ defineRule({
 
 defineRule({
   id: 'paying-off-too-much',
-  panels: ['mygame', 'showdown', 'leaks'],
+  panels: ['mygame', 'showdown'],
   minSample: { sawFlop: 10 },
   test: function(d) {
     var wtsd = pct(d.wentToShowdown, d.sawFlop);
@@ -481,7 +481,7 @@ defineRule({
 
 defineRule({
   id: 'cbet-then-fold',
-  panels: ['mygame', 'actions', 'leaks'],
+  panels: ['mygame', 'actions'],
   minSample: { cbetOpps: 8, facedRaise: 5 },
   test: function(d) {
     var cb = pct(d.cbetDone, d.cbetOpps);
@@ -536,7 +536,7 @@ defineRule({
 
 defineRule({
   id: 'loose-ep-then-fold-flop',
-  panels: ['mygame', 'position', 'street', 'leaks'],
+  panels: ['mygame', 'position', 'street'],
   minSample: { n: 40 },
   test: function(d) {
     var seats = dominantSeats(d) || 6;
@@ -568,7 +568,7 @@ defineRule({
 
 defineRule({
   id: 'winning-small-losing-big',
-  panels: ['mygame', 'showdown', 'bets', 'leaks'],
+  panels: ['mygame', 'showdown'],
   minSample: { handsWithOutcome: 20 },
   test: function(d, hands) {
     var winPots = [], lossPots = [];
@@ -604,7 +604,7 @@ defineRule({
 
 defineRule({
   id: 'winning-bigger-than-losing',
-  panels: ['mygame', 'showdown', 'bets'],
+  panels: ['mygame', 'showdown'],
   minSample: { handsWithOutcome: 20 },
   test: function(d, hands) {
     var winPots = [], lossPots = [];
@@ -810,7 +810,7 @@ defineRule({
 
 defineRule({
   id: 'turn-sizing-drops',
-  panels: ['bets', 'actions'],
+  panels: ['actions'],
   minSample: { n: 30 },
   test: function(d) {
     var flopAmts = d.betAmts.Flop;
@@ -834,13 +834,13 @@ defineRule({
   chips: function(ctx) {
     return [{ v: 'Flop: ' + fmt(ctx.avgFlop) }, { v: 'Turn: ' + fmt(ctx.avgTurn), hi: true }];
   },
-  tags: ['bets', 'sizing', 'leak'],
+  tags: ['sizing', 'leak'],
   costBB: function(ctx) { return Math.round(ctx.drop * 0.3); }
 });
 
 defineRule({
   id: 'river-value-missed',
-  panels: ['bets', 'leaks'],
+  panels: ['actions'],
   minSample: { n: 40 },
   test: function(d) {
     var rbo = d.betOpps.River;
@@ -858,13 +858,13 @@ defineRule({
     return 'You only bet the river ' + ctx.pct + '% of the time (' + ctx.bets + '/' + ctx.opps + ' spots). Bet for value with the best hand - that\'s where most of the money goes in.';
   },
   chips: function(ctx) { return [{ v: 'River bet: ' + ctx.pct + '%', hi: true }]; },
-  tags: ['bets', 'sizing', 'river', 'leak'],
+  tags: ['sizing', 'river', 'leak'],
   costBB: function(ctx) { return Math.round((30 - ctx.pct) * 0.5); }
 });
 
 defineRule({
   id: 'flop-bet-frequency-low',
-  panels: ['bets', 'actions', 'leaks'],
+  panels: ['actions'],
   minSample: { n: 30 },
   test: function(d) {
     var fbo = d.betOpps.Flop;
@@ -885,7 +885,7 @@ defineRule({
     return 'You only bet the flop ' + ctx.pct + '% when you had the option (' + ctx.bets + '/' + ctx.opps + '). Checking strong hands gives free cards to draws.';
   },
   chips: function(ctx) { return [{ v: 'Flop bet: ' + ctx.pct + '%', hi: true }]; },
-  tags: ['bets', 'flop', 'passive', 'leak'],
+  tags: ['flop', 'passive', 'leak'],
   costBB: function(ctx) { return Math.round((ctx.floor - ctx.pct) * 0.4); }
 });
 
@@ -917,7 +917,7 @@ defineRule({
 
 defineRule({
   id: 'trash-hands-played',
-  panels: ['cards', 'leaks'],
+  panels: ['cards'],
   minSample: { n: 20 },
   test: function(d) {
     var seats = dominantSeats(d) || 6;
@@ -994,7 +994,7 @@ defineRule({
 
 defineRule({
   id: 'session-tilt-detected',
-  panels: ['trends', 'mygame', 'leaks'],
+  panels: ['trends', 'mygame'],
   minSample: { n: 40 },
   test: function(d, hands) {
     if (hands.length < 20) return null;
@@ -1074,7 +1074,7 @@ defineRule({
 
 defineRule({
   id: 'blind-defense-leak',
-  panels: ['leaks', 'position'],
+  panels: ['position'],
   minSample: { n: 30 },
   test: function(d) {
     var sb = d.posMap['SB'];
@@ -1103,7 +1103,7 @@ defineRule({
 
 defineRule({
   id: 'missed-river-value',
-  panels: ['leaks', 'showdown'],
+  panels: ['showdown'],
   minSample: { n: 30 },
   test: function(d, hands) {
     var sdWins = 0, riverCheckWins = 0;
@@ -1251,7 +1251,7 @@ defineRule({
 
 defineRule({
   id: 'unexploited-opponent',
-  panels: ['players', 'leaks'],
+  panels: ['players'],
   minSample: { n: 30 },
   test: function(d, hands) {
     var targets = [];
@@ -1388,4 +1388,235 @@ defineRule({
     return [{ v: 'vs Passive: ' + ctx.passWr + '%' }, { v: 'vs Aggressive: ' + ctx.aggWr + '%', hi: true }];
   },
   tags: ['players', 'adjustment', 'leak']
+});
+
+// ── Rules ported from the old leaks.js panel ───────────────────────────────
+// These cover spots the metric-driven rules don't: opponents folding too much
+// to your 3-bets, wet-board passivity, and donk betting. They live alongside
+// the metric rules so My Game gets one unified set of insights.
+
+defineRule({
+  id: 'overfolds-to-3bets',
+  panels: ['mygame', 'actions'],
+  minSample: { n: 30 },
+  test: function(d, hands) {
+    var faced = 0, folded = 0;
+    for (var i = 0; i < hands.length; i++) {
+      var acts = parseActions(hands[i].actions);
+      var heroRaisedPre = false;
+      for (var j = 0; j < acts.length; j++) {
+        if (acts[j].street === 'Preflop' && acts[j].isMe && acts[j].type === 'raise') { heroRaisedPre = true; break; }
+      }
+      if (!heroRaisedPre) continue;
+      for (var k = 0; k < acts.length; k++) {
+        if (acts[k].street === 'Preflop' && !acts[k].isMe && acts[k].type === 'raise') {
+          for (var m = k + 1; m < acts.length; m++) {
+            if (acts[m].street !== 'Preflop') break;
+            if (acts[m].isMe) {
+              faced++;
+              if (acts[m].type === 'fold') folded++;
+              break;
+            }
+          }
+          break;
+        }
+      }
+    }
+    var minFaced = Math.max(6, Math.round(scaleThresh(6, d.n)));
+    if (faced < minFaced) return null;
+    var rate = pct(folded, faced);
+    var seats = dominantSeats(d) || 6;
+    var ceiling = seats <= 2 ? 60 : seats <= 4 ? 65 : 75;
+    if (rate <= ceiling) return null;
+    return { rate: rate, ceiling: ceiling, faced: faced };
+  },
+  sev: function(ctx) { return ctx.rate > ctx.ceiling + 12 ? 'r' : 'a'; },
+  score: function(ctx) { return ctx.rate - ctx.ceiling + 8; },
+  label: 'Over-Folding To 3-Bets',
+  text: function(ctx) {
+    return 'You fold ' + ctx.rate + '% to 3-bets across ' + ctx.faced + ' situations - the expected ceiling is around ' + ctx.ceiling + '%. Opponents can 3-bet you with any two cards.';
+  },
+  chips: function(ctx) { return [{ v: 'Fold to 3-bet: ' + ctx.rate + '%', hi: true }]; },
+  tags: ['fold-pressure', 'preflop', '3bet', 'leak'],
+  costBB: function(ctx) { return Math.round((ctx.rate - ctx.ceiling) * ctx.faced * 0.3 * Math.min(1, ctx.faced / 60)); },
+  examples: function(ctx, hands) {
+    return findExampleHand(function(h) {
+      var acts = parseActions(h.actions);
+      var raised = acts.some(function(a) { return a.street === 'Preflop' && a.isMe && a.type === 'raise'; });
+      if (!raised) return false;
+      for (var k = 0; k < acts.length; k++) {
+        if (acts[k].street === 'Preflop' && !acts[k].isMe && acts[k].type === 'raise') {
+          for (var m = k + 1; m < acts.length; m++) {
+            if (acts[m].street !== 'Preflop') break;
+            if (acts[m].isMe && acts[m].type === 'fold') return true;
+            if (acts[m].isMe) return false;
+          }
+          break;
+        }
+      }
+      return false;
+    });
+  },
+  coaching: 'You folded to a 3-bet here - consider defending with suited connectors and strong broadways from the right seats.'
+});
+
+defineRule({
+  id: 'wet-board-passive',
+  panels: ['mygame', 'actions', 'street'],
+  minSample: { n: 30 },
+  test: function(d, hands) {
+    var wetFlops = 0, passiveWet = 0;
+    for (var i = 0; i < hands.length; i++) {
+      var h = hands[i];
+      if (!h.board || h.board.length < 3) continue;
+      var tex = classifyBoardTexture(h.board.slice(0, 3).map(normCard));
+      if (!tex || tex.wetness === 'dry') continue;
+      var heroActs = getHeroActions(h);
+      var flopAct = null;
+      for (var j = 0; j < heroActs.length; j++) {
+        if (heroActs[j].street === 'Flop') { flopAct = heroActs[j]; break; }
+      }
+      if (!flopAct) continue;
+      wetFlops++;
+      if ((flopAct.type === 'check' || flopAct.type === 'call') && h.outcome && h.outcome.result === 'won') {
+        passiveWet++;
+      }
+    }
+    if (wetFlops < 15) return null;
+    var rate = pct(passiveWet, wetFlops);
+    if (rate <= 30) return null;
+    return { rate: rate, wetFlops: wetFlops, passive: passiveWet };
+  },
+  sev: function(ctx) { return ctx.rate > 45 ? 'a' : 'a'; },
+  score: function(ctx) { return ctx.rate - 25; },
+  label: 'Passive On Wet Boards',
+  text: function(ctx) {
+    return 'On coordinated flops you played passively but won the hand ' + ctx.rate + '% of the time (' + ctx.passive + ' of ' + ctx.wetFlops + ' wet flops). A bet would charge draws and build the pot when you are ahead.';
+  },
+  chips: function(ctx) { return [{ v: 'Wet-board passive: ' + ctx.rate + '%', hi: true }]; },
+  tags: ['postflop', 'wet-board', 'passive', 'missed-value', 'leak'],
+  costBB: function(ctx) { return Math.round(ctx.passive * 1.5); },
+  examples: function(ctx, hands) {
+    return findExampleHand(function(h) {
+      if (!h.board || h.board.length < 3) return false;
+      var tex = classifyBoardTexture(h.board.slice(0, 3).map(normCard));
+      if (!tex || tex.wetness === 'dry') return false;
+      var heroActs = getHeroActions(h);
+      var flopAct = null;
+      for (var j = 0; j < heroActs.length; j++) {
+        if (heroActs[j].street === 'Flop') { flopAct = heroActs[j]; break; }
+      }
+      if (!flopAct) return false;
+      return (flopAct.type === 'check' || flopAct.type === 'call') && h.outcome && h.outcome.result === 'won';
+    });
+  },
+  coaching: 'Wet board where you checked or called and still won. A bet could have charged the draws and built a bigger pot.'
+});
+
+defineRule({
+  id: 'donk-betting',
+  panels: ['mygame', 'actions', 'street'],
+  minSample: { n: 30 },
+  test: function(d, hands) {
+    var donkOpps = 0, donkDone = 0;
+    for (var i = 0; i < hands.length; i++) {
+      var acts = parseActions(hands[i].actions);
+      var pfRaiser = null;
+      for (var j = 0; j < acts.length; j++) {
+        if (acts[j].street === 'Preflop' && !acts[j].isMe && acts[j].type === 'raise') { pfRaiser = acts[j].author; break; }
+      }
+      if (!pfRaiser) continue;
+      var heroOnFlop = false;
+      for (var k = 0; k < acts.length; k++) {
+        if (acts[k].isMe && acts[k].street === 'Flop') { heroOnFlop = true; break; }
+      }
+      if (!heroOnFlop) continue;
+      for (var m = 0; m < acts.length; m++) {
+        if (acts[m].street !== 'Flop') continue;
+        if (acts[m].isMe && (acts[m].type === 'bet' || acts[m].type === 'raise')) {
+          donkOpps++;
+          donkDone++;
+          break;
+        }
+        if (acts[m].isMe) { donkOpps++; break; }
+        if (acts[m].author === pfRaiser) break;
+      }
+    }
+    if (donkOpps < 8) return null;
+    var rate = pct(donkDone, donkOpps);
+    if (rate <= 30) return null;
+    return { rate: rate, opps: donkOpps, done: donkDone };
+  },
+  sev: function() { return 'a'; },
+  score: function(ctx) { return ctx.rate - 20; },
+  label: 'Donk Betting',
+  text: function(ctx) {
+    return 'You donk-bet ' + ctx.rate + '% of flops against the preflop raiser (' + ctx.done + ' of ' + ctx.opps + ' spots). This usually gives up your range advantage. Check and let the aggressor c-bet, then decide.';
+  },
+  chips: function(ctx) { return [{ v: 'Donk: ' + ctx.rate + '%', hi: true }]; },
+  tags: ['postflop', 'donk', 'leak'],
+  costBB: function(ctx) { return Math.round(ctx.done * 1.5); },
+  coaching: 'You bet into the preflop raiser here. Usually better to check and let them continuation bet.'
+});
+
+// ── Cross-metric rules ─────────────────────────────────────────────────────
+// These look at combinations of metrics that together describe a recognisable
+// player pattern. They surface in My Game so the narrative can cross-reference
+// them.
+
+defineRule({
+  id: 'calling-station-pattern',
+  panels: ['mygame', 'actions'],
+  minSample: { n: 50 },
+  test: function(d) {
+    var vpip = pct(d.vpip, d.n);
+    var pfrR = pct(d.pfrHands, d.n);
+    var agg = calcAggression(d.raises, d.calls, d.checks);
+    if (vpip == null || pfrR == null || agg == null) return null;
+    if (vpip < 32) return null;
+    if (pfrR > vpip * 0.55) return null;
+    if (agg > 22) return null;
+    return { vpip: vpip, pfr: pfrR, agg: agg };
+  },
+  sev: function() { return 'r'; },
+  score: function(ctx) { return 35 + (ctx.vpip - 30) * 0.4; },
+  label: 'Calling Station Pattern',
+  text: function(ctx) {
+    return 'You play ' + ctx.vpip + '% of hands but raise only ' + ctx.pfr + '% and your aggression is just ' + ctx.agg + '%. That mix reads as a calling station: too many flops without the raises to win the pot uncontested. Tighten your calling preflop and raise more of the hands you do play.';
+  },
+  chips: function(ctx) {
+    return [
+      { v: 'VPIP: ' + ctx.vpip + '%' },
+      { v: 'PFR: ' + ctx.pfr + '%' },
+      { v: 'Agg: ' + ctx.agg + '%', hi: true }
+    ];
+  },
+  tags: ['cross-metric', 'passive', 'station', 'leak']
+});
+
+defineRule({
+  id: 'bluff-happy-pattern',
+  panels: ['mygame', 'actions'],
+  minSample: { n: 50 },
+  test: function(d) {
+    var agg = calcAggression(d.raises, d.calls, d.checks);
+    var ftr = pct(d.foldedToRaise, d.facedRaise);
+    if (agg == null || ftr == null) return null;
+    if (agg < 38) return null;
+    if (ftr > 35 || d.facedRaise < 15) return null;
+    return { agg: agg, ftr: ftr, faced: d.facedRaise };
+  },
+  sev: function() { return 'a'; },
+  score: function(ctx) { return 28 + (ctx.agg - 35) * 0.3; },
+  label: 'Bluff-Happy Pattern',
+  text: function(ctx) {
+    return 'Your aggression is high at ' + ctx.agg + '% but you only fold ' + ctx.ftr + '% when raised back. Firing often without folding when called or raised costs chips - opponents can call and raise you wider knowing you keep going.';
+  },
+  chips: function(ctx) {
+    return [
+      { v: 'Agg: ' + ctx.agg + '%' },
+      { v: 'Fold to raise: ' + ctx.ftr + '%', hi: true }
+    ];
+  },
+  tags: ['cross-metric', 'aggression', 'fold-pressure', 'leak']
 });

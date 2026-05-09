@@ -20,6 +20,26 @@ var CONTRADICTION_PAIRS = [
     matchA: function(i) { return i.tags.indexOf('pfr') >= 0 && i.sev === 'g'; },
     matchB: function(i) { return i.tags.indexOf('passive') >= 0 && (i.sev === 'r' || i.sev === 'a'); },
     explanation: 'You raise preflop but play passively postflop. Following through after the flop is critical.'
+  },
+  {
+    matchA: function(i) { return i.tags.indexOf('vpip') >= 0 && i.sev === 'g'; },
+    matchB: function(i) { return i.tags.indexOf('postflop') >= 0 && i.tags.indexOf('passive') >= 0 && (i.sev === 'r' || i.sev === 'a'); },
+    explanation: 'Your preflop hand selection is good, but the play loses momentum after the flop. Carry the same intent into postflop streets.'
+  },
+  {
+    matchA: function(i) { return i.tags.indexOf('strength') >= 0 && i.tags.indexOf('preflop') >= 0; },
+    matchB: function(i) { return i.tags.indexOf('missed-value') >= 0 && (i.sev === 'r' || i.sev === 'a'); },
+    explanation: 'Strong preflop selection paired with passive river play. You are getting to good spots and then not betting them.'
+  },
+  {
+    matchA: function(i) { return i.tags.indexOf('cross-metric') >= 0 && i.id === 'calling-station-pattern'; },
+    matchB: function(i) { return i.tags.indexOf('vpip') >= 0 && i.tags.indexOf('strength') >= 0; },
+    explanation: 'Your VPIP at table level is in target, but the cross-metric mix still looks like a station. Look at which positions and table sizes are pulling the average up.'
+  },
+  {
+    matchA: function(i) { return i.tags.indexOf('cross-metric') >= 0 && i.id === 'bluff-happy-pattern'; },
+    matchB: function(i) { return i.tags.indexOf('aggression') >= 0 && i.tags.indexOf('strength') >= 0; },
+    explanation: 'Aggression looks like a strength on its own, but combined with a low fold-to-raise it reads as bluff-happy. The story changes when both metrics are seen together.'
   }
 ];
 
@@ -48,6 +68,21 @@ var CHAIN_RULES = [
     fromTag: 'loose-ep',
     toTag: 'flop-fold',
     text: 'Wide early-position opens lead to postflop folds when you miss, the worst combination for your stack.'
+  },
+  {
+    fromTag: 'donk',
+    toTag: 'fold-pressure',
+    text: 'Donk-betting into the preflop raiser then folding when raised back is the worst combination - you give up your range advantage and pay it off.'
+  },
+  {
+    fromTag: 'wet-board',
+    toTag: 'missed-value',
+    text: 'Passive play on coordinated boards lets free turns and rivers come for opponents on draws. Bet to charge them.'
+  },
+  {
+    fromTag: '3bet',
+    toTag: 'fold-pressure',
+    text: 'Folding too often to 3-bets pairs with fold-to-pressure leaks - opponents see they can attack your opens with light 3-bets.'
   }
 ];
 

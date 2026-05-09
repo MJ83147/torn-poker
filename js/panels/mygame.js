@@ -126,12 +126,6 @@ function renderMyGame(container, d, hands) {
       html += '<div class="ins-grid">' + engineLeaks.map(function(i) { return renderRuleInsight(i); }).join('') + '</div>';
     }
 
-    // ── Section 5b: Leak Finder (merged from Leak Finder panel) ──
-    html += '<div class="sec-subtitle mt-20">Leak Finder</div>';
-    var _lkEl = document.createElement('div');
-    renderLeaks(_lkEl, d, hands);
-    html += _lkEl.innerHTML.replace(/<div class="section-title">[^<]*<\/div>/, '').replace(/<div class="desc-text mb-24">[^<]*<\/div>/, '');
-
     // ── Section 6: Work on next ──
     html += '<div class="sec-subtitle mt-20">Work On Next</div>';
     var workOn = null;

@@ -267,31 +267,31 @@ var METRIC_RULE_SPECS = [
   {
     metric: 'vpip',
     label: 'VPIP',
-    panels: ['mygame', 'actions', 'leaks', 'position'],
+    panels: ['mygame', 'actions', 'position'],
     tags: ['vpip', 'preflop']
   },
   {
     metric: 'pfr',
     label: 'PFR',
-    panels: ['mygame', 'actions', 'leaks', 'position'],
+    panels: ['mygame', 'actions', 'position'],
     tags: ['pfr', 'preflop', 'initiative']
   },
   {
     metric: 'af',
     label: 'Aggression',
-    panels: ['mygame', 'actions', 'leaks'],
+    panels: ['mygame', 'actions'],
     tags: ['aggression']
   },
   {
     metric: 'cbet',
     label: 'C-Bet',
-    panels: ['mygame', 'actions', 'leaks'],
+    panels: ['mygame', 'actions'],
     tags: ['cbet', 'postflop']
   },
   {
     metric: 'foldToRaise',
     label: 'Fold to Raise',
-    panels: ['mygame', 'actions', 'leaks'],
+    panels: ['mygame', 'actions'],
     tags: ['fold-pressure', 'postflop']
   }
 ];
@@ -334,7 +334,9 @@ function _verdictHeadlineWord(verdict, direction, metric) {
       return direction === 'high' ? 'Hyper-Aggressive' : 'Passive';
     }
     if (metric === 'foldToRaise') {
-      return direction === 'high' ? 'Folds Too Often' : 'Calls Too Often';
+      // STRENGTH_SIDE.foldToRaise is 'low', so a high fold-to-raise rate
+      // is the leak (over-folding) and a low rate is the strength side.
+      return direction === 'high' ? 'Over-Folds To Pressure' : 'Calls Too Often';
     }
     return direction === 'high' ? 'High' : 'Low';
   }
@@ -399,8 +401,168 @@ function _scoreVerdict(v) {
   return base + levelBoost + gapBoost;
 }
 
+// Pull a win rate (percent of hands won) for a level on the verdict tree.
+function _winRateForLevel(d, v) {
+  if (!d || !v) return null;
+  if (v.level === 'aggregate') return d.core ? d.core.wr : null;
+  if (v.level === 'position' && d.byPosition && d.byPosition[v.position]) {
+    return d.byPosition[v.position].core ? d.byPosition[v.position].core.wr : null;
+  }
+  if (v.level === 'playerCount' && d.bySeatBucket && d.bySeatBucket[v.seatBucket]) {
+    return d.bySeatBucket[v.seatBucket].core ? d.bySeatBucket[v.seatBucket].core.wr : null;
+  }
+  if (v.level === 'cell' && d.byPosSeat) {
+    var key = v.position + '|' + v.seatBucket;
+    if (d.byPosSeat[key] && d.byPosSeat[key].core) return d.byPosSeat[key].core.wr;
+  }
+  return null;
+}
+
+// Aggregate win rate across cells where the verdict is on-target / strength,
+// vs cells where it's a leak. Returns { onWr, offWr, onN, offN } where
+// off-target cells include positions OR seat buckets that disagree.
+function _winRateSplit(tree, d) {
+  if (!tree) return null;
+  var onWr = 0, offWr = 0, onN = 0, offN = 0;
+  function classifyAndCount(level, levelMap) {
+    if (!levelMap) return;
+    for (var k in levelMap) {
+      var v = levelMap[k];
+      if (!v) continue;
+      var subD = level === 'position'
+        ? (d.byPosition && d.byPosition[k])
+        : (d.bySeatBucket && d.bySeatBucket[k]);
+      if (!subD || !subD.core) continue;
+      var n = subD.n || 0;
+      var wr = subD.core.wr;
+      if (wr == null || !n) continue;
+      var isOff = v.verdict === 'significant-leak' || v.verdict === 'slight-leak';
+      if (isOff) { offWr += wr * n; offN += n; }
+      else { onWr += wr * n; onN += n; }
+    }
+  }
+  classifyAndCount('position', tree.byPosition);
+  classifyAndCount('playerCount', tree.byPlayerCount);
+  return {
+    onWr: onN ? onWr / onN : null,
+    offWr: offN ? offWr / offN : null,
+    onN: onN,
+    offN: offN
+  };
+}
+
+// Compose the multi-clause story for one metric. Threads the aggregate
+// position, the per-cell drill-down, and a win-rate cross-reference into one
+// short paragraph.
+function _composeMetricStory(spec, tree, d) {
+  if (!tree) return null;
+  var agg = tree.aggregate;
+  var aggActual = Math.round(agg.actual * 10) / 10;
+  var aggBand = _fmtBand(agg.target);
+  var aggWord = _verdictWord(agg.verdict, agg.direction);
+  var sentences = [];
+
+  // Sentence 1: the aggregate framing.
+  if (agg.verdict === 'on-target') {
+    sentences.push('Your overall ' + spec.label + ' is healthy at ' + aggActual + '% (target ' + aggBand + ').');
+  } else if (agg.verdict === 'strength') {
+    sentences.push('Your overall ' + spec.label + ' is a strength at ' + aggActual + '% (target ' + aggBand + ').');
+  } else {
+    sentences.push('Your overall ' + spec.label + ' is ' + aggActual + '%, ' + aggWord + ' for the games you play (target ' + aggBand + ').');
+  }
+
+  // Sentence 2: drill-down into surfaced child verdicts.
+  var children = (tree.surfaced || []).filter(function(v) { return v.level !== 'aggregate'; });
+  if (children.length) {
+    // Sort by absolute deltaUnits so the worst gap leads.
+    children.sort(function(a, b) { return (b.deltaUnits || 0) - (a.deltaUnits || 0); });
+    var top = children.slice(0, 2);
+    var clause = top.map(function(v) {
+      var label = v.level === 'position' ? 'from ' + v.position
+        : v.level === 'playerCount' ? 'in ' + v.seats + '-handed games'
+        : v.level === 'cell' ? 'from ' + v.position + ' in ' + v.seats + '-handed' : v.level;
+      var actual = Math.round(v.actual * 10) / 10;
+      var word = _verdictWord(v.verdict, v.direction);
+      return label + ' you sit at ' + actual + '% (' + word + ')';
+    }).join(', and ');
+    var lead = (agg.verdict === 'on-target' || agg.verdict === 'strength') ? 'But ' : 'Specifically, ';
+    sentences.push(lead + clause + '.');
+  }
+
+  // Sentence 3: win rate cross-reference. Only when we have BOTH a target
+  // cell and an off-target cell with hand counts.
+  var split = _winRateSplit(tree, d);
+  if (split && split.onWr != null && split.offWr != null && Math.abs(split.onWr - split.offWr) >= 4) {
+    var diff = Math.round(split.onWr - split.offWr);
+    if (diff > 0) {
+      sentences.push('Your win rate in cells where ' + spec.label + ' is on target is ' + Math.round(split.onWr) + '%, versus ' + Math.round(split.offWr) + '% where it is off. The gap is roughly ' + diff + ' percentage points.');
+    } else if (diff < 0) {
+      sentences.push('Your win rate in the off-target cells (' + Math.round(split.offWr) + '%) is actually higher than the on-target ones (' + Math.round(split.onWr) + '%) - worth checking whether the matrix targets fit how you play these spots.');
+    }
+  }
+
+  return sentences.join(' ');
+}
+
+// Build a compact list of cell records to attach to the insight. Consumers
+// (panels, future renderers) can use this for tooltips and richer tables.
+function _buildCellList(tree, d) {
+  var cells = [];
+  if (tree.byPosition) {
+    for (var pos in tree.byPosition) {
+      var pv = tree.byPosition[pos];
+      cells.push({
+        scope: 'position',
+        key: pos,
+        value: pv.actual,
+        target: pv.target,
+        verdict: pv.verdict,
+        n: pv.hands,
+        winRate: _winRateForLevel(d, pv)
+      });
+    }
+  }
+  if (tree.byPlayerCount) {
+    for (var sb in tree.byPlayerCount) {
+      var sv = tree.byPlayerCount[sb];
+      cells.push({
+        scope: 'seats',
+        key: sb,
+        value: sv.actual,
+        target: sv.target,
+        verdict: sv.verdict,
+        n: sv.hands,
+        winRate: _winRateForLevel(d, sv)
+      });
+    }
+  }
+  return cells;
+}
+
+// Aggregate severity for the single-card output. Worst child wins, with the
+// aggregate as a floor. Strength is preserved when nothing leaks.
+function _overallSev(tree) {
+  var ranks = { 'r': 3, 'a': 2, 'g': 1, 'n': 0 };
+  var best = _verdictToSev(tree.aggregate.verdict);
+  if (tree.byPosition) {
+    for (var pos in tree.byPosition) {
+      var s = _verdictToSev(tree.byPosition[pos].verdict);
+      if ((ranks[s] || 0) > (ranks[best] || 0)) best = s;
+    }
+  }
+  if (tree.byPlayerCount) {
+    for (var sb in tree.byPlayerCount) {
+      var s2 = _verdictToSev(tree.byPlayerCount[sb].verdict);
+      if ((ranks[s2] || 0) > (ranks[best] || 0)) best = s2;
+    }
+  }
+  return best;
+}
+
 // Run metric rules and return an array of insight records compatible with the
-// existing rule pipeline (id, panels, tags, sev, score, label, text, chips).
+// existing rule pipeline. Emits ONE insight per metric instead of one per
+// surfaced verdict, with multi-clause text covering aggregate, cell drill-down,
+// and a win-rate cross-reference.
 function evaluateMetricRules(d, hands) {
   var out = [];
   if (!d || !d.mixCells) return out;
@@ -409,39 +571,53 @@ function evaluateMetricRules(d, hands) {
   for (var i = 0; i < METRIC_RULE_SPECS.length; i++) {
     var spec = METRIC_RULE_SPECS[i];
     var tree = buildVerdictTree(spec.metric, d, style);
-    if (!tree || !tree.surfaced.length) continue;
+    if (!tree) continue;
+    // Skip a metric only when nothing surfaced AND aggregate is on-target.
+    var hasChildren = tree.surfaced.some(function(v) { return v.level !== 'aggregate'; });
+    if (!hasChildren && tree.aggregate.verdict === 'on-target') continue;
 
-    for (var j = 0; j < tree.surfaced.length; j++) {
-      var v = tree.surfaced[j];
-      var sev = _verdictToSev(v.verdict);
-      var text = _composeText(spec, v, tree.aggregate);
-      // Cell-level returns null; skip - those verdicts fold into per-position context.
-      if (text == null) continue;
-      var label = _composeLabel(spec, v);
-      var chips = [{ v: spec.label + ': ' + Math.round(v.actual * 10) / 10 + '%', hi: v.verdict !== 'on-target' && v.verdict !== 'strength' }];
+    var sev = _overallSev(tree);
+    var story = _composeMetricStory(spec, tree, d);
+    if (!story) continue;
 
-      var tags = (spec.tags || []).slice();
-      tags.push('metric');
-      tags.push('level-' + v.level);
-      tags.push('verdict-' + v.verdict);
-      if (v.verdict === 'significant-leak' || v.verdict === 'slight-leak') tags.push('leak');
-      if (v.verdict === 'strength') tags.push('strength');
+    var aggActual = Math.round(tree.aggregate.actual * 10) / 10;
+    var label = _composeLabel(spec, tree.aggregate);
+    var chips = [{ v: spec.label + ': ' + aggActual + '%', hi: tree.aggregate.verdict !== 'on-target' && tree.aggregate.verdict !== 'strength' }];
 
-      out.push({
-        id: 'metric-' + spec.metric + '-' + v.level + (v.position ? '-' + v.position : '') + (v.seatBucket ? '-' + v.seatBucket : ''),
-        panels: spec.panels,
-        tags: tags,
-        sev: sev,
-        score: _scoreVerdict(v),
-        label: label,
-        text: text,
-        chips: chips,
-        costBB: null,
-        ctx: { metric: spec.metric, verdict: v, tree: tree, style: style },
-        _rule: null,
-        _hands: hands
-      });
-    }
+    var tags = (spec.tags || []).slice();
+    tags.push('metric');
+    tags.push('level-aggregate');
+    tags.push('verdict-' + tree.aggregate.verdict);
+    if (sev === 'r' || sev === 'a') tags.push('leak');
+    if (sev === 'g' && tree.aggregate.verdict === 'strength') tags.push('strength');
+
+    var cells = _buildCellList(tree, d);
+
+    out.push({
+      id: 'metric-' + spec.metric,
+      panels: spec.panels,
+      tags: tags,
+      sev: sev,
+      score: _scoreVerdict(tree.aggregate) + (hasChildren ? 6 : 0),
+      label: label,
+      text: story,
+      chips: chips,
+      costBB: null,
+      // Finding shape: aggregate + cells + verdict are the new fields. Older
+      // consumers ignore them. Newer renderers can use them for cell tables.
+      aggregate: {
+        value: tree.aggregate.actual,
+        target: tree.aggregate.target,
+        verdict: tree.aggregate.verdict,
+        n: d.n,
+        winRate: d.core ? d.core.wr : null
+      },
+      cells: cells,
+      verdict: tree.aggregate.verdict,
+      ctx: { metric: spec.metric, tree: tree, style: style },
+      _rule: null,
+      _hands: hands
+    });
   }
 
   return out;
