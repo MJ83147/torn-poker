@@ -105,7 +105,7 @@ function renderSavedSection() {
     return (map[b].savedAt || '') > (map[a].savedAt || '') ? 1 : -1;
   });
 
-  var expanded = typeof window._savedExpanded !== 'undefined' ? window._savedExpanded : true;
+  var expanded = State.savedExpanded !== false;
 
   var html = '<div class="saved-section saved-section-divider mb-20">' +
     '<div class="saved-toggle">' +
@@ -159,7 +159,7 @@ function wireSavedSection(container) {
       var isVisible = body.style.display !== 'none';
       body.style.display = isVisible ? 'none' : '';
       if (arrow) arrow.style.transform = isVisible ? 'rotate(0deg)' : 'rotate(90deg)';
-      window._savedExpanded = !isVisible;
+      State.savedExpanded = !isVisible;
     };
   }
 

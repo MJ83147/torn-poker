@@ -10,101 +10,9 @@
 // metrics, scale by sample size for the rest, and factor flopBucket where
 // postflop aggression is involved.
 
-// ── Context helpers ─────────────────────────────────────────────────────────
-
-// Pick the seat-count the player has played most. Returns a number 2-9 or
-// null when no mix data exists.
-function _dominantSeats(d) {
-  if (!d || !d.bySeatBucket) return null;
-  var best = null, bestN = 0;
-  for (var sb in d.bySeatBucket) {
-    var sd = d.bySeatBucket[sb];
-    if (!sd || (sd.n || 0) <= bestN) continue;
-    bestN = sd.n;
-    best = parseInt(sb, 10);
-  }
-  if (!best || isNaN(best)) return null;
-  return Math.max(2, Math.min(9, best));
-}
-
-// seatBucket key '2p'..'9p' for the dominant seat count, or null.
-function _dominantSeatBucket(d) {
-  var n = _dominantSeats(d);
-  return n ? n + 'p' : null;
-}
-
-// Pick the position the player has played most (within a list of candidate
-// positions if provided). Returns the position string or null.
-function _dominantPosition(d, candidates) {
-  if (!d || !d.byPosition) return null;
-  var best = null, bestN = 0;
-  for (var p in d.byPosition) {
-    if (candidates && candidates.indexOf(p) === -1) continue;
-    var pd = d.byPosition[p];
-    if (!pd || (pd.n || 0) <= bestN) continue;
-    bestN = pd.n;
-    best = p;
-  }
-  return best;
-}
-
-// Pick the dominant flop bucket the player sees. 'HU' / '3-way' / 'multiway'
-// or null when no flops have been played.
-function _dominantFlopBucket(d) {
-  if (!d || !d.byFlopBucket) return null;
-  var best = null, bestN = 0;
-  var keys = ['HU', '3-way', 'multiway'];
-  for (var i = 0; i < keys.length; i++) {
-    var fd = d.byFlopBucket[keys[i]];
-    if (!fd || (fd.n || 0) <= bestN) continue;
-    bestN = fd.n;
-    best = keys[i];
-  }
-  return best;
-}
-
-// Sample-size scaler: tighten the trigger gap when samples are small. Use a
-// base threshold then multiply by sqrt(40 / n). Floor at the base value so
-// large samples never relax the rule.
-function _scaleThresh(base, n) {
-  if (!n || n <= 0) return base;
-  var mult = Math.max(1, Math.sqrt(40 / n));
-  return base * mult;
-}
-
-// Pull a matrix band for the dominant cell. Returns {tight, ideal, loose} or
-// null when no cell qualifies.
-function _bandFor(metric, d) {
-  var seats = _dominantSeats(d);
-  if (!seats) return null;
-  var pos = _dominantPosition(d) || (seats === 2 ? 'BTN' : (seats === 3 ? 'BTN' : 'CO'));
-  return matrixTarget(metric, pos, seats, getUserStyle());
-}
-
-// Flop bucket modifiers: postflop aggression rules tighten on multiway boards
-// (less c-bet expected) and loosen heads-up.
-function _flopMod(metric, d) {
-  var fb = _dominantFlopBucket(d);
-  if (!fb) return 0;
-  // Modifiers in percentage points. Positive means the "expected" rate goes up.
-  if (metric === 'cbet') {
-    if (fb === 'HU') return 15;
-    if (fb === 'multiway') return -20;
-    return 0;
-  }
-  if (metric === 'flop-fold') {
-    // Folding more is correct on multiway.
-    if (fb === 'HU') return -10;
-    if (fb === 'multiway') return 10;
-    return 0;
-  }
-  if (metric === 'foldToRaise') {
-    if (fb === 'HU') return -8;
-    if (fb === 'multiway') return 5;
-    return 0;
-  }
-  return 0;
-}
+// Context helpers (dominantSeats, dominantPosition, dominantFlopBucket,
+// scaleThresh, bandFor, flopMod) live in js/helpers/context.js so panels and
+// rules share a single source of truth.
 
 // ── PREFLOP / HAND SELECTION ──
 
@@ -115,7 +23,7 @@ defineRule({
   test: function(d) {
     var rate = pct(d.limpHands, d.n);
     if (rate === null) return null;
-    var seats = _dominantSeats(d) || 6;
+    var seats = dominantSeats(d) || 6;
     // HU and 3-handed correctly limp far more often (limp/complete from SB,
     // limp from BTN with deeper stacks). Full-ring limps are nearly always a
     // leak.
@@ -151,10 +59,10 @@ defineRule({
   test: function(d) {
     var pfr = pct(d.pfrHands, d.n);
     if (pfr === null) return null;
-    var band = _bandFor('pfr', d);
+    var band = bandFor('pfr', d);
     var floor = band ? band.tight - 4 : 10;
     if (pfr >= floor) return null;
-    return { pfr: pfr, floor: floor, ideal: band ? band.ideal : 18, seats: _dominantSeats(d) };
+    return { pfr: pfr, floor: floor, ideal: band ? band.ideal : 18, seats: dominantSeats(d) };
   },
   sev: function(ctx) { return ctx.pfr < ctx.floor - 5 ? 'r' : 'a'; },
   score: function(ctx) { return Math.max(5, ctx.floor - ctx.pfr) + 5; },
@@ -174,7 +82,7 @@ defineRule({
   test: function(d) {
     var pfr = pct(d.pfrHands, d.n);
     if (pfr === null) return null;
-    var band = _bandFor('pfr', d);
+    var band = bandFor('pfr', d);
     var floor = band ? band.tight : 15;
     if (pfr <= floor) return null;
     return { pfr: pfr, floor: floor };
@@ -196,7 +104,7 @@ defineRule({
   test: function(d) {
     var limp = pct(d.limpHands, d.n);
     if (limp === null) return null;
-    var seats = _dominantSeats(d) || 6;
+    var seats = dominantSeats(d) || 6;
     var ceiling = seats <= 2 ? 30 : seats <= 3 ? 18 : seats <= 5 ? 12 : 8;
     if (limp >= ceiling) return null;
     return { limp: limp, ceiling: ceiling };
@@ -220,7 +128,7 @@ defineRule({
   test: function(d) {
     var agg = calcAggression(d.raises, d.calls, d.checks);
     if (agg === null) return null;
-    var band = _bandFor('af', d);
+    var band = bandFor('af', d);
     var floor = band ? band.tight - 5 : 15;
     if (agg >= floor) return null;
     return { agg: agg, floor: floor };
@@ -243,7 +151,7 @@ defineRule({
   test: function(d) {
     var agg = calcAggression(d.raises, d.calls, d.checks);
     if (agg === null) return null;
-    var band = _bandFor('af', d);
+    var band = bandFor('af', d);
     if (!band) return null;
     if (agg < band.tight || agg > band.loose) return null;
     return { agg: agg, ideal: band.ideal };
@@ -265,7 +173,7 @@ defineRule({
   test: function(d) {
     var agg = calcAggression(d.raises, d.calls, d.checks);
     if (agg === null) return null;
-    var band = _bandFor('af', d);
+    var band = bandFor('af', d);
     var ceiling = band ? band.loose + 5 : 50;
     if (agg <= ceiling) return null;
     return { agg: agg, ceiling: ceiling };
@@ -289,8 +197,8 @@ defineRule({
   test: function(d) {
     var ftr = pct(d.foldedToRaise, d.facedRaise);
     if (ftr === null) return null;
-    var band = _bandFor('foldToRaise', d);
-    var ceiling = band ? band.loose + _flopMod('foldToRaise', d) : 60;
+    var band = bandFor('foldToRaise', d);
+    var ceiling = band ? band.loose + flopMod('foldToRaise', d) : 60;
     if (ftr <= ceiling) return null;
     return { ftr: ftr, ceiling: ceiling };
   },
@@ -314,8 +222,8 @@ defineRule({
   test: function(d) {
     var cb = pct(d.cbetDone, d.cbetOpps);
     if (cb === null) return null;
-    var band = _bandFor('cbet', d);
-    var mod = _flopMod('cbet', d);
+    var band = bandFor('cbet', d);
+    var mod = flopMod('cbet', d);
     if (!band) return null;
     var lo = band.tight + mod;
     var hi = band.loose + mod;
@@ -339,8 +247,8 @@ defineRule({
   test: function(d) {
     var cb = pct(d.cbetDone, d.cbetOpps);
     if (cb === null) return null;
-    var band = _bandFor('cbet', d);
-    var mod = _flopMod('cbet', d);
+    var band = bandFor('cbet', d);
+    var mod = flopMod('cbet', d);
     var floor = band ? band.tight + mod - 5 : 40;
     if (cb >= floor) return null;
     return { cb: cb, floor: floor };
@@ -365,8 +273,8 @@ defineRule({
   test: function(d) {
     var fcb = pct(d.foldToCbetDone, d.foldToCbetOpps);
     if (fcb === null) return null;
-    var band = _bandFor('foldToRaise', d);
-    var fb = _dominantFlopBucket(d);
+    var band = bandFor('foldToRaise', d);
+    var fb = dominantFlopBucket(d);
     // C-bet defence ceiling sits above fold-to-raise; loosen for multiway.
     var base = band ? band.loose + 15 : 65;
     if (fb === 'HU') base -= 5;
@@ -394,7 +302,7 @@ defineRule({
   test: function(d) {
     var f3b = pct(d.foldTo3betDone, d.foldTo3betOpps);
     if (f3b === null) return null;
-    var seats = _dominantSeats(d) || 6;
+    var seats = dominantSeats(d) || 6;
     // 3-bet defense ceiling: HU defenders need to fold less, full-ring more.
     var ceiling = seats <= 2 ? 45 : seats <= 4 ? 50 : 55;
     if (f3b >= ceiling) return null;
@@ -419,7 +327,7 @@ defineRule({
   test: function(d) {
     var wtsd = pct(d.wentToShowdown, d.sawFlop);
     if (wtsd === null) return null;
-    var fb = _dominantFlopBucket(d);
+    var fb = dominantFlopBucket(d);
     // Multiway → expect lower WTSD; HU → expect higher.
     var lo = fb === 'multiway' ? 18 : fb === 'HU' ? 28 : 25;
     var hi = fb === 'multiway' ? 30 : fb === 'HU' ? 42 : 35;
@@ -443,7 +351,7 @@ defineRule({
   test: function(d) {
     var wtsd = pct(d.wentToShowdown, d.sawFlop);
     if (wtsd === null) return null;
-    var fb = _dominantFlopBucket(d);
+    var fb = dominantFlopBucket(d);
     // Multiway pots should rarely go to showdown without a strong hand; HU
     // showdowns are normal and frequent.
     var ceiling = fb === 'multiway' ? 32 : fb === 'HU' ? 45 : 38;
@@ -469,8 +377,8 @@ defineRule({
   test: function(d) {
     var g = calcPositionGroupVpip(d.posMap, ['UTG', 'UTG+1', 'MP']);
     if (g.hands < 10 || g.vpip === null) return null;
-    var seats = _dominantSeats(d) || 6;
-    var pos = _dominantPosition(d, ['UTG', 'UTG+1', 'MP']) || 'UTG';
+    var seats = dominantSeats(d) || 6;
+    var pos = dominantPosition(d, ['UTG', 'UTG+1', 'MP']) || 'UTG';
     var band = matrixTarget('vpip', pos, seats, getUserStyle());
     var ceiling = band ? band.tight + 2 : 18;
     if (g.vpip >= ceiling) return null;
@@ -493,10 +401,10 @@ defineRule({
   test: function(d) {
     var g = calcPositionGroupVpip(d.posMap, ['UTG', 'UTG+1', 'MP']);
     if (g.hands < 10 || g.vpip === null) return null;
-    var seats = _dominantSeats(d) || 6;
+    var seats = dominantSeats(d) || 6;
     // At HU/3-handed there is no early position - skip the rule.
     if (seats <= 3) return null;
-    var pos = _dominantPosition(d, ['UTG', 'UTG+1', 'MP']) || 'UTG';
+    var pos = dominantPosition(d, ['UTG', 'UTG+1', 'MP']) || 'UTG';
     var band = matrixTarget('vpip', pos, seats, getUserStyle());
     var ceiling = band ? band.loose + 2 : 30;
     if (g.vpip <= ceiling) return null;
@@ -519,8 +427,8 @@ defineRule({
   test: function(d) {
     var g = calcPositionGroupVpip(d.posMap, ['CO', 'BTN']);
     if (g.hands < 10 || g.vpip === null) return null;
-    var seats = _dominantSeats(d) || 6;
-    var pos = _dominantPosition(d, ['CO', 'BTN']) || 'BTN';
+    var seats = dominantSeats(d) || 6;
+    var pos = dominantPosition(d, ['CO', 'BTN']) || 'BTN';
     var band = matrixTarget('vpip', pos, seats, getUserStyle());
     var floor = band ? band.tight + 5 : 32;
     if (g.vpip <= floor) return null;
@@ -579,10 +487,10 @@ defineRule({
     var cb = pct(d.cbetDone, d.cbetOpps);
     var ftr = pct(d.foldedToRaise, d.facedRaise);
     if (cb === null || ftr === null) return null;
-    var cbBand = _bandFor('cbet', d);
-    var ftrBand = _bandFor('foldToRaise', d);
-    var cbFloor = cbBand ? cbBand.tight + _flopMod('cbet', d) : 50;
-    var ftrCeil = ftrBand ? ftrBand.loose + _flopMod('foldToRaise', d) : 60;
+    var cbBand = bandFor('cbet', d);
+    var ftrBand = bandFor('foldToRaise', d);
+    var cbFloor = cbBand ? cbBand.tight + flopMod('cbet', d) : 50;
+    var ftrCeil = ftrBand ? ftrBand.loose + flopMod('foldToRaise', d) : 60;
     if (cb < cbFloor || ftr < ftrCeil) return null;
     return { cb: cb, ftr: ftr, ftrCeil: ftrCeil };
   },
@@ -607,9 +515,9 @@ defineRule({
     var agg = calcAggression(d.raises, d.calls, d.checks);
     var f3b = pct(d.foldTo3betDone, d.foldTo3betOpps);
     if (agg === null || f3b === null) return null;
-    var aggBand = _bandFor('af', d);
+    var aggBand = bandFor('af', d);
     var aggFloor = aggBand ? aggBand.tight : 20;
-    var seats = _dominantSeats(d) || 6;
+    var seats = dominantSeats(d) || 6;
     var f3bCeil = seats <= 2 ? 55 : seats <= 4 ? 60 : 65;
     if (agg < aggFloor || f3b < f3bCeil) return null;
     return { agg: agg, f3b: f3b, f3bCeil: f3bCeil };
@@ -631,17 +539,17 @@ defineRule({
   panels: ['mygame', 'position', 'street', 'leaks'],
   minSample: { n: 40 },
   test: function(d) {
-    var seats = _dominantSeats(d) || 6;
+    var seats = dominantSeats(d) || 6;
     if (seats <= 3) return null; // No early position to speak of.
     var ep = calcPositionGroupVpip(d.posMap, ['UTG', 'UTG+1', 'MP']);
     if (ep.hands < 10 || ep.vpip === null) return null;
-    var pos = _dominantPosition(d, ['UTG', 'UTG+1', 'MP']) || 'UTG';
+    var pos = dominantPosition(d, ['UTG', 'UTG+1', 'MP']) || 'UTG';
     var vpipBand = matrixTarget('vpip', pos, seats, getUserStyle());
     var epCeiling = vpipBand ? vpipBand.loose + 5 : 35;
     if (ep.vpip < epCeiling) return null;
     var flopFoldPct = d.ss.Flop.seen > 0 ? pct(d.ss.Flop.f, d.ss.Flop.seen) : null;
     if (flopFoldPct === null) return null;
-    var ffCeiling = 40 + _flopMod('flop-fold', d);
+    var ffCeiling = 40 + flopMod('flop-fold', d);
     if (flopFoldPct < ffCeiling) return null;
     return { epVpip: ep.vpip, flopFold: flopFoldPct, epCeiling: epCeiling, ffCeiling: ffCeiling };
   },
@@ -672,7 +580,7 @@ defineRule({
       else if (pnlVal < 0) lossPots.push(Math.abs(pnlVal));
     }
     // Sample-scale the per-side minimum.
-    var minSide = Math.max(5, Math.round(_scaleThresh(5, d.handsWithOutcome)));
+    var minSide = Math.max(5, Math.round(scaleThresh(5, d.handsWithOutcome)));
     if (winPots.length < minSide || lossPots.length < minSide) return null;
     var avgWin = avg(winPots);
     var avgLoss = avg(lossPots);
@@ -707,7 +615,7 @@ defineRule({
       if (h.outcome.result === 'won' && pnlVal > 0) winPots.push(pnlVal);
       else if (pnlVal < 0) lossPots.push(Math.abs(pnlVal));
     }
-    var minSide = Math.max(5, Math.round(_scaleThresh(5, d.handsWithOutcome)));
+    var minSide = Math.max(5, Math.round(scaleThresh(5, d.handsWithOutcome)));
     if (winPots.length < minSide || lossPots.length < minSide) return null;
     var avgWin = avg(winPots);
     var avgLoss = avg(lossPots);
@@ -744,13 +652,13 @@ defineRule({
       if (didRaise) { aggTotal++; if (won) aggWon++; }
       else { passTotal++; if (won) passWon++; }
     }
-    var minSide = Math.max(10, Math.round(_scaleThresh(10, d.n)));
+    var minSide = Math.max(10, Math.round(scaleThresh(10, d.n)));
     if (aggTotal < minSide || passTotal < minSide) return null;
     var aggWr = pct(aggWon, aggTotal);
     var passWr = pct(passWon, passTotal);
     if (aggWr === null || passWr === null) return null;
     var diff = aggWr - passWr;
-    var gate = _scaleThresh(8, Math.min(aggTotal, passTotal));
+    var gate = scaleThresh(8, Math.min(aggTotal, passTotal));
     if (Math.abs(diff) < gate) return null;
     return { aggWr: aggWr, passWr: passWr, diff: diff, aggN: aggTotal, passN: passTotal };
   },
@@ -789,13 +697,13 @@ defineRule({
       if (turnBet) { betBet.t++; if (won) betBet.w++; }
       else if (turnCheck) { betCheck.t++; if (won) betCheck.w++; }
     }
-    var minSide = Math.max(5, Math.round(_scaleThresh(5, d.n)));
+    var minSide = Math.max(5, Math.round(scaleThresh(5, d.n)));
     if (betBet.t < minSide || betCheck.t < minSide) return null;
     var bbWr = pct(betBet.w, betBet.t);
     var bcWr = pct(betCheck.w, betCheck.t);
     if (bbWr === null || bcWr === null) return null;
     var diff = bbWr - bcWr;
-    var gate = _scaleThresh(10, Math.min(betBet.t, betCheck.t));
+    var gate = scaleThresh(10, Math.min(betBet.t, betCheck.t));
     if (diff < gate) return null;
     return { bbWr: bbWr, bcWr: bcWr, bbN: betBet.t, bcN: betCheck.t, diff: diff };
   },
@@ -849,11 +757,11 @@ defineRule({
     if (d.ss.Flop.seen < 10) return null;
     var ff = pct(d.ss.Flop.f, d.ss.Flop.seen);
     if (ff === null) return null;
-    var ceiling = 45 + _flopMod('flop-fold', d);
+    var ceiling = 45 + flopMod('flop-fold', d);
     if (ff < ceiling) return null;
     // Correlate with VPIP - high VPIP plus high flop-fold is the real leak.
     var v = pct(d.vpip, d.n);
-    var vpipBand = _bandFor('vpip', d);
+    var vpipBand = bandFor('vpip', d);
     var vpipLoose = vpipBand ? vpipBand.loose : 30;
     var looseTrigger = v !== null && v > vpipLoose;
     return { ff: ff, ceiling: ceiling, vpip: v, vpipLoose: vpipLoose, looseTrigger: looseTrigger };
@@ -882,7 +790,7 @@ defineRule({
     if (d.ss.Turn.seen < 8) return null;
     var tf = pct(d.ss.Turn.f, d.ss.Turn.seen);
     if (tf === null) return null;
-    var ceiling = 50 + _flopMod('flop-fold', d);
+    var ceiling = 50 + flopMod('flop-fold', d);
     if (tf < ceiling) return null;
     return { tf: tf, ceiling: ceiling };
   },
@@ -907,13 +815,13 @@ defineRule({
   test: function(d) {
     var flopAmts = d.betAmts.Flop;
     var turnAmts = d.betAmts.Turn;
-    var minSide = Math.max(3, Math.round(_scaleThresh(3, d.n)));
+    var minSide = Math.max(3, Math.round(scaleThresh(3, d.n)));
     if (!flopAmts || !turnAmts || flopAmts.length < minSide || turnAmts.length < minSide) return null;
     var avgFlop = avg(flopAmts);
     var avgTurn = avg(turnAmts);
     if (avgFlop <= 0 || avgTurn >= avgFlop) return null;
     var drop = Math.round((1 - avgTurn / avgFlop) * 100);
-    var gate = Math.round(_scaleThresh(15, Math.min(flopAmts.length, turnAmts.length)));
+    var gate = Math.round(scaleThresh(15, Math.min(flopAmts.length, turnAmts.length)));
     if (drop < gate) return null;
     return { avgFlop: Math.round(avgFlop), avgTurn: Math.round(avgTurn), drop: drop };
   },
@@ -937,7 +845,7 @@ defineRule({
   test: function(d) {
     var rbo = d.betOpps.River;
     if (!rbo) return null;
-    var minOpps = Math.max(5, Math.round(_scaleThresh(5, d.n)));
+    var minOpps = Math.max(5, Math.round(scaleThresh(5, d.n)));
     if (rbo.t < minOpps) return null;
     var riverBetPct = pct(rbo.b, rbo.t);
     if (riverBetPct === null || riverBetPct >= 30) return null;
@@ -961,12 +869,12 @@ defineRule({
   test: function(d) {
     var fbo = d.betOpps.Flop;
     if (!fbo) return null;
-    var minOpps = Math.max(5, Math.round(_scaleThresh(5, d.n)));
+    var minOpps = Math.max(5, Math.round(scaleThresh(5, d.n)));
     if (fbo.t < minOpps) return null;
     var fp = pct(fbo.b, fbo.t);
     if (fp === null) return null;
     // Floor scales with flop bucket: HU expects more flop bets, multiway less.
-    var floor = 30 + _flopMod('cbet', d) * 0.4;
+    var floor = 30 + flopMod('cbet', d) * 0.4;
     if (fp >= floor) return null;
     return { pct: fp, bets: fbo.b, opps: fbo.t, floor: floor };
   },
@@ -991,7 +899,7 @@ defineRule({
   minSample: { n: 20 },
   test: function(d) {
     var ps = d.htMap['Pocket Pairs'];
-    var minPlayed = Math.max(3, Math.round(_scaleThresh(3, d.n)));
+    var minPlayed = Math.max(3, Math.round(scaleThresh(3, d.n)));
     if (!ps || ps.played < minPlayed) return null;
     var wr = pct(ps.won, ps.played);
     if (wr === null || wr >= 45) return null;
@@ -1012,11 +920,11 @@ defineRule({
   panels: ['cards', 'leaks'],
   minSample: { n: 20 },
   test: function(d) {
-    var seats = _dominantSeats(d) || 6;
+    var seats = dominantSeats(d) || 6;
     // HU and 3-handed: "trash" hands are routinely correct opens. Skip.
     if (seats <= 3) return null;
     var ts = d.htMap['Offsuit Trash'];
-    var minDealt = Math.max(3, Math.round(_scaleThresh(3, d.n)));
+    var minDealt = Math.max(3, Math.round(scaleThresh(3, d.n)));
     if (!ts || ts.dealt < minDealt || ts.played < 1) return null;
     var playRate = pct(ts.played, ts.dealt);
     if (playRate === null) return null;
@@ -1042,7 +950,7 @@ defineRule({
   minSample: { n: 20 },
   test: function(d) {
     var bw = d.htMap['Broadway'];
-    var minPlayed = Math.max(3, Math.round(_scaleThresh(3, d.n)));
+    var minPlayed = Math.max(3, Math.round(scaleThresh(3, d.n)));
     if (!bw || bw.played < minPlayed) return null;
     var wr = pct(bw.won, bw.played);
     if (wr === null || wr < 55) return null;
@@ -1064,7 +972,7 @@ defineRule({
   minSample: { n: 20 },
   test: function(d) {
     var sc = d.htMap['Suited Connectors'];
-    var minPlayed = Math.max(3, Math.round(_scaleThresh(3, d.n)));
+    var minPlayed = Math.max(3, Math.round(scaleThresh(3, d.n)));
     if (!sc || sc.played < minPlayed) return null;
     var wr = pct(sc.won, sc.played);
     if (wr === null || wr < 50) return null;
@@ -1107,13 +1015,13 @@ defineRule({
         if (won) normalWins++;
       }
     }
-    var minSide = Math.max(5, Math.round(_scaleThresh(5, hands.length)));
+    var minSide = Math.max(5, Math.round(scaleThresh(5, hands.length)));
     if (afterLossTotal < minSide || normalTotal < 10) return null;
     var afterWr = pct(afterLossWins, afterLossTotal);
     var normalWr = pct(normalWins, normalTotal);
     if (afterWr === null || normalWr === null) return null;
     var diff = normalWr - afterWr;
-    var gate = _scaleThresh(10, afterLossTotal);
+    var gate = scaleThresh(10, afterLossTotal);
     if (diff < gate) return null;
     return { afterWr: afterWr, normalWr: normalWr, diff: diff, afterN: afterLossTotal };
   },
@@ -1144,7 +1052,7 @@ defineRule({
     var wr2 = pct(d2.handsWon, d2.handsWithOutcome);
     if (wr1 === null || wr2 === null) return null;
     var diff = wr1 - wr2;
-    var gate = _scaleThresh(8, Math.min(d1.handsWithOutcome, d2.handsWithOutcome));
+    var gate = scaleThresh(8, Math.min(d1.handsWithOutcome, d2.handsWithOutcome));
     if (diff < gate) return null;
     return { wr1: wr1, wr2: wr2, diff: diff, n1: d1.n, n2: d2.n };
   },
@@ -1173,7 +1081,7 @@ defineRule({
     var bb = d.posMap['BB'];
     if (!sb || !bb) return null;
     var blindHands = (sb.hands || 0) + (bb.hands || 0);
-    var minBlinds = Math.max(15, Math.round(_scaleThresh(15, d.n)));
+    var minBlinds = Math.max(15, Math.round(scaleThresh(15, d.n)));
     if (blindHands < minBlinds) return null;
     var blindLoss = (sb.pnl || 0) + (bb.pnl || 0);
     if (blindLoss >= 0) return null;
@@ -1209,7 +1117,7 @@ defineRule({
       var heroCheckedRiver = acts.some(function(a) { return a.isMe && a.street === 'River' && a.type === 'check'; });
       if (heroCheckedRiver) riverCheckWins++;
     }
-    var minSd = Math.max(10, Math.round(_scaleThresh(10, d.n)));
+    var minSd = Math.max(10, Math.round(scaleThresh(10, d.n)));
     if (sdWins < minSd) return null;
     var rate = pct(riverCheckWins, sdWins);
     if (rate === null || rate < 35) return null;
@@ -1410,13 +1318,13 @@ defineRule({
       if (hasLoose) { vsLoose.t++; if (won) vsLoose.w++; }
       if (hasTight) { vsTight.t++; if (won) vsTight.w++; }
     }
-    var minSide = Math.max(8, Math.round(_scaleThresh(8, hands.length)));
+    var minSide = Math.max(8, Math.round(scaleThresh(8, hands.length)));
     if (vsLoose.t < minSide || vsTight.t < minSide) return null;
     var looseWr = pct(vsLoose.w, vsLoose.t);
     var tightWr = pct(vsTight.w, vsTight.t);
     if (looseWr === null || tightWr === null) return null;
     var diff = Math.abs(looseWr - tightWr);
-    var gate = _scaleThresh(8, Math.min(vsLoose.t, vsTight.t));
+    var gate = scaleThresh(8, Math.min(vsLoose.t, vsTight.t));
     if (diff < gate) return null;
     return { looseWr: looseWr, tightWr: tightWr, looseN: vsLoose.t, tightN: vsTight.t, diff: diff, betterVs: looseWr > tightWr ? 'loose' : 'tight' };
   },
@@ -1460,13 +1368,13 @@ defineRule({
       if (hasPassive) { vsPassive.t++; if (won) vsPassive.w++; }
       if (hasAggressive) { vsAggressive.t++; if (won) vsAggressive.w++; }
     }
-    var minSide = Math.max(8, Math.round(_scaleThresh(8, hands.length)));
+    var minSide = Math.max(8, Math.round(scaleThresh(8, hands.length)));
     if (vsPassive.t < minSide || vsAggressive.t < minSide) return null;
     var passWr = pct(vsPassive.w, vsPassive.t);
     var aggWr = pct(vsAggressive.w, vsAggressive.t);
     if (passWr === null || aggWr === null) return null;
     var diff = passWr - aggWr;
-    var gate = _scaleThresh(8, Math.min(vsPassive.t, vsAggressive.t));
+    var gate = scaleThresh(8, Math.min(vsPassive.t, vsAggressive.t));
     if (diff < gate) return null;
     return { passWr: passWr, aggWr: aggWr, passN: vsPassive.t, aggN: vsAggressive.t, diff: diff };
   },

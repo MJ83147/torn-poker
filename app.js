@@ -211,7 +211,7 @@ function _renderDashboard(d, hands, meta) {
   }
   if (bannerParts.length) {
     var bannerHtml = '<div class="filter-banner">Showing stats for ' + bannerParts.join(' · ') + '</div>';
-    ['p-welcome', 'p-mygame', 'p-leaks', 'p-cards', 'p-position', 'p-street', 'p-actions', 'p-bets', 'p-range', 'p-trends', 'p-showdown', 'p-log', 'p-allin', 'p-players', 'p-compare', 'p-styleMap'].forEach(function (id) {
+    ['p-welcome', 'p-mygame', 'p-cards', 'p-position', 'p-street', 'p-actions', 'p-range', 'p-trends', 'p-showdown', 'p-log', 'p-allin', 'p-players', 'p-compare', 'p-styleMap'].forEach(function (id) {
       var el = document.getElementById(id);
       if (el) el.insertAdjacentHTML('afterbegin', bannerHtml);
     });

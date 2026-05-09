@@ -1,5 +1,20 @@
 // ── PER-HAND ANALYSIS (pure data, no DOM) ─────────────────────────────────────
 
+// True if a poker-hand strength string represents a "strong" hand at showdown.
+// Used by opponent-stats.js and opponent-examples.js so the keyword set lives
+// in one place.
+function isStrongShowdownHand(strength) {
+  if (!strength) return false;
+  var s = String(strength).toLowerCase();
+  // 'straight flush' and 'royal flush' are caught by 'straight' / 'flush'.
+  return s.indexOf('two pair') !== -1 ||
+         s.indexOf('three of a kind') !== -1 ||
+         s.indexOf('straight') !== -1 ||
+         s.indexOf('flush') !== -1 ||
+         s.indexOf('full house') !== -1 ||
+         s.indexOf('four of a kind') !== -1;
+}
+
 // Get the amount the hero invested in a hand
 function getInvested(h) {
   return h.invested || calcInvestmentFromActions(h.actions || []);

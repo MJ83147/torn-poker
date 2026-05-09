@@ -62,9 +62,9 @@ function runEquitySimulation(hand) {
       heroActionType = a.type;
       if (a.type === 'fold') actionDesc = 'You folded.';
       else if (a.type === 'check') actionDesc = 'You checked.';
-      else if (a.type === 'call') actionDesc = 'You called ' + fmtDollar(a.amount) + '.';
-      else if (a.type === 'raise') actionDesc = 'You raised to ' + fmtDollar(a.amount) + '.';
-      else if (a.type === 'bet') actionDesc = 'You bet ' + fmtDollar(a.amount) + '.';
+      else if (a.type === 'call') actionDesc = 'You called ' + fmt(a.amount) + '.';
+      else if (a.type === 'raise') actionDesc = 'You raised to ' + fmt(a.amount) + '.';
+      else if (a.type === 'bet') actionDesc = 'You bet ' + fmt(a.amount) + '.';
       else if (a.type === 'sb') actionDesc = 'Small blind.';
       else if (a.type === 'bb') actionDesc = 'Big blind.';
     }
@@ -110,15 +110,8 @@ function runEquitySimulation(hand) {
   return { streets: results, summary: summary };
 }
 
-// ── Dollar formatting helper ──────────────────────────────────────────────
-function fmtDollar(n) {
-  if (n >= 1e9) return '$' + (n / 1e9).toFixed(1) + 'B';
-  if (n >= 1e6) return '$' + (n / 1e6).toFixed(1) + 'M';
-  if (n >= 1e3) return '$' + (n / 1e3).toFixed(0) + 'K';
-  return '$' + n;
-}
-
 // ── UI rendering ──────────────────────────────────────────────────────────
+// Money formatting uses fmt() from helpers/format.js.
 function renderEquityResults(container, simResult) {
   // Support both old (array) and new ({streets, summary}) return shapes
   var results = Array.isArray(simResult) ? simResult : simResult.streets;
@@ -171,7 +164,7 @@ function renderEquityResults(container, simResult) {
       metaParts.push(res.boardCards.join(' '));
     }
     if (res.potSize > 0) {
-      metaParts.push('Pot: ' + fmtDollar(res.potSize));
+      metaParts.push('Pot: ' + fmt(res.potSize));
     }
     if (res.playersActive > 0) {
       metaParts.push(res.playersActive + '-way');

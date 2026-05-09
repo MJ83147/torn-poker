@@ -129,6 +129,9 @@ var State = {
   meta: {},
   excludedTables: new Set(),
   modalHands: [],
+  // UI flags persisted within a session. Living on State (not window) so two
+  // panels can read the same value without monkey-patching globals.
+  savedExpanded: true,
 
   setSession: function(hands, meta) {
     backfillHandData(hands);
@@ -180,6 +183,7 @@ var State = {
       }
       var hands = data.hands || [];
       var tx = db.transaction(['hands', 'meta'], 'readwrite');
+      tx.onerror = function() { console.warn('IndexedDB save transaction failed', tx.error); };
       var store = tx.objectStore('hands');
       var dedupIdx = store.index('dedup');
 
@@ -189,19 +193,28 @@ var State = {
           var check = dedupIdx.get([hand.timestamp, hand.tableId]);
           check.onsuccess = function() {
             if (!check.result) {
-              store.add(hand);
+              var addReq = store.add(hand);
+              addReq.onerror = function() {
+                console.warn('IndexedDB hand add failed', addReq.error, hand && hand.timestamp);
+              };
             }
+          };
+          check.onerror = function() {
+            console.warn('IndexedDB dedup lookup failed', check.error);
           };
         })(hands[i]);
       }
 
       // Update meta
-      tx.objectStore('meta').put({
+      var metaPut = tx.objectStore('meta').put({
         player: data.player || 'Unknown',
         exportedAt: data.exportedAt || new Date().toISOString(),
         migrated: true,
         lastImportAt: new Date().toISOString()
       }, 'session_meta');
+      metaPut.onerror = function() {
+        console.warn('IndexedDB meta put failed', metaPut.error);
+      };
     });
   },
 

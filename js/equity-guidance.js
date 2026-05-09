@@ -199,7 +199,7 @@ function generateGuidance(equity, streetInfo, texture, madeHand, villainProfile,
       else if (vBetPct <= 100) vSizeDesc = ' (large, ' + vBetPct + '% pot)';
       else vSizeDesc = ' (overbet, ' + vBetPct + '% pot)';
     }
-    facingDesc = 'Facing ' + vAct.author + '\'s ' + fmtDollar(vAct.amount) + ' ' + vAct.type + vSizeDesc + '. ';
+    facingDesc = 'Facing ' + vAct.author + '\'s ' + fmt(vAct.amount) + ' ' + vAct.type + vSizeDesc + '. ';
   }
 
   // Multiway context
@@ -531,13 +531,13 @@ function generateHandSummary(results, hand, villainProfile) {
 
   // 1. Hero's line through the hand
   if (allCalls && streetsPlayed >= 2) {
-    parts.push('You called ' + streetsPlayed + ' streets' + (finalLabel ? ' with ' + finalLabel : '') + ', investing ' + fmtDollar(invested) + '.');
+    parts.push('You called ' + streetsPlayed + ' streets' + (finalLabel ? ' with ' + finalLabel : '') + ', investing ' + fmt(invested) + '.');
   } else if (allChecks && streetsPlayed >= 2) {
     parts.push('You checked ' + streetsPlayed + ' streets' + (finalLabel ? ' with ' + finalLabel : '') + '.');
   } else if (allPassive && streetsPlayed >= 2) {
-    parts.push('You played passively through ' + streetsPlayed + ' streets' + (finalLabel ? ' with ' + finalLabel : '') + ', investing ' + fmtDollar(invested) + '.');
+    parts.push('You played passively through ' + streetsPlayed + ' streets' + (finalLabel ? ' with ' + finalLabel : '') + ', investing ' + fmt(invested) + '.');
   } else if (folded) {
-    parts.push('You folded on the ' + (outcome.foldStreet || '').toLowerCase() + ', saving further investment after putting in ' + fmtDollar(invested) + '.');
+    parts.push('You folded on the ' + (outcome.foldStreet || '').toLowerCase() + ', saving further investment after putting in ' + fmt(invested) + '.');
   }
 
   // 2. Villain's line
@@ -579,11 +579,11 @@ function generateHandSummary(results, hand, villainProfile) {
 
   // 5. P&L
   if (won) {
-    parts.push('Result: won ' + fmtDollar(outcome.amount) + ' (profit ' + fmtDollar(pnl) + ').');
+    parts.push('Result: won ' + fmt(outcome.amount) + ' (profit ' + fmt(pnl) + ').');
   } else if (folded) {
-    parts.push('Result: folded, losing ' + fmtDollar(invested) + '.');
+    parts.push('Result: folded, losing ' + fmt(invested) + '.');
   } else {
-    parts.push('Result: lost ' + fmtDollar(invested) + ' at showdown.');
+    parts.push('Result: lost ' + fmt(invested) + ' at showdown.');
   }
 
   // Determine overall quality

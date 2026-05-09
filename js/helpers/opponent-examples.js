@@ -117,11 +117,7 @@ function findInsightExamples(hands, playerName) {
       if (line.indexOf(playerName) !== -1 && line.indexOf(' reveals ') !== -1) {
         var strengthMatch = line.match(/\(([^)]+)\)/);
         if (strengthMatch) {
-          var strength = strengthMatch[1].toLowerCase();
-          var isStrong = strength.indexOf('two pair') !== -1 || strength.indexOf('three of a kind') !== -1 ||
-              strength.indexOf('straight') !== -1 || strength.indexOf('flush') !== -1 ||
-              strength.indexOf('full house') !== -1 || strength.indexOf('four of a kind') !== -1 ||
-              strength.indexOf('straight flush') !== -1 || strength.indexOf('royal flush') !== -1;
+          var isStrong = isStrongShowdownHand(strengthMatch[1]);
           if (!full('weakReveal') && !isStrong) ex.weakReveal.push(h);
           if (!full('strongReveal') && isStrong) ex.strongReveal.push(h);
         }

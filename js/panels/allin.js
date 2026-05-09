@@ -3,11 +3,6 @@
 var _allinChart = null;
 var _allinHands = null;
 
-// ── Card normalisation - uses shared normCardCode from helpers.js ─────────────
-function normCardAllIn(c) {
-  return normCardCode(c);
-}
-
 // ── Parse reveals from action log ────────────────────────────────────────────
 function parseReveals(actions) {
   var results = [];
@@ -45,7 +40,7 @@ function parseReveals(actions) {
       for (var j = 0; j < results.length; j++) {
         if (results[j].name === playerName) { alreadyHave = true; break; }
       }
-      if (!alreadyHave) results.push({ name: playerName, hole: cards.map(normCardAllIn) });
+      if (!alreadyHave) results.push({ name: playerName, hole: cards.map(normCardCode) });
     }
   }
   return results;
@@ -92,7 +87,7 @@ function detectAllInCandidates(hands) {
     var reveals = parseReveals(h.actions);
     if (!reveals.length) continue;
 
-    var heroHole = [normCardAllIn(h.hole[0]), normCardAllIn(h.hole[1])];
+    var heroHole = [normCardCode(h.hole[0]), normCardCode(h.hole[1])];
 
     // Find hero's name so we can exclude their reveal from opponents
     var heroName = null;
@@ -110,7 +105,7 @@ function detectAllInCandidates(hands) {
 
     var streetIdx = { 'Preflop': 0, 'Flop': 3, 'Turn': 4, 'River': 5 };
     var boardSlice = streetIdx[allInStreet] || 0;
-    var fullBoard = (h.board || []).map(normCardAllIn);
+    var fullBoard = (h.board || []).map(normCardCode);
     var boardAtAllIn = fullBoard.slice(0, boardSlice);
 
     var potAtAllIn = 0;
@@ -150,83 +145,7 @@ function detectAllInCandidates(hands) {
   return results;
 }
 
-// ── Multiway equity calculation ──────────────────────────────────────────────
-function calcMultiwayEquity(heroHole, opponentHoles, boardAtAllIn) {
-  var dead = {};
-  for (var i = 0; i < heroHole.length; i++) dead[heroHole[i]] = true;
-  for (var j = 0; j < opponentHoles.length; j++) {
-    for (var k = 0; k < opponentHoles[j].length; k++) dead[opponentHoles[j][k]] = true;
-  }
-  for (var b = 0; b < boardAtAllIn.length; b++) dead[boardAtAllIn[b]] = true;
-
-  var remaining = buildDeck().map(normCardAllIn).filter(function (c) { return !dead[c]; }); var boardNeed = 5 - boardAtAllIn.length;
-  var wins = 0, ties = 0, total = 0;
-  var numOpps = opponentHoles.length;
-
-  if (boardNeed === 0) {
-    var heroScore = bestHand(heroHole.concat(boardAtAllIn));
-    var heroBeat = true, heroTied = true;
-    for (var oi = 0; oi < numOpps; oi++) {
-      var oppScore = bestHand(opponentHoles[oi].concat(boardAtAllIn));
-      if (oppScore > heroScore) { heroBeat = false; heroTied = false; break; }
-      if (oppScore < heroScore) heroTied = false;
-    }
-    if (heroBeat && !heroTied) return 1.0;
-    if (heroTied && heroBeat) {
-      var tiedCount = 1;
-      for (var ti = 0; ti < numOpps; ti++) {
-        if (bestHand(opponentHoles[ti].concat(boardAtAllIn)) === heroScore) tiedCount++;
-      }
-      return 1.0 / tiedCount;
-    }
-    return 0.0;
-  } else if (boardNeed === 1) {
-    for (var ci = 0; ci < remaining.length; ci++) {
-      var board5 = boardAtAllIn.concat([remaining[ci]]);
-      var hScore = bestHand(heroHole.concat(board5));
-      var beatAll = true, tiedAll = true;
-      for (var o = 0; o < numOpps; o++) {
-        var oScore = bestHand(opponentHoles[o].concat(board5));
-        if (oScore > hScore) { beatAll = false; tiedAll = false; break; }
-        if (oScore < hScore) tiedAll = false;
-      }
-      if (beatAll && !tiedAll) wins++;
-      else if (beatAll && tiedAll) {
-        var tc = 1;
-        for (var t2 = 0; t2 < numOpps; t2++) {
-          if (bestHand(opponentHoles[t2].concat(board5)) === hScore) tc++;
-        }
-        ties += 1.0 / tc;
-      }
-      total++;
-    }
-    return total > 0 ? (wins + ties) / total : 0.5;
-  } else {
-    var iterations = 5000;
-    for (var n = 0; n < iterations; n++) {
-      var deck = remaining.slice();
-      var drawn = shuffleDraw(deck, boardNeed);
-      var simBoard = boardAtAllIn.concat(drawn);
-      var hS = bestHand(heroHole.concat(simBoard));
-      var bAll = true, tAll = true;
-      for (var op = 0; op < numOpps; op++) {
-        var oS = bestHand(opponentHoles[op].concat(simBoard));
-        if (oS > hS) { bAll = false; tAll = false; break; }
-        if (oS < hS) tAll = false;
-      }
-      if (bAll && !tAll) wins++;
-      else if (bAll && tAll) {
-        var tc2 = 1;
-        for (var t3 = 0; t3 < numOpps; t3++) {
-          if (bestHand(opponentHoles[t3].concat(simBoard)) === hS) tc2++;
-        }
-        ties += 1.0 / tc2;
-      }
-      total++;
-    }
-    return total > 0 ? (wins + ties) / total : 0.5;
-  }
-}
+// Multiway equity now flows through simulateStreet in equity-monte-carlo.js.
 
 // ── Card display - uses shared displayCard/displayCards from helpers.js ───────
 
@@ -301,7 +220,7 @@ function renderAllIn(container, hands) {
         var end = Math.min(idx + batchSize, _allinHands.length);
         for (var i = idx; i < end; i++) {
           var ah = _allinHands[i];
-          ah.equity = calcMultiwayEquity(ah.heroHole, ah.opponents, ah.boardAtAllIn);
+          ah.equity = simulateStreet(ah.heroHole, ah.boardAtAllIn, 5000, ah.opponents).equity;
           ah.fairShare = ah.equity * ah.potAtAllIn;
           ah.expectedValue = (ah.equity * ah.potAtAllIn) - ah.heroInvested;
           ah.evDiff = ah.actualResult - ah.expectedValue;

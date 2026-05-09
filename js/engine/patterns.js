@@ -186,7 +186,7 @@ function detectPatterns(d, hands) {
           // Dynamic trigger: scale the base threshold up when the smaller
           // segment is small. Floor at base so big samples never relax.
           var smallerN = Math.min(dA.n, dB.n);
-          var dynamicThresh = metric.baseThreshold * Math.max(1, Math.sqrt(40 / smallerN));
+          var dynamicThresh = scaleThresh(metric.baseThreshold, smallerN);
 
           if (absDiff < dynamicThresh) continue;
 
