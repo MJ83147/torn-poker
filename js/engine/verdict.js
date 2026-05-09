@@ -268,31 +268,71 @@ var METRIC_RULE_SPECS = [
     metric: 'vpip',
     label: 'VPIP',
     panels: ['mygame', 'actions', 'position'],
-    tags: ['vpip', 'preflop']
+    tags: ['vpip', 'preflop'],
+    implications: {
+      high: 'You play too many hands. Wider ranges out of position cost you when you miss the flop, which is most of the time.',
+      low: 'You fold too many hands preflop. You miss profitable spots from late position and the blinds where wider ranges are correct.'
+    },
+    advice: {
+      high: 'Tighten the seats that are pulling the average up. UTG and MP should be your tightest opens.',
+      low: 'Open more from the cutoff and button when the action folds to you. Stealing blinds adds up.'
+    }
   },
   {
     metric: 'pfr',
     label: 'PFR',
     panels: ['mygame', 'actions', 'position'],
-    tags: ['pfr', 'preflop', 'initiative']
+    tags: ['pfr', 'preflop', 'initiative'],
+    implications: {
+      high: 'You raise a lot preflop. That is usually a strength as long as your fold-to-3bet is reasonable.',
+      low: 'You enter pots without raising too often, giving opponents free flops and easier postflop decisions.'
+    },
+    advice: {
+      high: 'Watch you are not over-opening unprofitable hands from early seats.',
+      low: 'When you decide to play a hand, raise rather than call. Initiative wins pots that go to the flop.'
+    }
   },
   {
     metric: 'af',
     label: 'Aggression',
     panels: ['mygame', 'actions'],
-    tags: ['aggression']
+    tags: ['aggression'],
+    implications: {
+      high: 'You are firing a lot. Combined with a healthy fold-to-raise this is fine. Combined with a low one you get trapped for value.',
+      low: 'You play too passively after the flop. Strong hands need to bet for value and weak hands sometimes need to bluff.'
+    },
+    advice: {
+      high: 'Cross-check your fold-to-raise. If it is low your bluffs are getting paid off.',
+      low: 'Lean toward betting when you face postflop decisions. Check-call should not be your default.'
+    }
   },
   {
     metric: 'cbet',
     label: 'C-Bet',
     panels: ['mygame', 'actions'],
-    tags: ['cbet', 'postflop']
+    tags: ['cbet', 'postflop'],
+    implications: {
+      high: 'You c-bet most flops. As long as you are not c-betting boards that miss your range, this is fine.',
+      low: 'You are not following up on your preflop raises. Opponents see your c-bet rate is low and can call wide knowing you give up often.'
+    },
+    advice: {
+      high: 'Pick small sizings on wet boards and be willing to give up rather than barrelling into clear range disadvantages.',
+      low: 'C-bet at least half the time after raising preflop, especially on dry boards where you have range advantage.'
+    }
   },
   {
     metric: 'foldToRaise',
     label: 'Fold to Raise',
     panels: ['mygame', 'actions'],
-    tags: ['fold-pressure', 'postflop']
+    tags: ['fold-pressure', 'postflop'],
+    implications: {
+      high: 'You fold too often when raised. Opponents can attack you with any two cards because your defending range is thin.',
+      low: 'You call too many raises without strong hands. Some raises are pure value and need to go.'
+    },
+    advice: {
+      high: 'Find more spots to call or 3-bet. Suited connectors and broadway hands defend well against light raises.',
+      low: 'When facing a raise, ask whether your hand actually beats their value range. If not, fold.'
+    }
   }
 ];
 
@@ -451,53 +491,90 @@ function _winRateSplit(tree, d) {
   };
 }
 
-// Compose the multi-clause story for one metric. Threads the aggregate
-// position, the per-cell drill-down, and a win-rate cross-reference into one
-// short paragraph.
+// Pick the dominant direction (high or low) across the surfaced child cells.
+// Used to choose the right implication and advice copy when the aggregate is
+// on-target but specific cells are leaking.
+function _dominantChildDirection(tree) {
+  var children = (tree.surfaced || []).filter(function(v) { return v.level !== 'aggregate'; });
+  var high = 0, low = 0;
+  for (var i = 0; i < children.length; i++) {
+    var v = children[i];
+    if (v.verdict !== 'significant-leak' && v.verdict !== 'slight-leak') continue;
+    var weight = (v.deltaUnits || 0) + 0.5;
+    if (v.direction === 'high') high += weight;
+    else if (v.direction === 'low') low += weight;
+  }
+  if (!high && !low) return null;
+  return high >= low ? 'high' : 'low';
+}
+
+// Compose the multi-clause story for one metric. Four clauses in order:
+//   1. Behaviour: what the player actually does, with the number.
+//   2. Implication: why that behaviour matters in plain English.
+//   3. Context: which positions or table sizes the leak concentrates in.
+//   4. Advice: a concrete next-action suggestion.
+// Win rate cross-reference is appended when there is a real gap to mention.
 function _composeMetricStory(spec, tree, d) {
   if (!tree) return null;
   var agg = tree.aggregate;
   var aggActual = Math.round(agg.actual * 10) / 10;
   var aggBand = _fmtBand(agg.target);
-  var aggWord = _verdictWord(agg.verdict, agg.direction);
   var sentences = [];
 
-  // Sentence 1: the aggregate framing.
-  if (agg.verdict === 'on-target') {
-    sentences.push('Your overall ' + spec.label + ' is healthy at ' + aggActual + '% (target ' + aggBand + ').');
+  // The "active" direction drives implication and advice copy. For aggregate
+  // leaks it is agg.direction. When aggregate is on-target but children are
+  // off, we use the dominant child direction.
+  var aggIsLeak = agg.verdict === 'significant-leak' || agg.verdict === 'slight-leak';
+  var direction = aggIsLeak ? agg.direction : _dominantChildDirection(tree);
+
+  // Clause 1: behaviour.
+  if (aggIsLeak) {
+    var aggWord = _verdictWord(agg.verdict, agg.direction);
+    sentences.push('Your ' + spec.label + ' is ' + aggActual + '%, ' + aggWord + ' the ' + aggBand + ' target for the games you play.');
   } else if (agg.verdict === 'strength') {
-    sentences.push('Your overall ' + spec.label + ' is a strength at ' + aggActual + '% (target ' + aggBand + ').');
+    sentences.push('Your ' + spec.label + ' is ' + aggActual + '%, sitting on the strong side of the ' + aggBand + ' target.');
   } else {
-    sentences.push('Your overall ' + spec.label + ' is ' + aggActual + '%, ' + aggWord + ' for the games you play (target ' + aggBand + ').');
+    // On-target overall.
+    sentences.push('Your overall ' + spec.label + ' is healthy at ' + aggActual + '% (target ' + aggBand + ').');
   }
 
-  // Sentence 2: drill-down into surfaced child verdicts.
-  var children = (tree.surfaced || []).filter(function(v) { return v.level !== 'aggregate'; });
+  // Clause 2: implication.
+  if (direction && spec.implications && spec.implications[direction]) {
+    sentences.push(spec.implications[direction]);
+  }
+
+  // Clause 3: context. Where the leak shows up most. If the aggregate is also
+  // a leak, lead with "It is worst in...". If the aggregate is fine but cells
+  // disagree, lead with "It happens most in...".
+  var children = (tree.surfaced || []).filter(function(v) {
+    return v.level !== 'aggregate' && (v.verdict === 'significant-leak' || v.verdict === 'slight-leak');
+  });
   if (children.length) {
-    // Sort by absolute deltaUnits so the worst gap leads.
     children.sort(function(a, b) { return (b.deltaUnits || 0) - (a.deltaUnits || 0); });
     var top = children.slice(0, 2);
-    var clause = top.map(function(v) {
-      var label = v.level === 'position' ? 'from ' + v.position
+    var clauses = top.map(function(v) {
+      var place = v.level === 'position' ? 'from ' + v.position
         : v.level === 'playerCount' ? 'in ' + v.seats + '-handed games'
         : v.level === 'cell' ? 'from ' + v.position + ' in ' + v.seats + '-handed' : v.level;
-      var actual = Math.round(v.actual * 10) / 10;
-      var word = _verdictWord(v.verdict, v.direction);
-      return label + ' you sit at ' + actual + '% (' + word + ')';
-    }).join(', and ');
-    var lead = (agg.verdict === 'on-target' || agg.verdict === 'strength') ? 'But ' : 'Specifically, ';
-    sentences.push(lead + clause + '.');
+      return place + ' (' + Math.round(v.actual * 10) / 10 + '%)';
+    }).join(' and ');
+    var lead = aggIsLeak ? 'It is worst ' : 'It happens most ';
+    sentences.push(lead + clauses + '.');
   }
 
-  // Sentence 3: win rate cross-reference. Only when we have BOTH a target
-  // cell and an off-target cell with hand counts.
+  // Clause 4: advice. Only show when we actually have a leak to act on.
+  if (direction && (aggIsLeak || children.length) && spec.advice && spec.advice[direction]) {
+    sentences.push(spec.advice[direction]);
+  }
+
+  // Trailer: win rate gap, only when both sides have data and the gap is real.
   var split = _winRateSplit(tree, d);
   if (split && split.onWr != null && split.offWr != null && Math.abs(split.onWr - split.offWr) >= 4) {
     var diff = Math.round(split.onWr - split.offWr);
     if (diff > 0) {
-      sentences.push('Your win rate in cells where ' + spec.label + ' is on target is ' + Math.round(split.onWr) + '%, versus ' + Math.round(split.offWr) + '% where it is off. The gap is roughly ' + diff + ' percentage points.');
+      sentences.push('Your win rate where ' + spec.label + ' is on target is ' + Math.round(split.onWr) + '%, versus ' + Math.round(split.offWr) + '% where it is off - a ' + diff + " point gap that's likely costing you money.");
     } else if (diff < 0) {
-      sentences.push('Your win rate in the off-target cells (' + Math.round(split.offWr) + '%) is actually higher than the on-target ones (' + Math.round(split.onWr) + '%) - worth checking whether the matrix targets fit how you play these spots.');
+      sentences.push('Win rate is actually higher in the off-target cells (' + Math.round(split.offWr) + '% versus ' + Math.round(split.onWr) + '%), which suggests the matrix targets may not fit how you play these spots yet.');
     }
   }
 
