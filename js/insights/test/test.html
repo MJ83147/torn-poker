@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Insights v2 Test Harness</title>
+  <link rel="stylesheet" href="../../../styles.css">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 24px; max-width: 980px; margin: 0 auto; background: #fbfaf6; color: #1a1a1a; }
+    h1 { font-size: 22px; margin: 0 0 4px; }
+    .subtitle { color: #777; margin: 0 0 20px; font-size: 14px; }
+    .controls { display: flex; gap: 12px; margin: 16px 0 24px; flex-wrap: wrap; }
+    button { background: #c9a96e; color: #1a1a1a; border: none; padding: 10px 18px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500; }
+    button:hover { background: #b8995d; }
+    button:disabled { background: #ddd; color: #999; cursor: not-allowed; }
+    .status { padding: 10px 14px; background: #fff; border-left: 3px solid #c9a96e; margin-bottom: 16px; font-size: 13px; color: #555; }
+    .status.error { border-left-color: #d33; color: #d33; }
+    .panel-section { background: #fff; padding: 16px 20px; margin-bottom: 12px; border-radius: 6px; border: 1px solid #e8e4d7; }
+    .panel-section h3 { margin: 0 0 12px; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; color: #777; }
+    .panel-empty { color: #999; font-size: 13px; font-style: italic; }
+    .finding { padding: 12px 0; border-bottom: 1px dashed #eee; }
+    .finding:last-child { border-bottom: none; }
+    .finding-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+    .sev-badge { display: inline-block; width: 9px; height: 9px; border-radius: 50%; }
+    .sev-badge.r { background: #d33; }
+    .sev-badge.a { background: #d99700; }
+    .sev-badge.g { background: #4a8; }
+    .sev-badge.n { background: #888; }
+    .finding-name { font-weight: 600; font-size: 15px; }
+    .finding-meta { font-size: 12px; color: #999; }
+    .finding-text { font-size: 14px; line-height: 1.55; color: #333; }
+    .finding-cells { margin-top: 6px; font-size: 12px; color: #777; }
+  </style>
+</head>
+<body>
+  <h1>Insights v2 Test Harness</h1>
+  <p class="subtitle">Loads existing analyse() output and runs the new story framework against it. Side by side, no existing code touched.</p>
+
+  <div class="controls">
+    <button id="run-saved">Run on saved hands (IndexedDB)</button>
+    <input type="file" id="upload-json" accept=".json" style="display:none">
+    <button id="run-upload">Upload JSON of hands</button>
+  </div>
+
+  <div id="status" class="status">Ready. Click a button above.</div>
+
+  <div id="output"></div>
+
+  <!-- Load the existing built app (gives us all helpers, matrix, analyse, etc.) -->
+  <script src="../../../app.min.js?v=test"></script>
+
+  <!-- Load the new framework -->
+  <script src="../framework.js"></script>
+  <script src="../panels-config.js"></script>
+
+  <!-- Load the OK stories -->
+  <script src="../stories/hand-selection.js"></script>
+  <script src="../stories/preflop-initiative.js"></script>
+  <script src="../stories/aggression-style.js"></script>
+  <script src="../stories/postflop-aggression-with-initiative.js"></script>
+  <script src="../stories/postflop-defence.js"></script>
+
+  <!-- Test runner -->
+  <script>
+    (function() {
+      var status = document.getElementById('status');
+      var output = document.getElementById('output');
+
+      function setStatus(msg, isError) {
+        status.textContent = msg;
+        status.className = 'status' + (isError ? ' error' : '');
+      }
+
+      function runOnHands(hands) {
+        if (!hands || !hands.length) {
+          setStatus('No hands found.', true);
+          return;
+        }
+        try {
+          // Backfill required hand-level annotations the existing engine relies on.
+          if (typeof backfillHandData === 'function') backfillHandData(hands);
+
+          var d = analyse(hands);
+          if (typeof bucketizeAnalysis === 'function') bucketizeAnalysis(d, hands);
+
+          var findings = Insights.evaluateStories(d, {}, hands);
+          renderFindings(findings, hands.length);
+          setStatus('Ran ' + hands.length + ' hands. ' + findings.length + ' findings produced.');
+        } catch (e) {
+          setStatus('Error: ' + e.message, true);
+          console.error(e);
+        }
+      }
+
+      function renderFindings(findings, totalHands) {
+        var panels = Insights.PANELS;
+        var html = '';
+        var panelOrder = ['My Game', 'Range', 'Cards', 'Position', 'Betting', 'Showdown', 'All-In EV', 'Players', 'Tables and Trends', 'Street', 'Hand Log', 'Welcome'];
+        for (var i = 0; i < panelOrder.length; i++) {
+          var panel = panelOrder[i];
+          var panelFindings = Insights.findingsForPanel(findings, panel);
+          html += '<div class="panel-section">';
+          html += '<h3>' + panel + ' (' + panelFindings.length + ')</h3>';
+          if (!panelFindings.length) {
+            html += '<div class="panel-empty">Nothing significant to flag here yet.</div>';
+          } else {
+            for (var j = 0; j < panelFindings.length; j++) {
+              html += renderFinding(panelFindings[j]);
+            }
+          }
+          html += '</div>';
+        }
+        output.innerHTML = html;
+      }
+
+      function renderFinding(f) {
+        var cellsLine = f.measurement && f.measurement.cells && f.measurement.cells.length
+          ? f.measurement.cells.length + ' cells (' + f.measurement.cells.map(function(c) { return c.scope + ':' + c.key; }).join(', ') + ')'
+          : 'no cells';
+        return '<div class="finding">' +
+          '<div class="finding-head">' +
+            '<span class="sev-badge ' + f.severity + '"></span>' +
+            '<span class="finding-name">' + f.name + '</span>' +
+            '<span class="finding-meta">score ' + f.score + ' · n=' + (f.measurement ? f.measurement.n : '?') + ' · ' + cellsLine + '</span>' +
+          '</div>' +
+          '<div class="finding-text">' + f.text + '</div>' +
+        '</div>';
+      }
+
+      document.getElementById('run-saved').addEventListener('click', function() {
+        setStatus('Loading saved hands from IndexedDB...');
+        if (typeof State === 'undefined' || !State.loadSaved) {
+          setStatus('State.loadSaved not available. Try the upload option.', true);
+          return;
+        }
+        State.loadSaved(function(blob) {
+          if (!blob || !blob.hands) {
+            setStatus('No saved session found in IndexedDB.', true);
+            return;
+          }
+          runOnHands(blob.hands);
+        });
+      });
+
+      document.getElementById('run-upload').addEventListener('click', function() {
+        document.getElementById('upload-json').click();
+      });
+
+      document.getElementById('upload-json').addEventListener('change', function(e) {
+        var file = e.target.files[0];
+        if (!file) return;
+        var reader = new FileReader();
+        reader.onload = function(ev) {
+          try {
+            var data = JSON.parse(ev.target.result);
+            var hands = Array.isArray(data) ? data : (data.hands || []);
+            runOnHands(hands);
+          } catch (err) {
+            setStatus('Failed to parse JSON: ' + err.message, true);
+          }
+        };
+        reader.readAsText(file);
+      });
+
+      setStatus('Ready. ' + Insights._stories.length + ' stories registered: ' + Insights._stories.map(function(s) { return s.id; }).join(', '));
+    })();
+  </script>
+</body>
+</html>
