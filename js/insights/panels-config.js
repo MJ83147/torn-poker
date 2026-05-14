@@ -33,7 +33,7 @@
     'Welcome': [],
     'My Game': ['top-strengths', 'top-weaknesses', 'play-style'],
     'Tables and Trends': ['session-and-tilt'],
-    'Range': ['hand-selection'],
+    'Range': ['width-of-range', 'winning-hands'],
     'Cards': ['played-hand-outcome'],
     'Position': ['position'],
     'Street': [],

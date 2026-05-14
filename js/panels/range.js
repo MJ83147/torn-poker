@@ -177,82 +177,41 @@ function renderRange(container, d, hands) {
       '<div class="leg"><div class="leg-sw leg-sw-med"></div>Sometimes</div>' +
       '<div class="leg"><div class="leg-sw leg-sw-high"></div>Most played</div>' +
       '</div>';
+    // Per-position raw-data widgets stay in this panel (Most Dealt, Coverage,
+    // per-position guide, per-position win rate). The leak verdicts (Best
+    // Hand, Worst Hand, Too Tight, Too Loose, Range Fit, Overplayed,
+    // Underplayed) are now produced by the Range section stories at the top
+    // of the panel via Sections.evaluateSections().
     var rangeIns = [];
-    var bestKey = null, bestWr = -1, worstKey = null, worstWr = 101, mostPlayed = null, mostCount = 0;
+    var mostPlayed = null, mostCount = 0;
     Object.keys(rMap).forEach(function(k) {
       var rm = rMap[k];
-      if (rm.played >= 2) {
-        var w2 = pct(rm.won, rm.played);
-        if (w2 !== null && w2 > bestWr) { bestWr = w2; bestKey = k; }
-        if (w2 !== null && w2 < worstWr) { worstWr = w2; worstKey = k; }
-      }
       if (rm.dealt > mostCount) { mostCount = rm.dealt; mostPlayed = k; }
     });
-    if (bestKey) {
-      var exBest = findExampleHand(function(h) { return parseHoleKey(h.hole) === bestKey && h.outcome && h.outcome.result === 'won'; });
-      rangeIns.push(insWithExample('g', 'Best Hand', 'Your strongest combo so far is ' + bestKey + ' at ' + bestWr + '% win rate. Sample size matters though.', [{ v: bestKey, hi: true }, { v: bestWr + '% win' }], exBest, 'Here is a hand where you won with ' + bestKey + '. This combo has been your most profitable - keep playing it confidently but watch for sample size.'));
-    }
-    if (worstKey && worstKey !== bestKey) {
-      var exWorst = findExampleHand(function(h) { return parseHoleKey(h.hole) === worstKey && h.outcome && h.outcome.result !== 'won'; });
-      rangeIns.push(insWithExample('r', 'Worst Hand', worstKey + ' has been your weakest at ' + worstWr + '% win rate. Consider tightening or adjusting play with this hand.', [{ v: worstKey, hi: true }, { v: worstWr + '% win' }], exWorst, 'This hand with ' + worstKey + ' did not go well. Review whether you are overplaying this combo or getting into bad spots post-flop.'));
-    }
     if (mostPlayed) {
       var exMost = findExampleHand(function(h) { return parseHoleKey(h.hole) === mostPlayed; });
-      rangeIns.push(insWithExample('n', 'Most Dealt', 'You have been dealt ' + mostPlayed + ' the most (' + mostCount + ' times). ' + (rMap[mostPlayed].played < mostCount / 2 ? 'You fold it more than half the time.' : 'You play it frequently.'), [{ v: mostPlayed, hi: true }, { v: mostCount + ' dealt' }], exMost, 'Here is a hand where you were dealt ' + mostPlayed + '. ' + (rMap[mostPlayed].played < mostCount / 2 ? 'You fold this hand often - make sure you are not being too tight with it in good positions.' : 'You play this hand frequently - make sure you are not overvaluing it from bad positions.')));
+      rangeIns.push(insWithExample('n', 'Most Dealt', 'You have been dealt ' + mostPlayed + ' the most (' + mostCount + ' times). ' + (rMap[mostPlayed].played < mostCount / 2 ? 'You fold it more than half the time.' : 'You play it frequently.'), [{ v: mostPlayed, hi: true }, { v: mostCount + ' dealt' }], exMost, 'Here is a hand where you were dealt ' + mostPlayed + '. ' + (rMap[mostPlayed].played < mostCount / 2 ? 'You fold this hand often, make sure you are not being too tight with it in good positions.' : 'You play this hand frequently, make sure you are not overvaluing it from bad positions.')));
     }
     var coveragePct = Math.round(seen / totalCombos * 100);
     rangeIns.push(ins('n', 'Coverage', 'You have seen ' + seen + ' of ' + totalCombos + ' possible hand combos (' + coveragePct + '%). The more hands you play, the more complete this picture becomes.', [{ v: seen + '/' + totalCombos + ' combos' }]));
 
-    // Position-specific coaching cards
+    // Position-specific raw-data card kept for the per-position filter view.
+    // Verdicts on whether the player is too tight or too loose belong to the
+    // Width of Range story rendered above the grid.
     if (posLabel && posLabel !== 'all') {
       var totalDealt = 0, totalPlayedPos = 0, totalWon = 0;
       Object.keys(rMap).forEach(function(k) { totalDealt += rMap[k].dealt; totalPlayedPos += rMap[k].played; totalWon += rMap[k].won; });
-      var vpipPctPos = totalDealt > 0 ? Math.round(totalPlayedPos / totalDealt * 100) : 0;
       var wrPctPos = totalPlayedPos > 0 ? Math.round(totalWon / totalPlayedPos * 100) : 0;
       var guide = benchmarkFor(posLabel).vpipGuide;
       if (guide && totalDealt >= 3) {
-        var exFolded = findExampleHand(function(h) {
-          return (h.position || '?') === posLabel && h.outcome && h.outcome.result === 'folded';
-        });
-        var exPlayed = findExampleHand(function(h) {
-          return (h.position || '?') === posLabel && !(h.outcome && h.outcome.result === 'folded');
-        });
         var exPos = findExampleHand(function(h) {
           return (h.position || '?') === posLabel;
         });
         rangeIns.push(ins('n', posLabel + ' Guide', guide.desc, [{ v: 'Ideal VPIP: ' + guide.ideal }]));
-        if (vpipPctPos < guide.tight) {
-          rangeIns.push(insWithExample('r', 'Too Tight from ' + posLabel, 'You are playing ' + vpipPctPos + '% of hands from ' + posLabel + ', which is below the typical range of ' + guide.ideal + '. You may be folding profitable hands. Consider opening wider with suited connectors and broadways.', [{ v: vpipPctPos + '% VPIP' }, { v: guide.ideal + ' ideal' }], exFolded, 'Here are hands you folded from ' + posLabel + '. Some of these may have been profitable opens given your position.'));
-        } else if (vpipPctPos > guide.loose) {
-          rangeIns.push(insWithExample('r', 'Too Loose from ' + posLabel, 'You are playing ' + vpipPctPos + '% of hands from ' + posLabel + ', above the typical range of ' + guide.ideal + '. Tighten up to avoid getting into marginal spots out of position or with weak holdings.', [{ v: vpipPctPos + '% VPIP' }, { v: guide.ideal + ' ideal' }], exPlayed, 'Here are hands you played from ' + posLabel + '. Review whether some of these could have been folded pre-flop.'));
-        } else {
-          rangeIns.push(insWithExample('g', posLabel + ' VPIP on Track', 'You are playing ' + vpipPctPos + '% of hands from ' + posLabel + ', which is within the typical range of ' + guide.ideal + '. Keep it up.', [{ v: vpipPctPos + '% VPIP' }, { v: guide.ideal + ' ideal' }], exPlayed, 'Here are hands you played from ' + posLabel + '. Your range selection looks solid for this position.'));
-        }
         if (totalPlayedPos >= 5) {
           rangeIns.push(insWithExample(wrPctPos >= 50 ? 'g' : wrPctPos >= 35 ? 'n' : 'r', posLabel + ' Win Rate', 'You are winning ' + wrPctPos + '% of hands you play from ' + posLabel + ' (' + totalWon + '/' + totalPlayedPos + ').', [{ v: wrPctPos + '% win' }, { v: totalPlayedPos + ' played' }], exPos, 'Here are hands from ' + posLabel + '. Review your play patterns to see what is working and where you can improve.'));
         }
       }
-    }
-
-    // Advisor deviation insights
-    if (recSet) {
-      var totalInRange = recSet.size;
-      var fitPct = totalInRange > 0 ? Math.round(matchCount / totalInRange * 100) : 0;
-      rangeIns.push(ins(fitPct >= 70 ? 'g' : fitPct >= 40 ? 'a' : 'r', 'Range Fit: ' + fitPct + '%', 'You play ' + matchCount + ' of ' + totalInRange + ' recommended hands for ' + posLabel + '. ' + overplayed.length + ' overplayed, ' + underplayed.length + ' underplayed.', [{ v: matchCount + '/' + totalInRange + ' match', hi: true }, { v: overplayed.length + ' over' }, { v: underplayed.length + ' under' }]));
-      if (overplayed.length > 0) {
-        var overList = overplayed.slice(0, 8).join(', ') + (overplayed.length > 8 ? ' +' + (overplayed.length - 8) + ' more' : '');
-        rangeIns.push(ins('r', 'Overplayed Hands', 'You play these hands from ' + posLabel + ' but they are not in the standard TAG range: ' + overList + '. Consider folding these to tighten up.', [{ v: overplayed.length + ' hands', hi: true }]));
-      }
-      if (underplayed.length > 0) {
-        var underList = underplayed.slice(0, 8).join(', ') + (underplayed.length > 8 ? ' +' + (underplayed.length - 8) + ' more' : '');
-        rangeIns.push(ins('a', 'Underplayed Hands', 'These are in the recommended range for ' + posLabel + ' but you are folding them: ' + underList + '. Consider opening these.', [{ v: underplayed.length + ' hands', hi: true }]));
-      }
-    }
-
-    // Append engine insights for range panel
-    var engineRangeIns = InsightEngine.forPanel('range', 3);
-    for (var eri = 0; eri < engineRangeIns.length; eri++) {
-      rangeIns.push(renderRuleInsight(engineRangeIns[eri]));
     }
 
     return { seen: seen, totalCombos: totalCombos, wrGrid: wrGrid, freqGrid: freqGrid, legend1: legend1, legend2: legend2, rangeIns: rangeIns, rMap: rMap };
@@ -413,6 +372,7 @@ function renderRange(container, d, hands) {
     '<div class="panel-title">Range</div>' +
     '<div class="panel-desc">Full 13x13 hand grid with win rate for every combo, benchmarked against table size.</div>' +
     renderBucketBanner() +
+    '<div id="range-stories" class="p-row"></div>' +
     '<div class="p-row"><div class="flex-gap-6 mb-16">' +
     '<select id="range-pos-filter" class="table-filter">' + posOpts + '</select>' +
     '<select id="range-seat-filter" class="table-filter">' + seatOpts + '</select>' +
@@ -423,9 +383,24 @@ function renderRange(container, d, hands) {
     '<div class="sec-subtitle mt-0">VPIP by Position vs Target</div>' +
     '<canvas id="range-vpip-canvas" height="160"></canvas></div>' +
     '<div id="range-grids"></div></div>';
+  renderRangeStories();
   renderRangeGrids(rc);
   renderVpipChart('all');
   renderBenchNotes();
+
+  // Section stories (Width of Range, Winning Hands) read full-data and do not
+  // change with the position filter. Computed once, rendered once.
+  function renderRangeStories() {
+    var el = document.getElementById('range-stories');
+    if (!el) return;
+    if (typeof Sections === 'undefined' || typeof Sections.evaluateSections !== 'function') {
+      el.innerHTML = '';
+      return;
+    }
+    var findings = Sections.evaluateSections(d, {}, hands);
+    var rangeFindings = Sections.findingsForPanel(findings, 'Range');
+    el.innerHTML = Sections.renderFindings(rangeFindings);
+  }
 
   // Bucket banner (describes the auto-detected benchmark)
   function renderBucketBanner() {

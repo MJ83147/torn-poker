@@ -46,15 +46,15 @@
 
   <div id="output"></div>
 
-  <!-- Load the existing built app (gives us all helpers, matrix, analyse, etc.) -->
+  <!-- Load the existing built app (gives us all helpers, matrix, analyse, etc.)
+       From Stage 5.2 the framework, story-engine, panels-config, and section
+       files are bundled inside app.min.js, so no extra script tags needed for
+       those. The four legacy prototype stories below still sideload because
+       they were not promoted into the build yet. -->
   <script src="../../../app.min.js?v=test"></script>
 
-  <!-- Load the new framework -->
-  <script src="../framework.js"></script>
-  <script src="../panels-config.js"></script>
-
-  <!-- Load the OK stories -->
-  <script src="../stories/hand-selection.js"></script>
+  <!-- Legacy framework prototypes from Stage 5.1, still in the test harness
+       only. These will retire when their sections ship. -->
   <script src="../stories/preflop-initiative.js"></script>
   <script src="../stories/aggression-style.js"></script>
   <script src="../stories/postflop-aggression-with-initiative.js"></script>
@@ -83,29 +83,40 @@
           var d = analyse(hands);
           if (typeof bucketizeAnalysis === 'function') bucketizeAnalysis(d, hands);
 
-          var findings = Insights.evaluateStories(d, {}, hands);
-          renderFindings(findings, hands.length);
-          setStatus('Ran ' + hands.length + ' hands. ' + findings.length + ' findings produced.');
+          var legacyFindings = Insights.evaluateStories(d, {}, hands);
+          var sectionFindings = (typeof Sections !== 'undefined')
+            ? Sections.evaluateSections(d, {}, hands)
+            : [];
+          renderAll(legacyFindings, sectionFindings, hands.length);
+          setStatus('Ran ' + hands.length + ' hands. ' +
+            legacyFindings.length + ' legacy findings, ' +
+            sectionFindings.length + ' section findings.');
         } catch (e) {
           setStatus('Error: ' + e.message, true);
           console.error(e);
         }
       }
 
-      function renderFindings(findings, totalHands) {
-        var panels = Insights.PANELS;
+      function renderAll(legacyFindings, sectionFindings, totalHands) {
         var html = '';
         var panelOrder = ['My Game', 'Range', 'Cards', 'Position', 'Betting', 'Showdown', 'All-In EV', 'Players', 'Tables and Trends', 'Street', 'Hand Log', 'Welcome'];
         for (var i = 0; i < panelOrder.length; i++) {
           var panel = panelOrder[i];
-          var panelFindings = Insights.findingsForPanel(findings, panel);
+          var panelLegacy = Insights.findingsForPanel(legacyFindings, panel);
+          var panelSection = (typeof Sections !== 'undefined')
+            ? Sections.findingsForPanel(sectionFindings, panel)
+            : [];
+          var total = panelLegacy.length + panelSection.length;
           html += '<div class="panel-section">';
-          html += '<h3>' + panel + ' (' + panelFindings.length + ')</h3>';
-          if (!panelFindings.length) {
+          html += '<h3>' + panel + ' (' + total + ')</h3>';
+          if (!total) {
             html += '<div class="panel-empty">Nothing significant to flag here yet.</div>';
           } else {
-            for (var j = 0; j < panelFindings.length; j++) {
-              html += renderFinding(panelFindings[j]);
+            for (var j = 0; j < panelSection.length; j++) {
+              html += renderSectionFinding(panelSection[j]);
+            }
+            for (var k = 0; k < panelLegacy.length; k++) {
+              html += renderLegacyFinding(panelLegacy[k]);
             }
           }
           html += '</div>';
@@ -113,7 +124,7 @@
         output.innerHTML = html;
       }
 
-      function renderFinding(f) {
+      function renderLegacyFinding(f) {
         var cellsLine = f.measurement && f.measurement.cells && f.measurement.cells.length
           ? f.measurement.cells.length + ' cells (' + f.measurement.cells.map(function(c) { return c.scope + ':' + c.key; }).join(', ') + ')'
           : 'no cells';
@@ -121,10 +132,45 @@
           '<div class="finding-head">' +
             '<span class="sev-badge ' + f.severity + '"></span>' +
             '<span class="finding-name">' + f.name + '</span>' +
-            '<span class="finding-meta">score ' + f.score + ' · n=' + (f.measurement ? f.measurement.n : '?') + ' · ' + cellsLine + '</span>' +
+            '<span class="finding-meta">legacy · score ' + f.score + ' · n=' + (f.measurement ? f.measurement.n : '?') + ' · ' + cellsLine + '</span>' +
           '</div>' +
           '<div class="finding-text">' + f.text + '</div>' +
         '</div>';
+      }
+
+      function renderSectionFinding(f) {
+        var meta = 'section · score ' + (f.score || 0);
+        var branches = '';
+        if (f.branchTexts && f.branchTexts.length) {
+          branches = '<ul class="story-branches">';
+          for (var i = 0; i < f.branchTexts.length; i++) {
+            branches += '<li>' + escapeHtml(f.branchTexts[i]) + '</li>';
+          }
+          branches += '</ul>';
+        }
+        var impact = f.impactText ? '<div class="finding-text"><strong>Impact:</strong> ' + escapeHtml(f.impactText) + '</div>' : '';
+        var soWhat = f.soWhatText ? '<div class="finding-text"><strong>So what:</strong> ' + escapeHtml(f.soWhatText) + '</div>' : '';
+        return '<div class="finding">' +
+          '<div class="finding-head">' +
+            '<span class="sev-badge ' + (f.severity || 'n') + '"></span>' +
+            '<span class="finding-name">' + escapeHtml(f.name || f.id) + '</span>' +
+            '<span class="finding-meta">' + meta + '</span>' +
+          '</div>' +
+          (f.openingText ? '<div class="finding-text">' + escapeHtml(f.openingText) + '</div>' : '') +
+          branches +
+          impact +
+          soWhat +
+        '</div>';
+      }
+
+      function escapeHtml(s) {
+        if (s == null) return '';
+        return String(s)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
       }
 
       document.getElementById('run-saved').addEventListener('click', function() {
@@ -162,7 +208,11 @@
         reader.readAsText(file);
       });
 
-      setStatus('Ready. ' + Insights._stories.length + ' stories registered: ' + Insights._stories.map(function(s) { return s.id; }).join(', '));
+      var legacyList = Insights._stories.map(function(s) { return s.id; }).join(', ');
+      var sectionList = (typeof Sections !== 'undefined' && Sections._sections)
+        ? Sections._sections.map(function(s) { return s.id; }).join(', ')
+        : '(none)';
+      setStatus('Ready. Legacy stories: ' + legacyList + '. Sections: ' + sectionList + '.');
     })();
   </script>
 </body>

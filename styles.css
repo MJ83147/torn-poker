@@ -663,6 +663,65 @@ textarea#jin:focus {
   line-height: 1.6;
 }
 
+/* STORY CARDS
+   Section findings (Width of Range, Winning Hands, etc.) reuse .ins as the
+   outer card. These inner classes layer the branch list, impact, and so-what
+   on top so a story reads as one coherent block. Shared across all sections. */
+.story-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--sp-16);
+  margin-bottom: var(--sp-16);
+}
+
+.story-card .ins-text {
+  margin-bottom: var(--sp-8);
+}
+
+.story-branches {
+  margin: var(--sp-8) 0 var(--sp-12);
+  padding-left: var(--sp-20);
+  font-size: var(--fs-14);
+  color: var(--dim);
+  line-height: 1.6;
+}
+
+.story-branches li {
+  margin-bottom: var(--sp-6);
+}
+
+.story-branches li:last-child {
+  margin-bottom: 0;
+}
+
+.story-impact,
+.story-sowhat {
+  font-size: var(--fs-14);
+  line-height: 1.6;
+  padding: var(--sp-10) 0 0;
+  margin-top: var(--sp-10);
+  border-top: var(--sp-1) solid var(--border);
+  color: var(--text);
+}
+
+.story-sowhat {
+  color: var(--gold);
+}
+
+.story-tag {
+  display: inline-block;
+  font-size: var(--fs-13);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-right: var(--sp-6);
+  font-weight: 600;
+}
+
+.story-impact .story-tag {
+  color: var(--dim);
+}
+
 .chip {
   background: none;
   border: none;

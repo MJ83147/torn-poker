@@ -22,6 +22,7 @@ var helperOrder = [
   'js/helpers/format.js',
   'js/helpers/hand-parsing.js',
   'js/helpers/analysis.js',
+  'js/helpers/sessions.js',
   'js/helpers/storage.js',
   'js/helpers/ui.js',
   'js/helpers/migration.js',
@@ -45,11 +46,26 @@ var engineOrder = [
 
 var panels = listJs('js/panels');
 
+// New insights layer (Stage 5.2 onward). Sits after the engine because
+// target-bands wraps engine/matrix.js and story-engine reads framework.js
+// helpers. Comes before panels so panels can call Sections at render time.
+var insightsOrder = [
+  'js/insights/framework.js',
+  'js/insights/panels-config.js',
+  'js/insights/story-engine.js',
+  'js/insights/sections/range.js',
+];
+
 var files = []
   .concat(helperOrder)
   .concat(['js/stats.js'])
   .concat(engineOrder)
-  .concat(['js/helpers/context.js'])
+  .concat([
+    'js/helpers/context.js',
+    'js/helpers/target-bands.js',
+    'js/helpers/pnl-slice.js',
+  ])
+  .concat(insightsOrder)
   .concat(['js/loader.js', 'js/state.js', 'js/modal.js', 'js/charting.js'])
   .concat(panels)
   .concat([
