@@ -35,7 +35,10 @@
     'Tables and Trends': ['session-and-tilt'],
     'Range': ['width-of-range', 'winning-hands'],
     'Cards': ['played-hand-outcome'],
-    'Position': ['position'],
+    'Position': [
+      'position-utg', 'position-utg-1', 'position-mp', 'position-lj',
+      'position-hj', 'position-co', 'position-btn', 'position-sb', 'position-bb'
+    ],
     'Street': [],
     'Betting': [
       'preflop-initiative',
