@@ -40,6 +40,42 @@
     return rows;
   }
 
+  // True if hero called or bet or raised at any point in the hand.
+  function heroPlayed(h) {
+    if (!h || !h.actions) return false;
+    var acts = (typeof parseActions === 'function') ? parseActions(h.actions) : [];
+    for (var i = 0; i < acts.length; i++) {
+      var a = acts[i];
+      if (!a.isMe) continue;
+      if (a.type === 'call' || a.type === 'bet' || a.type === 'raise') return true;
+    }
+    return false;
+  }
+
+  // True if hero's first preflop action was fold.
+  function heroFoldedPreflop(h) {
+    if (!h || !h.actions) return false;
+    var acts = (typeof parseActions === 'function') ? parseActions(h.actions) : [];
+    for (var i = 0; i < acts.length; i++) {
+      var a = acts[i];
+      if (!a.isMe || a.street !== 'Preflop') continue;
+      if (a.type === 'sb' || a.type === 'bb') continue;
+      return a.type === 'fold';
+    }
+    return false;
+  }
+
+  // Build a capped example-hand pool with most-recent first.
+  function pickHands(hands, predicate, cap) {
+    var out = [];
+    if (!hands) return out;
+    for (var i = hands.length - 1; i >= 0 && out.length < cap; i--) {
+      var h = hands[i];
+      if (predicate(h)) out.push(h);
+    }
+    return out;
+  }
+
   // ── STORY 1: WIDTH OF RANGE ───────────────────────────────────────────────
 
   function buildWidthOfRange(d, extras, hands) {
@@ -191,6 +227,47 @@
     var fired = branchTexts.length > 0 || severity === 'r' || severity === 'a';
     if (!fired) return null;
 
+    // Example hands. Show the worst off-target position's hands so the user
+    // can see specifically what to drop (too wide) or what was passed up
+    // (too tight).
+    var examples = [];
+    if (notablePositions && notablePositions.length) {
+      var worstPos = notablePositions.slice().sort(function(a, b) {
+        return b.sev.deltaUnits - a.sev.deltaUnits;
+      })[0];
+      if (worstPos && hands) {
+        if (worstPos.sev.direction === 'high') {
+          var played = pickHands(hands, function(h) {
+            return (h.position || '?') === worstPos.position && heroPlayed(h);
+          }, 12);
+          if (played.length) {
+            examples.push({
+              id: 'too-wide-' + worstPos.position,
+              label: 'Hands played from ' + worstPos.position,
+              hands: played,
+              coachingNote: 'Your ' + worstPos.position + ' play rate is ' + Math.round(worstPos.vpip) +
+                '%, above the ' + Sections.fmtBand(worstPos.band) + ' target. Look for the marginal combos in this list. ' +
+                'Weak aces, offsuit broadways, and low suited connectors are usually the drops.'
+            });
+          }
+        } else if (worstPos.sev.direction === 'low') {
+          var folded = pickHands(hands, function(h) {
+            return (h.position || '?') === worstPos.position && heroFoldedPreflop(h);
+          }, 12);
+          if (folded.length) {
+            examples.push({
+              id: 'too-tight-' + worstPos.position,
+              label: 'Hands folded from ' + worstPos.position,
+              hands: folded,
+              coachingNote: 'Your ' + worstPos.position + ' play rate is ' + Math.round(worstPos.vpip) +
+                '%, below the ' + Sections.fmtBand(worstPos.band) + ' target. These are hands you folded at this seat. ' +
+                'Suited connectors, suited aces, and broadways are often the missed opens here.'
+            });
+          }
+        }
+      }
+    }
+
     return {
       id: 'width-of-range',
       name: 'Width of Range',
@@ -202,6 +279,7 @@
       branchTexts: branchTexts,
       impactText: impactText,
       soWhatText: soWhatText,
+      examples: examples,
       meta: {
         aggregateVpip: aggregateVpip,
         seats: seats,
@@ -305,6 +383,53 @@
 
     if (!fired && severity === 'n') return null;
 
+    // Example hands per problem bucket, plus a "best combo" group for the
+    // headline. Each group filters the global hand set by hole-card key.
+    var examples = [];
+    function comboHands(combos) {
+      var keys = {};
+      for (var i = 0; i < combos.length; i++) keys[combos[i].key] = true;
+      return pickHands(hands, function(h) {
+        var hk = (typeof parseHoleKey === 'function') ? parseHoleKey(h.hole) : null;
+        return hk && keys[hk] && heroPlayed(h);
+      }, 15);
+    }
+    var pps = sortByImpact(classified['play-problem']).slice(0, 3);
+    if (pps.length) {
+      var ppHands = comboHands(pps);
+      if (ppHands.length) {
+        examples.push({
+          id: 'wh-play-problem',
+          label: 'Losing inside-range combos',
+          hands: ppHands,
+          coachingNote: 'These are combos inside your target range that are losing. Selection is right; the leak is in how you play them postflop. Watch turn and river decisions.'
+        });
+      }
+    }
+    var sps = sortByImpact(classified['selection-problem']).slice(0, 3);
+    if (sps.length) {
+      var spHands = comboHands(sps);
+      if (spHands.length) {
+        examples.push({
+          id: 'wh-selection-problem',
+          label: 'Losing outside-range combos',
+          hands: spHands,
+          coachingNote: 'These combos are outside your target range and losing. They have no profitable home from the seat you played them. Drop them.'
+        });
+      }
+    }
+    if (bestKey) {
+      var bestHands = comboHands([{ key: bestKey }]);
+      if (bestHands.length) {
+        examples.push({
+          id: 'wh-best',
+          label: 'Hands with ' + bestKey,
+          hands: bestHands,
+          coachingNote: 'Your most profitable combo so far. Keep playing it confidently; watch the sample size before reading too much into the number.'
+        });
+      }
+    }
+
     return {
       id: 'winning-hands',
       name: 'Winning Hands',
@@ -316,6 +441,7 @@
       branchTexts: branchTexts,
       impactText: impactText,
       soWhatText: soWhatText,
+      examples: examples,
       meta: {
         best: bestKey ? { key: bestKey, pnl: bestPnl, played: bestPlayed } : null,
         worst: worstKey ? { key: worstKey, pnl: worstPnl, played: worstPlayed } : null,

@@ -722,6 +722,13 @@ textarea#jin:focus {
   color: var(--dim);
 }
 
+.story-examples {
+  margin-top: var(--sp-12);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-8);
+}
+
 .chip {
   background: none;
   border: none;

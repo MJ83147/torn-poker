@@ -197,6 +197,48 @@
 
   var SEV_WORDS = { g: 'Good', r: 'Leak', a: 'Warning', n: 'Note', o: 'Info' };
 
+  // Stash for example-hand groups. Buttons in the rendered HTML carry a data-ex
+  // id; the setTimeout wiring below reads from this map and opens the existing
+  // showExampleHandListModal. Cleared lazily as cards re-render.
+  var EXAMPLE_LOOKUP = {};
+
+  function renderExampleButtons(finding) {
+    if (!finding.examples || !finding.examples.length) return '';
+    var parts = [];
+    for (var i = 0; i < finding.examples.length; i++) {
+      var ex = finding.examples[i];
+      if (!ex || !ex.hands || !ex.hands.length) continue;
+      var id = 'sx-' + Math.random().toString(36).slice(2, 9);
+      EXAMPLE_LOOKUP[id] = ex;
+      var label = escapeHtml(ex.label || 'See example hands');
+      var count = ex.hands.length;
+      parts.push(
+        '<button class="example-hand-btn" data-ex="' + id + '">' +
+          escapeHtml(label) + ' (' + count + ')' +
+        '</button>'
+      );
+    }
+    if (!parts.length) return '';
+    return '<div class="story-examples">' + parts.join('') + '</div>';
+  }
+
+  function wireExampleButtons(root) {
+    if (!root) return;
+    var btns = root.querySelectorAll('button[data-ex]');
+    for (var i = 0; i < btns.length; i++) {
+      (function(btn) {
+        var id = btn.getAttribute('data-ex');
+        if (!id || btn._wired) return;
+        btn._wired = true;
+        btn.onclick = function() {
+          var ex = EXAMPLE_LOOKUP[id];
+          if (!ex || typeof showExampleHandListModal !== 'function') return;
+          showExampleHandListModal(ex.label || 'Example hands', ex.hands, ex.coachingNote || null);
+        };
+      })(btns[i]);
+    }
+  }
+
   function renderStoryCard(finding) {
     if (!finding) return '';
     var sev = finding.severity || 'n';
@@ -222,6 +264,7 @@
     if (finding.soWhatText) {
       html += '<div class="story-sowhat"><span class="story-tag">So what</span> ' + escapeHtml(finding.soWhatText) + '</div>';
     }
+    html += renderExampleButtons(finding);
     html += '</div>';
     return html;
   }
@@ -230,7 +273,14 @@
     if (!findings || !findings.length) return '';
     var parts = [];
     for (var i = 0; i < findings.length; i++) parts.push(renderStoryCard(findings[i]));
-    return '<div class="story-grid">' + parts.join('') + '</div>';
+    var html = '<div class="story-grid">' + parts.join('') + '</div>';
+    // Wire example-hand buttons after the HTML is injected. The panel calls
+    // this through innerHTML or similar, so defer the wiring to a microtask.
+    setTimeout(function() {
+      var nodes = document.querySelectorAll('.story-grid');
+      for (var i = 0; i < nodes.length; i++) wireExampleButtons(nodes[i]);
+    }, 0);
+    return html;
   }
 
   // ── PUBLIC API ─────────────────────────────────────────────────────────────
