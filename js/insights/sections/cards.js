@@ -73,6 +73,101 @@
     return null;
   }
 
+  // Detect cases where hero is "playing the board" - the board contains the
+  // strong hand on its own and hero contributes only kickers. These hands
+  // must NOT classify as premium even when classifyMadeHand returns Set,
+  // Trips, Straight, Flush, etc. Returns true when the strength belongs to
+  // the board.
+  function heroPlaysBoard(hole, boardSlice, made) {
+    if (!hole || hole.length < 2) return false;
+    if (!boardSlice || boardSlice.length < 3) return false;
+    if (!made) return false;
+
+    var holeRanks = hole.map(function(c) { return c.slice(0, -1); });
+    var holeSuits = hole.map(function(c) { return c.slice(-1); });
+    var boardRanks = boardSlice.map(function(c) { return c.slice(0, -1); });
+    var boardSuits = boardSlice.map(function(c) { return c.slice(-1); });
+
+    // Trips on board: any board rank appears 3+ times AND hero has no card of
+    // that rank. The made label will be 'Trips' (not 'Set' which is hero's
+    // pocket pair hitting the board).
+    if (made.tier === 3 && made.label === 'Trips') {
+      var boardCounts = {};
+      for (var i = 0; i < boardRanks.length; i++) {
+        boardCounts[boardRanks[i]] = (boardCounts[boardRanks[i]] || 0) + 1;
+      }
+      for (var rk in boardCounts) {
+        if (boardCounts[rk] >= 3 && holeRanks.indexOf(rk) === -1) return true;
+      }
+    }
+
+    // Full house on board (rare but possible: e.g. AAA22 with hero KQ).
+    if (made.tier === 6) {
+      var bc6 = {};
+      for (var j = 0; j < boardRanks.length; j++) {
+        bc6[boardRanks[j]] = (bc6[boardRanks[j]] || 0) + 1;
+      }
+      var trips = null, pair = null;
+      for (var rk6 in bc6) {
+        if (bc6[rk6] >= 3) trips = rk6;
+        else if (bc6[rk6] === 2) pair = rk6;
+      }
+      if (trips && pair && holeRanks.indexOf(trips) === -1 && holeRanks.indexOf(pair) === -1) return true;
+    }
+
+    // Straight: board itself has 5 in a row, hero contributes nothing.
+    if (made.tier === 4 && boardRanks.length >= 5) {
+      // Build sorted unique board rank indexes.
+      var bIdx = boardRanks.map(function(r) { return RANKS.indexOf(r); });
+      var uniq = [];
+      for (var u = 0; u < bIdx.length; u++) {
+        if (uniq.indexOf(bIdx[u]) === -1) uniq.push(bIdx[u]);
+      }
+      uniq.sort(function(a, b) { return a - b; });
+      // Ace-low wheel.
+      if (uniq.indexOf(12) !== -1) uniq.unshift(-1);
+      // Scan windows of 5 consecutive ranks.
+      for (var w = 0; w <= uniq.length - 5; w++) {
+        if (uniq[w + 4] - uniq[w] === 4 &&
+            uniq[w + 1] === uniq[w] + 1 &&
+            uniq[w + 2] === uniq[w] + 2 &&
+            uniq[w + 3] === uniq[w] + 3) {
+          return true; // board straight
+        }
+      }
+    }
+
+    // Flush: 5+ cards of one suit on board AND hero has no card of that suit
+    // higher than the lowest board card of that suit. The simple test: hero
+    // has no card of that suit at all.
+    if (made.tier === 5) {
+      var suitCount = {};
+      for (var s = 0; s < boardSuits.length; s++) {
+        suitCount[boardSuits[s]] = (suitCount[boardSuits[s]] || 0) + 1;
+      }
+      for (var ssuit in suitCount) {
+        if (suitCount[ssuit] >= 5 && holeSuits.indexOf(ssuit) === -1) return true;
+      }
+    }
+
+    // Two pair on the board with hero having neither rank.
+    if (made.tier === 2) {
+      var bc2 = {};
+      for (var k = 0; k < boardRanks.length; k++) {
+        bc2[boardRanks[k]] = (bc2[boardRanks[k]] || 0) + 1;
+      }
+      var pairs = [];
+      for (var rk2 in bc2) if (bc2[rk2] >= 2) pairs.push(rk2);
+      if (pairs.length >= 2 &&
+          holeRanks.indexOf(pairs[0]) === -1 &&
+          holeRanks.indexOf(pairs[1]) === -1) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   // Map the made-hand draws array onto strong-draw / weak-draw buckets.
   // classifyMadeHand emits strings like 'Flush draw (9 outs)', 'OESD (8 outs)',
   // and 'Gutshot (4 outs)'. The river has no draws (last street). Returns
@@ -114,11 +209,23 @@
 
     var label = made.label;
     var madeBucket = null;
+
+    // If the board does all the work (board trips with hero kickers, board
+    // straight, board flush, board full house, board two pair), strength
+    // belongs to the board not hero. Treat as air - hero is on a kicker
+    // hand and the made-hand label overstates the holding.
+    if (heroPlaysBoard(h.hole, boardSlice, made)) {
+      madeBucket = 'air';
+    }
     // Premium Made: tier 3 (set/trips) and above. Use tier when present, fall
-    // back to label parsing.
-    if (made.tier != null) {
-      if (made.tier >= 3) madeBucket = 'premium';
-      else if (made.tier === 2) madeBucket = 'strong';
+    // back to label parsing. 'Trips' (board pair + hero card matching) is
+    // strong-but-not-premium; only 'Set' (hero pocket pair on the board) is
+    // a true premium tier 3 hand.
+    else if (made.tier != null) {
+      if (made.tier >= 5) madeBucket = 'premium';                      // Flush / Full House / Quads / Straight Flush
+      else if (made.tier === 4) madeBucket = 'premium';                 // Straight (board-straight handled above)
+      else if (made.tier === 3) madeBucket = (label === 'Set') ? 'premium' : 'strong';
+      else if (made.tier === 2) madeBucket = 'strong';                  // Two Pair
       else if (made.tier === 1) {
         if (label === 'Overpair' || label === 'Top Pair') madeBucket = 'strong';
         else if (label === 'Middle Pair' || label === 'Bottom Pair' || label === 'Pocket Pair') madeBucket = 'marginal';
@@ -126,7 +233,10 @@
         else madeBucket = 'marginal';
       } else if (made.tier === 0) madeBucket = 'air';
     } else {
-      if (/^(Set|Trips|Straight|Flush|Full House|Quads|Straight Flush)$/.test(label)) madeBucket = 'premium';
+      if (/^(Flush|Full House|Quads|Straight Flush)$/.test(label)) madeBucket = 'premium';
+      else if (label === 'Straight') madeBucket = 'premium';
+      else if (label === 'Set') madeBucket = 'premium';
+      else if (label === 'Trips') madeBucket = 'strong';
       else if (label === 'Overpair' || label === 'Top Pair' || label === 'Two Pair') madeBucket = 'strong';
       else if (label === 'Middle Pair' || label === 'Bottom Pair' || label === 'Pocket Pair') madeBucket = 'marginal';
       else madeBucket = 'air';
