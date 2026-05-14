@@ -188,3 +188,25 @@ function renderBestWorstSessions(hands, overallData) {
   html += '</div>';
   return html;
 }
+
+// Split each session at its own midpoint, aggregating across sessions.
+// Sessions shorter than minSession are skipped because halving them is noise.
+// Used by engine/patterns.js (session-half dimension) and engine/ruleset.js
+// (second-half-decline rule) and the Trends section.
+function splitSessionHalves(hands, minSession) {
+  var MIN = minSession || 20;
+  var sessions = buildSessions(hands);
+  var firstHalf = [];
+  var secondHalf = [];
+  var map = new Map();
+  for (var si = 0; si < sessions.length; si++) {
+    var sHands = sessions[si].hands;
+    if (sHands.length < MIN) continue;
+    var mid = Math.floor(sHands.length / 2);
+    for (var i = 0; i < sHands.length; i++) {
+      if (i < mid) { firstHalf.push(sHands[i]); map.set(sHands[i], 'first'); }
+      else         { secondHalf.push(sHands[i]); map.set(sHands[i], 'second'); }
+    }
+  }
+  return { firstHalf: firstHalf, secondHalf: secondHalf, handToHalf: map };
+}
