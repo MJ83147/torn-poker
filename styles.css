@@ -668,42 +668,52 @@ textarea#jin:focus {
    outer card. These inner classes layer the branch list, impact, and so-what
    on top so a story reads as one coherent block. Shared across all sections.
 
-   Card width is capped at a comfortable reading measure (about 70ch).
-   On wide screens cards tile two-per-row so the eye does not have to track
-   long sentences across the full panel width. */
+   Single column for narrative content. Stories are meant to be read top to
+   bottom; tiling them in multiple columns makes the eye zigzag. Max-width
+   on the grid itself keeps the reading measure comfortable. */
 .story-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
-  gap: var(--sp-16);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-20);
   margin-bottom: var(--sp-16);
+  max-width: 760px;
 }
 
 .story-card {
-  max-width: 70ch;
+  max-width: none;
+  padding: var(--sp-20);
+  border-left: 3px solid var(--border);
 }
+
+.story-card.story-card-r { border-left-color: var(--red); }
+.story-card.story-card-a { border-left-color: var(--amber); }
+.story-card.story-card-g { border-left-color: var(--green); }
+.story-card.story-card-n { border-left-color: var(--dim); }
 
 .story-card .ins-label {
   padding-right: 90px;
+  font-size: 17px;
+  margin-bottom: var(--sp-10);
 }
 
 .story-card .ins-text {
   padding-right: 0;
-  margin-bottom: var(--sp-8);
-  font-size: var(--fs-14);
-  line-height: 1.55;
+  margin-bottom: var(--sp-10);
+  font-size: 15px;
+  line-height: 1.6;
   color: var(--text);
 }
 
 .story-branches {
-  margin: var(--sp-8) 0 var(--sp-12);
+  margin: var(--sp-10) 0 var(--sp-14);
   padding-left: var(--sp-20);
   font-size: var(--fs-14);
   color: var(--dim);
-  line-height: 1.55;
+  line-height: 1.6;
 }
 
 .story-branches li {
-  margin-bottom: var(--sp-6);
+  margin-bottom: var(--sp-8);
 }
 
 .story-branches li:last-child {
@@ -713,9 +723,9 @@ textarea#jin:focus {
 .story-impact,
 .story-sowhat {
   font-size: var(--fs-14);
-  line-height: 1.55;
-  padding: var(--sp-10) 0 0;
-  margin-top: var(--sp-10);
+  line-height: 1.6;
+  padding: var(--sp-12) 0 0;
+  margin-top: var(--sp-12);
   border-top: var(--sp-1) solid var(--border);
   color: var(--text);
 }
@@ -726,12 +736,12 @@ textarea#jin:focus {
 
 .story-tag {
   display: inline-block;
-  font-size: var(--fs-13);
-  letter-spacing: 0.06em;
+  font-size: 11px;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--gold);
-  margin-right: var(--sp-6);
-  font-weight: 600;
+  margin-right: var(--sp-8);
+  font-weight: 700;
 }
 
 .story-impact .story-tag {
@@ -739,7 +749,7 @@ textarea#jin:focus {
 }
 
 .story-examples {
-  margin-top: var(--sp-12);
+  margin-top: var(--sp-14);
   display: flex;
   flex-wrap: wrap;
   gap: var(--sp-8);

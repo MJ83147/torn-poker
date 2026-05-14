@@ -245,7 +245,7 @@
     var name = escapeHtml(finding.name || finding.id || 'Story');
     var sevWord = SEV_WORDS[sev] || 'Note';
 
-    var html = '<div class="ins story-card">';
+    var html = '<div class="ins story-card story-card-' + sev + '">';
     html += '<div class="ins-badge ' + sev + '"><div class="ins-dot"></div><div class="ins-word">' + sevWord + '</div></div>';
     html += '<div class="ins-label">' + name + '</div>';
     if (finding.openingText) {

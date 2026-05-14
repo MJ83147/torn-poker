@@ -293,8 +293,9 @@
       soWhatText = 'Keep building data on by-position and by-texture splits as the sample grows.';
     }
 
-    // Example hands: pull recent hands containing post-flop hero bets,
-    // preferring scattered-street hands where possible.
+    // Example hands. When scattered streets exist, prefer hands that bet on
+    // those streets. Otherwise fall back to ANY hand where the player bet
+    // post-flop so the card always has something to inspect.
     var examples = [];
     if (hands && hands.length) {
       var pulled = pickHands(hands, function(h) {
@@ -302,12 +303,23 @@
         if (!w.heroBets.length) return false;
         if (!scatteredStreets.length) return true;
         for (var hb = 0; hb < w.heroBets.length; hb++) {
+          if (w.heroBets[hb].street === 'Preflop') continue;
           for (var ss = 0; ss < scatteredStreets.length; ss++) {
             if (w.heroBets[hb].street === scatteredStreets[ss].street) return true;
           }
         }
         return false;
       }, 12);
+      // Fallback: any hand where hero made a post-flop bet.
+      if (!pulled.length) {
+        pulled = pickHands(hands, function(h) {
+          var w = walkHandForSizing(h);
+          for (var b = 0; b < w.heroBets.length; b++) {
+            if (w.heroBets[b].street !== 'Preflop') return true;
+          }
+          return false;
+        }, 12);
+      }
       if (pulled.length) {
         examples.push({
           id: 'bets-sizing-shape-examples',
@@ -374,8 +386,25 @@
       else { lost.count++; lost.sumFrac += avg; lost.fracs.push(avg); }
     }
 
-    // Need enough on each side for a meaningful read.
+    // Need enough on each side for a meaningful read. When thin, still
+    // surface the post-flop bet pool so the user can browse what is there.
     if (won.count < MIN_CELL_LOCAL || lost.count < MIN_CELL_LOCAL) {
+      var thinExamples = [];
+      var anyBets = pickHands(hands, function(h) {
+        var w = walkHandForSizing(h);
+        for (var b = 0; b < w.heroBets.length; b++) {
+          if (w.heroBets[b].street !== 'Preflop') return true;
+        }
+        return false;
+      }, 12);
+      if (anyBets.length) {
+        thinExamples.push({
+          id: 'bets-value-vs-bluff-thin',
+          label: 'Hands where you bet post-flop',
+          hands: anyBets,
+          coachingNote: 'Browse these hands and ask whether the bet size matched what you held. As the showdown sample grows, this reading will sharpen into a real verdict.'
+        });
+      }
       return {
         id: 'bets-value-vs-bluff',
         name: 'Value vs Bluff Sizing',
@@ -387,7 +416,7 @@
         branchTexts: ['Won showdowns with bets: ' + won.count + '. Lost showdowns with bets: ' + lost.count + '. Need at least ' + MIN_CELL_LOCAL + ' on each side.'],
         impactText: null,
         soWhatText: 'Keep logging hands. This reading sharpens as the showdown sample grows.',
-        examples: [],
+        examples: thinExamples,
         meta: { won: won.count, lost: lost.count }
       };
     }
@@ -597,8 +626,13 @@
       soWhatText = 'Hold the shape. Track call frequency against overbets specifically as the sample grows.';
     }
 
-    // Examples per leak.
+    // Examples per leak, plus a generic fallback so the card always has at
+    // least one button to click into.
     var examples = [];
+    var anyFaced = pickHands(hands, function(h) {
+      var w = walkHandForSizing(h);
+      return w.facedBets && w.facedBets.length > 0;
+    }, 12);
     if (leaks.indexOf('folds-to-small') !== -1) {
       var foldsToSmall = pickHands(hands, function(h) {
         var w = walkHandForSizing(h);
@@ -634,6 +668,16 @@
           coachingNote: 'Hands where you called a big bet or overbet. Cross-check the outcomes: how many of these were winners? At your level, big sizes mean strong hands far more often than they mean bluffs.'
         });
       }
+    }
+    // Fallback: when no leaks fired, surface a general bets-faced pool so
+    // the card always has a button to inspect the underlying hands.
+    if (!examples.length && anyFaced.length) {
+      examples.push({
+        id: 'bets-response-faced',
+        label: 'Hands where you faced a bet',
+        hands: anyFaced,
+        coachingNote: 'Browse these and check whether your response shifted with the size of the bet. If your fold rate is identical against small probes and overbets, opponents can size for free information.'
+      });
     }
 
     return {
