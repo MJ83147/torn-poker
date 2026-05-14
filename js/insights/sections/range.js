@@ -76,6 +76,19 @@
     return out;
   }
 
+  function heroLost(h) {
+    if (!h || !h.outcome) return false;
+    if (h.outcome.result === 'won') return false;
+    var inv = (typeof getInvested === 'function') ? getInvested(h) : 0;
+    return inv > 0;
+  }
+
+  function heroWon(h) {
+    if (!h || !h.outcome || h.outcome.result !== 'won') return false;
+    var inv = (typeof getInvested === 'function') ? getInvested(h) : 0;
+    return (h.outcome.amount || 0) - inv > 0;
+  }
+
   // ── STORY 1: WIDTH OF RANGE ───────────────────────────────────────────────
 
   function buildWidthOfRange(d, extras, hands) {
@@ -237,16 +250,17 @@
       })[0];
       if (worstPos && hands) {
         if (worstPos.sev.direction === 'high') {
-          var played = pickHands(hands, function(h) {
-            return (h.position || '?') === worstPos.position && heroPlayed(h);
+          var losingPlays = pickHands(hands, function(h) {
+            return (h.position || '?') === worstPos.position && heroPlayed(h) && heroLost(h);
           }, 12);
-          if (played.length) {
+          if (losingPlays.length) {
             examples.push({
-              id: 'too-wide-' + worstPos.position,
-              label: 'Hands played from ' + worstPos.position,
-              hands: played,
+              id: 'too-wide-losing-' + worstPos.position,
+              label: 'Losing hands you played from ' + worstPos.position,
+              hands: losingPlays,
               coachingNote: 'Your ' + worstPos.position + ' play rate is ' + Math.round(worstPos.vpip) +
-                '%, above the ' + Sections.fmtBand(worstPos.band) + ' target. Look for the marginal combos in this list. ' +
+                '%, above the ' + Sections.fmtBand(worstPos.band) + ' target. ' +
+                'These are the hands you played from this seat that lost money. ' +
                 'Weak aces, offsuit broadways, and low suited connectors are usually the drops.'
             });
           }

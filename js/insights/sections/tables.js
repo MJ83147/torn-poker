@@ -262,37 +262,46 @@
       soWhatText = 'The leak, if there is one, is in your play, not your choice of table.';
     }
 
-    // Example hands. Worst-table hands lead; best-table hands follow.
+    // Example hands. Worst-table examples surface LOSING hands at that table;
+    // best-table examples surface WINNING hands. The contrast is the point.
     var examples = [];
+    function tableMatches(h, id) {
+      var t = inferTable(h);
+      return String(t != null ? t : 'unknown') === id;
+    }
+    function wasLoss(h) {
+      if (!h || !h.outcome) return false;
+      if (h.outcome.result === 'won') return false;
+      return ((typeof getInvested === 'function') ? getInvested(h) : 0) > 0;
+    }
+    function wasWin(h) {
+      if (!h || !h.outcome || h.outcome.result !== 'won') return false;
+      var inv = (typeof getInvested === 'function') ? getInvested(h) : 0;
+      return (h.outcome.amount || 0) - inv > 0;
+    }
     if (worst && worst.hands && worst.hands.length) {
       var worstId = String(worst.key);
-      var worstHands = pickHands(hands, function(h) {
-        var t = inferTable(h);
-        return String(t != null ? t : 'unknown') === worstId;
-      }, 15);
-      if (worstHands.length) {
+      var worstLosses = pickHands(hands, function(h) { return tableMatches(h, worstId) && wasLoss(h); }, 15);
+      if (worstLosses.length) {
         examples.push({
-          id: 'tbl-worst-' + worstId,
-          label: 'Hands at ' + worst.label,
-          hands: worstHands,
+          id: 'tbl-worst-losses-' + worstId,
+          label: 'Losing hands at ' + worst.label,
+          hands: worstLosses,
           coachingNote: 'Your worst table by P&L: ' + fmtPnlSafe(worst.pnl) + ' over ' + worst.n + ' hands. ' +
-            'Look for the pattern that is unique to this table. If you cannot find one, the answer is simpler: stop sitting here.'
+            'These are the hands you lost at this table. Look for the pattern. If you cannot find one, the answer is simpler: stop sitting here.'
         });
       }
     }
     if (best && best.hands && best.hands.length && best.key !== (worst && worst.key)) {
       var bestId = String(best.key);
-      var bestHands = pickHands(hands, function(h) {
-        var t = inferTable(h);
-        return String(t != null ? t : 'unknown') === bestId;
-      }, 10);
-      if (bestHands.length) {
+      var bestWins = pickHands(hands, function(h) { return tableMatches(h, bestId) && wasWin(h); }, 10);
+      if (bestWins.length) {
         examples.push({
-          id: 'tbl-best-' + bestId,
-          label: 'Hands at ' + best.label,
-          hands: bestHands,
+          id: 'tbl-best-wins-' + bestId,
+          label: 'Winning hands at ' + best.label,
+          hands: bestWins,
           coachingNote: 'Your most profitable table: ' + fmtPnlSafe(best.pnl) + ' over ' + best.n + ' hands. ' +
-            'Whatever is working here is the model. Look for similar games and put more volume into them.'
+            'These are the wins at this table. Whatever is working here is the model. Look for similar games and put more volume into them.'
         });
       }
     }

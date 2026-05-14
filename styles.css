@@ -666,16 +666,32 @@ textarea#jin:focus {
 /* STORY CARDS
    Section findings (Width of Range, Winning Hands, etc.) reuse .ins as the
    outer card. These inner classes layer the branch list, impact, and so-what
-   on top so a story reads as one coherent block. Shared across all sections. */
+   on top so a story reads as one coherent block. Shared across all sections.
+
+   Card width is capped at a comfortable reading measure (about 70ch).
+   On wide screens cards tile two-per-row so the eye does not have to track
+   long sentences across the full panel width. */
 .story-grid {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
   gap: var(--sp-16);
   margin-bottom: var(--sp-16);
 }
 
+.story-card {
+  max-width: 70ch;
+}
+
+.story-card .ins-label {
+  padding-right: 90px;
+}
+
 .story-card .ins-text {
+  padding-right: 0;
   margin-bottom: var(--sp-8);
+  font-size: var(--fs-14);
+  line-height: 1.55;
+  color: var(--text);
 }
 
 .story-branches {
@@ -683,7 +699,7 @@ textarea#jin:focus {
   padding-left: var(--sp-20);
   font-size: var(--fs-14);
   color: var(--dim);
-  line-height: 1.6;
+  line-height: 1.55;
 }
 
 .story-branches li {
@@ -697,7 +713,7 @@ textarea#jin:focus {
 .story-impact,
 .story-sowhat {
   font-size: var(--fs-14);
-  line-height: 1.6;
+  line-height: 1.55;
   padding: var(--sp-10) 0 0;
   margin-top: var(--sp-10);
   border-top: var(--sp-1) solid var(--border);

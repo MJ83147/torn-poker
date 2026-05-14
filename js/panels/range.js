@@ -402,16 +402,17 @@ function renderRange(container, d, hands) {
     el.innerHTML = Sections.renderFindings(rangeFindings);
   }
 
-  // Bucket banner (describes the auto-detected benchmark)
+  // Bucket banner (describes the auto-detected benchmark used for target
+  // bands only; no hands are filtered out by this).
   function renderBucketBanner() {
     if (!currentBucket.seatBucket) return '';
     var seatLbl = currentBucket.seatBucket;
     var shareTxt = '';
     if (hands.length > 0) {
       var share = Math.round((currentBucket.count / hands.length) * 100);
-      shareTxt = ' · ' + share + '% of viewed hands';
+      shareTxt = ' (' + share + '% of your hands)';
     }
-    return '<div class="p-row"><div class="filter-banner" id="range-bucket-banner">Benchmark: ' + seatLbl + shareTxt + '</div></div>';
+    return '<div class="p-row"><div class="filter-banner" id="range-bucket-banner">Benchmark bands taken from ' + seatLbl + shareTxt + '. All hands shown.</div></div>';
   }
 
   // Notes block describing the active (seats, position) advice

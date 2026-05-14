@@ -58,12 +58,14 @@ function renderTables(container, hands, allHands, excludedTables, onRerender) {
     tablesHtml += '<div class="panel-desc">Compare stats across different stakes.</div>';
 
     // Section stories (Table Selection, Time at Table) render above the
-    // per-table performance widget. Built by js/insights/sections/tables.js.
+    // per-table performance widget. The section always reads allHands so that
+    // cross-table comparisons survive the panel's table-filter dropdown.
     var sectionFindingsHtml = '';
     if (typeof Sections !== 'undefined' && typeof Sections.evaluateSections === 'function') {
-      var dTables = (typeof analyse === 'function') ? analyse(hands) : null;
+      var sectionInput = (allHands && allHands.length) ? allHands : hands;
+      var dTables = (typeof analyse === 'function') ? analyse(sectionInput) : null;
       if (dTables) {
-        var tblFindings = Sections.findingsForPanel(Sections.evaluateSections(dTables, {}, hands), 'Tables');
+        var tblFindings = Sections.findingsForPanel(Sections.evaluateSections(dTables, {}, sectionInput), 'Tables');
         if (tblFindings.length) sectionFindingsHtml = Sections.renderFindings(tblFindings);
       }
     }
@@ -91,9 +93,11 @@ function renderTables(container, hands, allHands, excludedTables, onRerender) {
     }
     tablesHtml += '</tbody></table></div></div>';
 
-    // Legacy "Best Win Rate", "Lowest Win Rate", "Most Profitable", and
-    // "Biggest Loss" cards lived here. They are now produced by the Table
-    // Selection section story rendered above. Engine insights still append.
+    // Legacy zone cards lived here. They are now produced by the Table
+    // Selection section story rendered above. Engine insights still append
+    // when they have something to add but they no longer surface a
+    // "more data needed" fallback - that contradicts the section story
+    // which already states the picture above.
     var tIns2 = [];
     var engineTblIns = InsightEngine.forPanel('tables', 4);
     for (var etbi = 0; etbi < engineTblIns.length; etbi++) {
@@ -103,7 +107,9 @@ function renderTables(container, hands, allHands, excludedTables, onRerender) {
       }
       if (!dupTbl) tIns2.push(renderRuleInsight(engineTblIns[etbi]));
     }
-    tablesHtml += '<div class="p-row">' + renderInsights(tIns2, 'Tables', 'More data needed for table-level insights.') + '</div>';
+    if (tIns2.length) {
+      tablesHtml += '<div class="p-row"><div class="ins-grid">' + tIns2.join('') + '</div></div>';
+    }
   }
   container.innerHTML = tablesHtml;
 

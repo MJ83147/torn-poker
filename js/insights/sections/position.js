@@ -107,18 +107,41 @@
     return out;
   }
 
+  // True when the hand was a net loss for hero. Folded preflop counts only when
+  // there was real investment (blind posts cost chips even when folding).
+  function heroLost(h) {
+    if (!h || !h.outcome) return false;
+    if (h.outcome.result === 'won') return false;
+    var inv = (typeof getInvested === 'function') ? getInvested(h) : 0;
+    return inv > 0;
+  }
+
+  function heroWon(h) {
+    if (!h || !h.outcome) return false;
+    if (h.outcome.result !== 'won') return false;
+    var amt = h.outcome.amount || 0;
+    var inv = (typeof getInvested === 'function') ? getInvested(h) : 0;
+    return amt - inv > 0;
+  }
+
   // Pull the right per-seat sub-d. Prefer the seat-count cell (most precise),
   // fall back to the position slice when the cell sample is below MIN_CELL.
+  // The seat-count label is only attached when that bucket represents a strong
+  // majority of the player's hands at this seat. Otherwise it would mislead
+  // anyone who plays mixed table sizes.
   // Returns { source, label, n }.
   function cellFor(d, position, seats) {
+    var posOverall = (d.byPosition && d.byPosition[position]) ? d.byPosition[position] : null;
     if (seats && d.byPosSeat) {
       var key = position + '|' + seats + 'p';
       var cell = d.byPosSeat[key];
-      if (cell && !cell.gated && cell.n >= 10) return { source: cell, label: seats + '-handed', n: cell.n };
+      if (cell && !cell.gated && cell.n >= 10) {
+        var dominant = posOverall && posOverall.n > 0 ? (cell.n / posOverall.n) >= 0.6 : true;
+        return { source: cell, label: dominant ? seats + '-handed' : null, n: cell.n };
+      }
     }
-    if (d.byPosition && d.byPosition[position] && !d.byPosition[position].gated) {
-      var p = d.byPosition[position];
-      return { source: p, label: null, n: p.n };
+    if (posOverall && !posOverall.gated) {
+      return { source: posOverall, label: null, n: posOverall.n };
     }
     return null;
   }
@@ -141,19 +164,21 @@
         ', ' + dirWord + ' the ' + Sections.fmtBand(band) + ' target' +
         (cell.label ? ' for ' + cell.label : '') + '.';
 
-      // Examples: hands played here (too wide) or folded here (too tight).
+      // Examples: when too wide we surface hands the player PLAYED from this
+      // seat that LOST money (the marginal combos to drop). When too tight we
+      // surface hands they folded that look like missed opens.
       if (sev.direction === 'high') {
-        var played = pickHands(hands, function(h) {
-          return (h.position || '?') === position && heroPlayed(h);
+        var losingPlays = pickHands(hands, function(h) {
+          return (h.position || '?') === position && heroPlayed(h) && heroLost(h);
         }, 12);
-        if (played.length) {
+        if (losingPlays.length) {
           examples = {
-            id: 'pos-played-' + position,
-            label: 'Hands played from ' + position,
-            hands: played,
+            id: 'pos-losing-plays-' + position,
+            label: 'Losing hands you played from ' + position,
+            hands: losingPlays,
             coachingNote: 'Your ' + position + ' play rate is ' + Math.round(vpip) +
               '%, above the ' + Sections.fmtBand(band) + ' target. ' +
-              'Drop the marginal combos that drag the rate up.'
+              'These are the hands that lost from this seat. Look for the marginal combos to drop.'
           };
         }
       } else {
