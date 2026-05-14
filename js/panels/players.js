@@ -81,6 +81,16 @@ function renderPlayers(container, d, hands) {
     var watchedOpps = filtered.filter(function(o) { return watched.indexOf(o.name) >= 0; });
     var html = '<div class="panel-title">Players</div>';
     html += '<div class="panel-desc">Opponent records, head-to-head stats, and watch list.</div>';
+
+    // Section stories (vs playstyle, profitable/unprofitable names) render
+    // above the legacy cards and the opponent table.
+    var sectionFindingsHtml = '';
+    if (typeof Sections !== 'undefined' && typeof Sections.evaluateSections === 'function') {
+      var sectionFindings = Sections.findingsForPanel(Sections.evaluateSections(d, {}, hands), 'Players');
+      if (sectionFindings.length) sectionFindingsHtml = Sections.renderFindings(sectionFindings);
+    }
+    if (sectionFindingsHtml) html += '<div class="p-row">' + sectionFindingsHtml + '</div>';
+
     html += '<div class="mb-16"><button class="example-hand-btn" id="open-compare-btn">Compare Players</button></div>';
 
     if (watchedOpps.length) {
@@ -105,37 +115,9 @@ function renderPlayers(container, d, hands) {
 
     var pIns = [];
 
-    // ── Head-to-head records ──
-    var best = null, worst = null, mostProfitable = null, biggestLoser = null;
-    for (var m = 0; m < filtered.length; m++) {
-      var ow = filtered[m];
-      var owr = pct(ow.won, ow.won + ow.lost);
-      if (owr !== null && (ow.won + ow.lost) >= 5) {
-        if (!best || owr > pct(best.won, best.won + best.lost)) best = ow;
-        if (!worst || owr < pct(worst.won, worst.won + worst.lost)) worst = ow;
-      }
-      if (ow.profit > 0 && (!mostProfitable || ow.profit > mostProfitable.profit)) mostProfitable = ow;
-      if (ow.profit < 0 && (!biggestLoser || ow.profit < biggestLoser.profit)) biggestLoser = ow;
-    }
-
-    if (best) {
-      var bestWr = pct(best.won, best.won + best.lost);
-      var bestProf = _opponentCache[best.name];
-      var bestExtra = bestProf ? ' They play a ' + expandOpponentType(bestProf.type) + ' style' + (bestProf.vpip !== null ? ' (' + bestProf.vpip + '% VPIP)' : '') + '.' : '';
-      pIns.push(ins('g', 'Best Record: ' + best.name, 'You win ' + bestWr + '% across ' + (best.won + best.lost) + ' contested hands.' + bestExtra, [{ v: best.name, hi: true }, { v: bestWr + '% win' }, { v: fmtPnl(best.profit) }]));
-    }
-    if (worst && worst !== best) {
-      var worstWr = pct(worst.won, worst.won + worst.lost);
-      var worstProf = _opponentCache[worst.name];
-      var worstExtra = worstProf ? ' They\'re ' + expandOpponentType(worstProf.type) + (worstProf.agg !== null && worstProf.agg >= 30 ? ' — consider tightening up and trapping.' : worstProf.vpip !== null && worstProf.vpip >= 50 ? ' — value bet them harder, cut the bluffs.' : '.') : '.';
-      pIns.push(ins('r', 'Toughest: ' + worst.name, 'Only ' + worstWr + '% win rate across ' + (worst.won + worst.lost) + ' contested hands.' + worstExtra, [{ v: worst.name, hi: true }, { v: worstWr + '% win' }, { v: fmtPnl(worst.profit) }]));
-    }
-    if (mostProfitable && mostProfitable !== best) {
-      pIns.push(ins('g', 'Cash Cow: ' + mostProfitable.name, 'You\'ve profited ' + fmtPnl(mostProfitable.profit) + ' in hands with ' + mostProfitable.name + '. Keep doing whatever works.', [{ v: fmtPnl(mostProfitable.profit), hi: true }, { v: mostProfitable.hands + ' hands' }]));
-    }
-    if (biggestLoser && biggestLoser !== worst) {
-      pIns.push(ins('r', 'Biggest Loss: ' + biggestLoser.name, 'You\'ve lost ' + fmtPnl(biggestLoser.profit) + ' in hands with ' + biggestLoser.name + '. Review these hands for pattern leaks.', [{ v: fmtPnl(biggestLoser.profit), hi: true }, { v: biggestLoser.hands + ' hands' }]));
-    }
+    // Head-to-head records (Best Record / Toughest / Cash Cow / Biggest Loss)
+    // are now produced by the Profitable Opponents and Unprofitable Opponents
+    // section stories rendered above.
 
     // ── Opponent-specific adjustment alerts ──
     for (var oppName in _opponentCache) {

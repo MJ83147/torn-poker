@@ -9,6 +9,15 @@ function renderStreet(container, d, hands) {
   var maxSeen = d.ss.Preflop.seen || 1;
   var stHtml = '<div class="panel-title">Streets</div>';
   stHtml += '<div class="panel-desc">Action breakdown by preflop, flop, turn, and river.</div>';
+
+  // Section stories render above the existing per-street tables and charts.
+  var sectionFindingsHtml = '';
+  if (typeof Sections !== 'undefined' && typeof Sections.evaluateSections === 'function') {
+    var streetFindings = Sections.findingsForPanel(Sections.evaluateSections(d, {}, hands), 'Street');
+    if (streetFindings.length) sectionFindingsHtml = Sections.renderFindings(streetFindings);
+  }
+  if (sectionFindingsHtml) stHtml += '<div class="p-row">' + sectionFindingsHtml + '</div>';
+
   stHtml += '<div class="p-row"><div class="two-col">';
   stHtml += '<div><div class="sec-subtitle">Hands reaching street</div><div class="bar-group">' + streets.map(function(s) {
     var seen2 = d.ss[s].seen;

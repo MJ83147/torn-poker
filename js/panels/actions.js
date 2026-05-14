@@ -20,6 +20,16 @@ function renderActions(container, d, hands) {
 
   var actHtml = '<div class="panel-title">Betting</div>';
   actHtml += '<div class="panel-desc">How you size your bets and choose your actions.</div>';
+
+  // Section stories (Bet Sizing Shape, Value vs Bluff Sizing, Response to
+  // Sizing) render above the legacy widgets.
+  var sectionFindingsHtml = '';
+  if (typeof Sections !== 'undefined' && typeof Sections.evaluateSections === 'function') {
+    var f = Sections.findingsForPanel(Sections.evaluateSections(d, {}, hands), 'Betting');
+    if (f.length) sectionFindingsHtml = Sections.renderFindings(f);
+  }
+  if (sectionFindingsHtml) actHtml += '<div class="p-row">' + sectionFindingsHtml + '</div>';
+
   // Aggression mini-box dropped - the header hero strip already shows your
   // headline aggression number always.
   actHtml += '<div class="p-row">' + renderMiniRow([
@@ -271,49 +281,9 @@ function renderActions(container, d, hands) {
     }).filter(Boolean).join('') + '</div></div>';
   actHtml += '</div></div>';
 
-  // Bet sizing insights
-  if (d.avgBetFlop > 0) {
-    var exFlopBet = findExampleHand(function(h) {
-      if (!h.board || h.board.length < 3) return false;
-      return parseActions(h.actions).some(function(a) { return a.isMe && a.street === 'Flop' && (a.type === 'raise' || a.type === 'bet'); });
-    });
-    var flopDisp = fmtAvgAmount(d.betAmts.Flop, d.betAmtsBB ? d.betAmtsBB.Flop : []);
-    aIns.push(insWithExample('o', 'Flop Sizing',
-      'Your average flop bet is ' + flopDisp + '.',
-      [{ v: 'Avg: ' + flopDisp, hi: true }],
-      exFlopBet,
-      'This hand shows your typical flop bet sizing. In TC where players call wide, sizing between 60-80% of pot extracts maximum value from weaker hands chasing draws.',
-      'TC players call wide. Aim for 60-80% pot on the flop to extract maximum value from weak made hands and charge draws their proper price.'));
-  }
-  if (d.avgBetTurn > 0) {
-    var bigger = d.avgBetTurn >= d.avgBetFlop;
-    var exTurnBet = findExampleHand(function(h) {
-      if (!h.board || h.board.length < 4) return false;
-      return parseActions(h.actions).some(function(a) { return a.isMe && a.street === 'Turn' && (a.type === 'raise' || a.type === 'bet'); });
-    });
-    var turnDisp = fmtAvgAmount(d.betAmts.Turn, d.betAmtsBB ? d.betAmtsBB.Turn : []);
-    var flopDispT = fmtAvgAmount(d.betAmts.Flop, d.betAmtsBB ? d.betAmtsBB.Flop : []);
-    aIns.push(insWithExample(bigger ? 'g' : 'a', 'Turn Sizing',
-      bigger ? 'Your turn bets (' + turnDisp + ') are larger than your flop bets.' : 'Your turn bets (' + turnDisp + ') are smaller than your flop bets (' + flopDispT + ').',
-      [{ v: 'Avg: ' + turnDisp, hi: true }],
-      exTurnBet,
-      bigger ? 'Good turn sizing here - increasing your bet as the pot grows puts maximum pressure on drawing hands and builds value.' : 'Your turn bet here was smaller than your flop bet. As the pot grows, your bets should scale up to charge opponents for chasing.',
-      'Bets should scale with the pot. As the pot grows from flop to turn to river, bet sizes should grow too - same percentage of a bigger pot equals more chips, charging draws and building value.'));
-  }
-  if (d.avgBetRiver > 0) {
-    var exRiverBet = findExampleHand(function(h) {
-      if (!h.board || h.board.length < 5) return false;
-      if (!h.outcome || h.outcome.result !== 'won') return false;
-      return parseActions(h.actions).some(function(a) { return a.isMe && a.street === 'River' && (a.type === 'raise' || a.type === 'bet'); });
-    });
-    var riverDisp = fmtAvgAmount(d.betAmts.River, d.betAmtsBB ? d.betAmtsBB.River : []);
-    aIns.push(insWithExample('o', 'River Sizing',
-      'Your average river bet is ' + riverDisp + '.',
-      [{ v: 'Avg: ' + riverDisp, hi: true }],
-      exRiverBet,
-      'This winning hand shows the river paying off. Size up with strong hands - TC players will call with second-best hands more often than they should.',
-      'The river is where you get paid. With value hands, size up to 75-100% of pot - TC players call too wide on the end with second-best hands.'));
-  }
+  // Per-street sizing insights (Flop/Turn/River Sizing) retired - the new
+  // Bet Sizing Shape story above covers per-street sizing distribution with
+  // richer scatter/single-size/scaling reads.
   var fbo = d.betOpps['Flop'];
   var _flopBetMin = _scaleN(3);
   var _flopBetFloor = _cbetBand ? _cbetBand.tight + (_domFb === 'HU' ? 10 : _domFb === 'multiway' ? -10 : 0) - 5 : 30;

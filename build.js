@@ -58,6 +58,9 @@ var insightsOrder = [
   'js/insights/sections/showdown.js',
   'js/insights/sections/tables.js',
   'js/insights/sections/trends.js',
+  'js/insights/sections/streets.js',
+  'js/insights/sections/players.js',
+  'js/insights/sections/bets.js',
 ];
 
 var files = []

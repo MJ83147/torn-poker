@@ -41,20 +41,18 @@
       'position-hj', 'position-co', 'position-btn', 'position-sb', 'position-bb'
     ],
     'Tables': ['tables-selection', 'tables-time'],
-    'Street': [],
-    'Betting': [
-      'preflop-initiative',
-      'preflop-defence',
-      'postflop-aggression-with-initiative',
-      'postflop-aggression-without-initiative',
-      'postflop-defence',
-      'sizing-patterns',
-      'aggression-style'
+    'Street': [
+      'streets-cbet', 'streets-fold-to-cbet', 'streets-three-bet', 'streets-fold-to-three-bet',
+      'streets-check-fold', 'streets-donk', 'streets-delay-cbet'
     ],
+    'Betting': ['bets-sizing-shape', 'bets-value-vs-bluff', 'bets-response'],
     'Showdown': ['showdown-going', 'showdown-winning', 'showdown-split'],
     'All-In EV': ['all-in-and-stack-off'],
     'Hand Log': [],
-    'Players': ['opponent-adjustment']
+    'Players': [
+      'players-vs-tag', 'players-vs-lag', 'players-vs-nit', 'players-vs-station', 'players-vs-maniac',
+      'players-profitable', 'players-unprofitable'
+    ]
   };
 
   window.Insights.PANELS = PANELS;
