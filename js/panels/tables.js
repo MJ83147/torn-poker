@@ -56,6 +56,19 @@ function renderTables(container, hands, allHands, excludedTables, onRerender) {
     var maxHands = Math.max.apply(null, tableRows.map(function(r) { return r.n; }).concat([1]));
     tablesHtml += '<div class="panel-title">Tables</div>';
     tablesHtml += '<div class="panel-desc">Compare stats across different stakes.</div>';
+
+    // Section stories (Table Selection, Time at Table) render above the
+    // per-table performance widget. Built by js/insights/sections/tables.js.
+    var sectionFindingsHtml = '';
+    if (typeof Sections !== 'undefined' && typeof Sections.evaluateSections === 'function') {
+      var dTables = (typeof analyse === 'function') ? analyse(hands) : null;
+      if (dTables) {
+        var tblFindings = Sections.findingsForPanel(Sections.evaluateSections(dTables, {}, hands), 'Tables');
+        if (tblFindings.length) sectionFindingsHtml = Sections.renderFindings(tblFindings);
+      }
+    }
+    if (sectionFindingsHtml) tablesHtml += '<div class="p-row">' + sectionFindingsHtml + '</div>';
+
     tablesHtml += '<div class="p-row"><div class="sec-subtitle mt-0">Performance by Table</div>';
     tablesHtml += '<div class="overflow-x"><table class="tbl"><thead><tr>';
     tablesHtml += '<th>Table</th><th>Blinds</th><th>Hands</th><th></th><th>' + tipWrap('Win Rate') + '</th><th>' + tipWrap('Net P&L') + '</th><th>' + tipWrap('VPIP') + '</th><th>' + tipWrap('Aggression') + '</th><th>' + tipWrap('Avg Pot') + '</th><th></th>';
@@ -78,30 +91,10 @@ function renderTables(container, hands, allHands, excludedTables, onRerender) {
     }
     tablesHtml += '</tbody></table></div></div>';
 
+    // Legacy "Best Win Rate", "Lowest Win Rate", "Most Profitable", and
+    // "Biggest Loss" cards lived here. They are now produced by the Table
+    // Selection section story rendered above. Engine insights still append.
     var tIns2 = [];
-    if (tableRows.length >= 2) {
-      var best = tableRows.filter(function(r2) { return r2.wr !== null; }).sort(function(a, b) { return b.wr - a.wr; })[0];
-      var worst = tableRows.filter(function(r2) { return r2.wr !== null && r2.n >= 5; }).sort(function(a, b) { return a.wr - b.wr; })[0];
-      var mostProfit = tableRows.slice().sort(function(a, b) { return b.net - a.net; })[0];
-      if (best && best.wr >= 40) {
-        var exBestTable = findExampleHand(function(h) { return String(inferTable(h) || 'unknown') === String(best.tid) && h.outcome && h.outcome.result === 'won'; });
-        tIns2.push(insWithExample(best.wr >= 50 ? 'g' : 'n', 'Best Win Rate', best.label + ' at ' + best.wr + '% across ' + best.n + ' hands.', [{ v: best.wr + '%', hi: true }, { v: best.n + ' hands' }], exBestTable, 'A winning hand from ' + best.label + ', your highest win-rate table. Consider whether the player pool or stakes here suit your style particularly well.'));
-      }
-      if (worst && worst.wr < 40 && worst.n >= 5) {
-        var exWorstTable = findExampleHand(function(h) { return String(inferTable(h) || 'unknown') === String(worst.tid) && h.outcome && h.outcome.result !== 'won'; });
-        tIns2.push(insWithExample('r', 'Lowest Win Rate', worst.label + ' at ' + worst.wr + '% across ' + worst.n + ' hands. Consider whether the stakes or player pool suit your style.', [{ v: worst.wr + '%', hi: true }, { v: worst.n + ' hands' }], exWorstTable, 'A losing hand from ' + worst.label + '. Review whether you are adjusting your strategy for this table\'s stakes and player tendencies.'));
-      }
-      if (mostProfit && mostProfit.net > 0) {
-        var exProfitTable = findExampleHand(function(h) { return String(inferTable(h) || 'unknown') === String(mostProfit.tid) && h.outcome && h.outcome.result === 'won'; });
-        tIns2.push(insWithExample('g', 'Most Profitable', mostProfit.label + ' with a net of ' + fmtPnl(mostProfit.net) + '.', [{ v: fmtPnl(mostProfit.net), hi: true }], exProfitTable, 'A winning hand from your most profitable table. The combination of stakes, player pool, and your strategy is working well here.'));
-      }
-      var bigLoss = tableRows.filter(function(r2) { return r2.net < 0; }).sort(function(a, b) { return a.net - b.net; })[0];
-      if (bigLoss) {
-        var exLossTable = findExampleHand(function(h) { return String(inferTable(h) || 'unknown') === String(bigLoss.tid) && h.outcome && h.outcome.result !== 'won'; });
-        tIns2.push(insWithExample('a', 'Biggest Loss', bigLoss.label + ' at ' + fmtPnl(bigLoss.net) + '. Review whether leaks are table-specific or general.', [{ v: fmtPnl(bigLoss.net), hi: true }], exLossTable, 'A losing hand from ' + bigLoss.label + '. Check if you are playing too loose or calling too much at these stakes.'));
-      }
-    }
-    // Append engine insights to legacy
     var engineTblIns = InsightEngine.forPanel('tables', 4);
     for (var etbi = 0; etbi < engineTblIns.length; etbi++) {
       var dupTbl = false;

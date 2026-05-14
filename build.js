@@ -55,6 +55,9 @@ var insightsOrder = [
   'js/insights/story-engine.js',
   'js/insights/sections/range.js',
   'js/insights/sections/position.js',
+  'js/insights/sections/showdown.js',
+  'js/insights/sections/tables.js',
+  'js/insights/sections/trends.js',
 ];
 
 var files = []

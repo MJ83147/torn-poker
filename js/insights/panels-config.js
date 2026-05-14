@@ -18,6 +18,7 @@
     Range: 'Range',                         // hand selection (preflop hole cards)
     Cards: 'Cards',                         // played-hand outcome (made-hand journey)
     Position: 'Position',                   // position story
+    Tables: 'Tables',                       // table selection and time at table
     Street: 'Street',                       // raw data only, no stories
     Betting: 'Betting',                     // preflop init/defence, postflop with/without
                                             // initiative, postflop defence, sizing, agg style
@@ -32,13 +33,14 @@
   var STORIES_BY_PANEL = {
     'Welcome': [],
     'My Game': ['top-strengths', 'top-weaknesses', 'play-style'],
-    'Tables and Trends': ['session-and-tilt'],
+    'Tables and Trends': ['trends-direction', 'trends-sessions'],
     'Range': ['width-of-range', 'winning-hands'],
     'Cards': ['played-hand-outcome'],
     'Position': [
       'position-utg', 'position-utg-1', 'position-mp', 'position-lj',
       'position-hj', 'position-co', 'position-btn', 'position-sb', 'position-bb'
     ],
+    'Tables': ['tables-selection', 'tables-time'],
     'Street': [],
     'Betting': [
       'preflop-initiative',
@@ -49,7 +51,7 @@
       'sizing-patterns',
       'aggression-style'
     ],
-    'Showdown': ['showdown'],
+    'Showdown': ['showdown-going', 'showdown-winning', 'showdown-split'],
     'All-In EV': ['all-in-and-stack-off'],
     'Hand Log': [],
     'Players': ['opponent-adjustment']

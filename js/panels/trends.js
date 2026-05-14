@@ -66,6 +66,17 @@ function renderTrends(container, hands, meta, overallData) {
 
   var tHtml = '<div class="panel-title">Trends</div>';
   tHtml += '<div class="panel-desc">Session-over-session charts for win rate, VPIP, and P&L.</div>';
+
+  // Section stories (Direction of Travel, Session Swings) render above the
+  // charts and tables. They subsume the legacy Win Rate / VPIP Shift cards
+  // below.
+  var sectionFindingsHtml = '';
+  if (typeof Sections !== 'undefined' && typeof Sections.evaluateSections === 'function') {
+    var sectionFindings = Sections.findingsForPanel(Sections.evaluateSections(overallData || analyse(hands), {}, hands), 'Tables and Trends');
+    if (sectionFindings.length) sectionFindingsHtml = Sections.renderFindings(sectionFindings);
+  }
+  if (sectionFindingsHtml) tHtml += '<div class="p-row">' + sectionFindingsHtml + '</div>';
+
   tHtml += '<div class="p-row"><div class="trends-grid">';
   for (var ci = 0; ci < chartConfigs.length; ci++) {
     var cfg = chartConfigs[ci];
@@ -96,61 +107,11 @@ function renderTrends(container, hands, meta, overallData) {
   }
   tHtml += '</tbody></table></div></div>';
 
+  // Win Rate Improving/Declining/Stable and VPIP Shift cards retired: the
+  // Direction of Travel and Session Swings section stories above cover the
+  // same territory with richer branching. Engine pattern insights still run
+  // below as they cover session-half and tilt patterns from a separate engine.
   var tIns = [];
-  if (points.length >= 3) {
-    var last = points[points.length - 1];
-    var mid = points[Math.floor(points.length / 2)];
-    // Scale the swing gate by the smaller half's hand count so a few sessions
-    // don't trigger spurious shifts.
-    var _smallHalfN = Math.min(last.cumHands - mid.cumHands, mid.cumHands);
-    var _wrGate = 5 * Math.max(1, Math.sqrt(40 / Math.max(1, _smallHalfN)));
-    var _vpipGate = 8 * Math.max(1, Math.sqrt(40 / Math.max(1, _smallHalfN)));
-    if (last.wr !== null && mid.wr !== null) {
-      var diff = last.wr - mid.wr;
-      if (diff > _wrGate) {
-        var exRecentWin = findExampleHand(function(h) { return h.outcome && h.outcome.result === 'won' && (h.timestamp || 0) >= (sorted[Math.floor(sorted.length / 2)].timestamp || 0); });
-        tIns.push(insWithExample('g', 'Win Rate Improving',
-          'Your cumulative win rate has climbed ' + diff + ' points over the second half of your sessions.',
-          [{ v: mid.wr + '% → ' + last.wr + '%', hi: true }],
-          exRecentWin,
-          'A recent winning hand from your improving stretch. Whatever adjustments you have made are paying off - keep it up.',
-          'Whatever you changed is working. Keep playing the same way and resist the urge to "mix it up" while you are in a winning rhythm.'));
-      } else if (diff < -_wrGate) {
-        var exRecentLoss = findExampleHand(function(h) { return h.outcome && h.outcome.result !== 'won' && (h.timestamp || 0) >= (sorted[Math.floor(sorted.length / 2)].timestamp || 0); });
-        tIns.push(insWithExample('a', 'Win Rate Declining',
-          'Your cumulative win rate has dropped ' + Math.abs(diff) + ' points over the second half of your sessions.',
-          [{ v: mid.wr + '% → ' + last.wr + '%', hi: true }],
-          exRecentLoss,
-          'A recent losing hand during your downswing. Review whether you are tilting, calling too wide, or facing tougher competition.',
-          'Downswings are usually one of three things: variance, a leak that opened up recently, or tougher opponents. Filter the hand log to recent sessions and look for patterns before assuming variance.'));
-      } else {
-        tIns.push(ins('n', 'Win Rate Stable',
-          'Consistent at around ' + last.wr + '% across sessions.',
-          [{ v: last.wr + '%' }]));
-      }
-    }
-    if (last.vpip !== null && mid.vpip !== null) {
-      var vdiff = last.vpip - mid.vpip;
-      if (Math.abs(vdiff) > _vpipGate) {
-        var exVpipShift = findExampleHand(function(h) {
-          if (!h.timestamp || h.timestamp < (sorted[Math.floor(sorted.length / 2)].timestamp || 0)) return false;
-          var ma = parseActions(h.actions).filter(function(a) { return a.isMe && a.street === 'Preflop'; });
-          return vdiff > 0
-            ? ma.some(function(a) { return a.type === 'call' || a.type === 'raise'; })
-            : ma.some(function(a) { return a.type === 'fold'; });
-        });
-        tIns.push(insWithExample('a', 'VPIP Shift',
-          'Your VPIP has moved ' + (vdiff > 0 ? 'up' : 'down') + ' by ' + Math.abs(vdiff) + ' points across the second half of your sessions.',
-          [{ v: mid.vpip + '% → ' + last.vpip + '%', hi: true }],
-          exVpipShift,
-          vdiff > 0 ? 'A recent hand where you voluntarily entered the pot. Your VPIP has increased - make sure you are not playing too many marginal hands.' : 'A recent hand where you folded preflop. Your VPIP has dropped - make sure you are not being too tight and missing value.',
-          vdiff > 0
-            ? 'A creeping VPIP usually means you are playing more marginal hands - especially from early position or when bored. Tighten back up if your win rate has not also climbed.'
-            : 'A dropping VPIP can mean you are folding hands that play well in position. Check whether you are still opening enough from CO and BTN.'));
-      }
-    }
-  }
-  // Append engine insights (patterns: session-half, tilt) to legacy
   appendEngineInsights('trends', tIns, { limit: 4 });
   tHtml += '<div class="p-row">' + renderInsights(tIns, 'Trends', 'Keep tracking to build up enough data points for trend insights.') + '</div>';
   container.innerHTML = tHtml;
