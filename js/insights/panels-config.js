@@ -35,7 +35,7 @@
     'My Game': ['top-strengths', 'top-weaknesses', 'play-style'],
     'Tables and Trends': ['trends-direction', 'trends-sessions'],
     'Range': ['width-of-range', 'winning-hands'],
-    'Cards': ['played-hand-outcome'],
+    'Cards': ['cards-premium', 'cards-strong', 'cards-marginal', 'cards-air'],
     'Position': [
       'position-utg', 'position-utg-1', 'position-mp', 'position-lj',
       'position-hj', 'position-co', 'position-btn', 'position-sb', 'position-bb'
@@ -47,7 +47,7 @@
     ],
     'Betting': ['bets-sizing-shape', 'bets-value-vs-bluff', 'bets-response'],
     'Showdown': ['showdown-going', 'showdown-winning', 'showdown-split'],
-    'All-In EV': ['all-in-and-stack-off'],
+    'All-In EV': ['allin-pressure'],
     'Hand Log': [],
     'Players': [
       'players-vs-tag', 'players-vs-lag', 'players-vs-nit', 'players-vs-station', 'players-vs-maniac',

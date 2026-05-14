@@ -165,6 +165,15 @@ function renderAllIn(container, hands) {
   var html = '<div class="panel-title">All-In EV</div>';
   html += '<div class="panel-desc">Compares actual results vs expected value at all-in showdowns to measure variance.</div>';
 
+  // Section story (All-in Pressure) renders above the equity workflow. Reads
+  // d.facedAllin / foldAllin / callAllin / wonAllin so it works without
+  // running the Monte Carlo step.
+  if (typeof Sections !== 'undefined' && typeof Sections.evaluateSections === 'function' && typeof analyse === 'function') {
+    var dAllin = analyse(hands);
+    var allinFindings = Sections.findingsForPanel(Sections.evaluateSections(dAllin, {}, hands), 'All-In EV');
+    if (allinFindings.length) html += '<div class="p-row">' + Sections.renderFindings(allinFindings) + '</div>';
+  }
+
   // Pre-simulation: show hand count and button
   html += '<div class="p-row"><div class="p-section cta-block">';
   html += '<div class="cta-count">' + _allinHands.length + '</div>';

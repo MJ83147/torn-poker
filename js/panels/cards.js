@@ -6,6 +6,18 @@ function renderCards(container, d, hands) {
   var maxDealt = htData.length ? Math.max.apply(null, htData.map(function(ht) { return d.htMap[ht].dealt; })) : 1;
   var cardsHtml = '<div class="panel-title">Cards</div>';
   cardsHtml += '<div class="panel-desc">Win rates by hand type: pairs, broadway, suited connectors, and more.</div>';
+
+  // Section stories (postflop hand strength buckets) render above the per-
+  // hole-type stacked bars. The new stories classify by what the player held
+  // at the moment of postflop decision (premium, strong, marginal, air);
+  // the legacy bars below still describe preflop hole-card type.
+  var sectionFindingsHtml = '';
+  if (typeof Sections !== 'undefined' && typeof Sections.evaluateSections === 'function') {
+    var cardsFindings = Sections.findingsForPanel(Sections.evaluateSections(d, {}, hands), 'Cards');
+    if (cardsFindings.length) sectionFindingsHtml = Sections.renderFindings(cardsFindings);
+  }
+  if (sectionFindingsHtml) cardsHtml += '<div class="p-row">' + sectionFindingsHtml + '</div>';
+
   cardsHtml += '<div class="p-row">';
   // Legend
   cardsHtml += '<div class="ht-stack-legend">' +
