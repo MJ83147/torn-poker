@@ -1,15 +1,15 @@
 // ── CARDS SECTION ─────────────────────────────────────────────────────────────
 //
 // Six stories cover postflop performance by hand strength held at the moment
-// of decision. The MVP ships four of them because the current evaluator only
-// returns made-hand labels; draw detection is partial and not split into
-// strong vs weak buckets. Strong Draws and Weak Draws stay deferred until a
-// dedicated draw classifier lands.
+// of decision.
 //
 //   Premium Made   Set or better.
 //   Strong Made    Overpair, Top Pair, Two Pair.
 //   Marginal Made  Middle Pair, Bottom Pair, Pocket Pair below the board.
-//   Air            High card hands (no pair, no draw classification yet).
+//   Strong Draws   Flush draw, open-ended straight draw, or combo of both
+//                  (held on the flop or turn before the river).
+//   Weak Draws     Gutshot straight draw only.
+//   Air            High card hands with no significant draw.
 //
 // Hand strength is computed once per hand using classifyMadeHand on the last
 // street the hand actually reached. Hands that fold preflop without a flop
@@ -73,9 +73,30 @@
     return null;
   }
 
-  // Classify a single hand into one of the four MVP buckets, or null if the
-  // hand never reached the flop or lacks board cards.
-  // Bucket ids: 'premium', 'strong', 'marginal', 'air'.
+  // Map the made-hand draws array onto strong-draw / weak-draw buckets.
+  // classifyMadeHand emits strings like 'Flush draw (9 outs)', 'OESD (8 outs)',
+  // and 'Gutshot (4 outs)'. The river has no draws (last street). Returns
+  // 'strong-draw' for flush draw or OESD (or combo), 'weak-draw' for gutshot
+  // only, or null when there is nothing to classify.
+  function classifyDrawBucket(made, lastStreet) {
+    if (!made || !made.draws || !made.draws.length) return null;
+    if (lastStreet === 'River') return null; // draws are not live on the river
+    var hasFlush = false, hasOESD = false, hasGutshot = false;
+    for (var i = 0; i < made.draws.length; i++) {
+      var dStr = made.draws[i] || '';
+      if (dStr.indexOf('Flush draw') === 0) hasFlush = true;
+      else if (dStr.indexOf('OESD') === 0) hasOESD = true;
+      else if (dStr.indexOf('Gutshot') === 0) hasGutshot = true;
+    }
+    if (hasFlush || hasOESD) return 'strongDraw';
+    if (hasGutshot) return 'weakDraw';
+    return null;
+  }
+
+  // Classify a single hand into one of the six buckets, or null if the hand
+  // never reached the flop or lacks board cards. Made hands route first; the
+  // air bucket promotes to a draw bucket when classifyMadeHand surfaced a
+  // live draw on the flop or turn.
   function classifyHandBucket(h) {
     if (!h || !h.hole || h.hole.length < 2) return null;
     if (!h.board || h.board.length < 3) return null;
@@ -92,25 +113,33 @@
     if (!made || !made.label) return null;
 
     var label = made.label;
+    var madeBucket = null;
     // Premium Made: tier 3 (set/trips) and above. Use tier when present, fall
     // back to label parsing.
     if (made.tier != null) {
-      if (made.tier >= 3) return 'premium';
-      if (made.tier === 2) return 'strong'; // Two Pair (excluding board-only).
-      if (made.tier === 1) {
-        if (label === 'Overpair' || label === 'Top Pair') return 'strong';
-        if (label === 'Middle Pair' || label === 'Bottom Pair' || label === 'Pocket Pair') return 'marginal';
-        // Pair labels that fall through (e.g. board-pair high-card variants).
-        if (label.indexOf('High') !== -1) return 'air';
-        return 'marginal';
-      }
-      if (made.tier === 0) return 'air';
+      if (made.tier >= 3) madeBucket = 'premium';
+      else if (made.tier === 2) madeBucket = 'strong';
+      else if (made.tier === 1) {
+        if (label === 'Overpair' || label === 'Top Pair') madeBucket = 'strong';
+        else if (label === 'Middle Pair' || label === 'Bottom Pair' || label === 'Pocket Pair') madeBucket = 'marginal';
+        else if (label.indexOf('High') !== -1) madeBucket = 'air';
+        else madeBucket = 'marginal';
+      } else if (made.tier === 0) madeBucket = 'air';
+    } else {
+      if (/^(Set|Trips|Straight|Flush|Full House|Quads|Straight Flush)$/.test(label)) madeBucket = 'premium';
+      else if (label === 'Overpair' || label === 'Top Pair' || label === 'Two Pair') madeBucket = 'strong';
+      else if (label === 'Middle Pair' || label === 'Bottom Pair' || label === 'Pocket Pair') madeBucket = 'marginal';
+      else madeBucket = 'air';
     }
-    // Last-resort string match.
-    if (/^(Set|Trips|Straight|Flush|Full House|Quads|Straight Flush)$/.test(label)) return 'premium';
-    if (label === 'Overpair' || label === 'Top Pair' || label === 'Two Pair') return 'strong';
-    if (label === 'Middle Pair' || label === 'Bottom Pair' || label === 'Pocket Pair') return 'marginal';
-    return 'air';
+
+    // Promote air to a draw bucket when a live draw is present. Made-hand
+    // categories (pair+) keep their classification; their draws are
+    // incidental upgrades, not the primary strength.
+    if (madeBucket === 'air') {
+      var drawBucket = classifyDrawBucket(made, last);
+      if (drawBucket) return drawBucket;
+    }
+    return madeBucket;
   }
 
   // Hero's aggregate postflop action profile in a hand: counts of bets/raises,
@@ -166,10 +195,12 @@
 
   function buildBuckets(hands) {
     var buckets = {
-      premium: { id: 'premium', hands: [], n: 0, pnl: 0, won: 0, aggressive: 0, passive: 0, riverCall: 0, riverCallLost: 0, riverCallPnl: 0 },
-      strong:  { id: 'strong',  hands: [], n: 0, pnl: 0, won: 0, aggressive: 0, passive: 0, riverCall: 0, riverCallLost: 0, riverCallPnl: 0 },
-      marginal:{ id: 'marginal',hands: [], n: 0, pnl: 0, won: 0, aggressive: 0, passive: 0, riverCall: 0, riverCallLost: 0, riverCallPnl: 0 },
-      air:     { id: 'air',     hands: [], n: 0, pnl: 0, won: 0, aggressive: 0, passive: 0, called: 0, calledLost: 0, calledPnl: 0 }
+      premium:    { id: 'premium',    hands: [], n: 0, pnl: 0, won: 0, aggressive: 0, passive: 0, riverCall: 0, riverCallLost: 0, riverCallPnl: 0 },
+      strong:     { id: 'strong',     hands: [], n: 0, pnl: 0, won: 0, aggressive: 0, passive: 0, riverCall: 0, riverCallLost: 0, riverCallPnl: 0 },
+      marginal:   { id: 'marginal',   hands: [], n: 0, pnl: 0, won: 0, aggressive: 0, passive: 0, riverCall: 0, riverCallLost: 0, riverCallPnl: 0 },
+      strongDraw: { id: 'strongDraw', hands: [], n: 0, pnl: 0, won: 0, aggressive: 0, passive: 0, called: 0, calledLost: 0, calledPnl: 0, semibluffed: 0, semibluffPnl: 0 },
+      weakDraw:   { id: 'weakDraw',   hands: [], n: 0, pnl: 0, won: 0, aggressive: 0, passive: 0, called: 0, calledLost: 0, calledPnl: 0 },
+      air:        { id: 'air',        hands: [], n: 0, pnl: 0, won: 0, aggressive: 0, passive: 0, called: 0, calledLost: 0, calledPnl: 0 }
     };
     if (!hands) return buckets;
     for (var i = 0; i < hands.length; i++) {
@@ -187,14 +218,26 @@
         if ((prof.bet + prof.raise) > 0) b.aggressive++;
         else b.passive++;
       }
-      if (id === 'air') {
-        // For air, "called" tracks any postflop call (the leak: paying off).
+      if (id === 'air' || id === 'weakDraw') {
+        // For these, "called" tracks any postflop call (the leak: paying off
+        // with no equity or thin equity).
         if (prof && prof.call > 0) {
           b.called++;
           if (heroLost(h)) { b.calledLost++; b.calledPnl += pnl; }
         }
+      } else if (id === 'strongDraw') {
+        // Strong draws also track call-down losses but the headline pillar is
+        // semi-bluff frequency (bet/raise on the draw street).
+        if (prof && prof.call > 0) {
+          b.called++;
+          if (heroLost(h)) { b.calledLost++; b.calledPnl += pnl; }
+        }
+        if (prof && (prof.bet + prof.raise) > 0) {
+          b.semibluffed++;
+          b.semibluffPnl += pnl;
+        }
       } else {
-        // For made hands, river-call frequency is the "going too far" probe.
+        // Made hands: river-call frequency is the "going too far" probe.
         if (prof && prof.riverCall > 0) {
           b.riverCall++;
           if (heroLost(h)) { b.riverCallLost++; b.riverCallPnl += pnl; }
@@ -729,6 +772,220 @@
     };
   }
 
+  // ── STORY 5: STRONG DRAWS ────────────────────────────────────────────────
+
+  function buildStrongDraws(d, bucket, overallPerHand) {
+    if (!bucket || bucket.n < MIN_AX) return null;
+
+    var perHand = perHandRate(bucket.pnl, bucket.n);
+    var winRate = bucket.n > 0 ? Math.round((bucket.won / bucket.n) * 100) : 0;
+    var aggressivePct = bucket.n > 0 ? (bucket.aggressive / bucket.n) * 100 : 0;
+    var passivePct = 100 - aggressivePct;
+
+    var openingText = 'You hold a strong draw (flush draw, open-ended straight, or combo) on ' +
+      bucket.n + ' postflop hands. Net P&L is ' + fmtMoney(bucket.pnl) +
+      ', a win rate of ' + winRate + '%.';
+
+    var branchTexts = [];
+    var pillarSeverities = [];
+
+    // Pillar 1: semi-bluffing. Strong draws are the best semi-bluffing hands
+    // because they have equity when called. Below 30% aggression frequency
+    // means too many passive calls with these draws.
+    var semibluffSev = null;
+    if (bucket.n >= MIN_CL) {
+      if (aggressivePct < 20) semibluffSev = { severity: 'r', deltaUnits: (30 - aggressivePct) / 15 };
+      else if (aggressivePct < 30) semibluffSev = { severity: 'a', deltaUnits: (30 - aggressivePct) / 15 };
+    }
+    if (semibluffSev) {
+      branchTexts.push(
+        'You raised or bet only ' + Math.round(aggressivePct) + '% of strong draws. ' +
+        'These hands have the equity to play aggressively and the fold equity to make it work; passive calls leave the easiest money on the table.'
+      );
+      pillarSeverities.push(semibluffSev.severity);
+    } else if (bucket.n >= MIN_CL) {
+      pillarSeverities.push('g');
+    }
+
+    // Pillar 2: paying off when the draw bricks. If called frequently and the
+    // P&L on those call lines is negative, that is realising equity poorly.
+    var callLossPct = bucket.called > 0 ? (bucket.calledLost / bucket.called) * 100 : 0;
+    if (bucket.called >= MIN_CL && callLossPct >= 65 && bucket.calledPnl < 0) {
+      branchTexts.push(
+        'When you only called with strong draws you lost ' + Math.round(callLossPct) +
+        '% of those hands (' + fmtMoney(bucket.calledPnl) + ' across ' + bucket.called + ' hands). ' +
+        'Strong draws miss roughly two-thirds of the time; passive call lines turn that into a chip drain.'
+      );
+      pillarSeverities.push('a');
+    }
+
+    // Pillar 3: P&L direction vs overall.
+    var pnlVerdict = comparePnl(perHand, overallPerHand);
+    if (pnlVerdict === 'leak') {
+      branchTexts.push(
+        'Strong draws are net negative: ' + fmtMoney(bucket.pnl) + ' across ' + bucket.n +
+        ' hands. Even at fair pricing the bucket should not be losing money.'
+      );
+      pillarSeverities.push('r');
+    } else if (pnlVerdict === 'lift') {
+      branchTexts.push(
+        'Strong draws lift your win rate: ' + fmtMoney(bucket.pnl) + ' across ' + bucket.n +
+        ' hands, above your per-hand average.'
+      );
+    }
+
+    var severity = pillarSeverities.length ? Sections.combineSeverity(pillarSeverities) : 'g';
+
+    var impactText = null;
+    var soWhatText = null;
+    if (semibluffSev) {
+      impactText = 'Strong draws need to be played aggressively. Calling passively gets the worst of both worlds: no fold equity, no price discipline, just paying to see the next card.';
+      soWhatText = 'Raise more with flush draws and OESDs facing a flop bet. The equity plus fold equity makes raising the highest-EV line on most boards.';
+    } else if (pnlVerdict === 'leak') {
+      impactText = 'When strong draws lose money on net, the leak is usually in the streets after they miss. Calling turn bricks with no plan is the most common culprit.';
+      soWhatText = 'When the draw misses on the turn, fold to a bet unless you have backed it up with a barrel of your own. Free cards are not worth chasing.';
+    }
+
+    var fired = branchTexts.length > 0 || severity === 'r' || severity === 'a';
+    if (!fired) return null;
+
+    // Examples: strong draws where hero only called and lost (passive equity
+    // realisation gone wrong). Filtered to the verdict.
+    var examples = [];
+    var passiveLosses = pickHands(bucket.hands, function(h) {
+      return heroOnlyPassive(h) && heroLost(h);
+    }, 12);
+    if (passiveLosses.length) {
+      examples.push({
+        id: 'cards-strong-draws-passive-lost',
+        label: 'Strong draws you called with and lost',
+        hands: passiveLosses,
+        coachingNote: 'These are flush draws or OESDs where you only called and the draw missed. Look for spots that could have been semi-bluff raises on the flop or turn instead.'
+      });
+    }
+
+    return {
+      id: 'cards-strong-draws',
+      name: 'Strong Draws',
+      panel: 'Cards',
+      sectionId: 'cards',
+      severity: severity,
+      score: Sections.score(severity, semibluffSev ? semibluffSev.deltaUnits : 0),
+      openingText: openingText,
+      branchTexts: branchTexts,
+      impactText: impactText,
+      soWhatText: soWhatText,
+      examples: examples,
+      meta: {
+        n: bucket.n, pnl: bucket.pnl, won: bucket.won,
+        aggressive: bucket.aggressive, called: bucket.called,
+        calledLost: bucket.calledLost, calledPnl: bucket.calledPnl,
+        semibluffed: bucket.semibluffed, semibluffPnl: bucket.semibluffPnl,
+        perHand: perHand, overallPerHand: overallPerHand
+      }
+    };
+  }
+
+  // ── STORY 6: WEAK DRAWS ──────────────────────────────────────────────────
+
+  function buildWeakDraws(d, bucket, overallPerHand) {
+    if (!bucket || bucket.n < MIN_AX) return null;
+
+    var perHand = perHandRate(bucket.pnl, bucket.n);
+    var winRate = bucket.n > 0 ? Math.round((bucket.won / bucket.n) * 100) : 0;
+    var callPct = bucket.n > 0 ? (bucket.called / bucket.n) * 100 : 0;
+
+    var openingText = 'You hold a weak draw (gutshot straight) on ' + bucket.n +
+      ' postflop hands. Net P&L is ' + fmtMoney(bucket.pnl) + ', a win rate of ' + winRate + '%.';
+
+    var branchTexts = [];
+    var pillarSeverities = [];
+
+    // Pillar 1: pricing discipline. Gutshots are about 8 percent per street.
+    // Calling them often without the right price is the central leak.
+    var pricingSev = null;
+    if (bucket.called >= MIN_CL) {
+      var callLossPct = (bucket.calledLost / bucket.called) * 100;
+      if (callPct >= 50 && bucket.calledPnl < 0) {
+        pricingSev = { severity: 'r', deltaUnits: (callPct - 35) / 15 };
+        branchTexts.push(
+          'You called bets with weak draws on ' + Math.round(callPct) + '% of these hands. ' +
+          'Those calls have lost ' + fmtMoney(bucket.calledPnl) + ' across ' + bucket.called +
+          ' hands. Gutshots need a 10 to 1 price plus implied odds to be profitable; most of these spots do not have that.'
+        );
+        pillarSeverities.push('r');
+      } else if (callPct >= 35 && bucket.calledPnl < 0) {
+        pricingSev = { severity: 'a', deltaUnits: (callPct - 25) / 15 };
+        branchTexts.push(
+          'You called with weak draws on ' + Math.round(callPct) + '% of these hands. ' +
+          'Those calls have cost ' + fmtMoney(bucket.calledPnl) + '. Gutshots are the most price-sensitive draws in poker.'
+        );
+        pillarSeverities.push('a');
+      } else {
+        pillarSeverities.push('g');
+      }
+    }
+
+    // Pillar 2: P&L direction.
+    var pnlVerdict = comparePnl(perHand, overallPerHand);
+    if (pnlVerdict === 'leak') {
+      branchTexts.push(
+        'Weak draws are net negative: ' + fmtMoney(bucket.pnl) + ' across ' + bucket.n + ' hands. ' +
+        'The category that should be the most disciplined in your game is leaking.'
+      );
+      pillarSeverities.push('r');
+    }
+
+    var severity = pillarSeverities.length ? Sections.combineSeverity(pillarSeverities) : 'g';
+
+    var impactText = null;
+    var soWhatText = null;
+    if (pricingSev) {
+      impactText = 'Weak draws are the most expensive hands to call without discipline. They win rarely, and when they do not win, they cost you a bet on every street.';
+      soWhatText = 'Fold gutshots when the price is not right. The math is unforgiving: 8% equity needs roughly 11 to 1 odds plus implied. Without both you are giving chips away.';
+    } else if (pnlVerdict === 'leak') {
+      impactText = 'Even at correct prices, weak draws cumulate small losses across many hands. The discipline is the difference between a small leak and a big one.';
+      soWhatText = 'Tighten the conditions where you continue with a weak draw. Deep stacks, position, and a clean board texture are the spots; anything else folds.';
+    }
+
+    var fired = branchTexts.length > 0 || severity === 'r' || severity === 'a';
+    if (!fired) return null;
+
+    // Examples: weak draws called and lost.
+    var examples = [];
+    var calledLost = pickHands(bucket.hands, function(h) {
+      var prof = heroPostflopProfile(h);
+      return !!(prof && prof.call > 0 && heroLost(h));
+    }, 12);
+    if (calledLost.length) {
+      examples.push({
+        id: 'cards-weak-draws-called-lost',
+        label: 'Weak draws you called with and lost',
+        hands: calledLost,
+        coachingNote: 'Gutshot calls that did not connect. Look at the price you were getting; most of these are folds unless the stack-to-pot ratio is generous and position is yours.'
+      });
+    }
+
+    return {
+      id: 'cards-weak-draws',
+      name: 'Weak Draws',
+      panel: 'Cards',
+      sectionId: 'cards',
+      severity: severity,
+      score: Sections.score(severity, pricingSev ? pricingSev.deltaUnits : 0),
+      openingText: openingText,
+      branchTexts: branchTexts,
+      impactText: impactText,
+      soWhatText: soWhatText,
+      examples: examples,
+      meta: {
+        n: bucket.n, pnl: bucket.pnl, won: bucket.won,
+        called: bucket.called, calledLost: bucket.calledLost, calledPnl: bucket.calledPnl,
+        perHand: perHand, overallPerHand: overallPerHand
+      }
+    };
+  }
+
   // ── REGISTER ──────────────────────────────────────────────────────────────
 
   Sections.defineSection({
@@ -743,10 +1000,12 @@
       var overallPerHand = d.n > 0 ? overallPnl / d.n : 0;
 
       var out = [];
-      var p = buildPremium(d, buckets.premium, overallPerHand);  if (p) out.push(p);
-      var s = buildStrong(d, buckets.strong, overallPerHand);    if (s) out.push(s);
-      var m = buildMarginal(d, buckets.marginal, overallPerHand); if (m) out.push(m);
-      var a = buildAir(d, buckets.air, overallPerHand);          if (a) out.push(a);
+      var p = buildPremium(d, buckets.premium, overallPerHand);            if (p) out.push(p);
+      var s = buildStrong(d, buckets.strong, overallPerHand);              if (s) out.push(s);
+      var m = buildMarginal(d, buckets.marginal, overallPerHand);          if (m) out.push(m);
+      var sd = buildStrongDraws(d, buckets.strongDraw, overallPerHand);    if (sd) out.push(sd);
+      var wd = buildWeakDraws(d, buckets.weakDraw, overallPerHand);        if (wd) out.push(wd);
+      var a = buildAir(d, buckets.air, overallPerHand);                    if (a) out.push(a);
       return out;
     }
   });

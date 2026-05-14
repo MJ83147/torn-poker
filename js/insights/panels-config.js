@@ -35,7 +35,7 @@
     'My Game': ['top-strengths', 'top-weaknesses', 'play-style'],
     'Tables and Trends': ['trends-direction', 'trends-sessions'],
     'Range': ['width-of-range', 'winning-hands'],
-    'Cards': ['cards-premium', 'cards-strong', 'cards-marginal', 'cards-air'],
+    'Cards': ['cards-premium', 'cards-strong', 'cards-marginal', 'cards-strong-draws', 'cards-weak-draws', 'cards-air'],
     'Position': [
       'position-utg', 'position-utg-1', 'position-mp', 'position-lj',
       'position-hj', 'position-co', 'position-btn', 'position-sb', 'position-bb'
