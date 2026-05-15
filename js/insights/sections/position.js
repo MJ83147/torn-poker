@@ -251,6 +251,27 @@
        group === 'middle' ? 'marginal hand types' : 'offsuit trash') +
       '. The biggest contributors are ' + top + '.';
 
+    // Examples: pull recent hands at this seat with a hand type matching the
+    // weakest buckets, so the user can see the marginal opens directly.
+    var weakKeys = {};
+    for (var wi = 0; wi < weakBuckets.length; wi++) weakKeys[weakBuckets[wi].key] = true;
+    var weakHands = pickHands(hands, function(h) {
+      if ((h.position || '?') !== position) return false;
+      if (!heroPlayed(h)) return false;
+      var key = (typeof parseHoleKey === 'function') ? parseHoleKey(h.hole) : null;
+      var bucket = (key && typeof classifyKey === 'function') ? classifyKey(key) : null;
+      return bucket && weakKeys[bucket];
+    }, 12);
+    var examples = null;
+    if (weakHands.length) {
+      examples = {
+        id: 'pos-composition-' + position,
+        label: 'Weak opens you played from ' + position,
+        hands: weakHands,
+        coachingNote: 'Hands at the bottom of your ' + position + ' range. Try folding these next time and watch how the seat\'s win rate moves.'
+      };
+    }
+
     return {
       id: 'composition',
       severity: severity,
@@ -258,7 +279,8 @@
       deltaUnits: (weakPct - threshold) / 15,
       value: weakPct,
       branchText: branchText,
-      composition: weakBuckets
+      composition: weakBuckets,
+      examples: examples
     };
   }
 
@@ -295,6 +317,19 @@
       ' across ' + s.hands + ' hands' +
       (overallPerHand > 0 ? ', against your overall rate of ' + fmtFn(overallPerHand) + ' per hand' : '') + '.';
 
+    var lostHere = pickHands(hands, function(h) {
+      return (h.position || '?') === position && heroLost(h);
+    }, 12);
+    var examples = null;
+    if (lostHere.length) {
+      examples = {
+        id: 'pos-losses-' + position,
+        label: 'Losing hands at ' + position,
+        hands: lostHere,
+        coachingNote: 'Recent hands at ' + position + ' that lost chips. Look for the postflop pattern that keeps recurring here.'
+      };
+    }
+
     return {
       id: 'pnl',
       severity: severity,
@@ -304,7 +339,8 @@
       gap: gap,
       branchText: branchText,
       total: s.pnl,
-      hands: s.hands
+      hands: s.hands,
+      examples: examples
     };
   }
 

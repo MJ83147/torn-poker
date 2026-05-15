@@ -177,44 +177,7 @@ function renderRange(container, d, hands) {
       '<div class="leg"><div class="leg-sw leg-sw-med"></div>Sometimes</div>' +
       '<div class="leg"><div class="leg-sw leg-sw-high"></div>Most played</div>' +
       '</div>';
-    // Per-position raw-data widgets stay in this panel (Most Dealt, Coverage,
-    // per-position guide, per-position win rate). The leak verdicts (Best
-    // Hand, Worst Hand, Too Tight, Too Loose, Range Fit, Overplayed,
-    // Underplayed) are now produced by the Range section stories at the top
-    // of the panel via Sections.evaluateSections().
-    var rangeIns = [];
-    var mostPlayed = null, mostCount = 0;
-    Object.keys(rMap).forEach(function(k) {
-      var rm = rMap[k];
-      if (rm.dealt > mostCount) { mostCount = rm.dealt; mostPlayed = k; }
-    });
-    if (mostPlayed) {
-      var exMost = findExampleHand(function(h) { return parseHoleKey(h.hole) === mostPlayed; });
-      rangeIns.push(insWithExample('n', 'Most Dealt', 'You have been dealt ' + mostPlayed + ' the most (' + mostCount + ' times). ' + (rMap[mostPlayed].played < mostCount / 2 ? 'You fold it more than half the time.' : 'You play it frequently.'), [{ v: mostPlayed, hi: true }, { v: mostCount + ' dealt' }], exMost, 'Here is a hand where you were dealt ' + mostPlayed + '. ' + (rMap[mostPlayed].played < mostCount / 2 ? 'You fold this hand often, make sure you are not being too tight with it in good positions.' : 'You play this hand frequently, make sure you are not overvaluing it from bad positions.')));
-    }
-    var coveragePct = Math.round(seen / totalCombos * 100);
-    rangeIns.push(ins('n', 'Coverage', 'You have seen ' + seen + ' of ' + totalCombos + ' possible hand combos (' + coveragePct + '%). The more hands you play, the more complete this picture becomes.', [{ v: seen + '/' + totalCombos + ' combos' }]));
-
-    // Position-specific raw-data card kept for the per-position filter view.
-    // Verdicts on whether the player is too tight or too loose belong to the
-    // Width of Range story rendered above the grid.
-    if (posLabel && posLabel !== 'all') {
-      var totalDealt = 0, totalPlayedPos = 0, totalWon = 0;
-      Object.keys(rMap).forEach(function(k) { totalDealt += rMap[k].dealt; totalPlayedPos += rMap[k].played; totalWon += rMap[k].won; });
-      var wrPctPos = totalPlayedPos > 0 ? Math.round(totalWon / totalPlayedPos * 100) : 0;
-      var guide = benchmarkFor(posLabel).vpipGuide;
-      if (guide && totalDealt >= 3) {
-        var exPos = findExampleHand(function(h) {
-          return (h.position || '?') === posLabel;
-        });
-        rangeIns.push(ins('n', posLabel + ' Guide', guide.desc, [{ v: 'Ideal VPIP: ' + guide.ideal }]));
-        if (totalPlayedPos >= 5) {
-          rangeIns.push(insWithExample(wrPctPos >= 50 ? 'g' : wrPctPos >= 35 ? 'n' : 'r', posLabel + ' Win Rate', 'You are winning ' + wrPctPos + '% of hands you play from ' + posLabel + ' (' + totalWon + '/' + totalPlayedPos + ').', [{ v: wrPctPos + '% win' }, { v: totalPlayedPos + ' played' }], exPos, 'Here are hands from ' + posLabel + '. Review your play patterns to see what is working and where you can improve.'));
-        }
-      }
-    }
-
-    return { seen: seen, totalCombos: totalCombos, wrGrid: wrGrid, freqGrid: freqGrid, legend1: legend1, legend2: legend2, rangeIns: rangeIns, rMap: rMap };
+    return { seen: seen, totalCombos: totalCombos, wrGrid: wrGrid, freqGrid: freqGrid, legend1: legend1, legend2: legend2, rMap: rMap };
   }
 
   function renderRangeGrids(rc) {
@@ -230,7 +193,7 @@ function renderRange(container, d, hands) {
       '<div class="two-col">' +
       '<div><div class="sec-subtitle mt-0">Win Rate by Hand</div>' + rc.legend1 + advLegend + '<div class="range-grid-sm">' + rc.wrGrid + '</div></div>' +
       '<div><div class="sec-subtitle mt-0">Hands Played</div>' + rc.legend2 + advLegend + '<div class="range-grid-sm">' + rc.freqGrid + '</div></div>' +
-      '</div><div class="divider"></div><div class="ins-grid">' + rc.rangeIns.join('') + '</div>';
+      '</div>';
   }
 
   // Render a single bar chart: one bar per position showing the user's actual
@@ -388,8 +351,8 @@ function renderRange(container, d, hands) {
   renderVpipChart('all');
   renderBenchNotes();
 
-  // Section stories (Width of Range, Winning Hands) read full-data and do not
-  // change with the position filter. Computed once, rendered once.
+  // Verdict + section stories (Width of Range, Winning Hands). Read full-data
+  // and do not change with the position filter. Computed once, rendered once.
   function renderRangeStories() {
     var el = document.getElementById('range-stories');
     if (!el) return;
@@ -399,7 +362,7 @@ function renderRange(container, d, hands) {
     }
     var findings = Sections.evaluateSections(d, {}, hands);
     var rangeFindings = Sections.findingsForPanel(findings, 'Range');
-    el.innerHTML = Sections.renderFindings(rangeFindings);
+    el.innerHTML = Sections.renderVerdict(rangeFindings, 'Range data is still building.') + Sections.renderFindings(rangeFindings);
   }
 
   // Bucket banner (describes the auto-detected benchmark used for target

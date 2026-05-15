@@ -14,7 +14,9 @@ function renderTrends(container, hands, meta, overallData) {
 
   var sorted = hands.slice().sort(function(a, b) { return (a.timestamp || 0) - (b.timestamp || 0); });
   if (sorted.length < 5) {
-    container.innerHTML = ins('n', 'Trends', 'Need at least 5 hands to show trends. Keep playing and tracking.', []);
+    container.innerHTML = '<div class="panel-title">Trends</div>' +
+      '<div class="panel-desc">Session-over-session charts for win rate, VPIP, and P&L.</div>' +
+      '<div class="panel-verdict">Need at least 5 hands to show trends. Keep playing and tracking.</div>';
     return;
   }
   var sessions = [];
@@ -67,15 +69,13 @@ function renderTrends(container, hands, meta, overallData) {
   var tHtml = '<div class="panel-title">Trends</div>';
   tHtml += '<div class="panel-desc">Session-over-session charts for win rate, VPIP, and P&L.</div>';
 
-  // Section stories (Direction of Travel, Session Swings) render above the
-  // charts and tables. They subsume the legacy Win Rate / VPIP Shift cards
-  // below.
-  var sectionFindingsHtml = '';
+  // Verdict + section stories (Direction of Travel, Session Swings).
+  var trendsFindings = [];
   if (typeof Sections !== 'undefined' && typeof Sections.evaluateSections === 'function') {
-    var sectionFindings = Sections.findingsForPanel(Sections.evaluateSections(overallData || analyse(hands), {}, hands), 'Tables and Trends');
-    if (sectionFindings.length) sectionFindingsHtml = Sections.renderFindings(sectionFindings);
+    trendsFindings = Sections.findingsForPanel(Sections.evaluateSections(overallData || analyse(hands), {}, hands), 'Tables and Trends');
+    tHtml += Sections.renderVerdict(trendsFindings, 'Direction of travel is steady across sessions.');
+    if (trendsFindings.length) tHtml += '<div class="p-row">' + Sections.renderFindings(trendsFindings) + '</div>';
   }
-  if (sectionFindingsHtml) tHtml += '<div class="p-row">' + sectionFindingsHtml + '</div>';
 
   tHtml += '<div class="p-row"><div class="trends-grid">';
   for (var ci = 0; ci < chartConfigs.length; ci++) {
@@ -107,13 +107,6 @@ function renderTrends(container, hands, meta, overallData) {
   }
   tHtml += '</tbody></table></div></div>';
 
-  // Win Rate Improving/Declining/Stable and VPIP Shift cards retired: the
-  // Direction of Travel and Session Swings section stories above cover the
-  // same territory with richer branching. Engine pattern insights still run
-  // below as they cover session-half and tilt patterns from a separate engine.
-  var tIns = [];
-  appendEngineInsights('trends', tIns, { limit: 4 });
-  tHtml += '<div class="p-row">' + renderInsights(tIns, 'Trends', 'Keep tracking to build up enough data points for trend insights.') + '</div>';
   container.innerHTML = tHtml;
 
   // ── Render Chart.js charts ──

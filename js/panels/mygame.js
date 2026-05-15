@@ -25,24 +25,14 @@ function renderMyGame(container, d, hands) {
   var _domSeatsMG = ctx.seats;
   var _vpipBandMG = ctx.band('vpip');
   var _afBandMG = ctx.band('af');
-  var _vpipTightCap = _vpipBandMG ? _vpipBandMG.ideal : 30;
-  var _aggCap = _afBandMG ? _afBandMG.tight : 25;
 
+  // Use the shared style detector so this panel's label is drawn from the
+  // same 8-label set the welcome target picker and players panel use.
   var typeLabel = '', typeDesc = '';
-  if (!smallSample) {
-    if (vpipVal <= _vpipTightCap && aggVal >= _aggCap) {
-      typeLabel = 'Shark';
-      typeDesc = 'Tight and aggressive. Picks spots well and applies pressure.';
-    } else if (vpipVal <= _vpipTightCap && aggVal < _aggCap) {
-      typeLabel = 'Rock';
-      typeDesc = 'Tight and passive. Only plays premiums, rarely bets without the goods.';
-    } else if (vpipVal > _vpipTightCap && aggVal >= _aggCap) {
-      typeLabel = 'Cannon';
-      typeDesc = 'Loose and aggressive. Plays lots of hands and fires often.';
-    } else {
-      typeLabel = 'Station';
-      typeDesc = 'Loose and passive. Calls too much, folds too little, rarely raises.';
-    }
+  if (!smallSample && typeof detectCurrentStyle === 'function') {
+    var detected = detectCurrentStyle(d);
+    typeLabel = detected.name;
+    typeDesc = (typeof styleDescription === 'function') ? styleDescription(typeLabel) : '';
   }
 
   html += '<div class="profile-row">';
@@ -102,29 +92,14 @@ function renderMyGame(container, d, hands) {
     var f3b = pct(d.foldTo3betDone, d.foldTo3betOpps);
     var fcbet = pct(d.foldToCbetDone, d.foldToCbetOpps);
 
-    // ── Section 4: Strengths (via Insight Engine) ──
-    var engineStrengths = InsightEngine.forPanel('mygame', 12).filter(function(i) { return i.sev === 'g'; });
-    if (engineStrengths.length > 4) engineStrengths = engineStrengths.slice(0, 4);
-    if (engineStrengths.length) {
-      html += '<div class="sec-subtitle mt-20">Strengths</div>';
-      html += '<div class="ins-grid">' + engineStrengths.map(function(i) { return renderRuleInsight(i); }).join('') + '</div>';
-    }
+    // Strengths and Exploitable Leaks lived here as legacy engine cards. The
+    // analytical panels (Position, Streets, Betting, Cards) carry the same
+    // verdicts via story cards now, so this panel focuses on the headline
+    // player type, table-dynamics targets, and the single "Work On Next" pick.
 
-    // ── Section 5: Exploitable leaks (via Insight Engine) ──
-    var engineLeaks = InsightEngine.forPanel('mygame', 12).filter(function(i) { return i.sev === 'r' || i.sev === 'a'; });
-    var allLeaks = engineLeaks.slice();
-    if (engineLeaks.length > 6) engineLeaks = engineLeaks.slice(0, 6);
-
-    if (engineLeaks.length) {
-      // Narrative summary
-      var narr = InsightEngine.narrativeFor('mygame');
-      if (narr && narr.narrative) {
-        html += '<div class="sec-subtitle mt-20">Analysis</div>';
-        html += '<div class="engine-narrative">' + narr.narrative + '</div>';
-      }
-      html += '<div class="sec-subtitle mt-20">Exploitable Leaks</div>';
-      html += '<div class="ins-grid">' + engineLeaks.map(function(i) { return renderRuleInsight(i); }).join('') + '</div>';
-    }
+    var allLeaks = InsightEngine && typeof InsightEngine.forPanel === 'function'
+      ? InsightEngine.forPanel('mygame', 12).filter(function(i) { return i.sev === 'r' || i.sev === 'a'; })
+      : [];
 
     // ── Section 6: Work on next ──
     html += '<div class="sec-subtitle mt-20">Work On Next</div>';
@@ -152,17 +127,15 @@ function renderMyGame(container, d, hands) {
     if (!workOn && allLeaks.length) workOn = { sev: allLeaks[0].sev, label: allLeaks[0].label, desc: '', action: 'Focus on this pattern in your next session and track whether the stat improves.' };
 
     if (workOn) {
-      var badgeColor = workOn.sev === 'r' ? 'red' : 'amber';
-      html += '<div class="ins" style="border-left:3px solid var(--' + badgeColor + ');padding-left:16px;margin:12px 0;">';
-      html += '<div class="ins-badge ' + workOn.sev + '"><div class="ins-dot"></div><div class="ins-word">Work on this</div></div>';
-      html += '<div class="ins-label dim-label">' + workOn.label + '</div>';
-      if (workOn.desc) html += '<div class="ins-text">' + workOn.desc + '</div>';
-      html += '<div class="ins-text" style="margin-top:8px;color:var(--text);">' + workOn.action + '</div>';
+      html += '<div class="work-on-block work-on-' + workOn.sev + '">';
+      html += '<div class="work-on-label">' + workOn.label + '</div>';
+      if (workOn.desc) html += '<div class="work-on-desc">' + workOn.desc + '</div>';
+      html += '<div class="work-on-action">' + workOn.action + '</div>';
       html += '</div>';
     } else {
-      html += '<div class="ins" style="border-left:3px solid var(--green);padding-left:16px;margin:12px 0;">';
-      html += '<div class="ins-badge g"><div class="ins-dot"></div><div class="ins-word">Solid Game</div></div>';
-      html += '<div class="ins-text">No major leaks detected from ' + d.n + ' hands. Keep playing to refine the picture.</div>';
+      html += '<div class="work-on-block work-on-g">';
+      html += '<div class="work-on-label">Solid game</div>';
+      html += '<div class="work-on-desc">No major leaks detected from ' + d.n + ' hands. Keep playing to refine the picture.</div>';
       html += '</div>';
     }
 

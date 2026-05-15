@@ -68,7 +68,9 @@ function renderPlayers(container, d, hands) {
 
   function renderPlayerList() {
     if (!filtered.length) {
-      container.innerHTML = ins('n', 'Players', 'Not enough shared hands to show opponent stats. Keep playing to build data.', []);
+      container.innerHTML = '<div class="panel-title">Players</div>' +
+        '<div class="panel-desc">Opponent records, head-to-head stats, and watch list.</div>' +
+        '<div class="panel-verdict">Not enough shared hands to show opponent stats. Keep playing to build data.</div>';
       return;
     }
     var watched = getWatchedPlayers();
@@ -82,14 +84,13 @@ function renderPlayers(container, d, hands) {
     var html = '<div class="panel-title">Players</div>';
     html += '<div class="panel-desc">Opponent records, head-to-head stats, and watch list.</div>';
 
-    // Section stories (vs playstyle, profitable/unprofitable names) render
-    // above the legacy cards and the opponent table.
-    var sectionFindingsHtml = '';
+    // Verdict + section stories (vs playstyle, profitable/unprofitable names).
+    var playersFindings = [];
     if (typeof Sections !== 'undefined' && typeof Sections.evaluateSections === 'function') {
-      var sectionFindings = Sections.findingsForPanel(Sections.evaluateSections(d, {}, hands), 'Players');
-      if (sectionFindings.length) sectionFindingsHtml = Sections.renderFindings(sectionFindings);
+      playersFindings = Sections.findingsForPanel(Sections.evaluateSections(d, {}, hands), 'Players');
+      html += Sections.renderVerdict(playersFindings, 'Opponent pool is still forming.');
+      if (playersFindings.length) html += '<div class="p-row">' + Sections.renderFindings(playersFindings) + '</div>';
     }
-    if (sectionFindingsHtml) html += '<div class="p-row">' + sectionFindingsHtml + '</div>';
 
     html += '<div class="mb-16"><button class="example-hand-btn" id="open-compare-btn">Compare Players</button></div>';
 
@@ -112,51 +113,6 @@ function renderPlayers(container, d, hands) {
       }
       html += '</tbody></table></div></div>';
     }
-
-    var pIns = [];
-
-    // Head-to-head records (Best Record / Toughest / Cash Cow / Biggest Loss)
-    // are now produced by the Profitable Opponents and Unprofitable Opponents
-    // section stories rendered above.
-
-    // ── Opponent-specific adjustment alerts ──
-    for (var oppName in _opponentCache) {
-      var oppProf = _opponentCache[oppName];
-      if (oppProf.hands < 15 || oppProf.adjustments.length < 2) continue;
-      // Check if hero is losing to this exploitable opponent
-      var oppData = oppMap[oppName];
-      if (!oppData) continue;
-      var heroVsWr = pct(oppData.won, oppData.won + oppData.lost);
-      if (heroVsWr !== null && heroVsWr < 40 && (oppData.won + oppData.lost) >= 5) {
-        var exploitList = oppProf.adjustments.length
-          ? oppProf.adjustments.join(' · ')
-          : 'no clear leaks identified yet';
-        pIns.push(ins('a', 'Adjust vs ' + oppName,
-          'You\'re losing (' + heroVsWr + '% WR) against ' + oppName + ' despite their leaks: ' + oppProf.adjustments.slice(0, 2).join('. ') + '.',
-          [{ v: heroVsWr + '% WR', hi: true }, { v: expandOpponentType(oppProf.type) }, { v: exploitList }]));
-        break; // Only show the most important one
-      }
-    }
-
-    // ── Engine insights (pool composition, fish, shark, etc.) ──
-    var enginePlrIns = InsightEngine.forPanel('players', 6);
-    for (var epi = 0; epi < enginePlrIns.length; epi++) {
-      var refined = refineOpponentInsight(enginePlrIns[epi]);
-      var dupPlr = false;
-      for (var pi2 = 0; pi2 < pIns.length; pi2++) {
-        if (pIns[pi2].indexOf(refined.label) !== -1) { dupPlr = true; break; }
-      }
-      if (!dupPlr) pIns.push(renderRuleInsight(refined));
-    }
-
-    // ── Engine narrative for players ──
-    var plrNarrative = InsightEngine.narrativeFor('players', 6);
-    if (plrNarrative && plrNarrative.narrative) {
-      var narrText = expandOpponentTypesInText(plrNarrative.narrative);
-      html += '<div class="p-row"><div class="engine-narrative">' + narrText + '</div></div>';
-    }
-
-    if (pIns.length) html += '<div class="p-row mt-8"><div class="ins-grid">' + pIns.join('') + '</div></div>';
 
     html += '<div class="p-row"><div class="flex-between"><div class="sec-subtitle mt-0">All Opponents</div>';
     html += '<input type="text" id="player-search" class="player-search" placeholder="Search players…" value="' + (_playerSearch || '').replace(/"/g, '&quot;') + '"></div>';
@@ -283,7 +239,7 @@ function renderPlayers(container, d, hands) {
           ph += '<div class="ins-grid mb-16">' + exploitIns.join('') + '</div>';
         }
       } else {
-        ph += '<div class="mb-16">' + ins('n', 'Building Profile', 'Need ' + Math.max(0, 5 - oppStats.hands) + ' more shared hands to show tendency stats.', [{ v: oppStats.hands + '/5 hands' }]) + '</div>';
+        ph += '<div class="panel-verdict">Need ' + Math.max(0, 5 - oppStats.hands) + ' more shared hands to show tendency stats (' + oppStats.hands + '/5 hands).</div>';
       }
 
       // ── Hand list ──

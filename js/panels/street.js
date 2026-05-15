@@ -10,13 +10,13 @@ function renderStreet(container, d, hands) {
   var stHtml = '<div class="panel-title">Streets</div>';
   stHtml += '<div class="panel-desc">Action breakdown by preflop, flop, turn, and river.</div>';
 
-  // Section stories render above the existing per-street tables and charts.
-  var sectionFindingsHtml = '';
+  // Verdict + section stories render above the existing per-street tables.
+  var streetFindings = [];
   if (typeof Sections !== 'undefined' && typeof Sections.evaluateSections === 'function') {
-    var streetFindings = Sections.findingsForPanel(Sections.evaluateSections(d, {}, hands), 'Street');
-    if (streetFindings.length) sectionFindingsHtml = Sections.renderFindings(streetFindings);
+    streetFindings = Sections.findingsForPanel(Sections.evaluateSections(d, {}, hands), 'Street');
+    stHtml += Sections.renderVerdict(streetFindings, 'Street-by-street action looks balanced for now.');
+    if (streetFindings.length) stHtml += '<div class="p-row">' + Sections.renderFindings(streetFindings) + '</div>';
   }
-  if (sectionFindingsHtml) stHtml += '<div class="p-row">' + sectionFindingsHtml + '</div>';
 
   stHtml += '<div class="p-row"><div class="two-col">';
   stHtml += '<div><div class="sec-subtitle">Hands reaching street</div><div class="bar-group">' + streets.map(function(s) {
@@ -52,46 +52,6 @@ function renderStreet(container, d, hands) {
   stHtml += '<div class="p-row"><div class="sec-subtitle mt-0">Action Breakdown by Street</div>';
   stHtml += '<div class="chart-wrap-full"><canvas id="street-action-chart"></canvas></div></div>';
 
-  // Engine insights for street panel
-  var engineStreetHtml = InsightEngine.renderForPanel('street', 6);
-  if (engineStreetHtml) {
-    stHtml += '<div class="p-row">' + engineStreetHtml + '</div>';
-  } else {
-    // Legacy fallback
-    var sIns = [];
-    var fr = pct(d.ss.Flop.seen, d.ss.Preflop.seen);
-    var rr = pct(d.ss.River.seen, d.ss.Preflop.seen);
-    if (fr !== null) {
-      sIns.push(ins('n', 'Street Depth', 'You see the flop ' + fr + '% of hands and reach the river ' + rr + '% of the time.', [{
-        v: 'Flop: ' + fr + '%',
-      }, {
-        v: 'River: ' + rr + '%',
-      }]));
-    }
-    var flopFoldP = pct(d.ss.Flop.f, d.ss.Flop.f + d.ss.Flop.ch + d.ss.Flop.ca + d.ss.Flop.ra);
-    var turnFoldP = pct(d.ss.Turn.f, d.ss.Turn.f + d.ss.Turn.ch + d.ss.Turn.ca + d.ss.Turn.ra);
-
-    // Pick dominant flop bucket so the fold-rate ceiling tracks board
-    // multiplicity - HU folds should stay low, multiway folds run higher.
-    var _streetFb = null;
-    if (d && d.byFlopBucket) {
-      var _bestN = 0;
-      var _keys = ['HU', '3-way', 'multiway'];
-      for (var _ki = 0; _ki < _keys.length; _ki++) {
-        var _fd = d.byFlopBucket[_keys[_ki]];
-        if (_fd && (_fd.n || 0) > _bestN) { _bestN = _fd.n; _streetFb = _keys[_ki]; }
-      }
-    }
-    var _flopCeil = _streetFb === 'HU' ? 38 : _streetFb === 'multiway' ? 60 : 50;
-    var _turnCeil = _streetFb === 'HU' ? 42 : _streetFb === 'multiway' ? 65 : 55;
-    if (flopFoldP !== null && flopFoldP > _flopCeil) {
-      sIns.push(ins('a', 'Flop Folding', 'You fold ' + flopFoldP + '% on the flop' + (_streetFb ? ' (' + _streetFb + ' flops; ceiling around ' + _flopCeil + '%)' : '') + '.', [{ v: d.ss.Flop.f + ' flop folds' }]));
-    }
-    if (turnFoldP !== null && turnFoldP > _turnCeil) {
-      sIns.push(ins('r', 'Turn Folding', 'Folding ' + turnFoldP + '% on the turn' + (_streetFb ? ' (' + _streetFb + '; ceiling around ' + _turnCeil + '%)' : '') + '.', [{ v: d.ss.Turn.f + ' turn folds' }]));
-    }
-    stHtml += '<div class="p-row">' + renderInsights(sIns, 'Streets', 'Keep building the sample for street-level patterns.') + '</div>';
-  }
   container.innerHTML = stHtml;
 
   // ── Render Chart.js stacked bar chart ──

@@ -663,45 +663,121 @@ textarea#jin:focus {
   line-height: 1.6;
 }
 
+/* WORK ON NEXT block (My Game panel)
+   Replaces the old border-rail .ins card with a flat block. The severity
+   shows in the label colour rather than a border. */
+.work-on-block {
+  background: var(--s2);
+  border-radius: var(--sp-8);
+  padding: var(--sp-16) var(--sp-20);
+  margin: var(--sp-12) 0;
+}
+
+.work-on-label {
+  font-size: var(--fs-16);
+  font-weight: 600;
+  margin-bottom: var(--sp-8);
+}
+
+.work-on-r .work-on-label { color: var(--red); }
+.work-on-a .work-on-label { color: var(--amber); }
+.work-on-g .work-on-label { color: var(--green); }
+
+.work-on-desc {
+  font-size: var(--fs-14);
+  color: var(--dim);
+  line-height: 1.6;
+  margin-bottom: var(--sp-8);
+}
+
+.work-on-action {
+  font-size: var(--fs-14);
+  color: var(--text);
+  line-height: 1.6;
+}
+
+/* PANEL VERDICT
+   One-sentence top-line per analytical panel. Synthesised from the highest
+   severity finding so the reader gets the headline before diving into cards. */
+.panel-verdict {
+  font-size: var(--fs-16);
+  line-height: 1.5;
+  color: var(--text);
+  background: var(--s2);
+  border-radius: var(--sp-8);
+  padding: var(--sp-16) var(--sp-20);
+  margin-bottom: var(--sp-24);
+}
+
 /* STORY CARDS
    Section findings (Width of Range, Winning Hands, etc.) reuse .ins as the
-   outer card. These inner classes layer the branch list, impact, and so-what
-   on top so a story reads as one coherent block. Shared across all sections.
-
-   Single column for narrative content. Stories are meant to be read top to
-   bottom; tiling them in multiple columns makes the eye zigzag. Max-width
-   on the grid itself keeps the reading measure comfortable. */
+   outer card. Two-column grid with collapsed cards by default; click a card
+   head to expand and read branches, impact, advice, examples. */
 .story-grid {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--sp-20);
   margin-bottom: var(--sp-16);
-  max-width: 760px;
 }
 
 .story-card {
   max-width: none;
-  padding: var(--sp-20);
-  border-left: 3px solid var(--border);
+  padding: 0;
+  cursor: pointer;
+  transition: background .15s;
 }
 
-.story-card.story-card-r { border-left-color: var(--red); }
-.story-card.story-card-a { border-left-color: var(--amber); }
-.story-card.story-card-g { border-left-color: var(--green); }
-.story-card.story-card-n { border-left-color: var(--dim); }
+.story-card:hover .story-card-head {
+  background: var(--s1);
+}
+
+.story-card-head {
+  position: relative;
+  padding: var(--sp-16) var(--sp-20);
+  border-radius: var(--sp-8);
+}
+
+.story-card-chev {
+  position: absolute;
+  bottom: var(--sp-12);
+  right: var(--sp-16);
+  font-size: var(--fs-12);
+  color: var(--dim);
+  transition: transform .15s;
+}
+
+.story-card:not(.is-collapsed) .story-card-chev {
+  transform: rotate(180deg);
+}
+
+.story-card.is-collapsed .story-body {
+  display: none;
+}
+
+.story-body {
+  padding: 0 var(--sp-20) var(--sp-20);
+}
 
 .story-card .ins-label {
   padding-right: 90px;
-  font-size: 17px;
-  margin-bottom: var(--sp-10);
+  font-size: var(--fs-16);
+  margin-bottom: var(--sp-8);
 }
 
 .story-card .ins-text {
   padding-right: 0;
-  margin-bottom: var(--sp-10);
-  font-size: 15px;
-  line-height: 1.6;
-  color: var(--text);
+  margin-bottom: 0;
+  font-size: var(--fs-14);
+  line-height: 1.5;
+  color: var(--dim);
+}
+
+.story-teaser {
+  margin-top: var(--sp-8);
+  font-size: var(--fs-13);
+  color: var(--dim);
+  line-height: 1.5;
+  padding-right: var(--sp-24);
 }
 
 .story-branches {

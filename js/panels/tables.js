@@ -32,7 +32,9 @@ function renderTables(container, hands, allHands, excludedTables, onRerender) {
 
   var tablesHtml = '';
   if (Object.keys(allTableGroups).length <= 1) {
-    tablesHtml = ins('n', 'Single Table', 'All hands are from a single table. Play across multiple tables to see comparisons.', []);
+    tablesHtml = '<div class="panel-title">Tables</div>' +
+      '<div class="panel-desc">Compare stats across different stakes.</div>' +
+      '<div class="panel-verdict">All hands are from a single table. Play across multiple tables to see comparisons.</div>';
   } else {
     var tableRows = [];
     var allTableIds = sortedTables.slice();
@@ -57,19 +59,18 @@ function renderTables(container, hands, allHands, excludedTables, onRerender) {
     tablesHtml += '<div class="panel-title">Tables</div>';
     tablesHtml += '<div class="panel-desc">Compare stats across different stakes.</div>';
 
-    // Section stories (Table Selection, Time at Table) render above the
-    // per-table performance widget. The section always reads allHands so that
-    // cross-table comparisons survive the panel's table-filter dropdown.
-    var sectionFindingsHtml = '';
+    // Verdict + section stories (Table Selection, Time at Table). Section
+    // always reads allHands so cross-table comparisons survive the dropdown.
+    var tblFindings = [];
     if (typeof Sections !== 'undefined' && typeof Sections.evaluateSections === 'function') {
       var sectionInput = (allHands && allHands.length) ? allHands : hands;
       var dTables = (typeof analyse === 'function') ? analyse(sectionInput) : null;
       if (dTables) {
-        var tblFindings = Sections.findingsForPanel(Sections.evaluateSections(dTables, {}, sectionInput), 'Tables');
-        if (tblFindings.length) sectionFindingsHtml = Sections.renderFindings(tblFindings);
+        tblFindings = Sections.findingsForPanel(Sections.evaluateSections(dTables, {}, sectionInput), 'Tables');
       }
+      tablesHtml += Sections.renderVerdict(tblFindings, 'Cross-table picture still building.');
+      if (tblFindings.length) tablesHtml += '<div class="p-row">' + Sections.renderFindings(tblFindings) + '</div>';
     }
-    if (sectionFindingsHtml) tablesHtml += '<div class="p-row">' + sectionFindingsHtml + '</div>';
 
     tablesHtml += '<div class="p-row"><div class="sec-subtitle mt-0">Performance by Table</div>';
     tablesHtml += '<div class="overflow-x"><table class="tbl"><thead><tr>';
@@ -92,24 +93,6 @@ function renderTables(container, hands, allHands, excludedTables, onRerender) {
       tablesHtml += '<td><button class="log-nav-btn exclude-btn exclude-table-btn" data-tid="' + r.tid + '">' + (isExcluded ? 'Include' : 'Exclude') + '</button></td></tr>';
     }
     tablesHtml += '</tbody></table></div></div>';
-
-    // Legacy zone cards lived here. They are now produced by the Table
-    // Selection section story rendered above. Engine insights still append
-    // when they have something to add but they no longer surface a
-    // "more data needed" fallback - that contradicts the section story
-    // which already states the picture above.
-    var tIns2 = [];
-    var engineTblIns = InsightEngine.forPanel('tables', 4);
-    for (var etbi = 0; etbi < engineTblIns.length; etbi++) {
-      var dupTbl = false;
-      for (var ti3 = 0; ti3 < tIns2.length; ti3++) {
-        if (tIns2[ti3].indexOf(engineTblIns[etbi].label) !== -1) { dupTbl = true; break; }
-      }
-      if (!dupTbl) tIns2.push(renderRuleInsight(engineTblIns[etbi]));
-    }
-    if (tIns2.length) {
-      tablesHtml += '<div class="p-row"><div class="ins-grid">' + tIns2.join('') + '</div></div>';
-    }
   }
   container.innerHTML = tablesHtml;
 

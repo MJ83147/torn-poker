@@ -41,17 +41,21 @@
     return items.slice(0, -1).join(', ') + ', and ' + items[items.length - 1];
   }
 
-  // Classify an opponent into the five canonical types plus Unknown. Tuned
-  // against the welcome cards and the matrix style list so the labels stay
-  // consistent with the rest of the app.
+  // Classify an opponent into the eight canonical types plus Unknown. Uses
+  // the same thresholds as js/engine/styleDetector.js so the labels stay
+  // consistent across welcome target picker, My Game and Style Map.
   function classifyVillain(vpip, af) {
     if (vpip == null || af == null) return 'Unknown';
     if (vpip >= 45 && af >= 40) return 'Maniac';
+    if (vpip >= 28) {
+      if (af >= 30) return 'LAG';
+      if (af >= 20) return 'Cannon';
+      return 'Station';
+    }
     if (vpip < 14) return 'Nit';
-    if (vpip >= 28 && af < 20) return 'Station';
-    if (vpip >= 28 && af >= 25) return 'LAG';
-    if (vpip >= 14 && vpip < 28 && af >= 25) return 'TAG';
-    return 'Unknown';
+    if (af >= 35) return 'Shark';
+    if (af >= 25) return 'TAG';
+    return 'Rock';
   }
 
   // Build the per-opponent profile list. Each entry: name, hands, vpip, af,
@@ -160,6 +164,14 @@
 
   // Copy hooks for each style.
   var STYLE_META = {
+    Shark: {
+      name: 'vs Sharks',
+      shortPlural: 'sharks',
+      shortSingle: 'a shark',
+      losingImpact: 'Sharks pick spots well and apply heavy pressure when they do get involved. Marginal hands are dominated against their range.',
+      losingSoWhat: 'Avoid hero calls against sharks. Pick your battles, fold dominated hands, and only put chips in with strong value or clear bluff-catchers.',
+      winningSoWhat: 'Stay disciplined against sharks. Avoid fancy lines, stick to value, and pick off only the spots where the board clearly favours you.'
+    },
     TAG: {
       name: 'vs Tight-Aggressive opponents',
       shortPlural: 'TAGs',
@@ -167,6 +179,22 @@
       losingImpact: 'TAGs only get involved with strong holdings and apply pressure when they do. Calling wide against them pays off their value range.',
       losingSoWhat: 'Tighten up the calls against TAG raises. Fold dominated hands and three-bet the spots where you do continue.',
       winningSoWhat: 'Keep doing what works against TAGs. Stay disciplined on calls and pick off their thin barrels when the board favours your range.'
+    },
+    Rock: {
+      name: 'vs Rocks',
+      shortPlural: 'rocks',
+      shortSingle: 'a rock',
+      losingImpact: 'Rocks only continue with value, but you may be paying off their rare aggression too often.',
+      losingSoWhat: 'When a rock bets or raises, fold marginal hands. Use their tightness against them by stealing pots when they show weakness.',
+      winningSoWhat: 'Keep attacking when a rock checks or limps. They give up easily, so apply pressure on safe boards.'
+    },
+    Cannon: {
+      name: 'vs Cannons',
+      shortPlural: 'cannons',
+      shortSingle: 'a cannon',
+      losingImpact: 'Cannons play too many flops without enough follow-through. The losses come from getting outdrawn or paying off the rare big bet.',
+      losingSoWhat: 'Value-bet thinner against cannons. They will call light on flops and turns, so bet for value and avoid bluffing.',
+      winningSoWhat: 'Keep value-betting cannons. They pay off too often; size up when they keep calling.'
     },
     LAG: {
       name: 'vs Loose-Aggressive opponents',
@@ -499,7 +527,7 @@
       if (!profiles.length) return [];
 
       var out = [];
-      var styles = ['TAG', 'LAG', 'Nit', 'Station', 'Maniac'];
+      var styles = ['Shark', 'TAG', 'Rock', 'LAG', 'Cannon', 'Nit', 'Station', 'Maniac'];
       for (var i = 0; i < styles.length; i++) {
         var s = buildPlaystyleStory(styles[i], profiles, hands);
         if (s) out.push(s);

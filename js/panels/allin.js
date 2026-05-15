@@ -158,19 +158,19 @@ function renderAllIn(container, hands) {
   if (!_allinHands.length) {
     container.innerHTML = '<div class="panel-title">All-In EV</div>' +
       '<div class="panel-desc">Tracks every all-in showdown to measure luck vs skill.</div>' +
-      '<div class="p-row">' + ins('n', 'No All-In Hands', 'No all-in showdown hands found in this dataset. When you go all-in and both players show cards, those hands will appear here with equity calculations.', []) + '</div>';
+      '<div class="panel-verdict">No all-in showdown hands found yet. When you go all-in and both players show cards, those hands appear here with equity calculations.</div>';
     return;
   }
 
   var html = '<div class="panel-title">All-In EV</div>';
   html += '<div class="panel-desc">Compares actual results vs expected value at all-in showdowns to measure variance.</div>';
 
-  // Section story (All-in Pressure) renders above the equity workflow. Reads
-  // d.facedAllin / foldAllin / callAllin / wonAllin so it works without
-  // running the Monte Carlo step.
+  // Verdict + section story (All-in Pressure). Reads d.facedAllin / foldAllin
+  // / callAllin / wonAllin so it works without running the Monte Carlo step.
   if (typeof Sections !== 'undefined' && typeof Sections.evaluateSections === 'function' && typeof analyse === 'function') {
     var dAllin = analyse(hands);
     var allinFindings = Sections.findingsForPanel(Sections.evaluateSections(dAllin, {}, hands), 'All-In EV');
+    html += Sections.renderVerdict(allinFindings, 'Not enough all-in spots yet to call out a pattern.');
     if (allinFindings.length) html += '<div class="p-row">' + Sections.renderFindings(allinFindings) + '</div>';
   }
 
@@ -284,48 +284,20 @@ function showAllInResults(container) {
     html += '</div></div>';
   }
 
-  // Insights
-  var insArr = [];
-  // Variance flags (running hot/cold) need a minimum of 10 all-ins before
-  // surfacing - anything below is pure noise, not signal.
+  // Variance verdict (running hot / cold / underdog) rendered as a single
+  // sentence above the equity table. Cards retired in favour of the section
+  // story rendered earlier in the panel.
   var _aiN = allInHands.length;
-  var _aiVarianceMin = 10;
-  var _aiCountMin = 3;
-  // Scale the EV-diff threshold by sample size: small samples need a bigger
-  // absolute swing before we call it hot or cold.
-  var _evGate = 0;
-  if (_aiN >= _aiVarianceMin) {
-    _evGate = 1; // any nonzero diff at 10+ is meaningful enough to surface.
+  var variance = '';
+  if (_aiN >= 10 && totalEvDiff > 1) {
+    variance = 'You\'re running ' + fmt(totalEvDiff) + ' above expectation across ' + _aiN + ' all-in hands. Results converge toward the EV line over time.';
+  } else if (_aiN >= 10 && totalEvDiff < -1) {
+    variance = 'You\'re running ' + fmt(Math.abs(totalEvDiff)) + ' below expectation across ' + _aiN + ' all-in hands. Play has been correct more often than results suggest.';
+  } else if (equityWinRate !== null && equityWinRate < 45) {
+    variance = 'You\'re frequently all-in as an underdog (' + equityWinRate + '% favourite rate). Check whether the spots are +EV given pot odds, or if tighter selection helps.';
   }
-  if (_aiN >= _aiCountMin) {
-    if (_aiN >= _aiVarianceMin && totalEvDiff > _evGate) {
-      insArr.push(ins('o', 'Running Hot', 'You\'re running ' + fmt(totalEvDiff) + ' above expectation across ' + _aiN + ' all-in hands. Actual results will converge toward the EV line over time.', [
-        { v: 'EV Diff: +' + fmt(totalEvDiff), hi: true }
-      ]));
-    } else if (_aiN >= _aiVarianceMin && totalEvDiff < -_evGate) {
-      insArr.push(ins('n', 'Running Cold', 'You\'re running ' + fmt(Math.abs(totalEvDiff)) + ' below expectation across ' + _aiN + ' all-in hands. Your play at the all-in point has been correct more often than results suggest.', [
-        { v: 'EV Diff: -' + fmt(Math.abs(totalEvDiff)), hi: true }
-      ]));
-    }
-    if (_aiN >= _aiVarianceMin && equityWinRate >= 55 && actualWinRate !== null && actualWinRate < equityWinRate - 10) {
-      insArr.push(ins('n', 'Negative Variance', 'You\'re getting your chips in good (favourite ' + equityWinRate + '% of the time) but results haven\'t followed. Classic negative variance.', [
-        { v: 'Favourite: ' + equityWinRate + '%' },
-        { v: 'Won: ' + actualWinRate + '%' }
-      ]));
-    }
-    if (equityWinRate !== null && equityWinRate < 45) {
-      insArr.push(ins('a', 'Underdog All-Ins', 'You\'re frequently all-in as an underdog (' + equityWinRate + '% favourite rate). Look at whether these spots are +EV given pot odds, or if tighter selection helps.', [
-        { v: 'Favourite rate: ' + equityWinRate + '%', hi: true }
-      ]));
-    }
-  }
-  // Append engine insights
-  var engineAllinIns = InsightEngine.forPanel('allin', 3);
-  for (var eali = 0; eali < engineAllinIns.length; eali++) {
-    insArr.push(renderRuleInsight(engineAllinIns[eali]));
-  }
-  if (insArr.length) {
-    html += '<div class="p-row">' + renderInsights(insArr, 'All-In EV', 'More all-in hands needed for patterns.') + '</div>';
+  if (variance) {
+    html += '<div class="panel-verdict">' + variance + '</div>';
   }
 
   // Full table with equity columns

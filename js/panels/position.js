@@ -13,14 +13,13 @@ function renderPosition(container, d, hands) {
   var posHtml = '<div class="panel-title">Position</div>';
   posHtml += '<div class="panel-desc">Which seats make and lose you money.</div>';
 
-  // Section stories (one per seat) render above the per-position table.
-  var sectionFindingsHtml = '';
+  // Verdict + section stories (one per seat) render above the per-seat table.
+  var posFindings = [];
   if (typeof Sections !== 'undefined' && typeof Sections.evaluateSections === 'function') {
-    var findings = Sections.evaluateSections(d, {}, hands);
-    var posFindings = Sections.findingsForPanel(findings, 'Position');
-    if (posFindings.length) sectionFindingsHtml = Sections.renderFindings(posFindings);
+    posFindings = Sections.findingsForPanel(Sections.evaluateSections(d, {}, hands), 'Position');
+    posHtml += Sections.renderVerdict(posFindings, 'No standout positional patterns yet.');
+    if (posFindings.length) posHtml += '<div class="p-row">' + Sections.renderFindings(posFindings) + '</div>';
   }
-  if (sectionFindingsHtml) posHtml += '<div class="p-row">' + sectionFindingsHtml + '</div>';
 
   posHtml += '<div class="p-row"><div class="overflow-x"><table class="tbl"><thead><tr><th>Position</th><th>Hands</th><th>' + tipWrap('Fold Pre') + '</th><th>VPIP &Delta; vs target</th><th>' + tipWrap('Net P&L') + '</th><th>' + tipWrap('Avg Pot') + '</th></tr></thead><tbody>';
   posHtml += activePosOrder.map(function(p) {
@@ -55,50 +54,6 @@ function renderPosition(container, d, hands) {
     posHtml += '<div class="chart-wrap-full"><canvas id="position-chart"></canvas></div></div>';
   }
 
-  // Per-zone VPIP verdicts (Early Position VPIP, Late Position VPIP, Button
-  // Range) used to live here as legacy cards. They are now produced by the
-  // Position section stories rendered above the per-seat table. Win Rate
-  // Spread and Position P&L below remain as cross-seat summaries.
-  var pIns = [];
-
-  // Position Win Rate Spread
-  var posWinRates = posOrder.filter(function(p) { return d.posMap[p] && d.posMap[p].hands >= 3; }).map(function(p) {
-    return { pos: p, wr: pct(d.posMap[p].won, d.posMap[p].hands), hands: d.posMap[p].hands, pnl: d.posMap[p].pnl };
-  }).sort(function(a, b) { return (b.wr || 0) - (a.wr || 0); });
-  if (posWinRates.length >= 2) {
-    var bestPos = posWinRates[0];
-    var worstPos = posWinRates[posWinRates.length - 1];
-    if (bestPos.wr !== null && worstPos.wr !== null && bestPos.wr - worstPos.wr > 15) {
-      pIns.push(ins('o', 'Win Rate Spread',
-        'Your best position is ' + bestPos.pos + ' (' + bestPos.wr + '% win) and worst is ' + worstPos.pos + ' (' + worstPos.wr + '% win). A ' + (bestPos.wr - worstPos.wr) + ' point gap.',
-        [
-          { v: bestPos.pos + ': ' + bestPos.wr + '%', hi: true },
-          { v: worstPos.pos + ': ' + worstPos.wr + '%' },
-        ],
-        'A spread this wide usually means a leak in the worse seat - too loose, too passive, or too fold-heavy. Drill into your hand log filtered to ' + worstPos.pos + ' to see the pattern.'));
-    }
-  }
-
-  // Position P&L
-  var posPnlSorted = posOrder.filter(function(p) { return d.posMap[p] && d.posMap[p].hands >= 3; }).map(function(p) {
-    return { pos: p, pnl: d.posMap[p].pnl, hands: d.posMap[p].hands };
-  }).sort(function(a, b) { return b.pnl - a.pnl; });
-  if (posPnlSorted.length >= 2) {
-    var mostProfit = posPnlSorted[0];
-    var mostLoss = posPnlSorted[posPnlSorted.length - 1];
-    if (mostProfit.pnl > 0 && mostLoss.pnl < 0) {
-      pIns.push(ins('o', 'Position P&L',
-        'Most profitable: ' + mostProfit.pos + ' (' + fmtPnl(mostProfit.pnl) + ' over ' + mostProfit.hands + ' hands). Biggest loss: ' + mostLoss.pos + ' (' + fmtPnl(mostLoss.pnl) + ' over ' + mostLoss.hands + ' hands).',
-        [
-          { v: mostProfit.pos + ': ' + fmtPnl(mostProfit.pnl), hi: true },
-          { v: mostLoss.pos + ': ' + fmtPnl(mostLoss.pnl) },
-        ],
-        'Play more pots from ' + mostProfit.pos + ' and tighten up from ' + mostLoss.pos + '. Position drives win rate more than starting hand selection at most stakes.'));
-    }
-  }
-  // Append engine insights (patterns + multi-factor) to legacy insights
-  appendEngineInsights('position', pIns, { limit: 4 });
-  posHtml += '<div class="p-row">' + renderInsights(pIns, 'Position', 'More hands needed for positional patterns.') + '</div>';
   container.innerHTML = posHtml;
 
   // ── Render Chart.js chart: Net P&L by position ──

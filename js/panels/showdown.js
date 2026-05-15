@@ -17,7 +17,9 @@ function renderShowdown(container, hands, meta) {
   }
 
   if (cash.length < 5) {
-    container.innerHTML = ins('n', 'Showdown', 'Need at least 5 cash hands with outcomes to show showdown graph. Keep playing and tracking.', []);
+    container.innerHTML = '<div class="panel-title">Showdown</div>' +
+      '<div class="panel-desc">Showdown vs non-showdown P&L breakdown.</div>' +
+      '<div class="panel-verdict">Need at least 5 cash hands with outcomes to show the showdown graph. Keep playing and tracking.</div>';
     return;
   }
 
@@ -82,29 +84,6 @@ function renderShowdown(container, hands, meta) {
 
   statsHtml += '</div>';
 
-  // Insights. The section stories now own the headline WTSD verdict and the
-  // showdown vs non-showdown narrative, so the legacy SD/NSD verdict cards
-  // (Non-Showdown Loss, Winning Without Showdown, Showdown Weakness, Solid
-  // Across The Board) retire here. The engine rules and the empty-state hint
-  // stay; those produce pattern callouts that the stories do not yet cover.
-  var insHtml = '<div class="ins-grid">';
-  var hasInsight = false;
-
-  // Append engine insights for showdown panel
-  var engineSdIns = InsightEngine.forPanel('showdown', 4);
-  for (var esi = 0; esi < engineSdIns.length; esi++) {
-    insHtml += renderRuleInsight(engineSdIns[esi]);
-    hasInsight = true;
-  }
-
-  if (!hasInsight) {
-    insHtml += ins('n', 'Showdown Breakdown', 'Track more hands to unlock showdown vs non-showdown insights. Aim for 20+ hands in each category.', [
-      { v: sdTotal + ' SD hands' },
-      { v: nsdTotal + ' NSD hands' },
-    ]);
-  }
-  insHtml += '</div>';
-
   // ── Pot Size Analysis ──
   var potHtml = '<div class="sec-subtitle mt-0">Average Pot Size by Outcome</div>';
 
@@ -136,79 +115,24 @@ function renderShowdown(container, hands, meta) {
 
   potHtml += '</div></div></div>';
 
-  // Pot size insights
-  var potInsHtml = '<div class="ins-grid">';
-  var hasPotInsight = false;
-  var minSample = Math.max(5, Math.round(5 * Math.max(1, Math.sqrt(40 / Math.max(1, cash.length)))));
-  // Sample-scaled ratio gates: when pot counts are small, demand a larger gap.
-  var _ratioGateSd = 1.3 * Math.max(1, Math.sqrt(40 / Math.max(1, Math.min(potSdLoss.length, potSdWin.length))));
-  var _ratioGateNsd = 1.5 * Math.max(1, Math.sqrt(40 / Math.max(1, potNsdLoss.length)));
-
-  if (potSdLoss.length >= minSample && potSdWin.length >= minSample) {
-    if (avgPotSdLoss > avgPotSdWin * _ratioGateSd) {
-      potInsHtml += ins('r', 'Big Showdown Losses', 'Your average losing showdown pot (' + fmt(avgPotSdLoss) + ') is significantly larger than your winning pot (' + fmt(avgPotSdWin) + '). Fold earlier on the river when the action says you\'re beaten.', [
-        { v: 'Win: ' + fmt(avgPotSdWin), hi: false },
-        { v: 'Loss: ' + fmt(avgPotSdLoss), hi: true },
-      ]);
-      hasPotInsight = true;
-    }
-    if (avgPotSdWin > avgPotSdLoss * _ratioGateSd) {
-      potInsHtml += ins('g', 'Extracting Value At Showdown', 'Your winning showdown pots (' + fmt(avgPotSdWin) + ') are larger than your losing ones (' + fmt(avgPotSdLoss) + '). Strong value betting.', [
-        { v: 'Win: ' + fmt(avgPotSdWin), hi: true },
-        { v: 'Loss: ' + fmt(avgPotSdLoss), hi: false },
-      ]);
-      hasPotInsight = true;
-    }
-  }
-
-  if (potNsdLoss.length >= minSample) {
-    if (avgPotNsdLoss > avgPotNsdWin * _ratioGateNsd && avgPotNsdLoss > avgPotSdLoss * 0.6) {
-      potInsHtml += ins('a', 'Expensive Folds', 'Your average non-showdown loss pot is ' + fmt(avgPotNsdLoss) + '. You invest heavily then fold. Pot-control sooner or fold earlier when you don\'t plan to continue.', [
-        { v: 'NSD Loss: ' + fmt(avgPotNsdLoss), hi: true },
-      ]);
-      hasPotInsight = true;
-    }
-  }
-
-  if (winLossRatio !== null && winLossRatio >= 1.2 && (potSdWin.length + potNsdWin.length) >= minSample) {
-    potInsHtml += ins('g', 'Winning Bigger Than Losing', 'Your win/loss pot ratio is ' + winLossRatio + 'x - you win more when you win than you lose when you lose. Hallmark of a solid strategy.', [
-      { v: winLossRatio + 'x ratio', hi: true },
-    ]);
-    hasPotInsight = true;
-  } else if (winLossRatio !== null && winLossRatio < 0.8 && (potSdLoss.length + potNsdLoss.length) >= minSample) {
-    potInsHtml += ins('r', 'Losing Bigger Than Winning', 'Your win/loss pot ratio is ' + winLossRatio + 'x - your average losing pot is bigger than your average winning pot. The pots you lose cost more than the ones you take down.', [
-      { v: winLossRatio + 'x ratio', hi: true },
-    ]);
-    hasPotInsight = true;
-  }
-
-  if (!hasPotInsight) {
-    potInsHtml += ins('n', 'Pot Size Analysis', 'Track more hands to unlock pot size insights.', []);
-  }
-  potInsHtml += '</div>';
-
   // Assemble HTML
   var html = '<div class="panel-title">Showdown</div>';
   html += '<div class="panel-desc">Showdown vs non-showdown P&L breakdown.</div>';
 
-  // Section stories render above the per-line breakdown and charts. The Showdown
-  // section needs a `d` object; the panel only receives raw hands, so compute it
-  // locally. analyse() is the same call app.js uses for every other panel.
-  var sectionFindingsHtml = '';
+  // Verdict + section stories render above the per-line breakdown and charts.
+  // The Showdown section needs a `d` object; compute it locally.
   if (typeof Sections !== 'undefined' && typeof Sections.evaluateSections === 'function' && typeof analyse === 'function') {
     var d = analyse(hands);
     if (typeof bucketizeAnalysis === 'function') bucketizeAnalysis(d, hands);
-    var f = Sections.findingsForPanel(Sections.evaluateSections(d, {}, hands), 'Showdown');
-    if (f.length) sectionFindingsHtml = Sections.renderFindings(f);
+    var sdFindings = Sections.findingsForPanel(Sections.evaluateSections(d, {}, hands), 'Showdown');
+    html += Sections.renderVerdict(sdFindings, 'Showdown picture still building.');
+    if (sdFindings.length) html += '<div class="p-row">' + Sections.renderFindings(sdFindings) + '</div>';
   }
-  if (sectionFindingsHtml) html += '<div class="p-row">' + sectionFindingsHtml + '</div>';
 
   html += '<div class="p-row"><div class="sec-subtitle mt-0">Showdown vs Non-Showdown P&L</div>';
   html += '<div class="chart-wrap-full"><canvas id="showdown-chart"></canvas></div>';
   html += statsHtml + '</div>';
-  html += '<div class="p-row">' + insHtml + '</div>';
   html += '<div class="p-row">' + potHtml + '</div>';
-  html += '<div class="p-row">' + potInsHtml + '</div>';
 
   container.innerHTML = html;
 

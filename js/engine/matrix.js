@@ -631,13 +631,16 @@ function metricTargets(seats, position) {
 
 var STYLE_OFFSETS = {
   TAG:     { vpip: 0,   pfr: 0,   af: 0,   cbet: 0,   foldToRaise: 0 },
+  Shark:   { vpip: -2,  pfr: 0,   af: 6,   cbet: 4,   foldToRaise: 2 },
+  Rock:    { vpip: -4,  pfr: -3,  af: -8,  cbet: -4,  foldToRaise: 4 },
   LAG:     { vpip: 8,   pfr: 6,   af: 8,   cbet: 5,   foldToRaise: -5 },
+  Cannon:  { vpip: 6,   pfr: 2,   af: -2,  cbet: -2,  foldToRaise: -4 },
   Nit:     { vpip: -6,  pfr: -5,  af: -3,  cbet: -3,  foldToRaise: 6 },
   Station: { vpip: 10,  pfr: -4,  af: -10, cbet: -8,  foldToRaise: -10 },
   Maniac:  { vpip: 14,  pfr: 12,  af: 15,  cbet: 10,  foldToRaise: -10 }
 };
 
-var STYLE_LIST = ['TAG', 'LAG', 'Nit', 'Station', 'Maniac'];
+var STYLE_LIST = ['Shark', 'TAG', 'LAG', 'Cannon', 'Rock', 'Nit', 'Station', 'Maniac'];
 
 // Read the user's chosen style. Defaults to 'TAG'. Persisted in localStorage.
 function getUserStyle() {

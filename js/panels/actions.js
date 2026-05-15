@@ -21,14 +21,14 @@ function renderActions(container, d, hands) {
   var actHtml = '<div class="panel-title">Betting</div>';
   actHtml += '<div class="panel-desc">How you size your bets and choose your actions.</div>';
 
-  // Section stories (Bet Sizing Shape, Value vs Bluff Sizing, Response to
-  // Sizing) render above the legacy widgets.
-  var sectionFindingsHtml = '';
+  // Verdict + section stories (Bet Sizing Shape, Value vs Bluff Sizing,
+  // Response to Sizing) render above the widgets.
+  var bettingFindings = [];
   if (typeof Sections !== 'undefined' && typeof Sections.evaluateSections === 'function') {
-    var f = Sections.findingsForPanel(Sections.evaluateSections(d, {}, hands), 'Betting');
-    if (f.length) sectionFindingsHtml = Sections.renderFindings(f);
+    bettingFindings = Sections.findingsForPanel(Sections.evaluateSections(d, {}, hands), 'Betting');
+    actHtml += Sections.renderVerdict(bettingFindings, 'Betting profile looks balanced at this sample size.');
+    if (bettingFindings.length) actHtml += '<div class="p-row">' + Sections.renderFindings(bettingFindings) + '</div>';
   }
-  if (sectionFindingsHtml) actHtml += '<div class="p-row">' + sectionFindingsHtml + '</div>';
 
   // Aggression mini-box dropped - the header hero strip already shows your
   // headline aggression number always.
@@ -105,150 +105,6 @@ function renderActions(container, d, hands) {
 
   actHtml += '</div></div>';
 
-  // Insights
-  var aIns = [];
-  if (caPct > raPct + 20) {
-    var exCallHeavy = findExampleHand(function (h) {
-      var ma = getHeroActions(h);
-      return ma.some(function (a) { return a.type === 'call'; }) && !ma.some(function (a) { return a.type === 'raise' || a.type === 'bet'; }) && h.outcome && h.outcome.result !== 'won';
-    });
-    aIns.push(insWithExample('a', 'Call-Heavy',
-      'You call ' + caPct + '% of actions but raise only ' + raPct + '%.',
-      [{ v: 'Call: ' + caPct + '%' }, { v: 'Raise: ' + raPct + '%' }],
-      exCallHeavy,
-      'This hand was called when a raise could have taken down the pot or extracted more value. Passive play lets draws get there for free.',
-      'Calling lets the opponent control the pot. Raising charges draws, narrows their range, and gives you fold equity. Default to raising when you have a strong hand or a good draw.'));
-  }
-  var _aggLow = _aggBand ? _aggBand.tight - 3 : 15;
-  var _aggHigh = _aggBand ? _aggBand.loose + 3 : 40;
-  if (aggPct !== null && aggPct < _aggLow) {
-    var exLowAgg = findExampleHand(function (h) {
-      var ma = getHeroActions(h);
-      return ma.some(function (a) { return a.type === 'call'; }) && !ma.some(function (a) { return a.type === 'raise' || a.type === 'bet'; });
-    });
-    aIns.push(insWithExample('r', 'Low Aggression',
-      'You raise on ' + aggPct + '% of actions. Floor for your style is around ' + Math.round(_aggLow) + '%.',
-      [{ v: d.raises + ' raises from ' + actTotal + ' actions' }],
-      exLowAgg,
-      'Only ' + aggPct + '% of actions are raises. Strong hands need to be bet for value. Checking and calling lets opponents draw cheaply and control the pot size.',
-      'Strong hands need to be bet for value, not slowplayed. When you have top pair or better, default to betting. Checking strong hands gives free cards and caps your range.'));
-  } else if (aggPct !== null && aggPct <= _aggHigh) {
-    var exGoodAgg = findExampleHand(function (h) {
-      return parseActions(h.actions).some(function (a) { return a.isMe && (a.type === 'raise' || a.type === 'bet'); });
-    });
-    aIns.push(insWithExample('g', 'Aggression',
-      aggPct + '% raise frequency is inside the expected band for your style.',
-      [{ v: d.raises + ' raises' }],
-      exGoodAgg,
-      'A well-timed raise like this one puts opponents on the defensive. Your aggression level is in a healthy range - enough to take initiative without overbluffing.',
-      'Keep this balance. Aggression in the expected band means you take initiative without spewing chips on light bluffs.'));
-  } else if (aggPct !== null) {
-    var exHighAgg = findExampleHand(function (h) {
-      var ma = getHeroActions(h);
-      return ma.filter(function (a) { return a.type === 'raise' || a.type === 'bet'; }).length >= 2;
-    });
-    aIns.push(insWithExample('a', 'High Aggression',
-      aggPct + '% raise frequency. Ceiling for your style is around ' + Math.round(_aggHigh) + '%.',
-      [{ v: d.raises + ' raises' }],
-      exHighAgg,
-      'Multiple raises in this hand illustrate your aggressive tendencies. In situations where players call wide, each bluff raise is more likely to get looked up - save aggression for strong holdings.',
-      'Calling stations punish bluff raises. Cut bluffs against loose-passive opponents and only bet/raise with hands that beat their calling range.'));
-  }
-  var _f3Min = _scaleN(3);
-  if (d.faced3bet >= _f3Min) {
-    var f3 = pct(d.fold3bet, d.faced3bet);
-    var _f3Ceil = _domSeats <= 2 ? 55 : _domSeats <= 4 ? 60 : 70;
-    if (f3 > _f3Ceil) {
-      var ex3bet = findExampleHand(function (h) {
-        var acts = parseActions(h.actions);
-        var rc = 0;
-        for (var ai = 0; ai < acts.length; ai++) {
-          var a = acts[ai];
-          if (!a.isMe && a.type === 'raise' && a.street === 'Preflop') rc++;
-          if (a.isMe && a.street === 'Preflop' && rc >= 2 && a.type === 'fold') return true;
-        }
-        return false;
-      });
-      aIns.push(insWithExample('r', '3-Bet Response',
-        'You fold to 3-bets ' + f3 + '% of the time at ' + (_domSeats || '?') + '-max. Ceiling around ' + _f3Ceil + '%.',
-        [{ v: d.fold3bet + '/' + d.faced3bet + ' situations' }],
-        ex3bet,
-        'You folded here facing a 3-bet. Many 3-bets are light. With a decent holding, calling can be profitable given how often opponents are bluffing or semi-bluffing.',
-        'Many 3-bets are light bluffs and merge raises. Defend with mid pairs, suited broadways, and suited connectors against frequent 3-bettors. 4-bet your premiums to fight back.'));
-    }
-  }
-  // All-in insights
-  var _aiMin = _scaleN(2);
-  if (d.facedAllin >= _aiMin) {
-    var afp = pct(d.foldAllin, d.facedAllin);
-    var awp = pct(d.wonAllin, d.callAllin);
-    if (afp > 75 && awp !== null && awp > 60) {
-      var exAllinFold = findExampleHand(function (h) {
-        var acts2 = parseActions(h.actions);
-        return acts2.some(function (a) { return !a.isMe && (a.type === 'raise' || a.type === 'bet') && a.msg && a.msg.indexOf(' to ') === -1; }) && acts2.some(function (a) { return a.isMe && a.type === 'fold'; });
-      });
-      aIns.push(insWithExample('r', 'All-in Folds x Win Rate',
-        'You fold all-ins ' + afp + '% of the time but win ' + awp + '% when you call.',
-        [{ v: d.callAllin + ' calls, ' + d.wonAllin + ' won' }],
-        exAllinFold,
-        'You folded to an all-in here. Given your high win rate when calling (' + awp + '%), you may be folding too many hands with good equity against all-in ranges.',
-        'A high win rate when you do call means your folding range contains too many hands that beat the typical all-in range. Call wider with mid pairs and broadways when stacks justify the equity.'));
-    } else {
-      aIns.push(ins('n', 'All-in Profile',
-        'Fold rate: ' + afp + '%. Win rate when calling: ' + (awp !== null ? awp + '%' : '-') + '.',
-        [{ v: d.facedAllin + ' situations' }]));
-    }
-  }
-  // Preflop Fold Rate
-  var pfFoldPct = pct(d.ss.Preflop.f, d.ss.Preflop.seen);
-  if (pfFoldPct !== null) {
-    var tight = pfFoldPct > 65;
-    aIns.push(ins(tight ? 'a' : 'n', 'Preflop Fold Rate',
-      'You fold preflop ' + pfFoldPct + '% of the hands you see.',
-      [{ v: d.ss.Preflop.f + ' folds' }],
-      tight
-        ? 'Tight is fine, but check your late-position fold rate too. From CO and BTN you should be opening or 3-betting more, not folding marginal playable hands.'
-        : 'A reasonable preflop fold rate. Keep tightening from early position and loosening from late position to maximise positional EV.'));
-  }
-  // Street Aggression x Win Rate
-  var streetAggWins = {};
-  for (var hi = 0; hi < hands.length; hi++) {
-    var h2 = hands[hi];
-    var acts2 = parseActions(h2.actions);
-    var heroActs = acts2.filter(function (a) { return a.isMe; });
-    var didRaise = {};
-    heroActs.forEach(function (a) { if (a.type === 'raise' || a.type === 'bet') didRaise[a.street] = true; });
-    var won2 = h2.outcome && h2.outcome.result === 'won';
-    for (var sti = 0; sti < streets.length; sti++) {
-      var st = streets[sti];
-      if (!streetAggWins[st]) streetAggWins[st] = { aggWon: 0, aggTotal: 0, passWon: 0, passTotal: 0 };
-      if (heroActs.some(function (a) { return a.street === st; })) {
-        if (didRaise[st]) {
-          streetAggWins[st].aggTotal++;
-          if (won2) streetAggWins[st].aggWon++;
-        } else {
-          streetAggWins[st].passTotal++;
-          if (won2) streetAggWins[st].passWon++;
-        }
-      }
-    }
-  }
-  var aggVsPassInsights = streets.filter(function (st) {
-    var s2 = streetAggWins[st];
-    return s2 && s2.aggTotal >= 3 && s2.passTotal >= 3;
-  }).map(function (st) {
-    var s2 = streetAggWins[st];
-    var aggWr = pct(s2.aggWon, s2.aggTotal);
-    var passWr = pct(s2.passWon, s2.passTotal);
-    return { street: st, aggWr: aggWr, passWr: passWr, diff: (aggWr || 0) - (passWr || 0) };
-  }).filter(function (r) { return Math.abs(r.diff) > 10; });
-  if (aggVsPassInsights.length > 0) {
-    var best2 = aggVsPassInsights.sort(function (a, b) { return b.diff - a.diff; })[0];
-    aIns.push(ins(best2.diff > 0 ? 'g' : 'a', 'Aggression x Win Rate (' + best2.street + ')', 'When you raise on the ' + best2.street.toLowerCase() + ', you win ' + best2.aggWr + '% vs ' + best2.passWr + '% when passive. ' + (best2.diff > 0 ? 'Aggression pays off here.' : 'Passive play performs better - opponents may be calling your bluffs.'), [
-      { v: 'Aggressive: ' + best2.aggWr + '%', hi: best2.diff > 0 },
-      { v: 'Passive: ' + best2.passWr + '%' },
-    ]));
-  }
   // ── Bet Sizing Section (merged from Bets panel) ──
   var avgBets = {};
   var avgBetsBB = {};
@@ -281,33 +137,5 @@ function renderActions(container, d, hands) {
     }).filter(Boolean).join('') + '</div></div>';
   actHtml += '</div></div>';
 
-  // Per-street sizing insights (Flop/Turn/River Sizing) retired - the new
-  // Bet Sizing Shape story above covers per-street sizing distribution with
-  // richer scatter/single-size/scaling reads.
-  var fbo = d.betOpps['Flop'];
-  var _flopBetMin = _scaleN(3);
-  var _flopBetFloor = _cbetBand ? _cbetBand.tight + (_domFb === 'HU' ? 10 : _domFb === 'multiway' ? -10 : 0) - 5 : 30;
-  if (fbo && fbo.t >= _flopBetMin && pct(fbo.b, fbo.t) < _flopBetFloor) {
-    var exFlopPassive = findExampleHand(function(h) {
-      if (!h.board || h.board.length < 3) return false;
-      var ma2 = parseActions(h.actions).filter(function(a) { return a.isMe && a.street === 'Flop'; });
-      return ma2.some(function(a) { return a.type === 'check' || a.type === 'call'; }) && !ma2.some(function(a) { return a.type === 'raise' || a.type === 'bet'; });
-    });
-    aIns.push(insWithExample('r', 'Flop Passivity',
-      'You bet the flop only ' + pct(fbo.b, fbo.t) + '% of the time when given the option. Floor around ' + Math.round(_flopBetFloor) + '%.',
-      [{ v: fbo.b + '/' + fbo.t + ' opportunities' }],
-      exFlopPassive,
-      'On this flop you checked or called instead of betting. Betting puts opponents on the defensive and charges draws. Set the price for your value hands.',
-      'C-bet the flop the majority of the time when you raised preflop. It maintains range advantage, denies free cards, and folds out unimproved high cards.'));
-  }
-
-  // Append engine insights (rules + patterns) to legacy insights
-  appendEngineInsights('actions', aIns, { limit: 6 });
-  // Engine narrative (returns { narrative, ... } - guard against the object accessor)
-  var actNarrative = InsightEngine.narrativeFor('actions', 6);
-  if (actNarrative && actNarrative.narrative) {
-    actHtml += '<div class="p-row"><div class="engine-narrative">' + actNarrative.narrative + '</div></div>';
-  }
-  actHtml += '<div class="p-row">' + renderInsights(aIns, 'Betting', 'Keep building data for betting pattern insights.') + '</div>';
   container.innerHTML = actHtml;
 }

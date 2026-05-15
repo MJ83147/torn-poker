@@ -230,7 +230,8 @@
         var id = btn.getAttribute('data-ex');
         if (!id || btn._wired) return;
         btn._wired = true;
-        btn.onclick = function() {
+        btn.onclick = function(e) {
+          if (e && e.stopPropagation) e.stopPropagation();
           var ex = EXAMPLE_LOOKUP[id];
           if (!ex || typeof showExampleHandListModal !== 'function') return;
           showExampleHandListModal(ex.label || 'Example hands', ex.hands, ex.coachingNote || null);
@@ -239,15 +240,92 @@
     }
   }
 
+  function wireCardToggles(root) {
+    if (!root) return;
+    var cards = root.querySelectorAll('.story-card');
+    for (var i = 0; i < cards.length; i++) {
+      (function(card) {
+        if (card._wired) return;
+        card._wired = true;
+        var head = card.querySelector('.story-card-head');
+        if (!head) return;
+        head.onclick = function() {
+          card.classList.toggle('is-collapsed');
+          var id = card.getAttribute('data-story-id');
+          if (id && window.sessionStorage) {
+            try {
+              var key = 'story-open:' + id;
+              if (card.classList.contains('is-collapsed')) sessionStorage.removeItem(key);
+              else sessionStorage.setItem(key, '1');
+            } catch (e) {}
+          }
+        };
+      })(cards[i]);
+    }
+  }
+
+  // Build a short teaser from the finding's branch list or impact. Caps at
+  // ~110 chars so it sits as a single readable line under the title.
+  function buildTeaser(finding) {
+    var TEASER_MAX = 110;
+    var raw = '';
+    if (finding.branchTexts && finding.branchTexts.length) {
+      raw = finding.branchTexts[0];
+    } else if (finding.impactText) {
+      raw = finding.impactText;
+    } else if (finding.soWhatText) {
+      raw = finding.soWhatText;
+    }
+    raw = (raw || '').replace(/\s+/g, ' ').trim();
+    if (raw.length <= TEASER_MAX) return raw;
+    return raw.slice(0, TEASER_MAX - 1).replace(/[\s,;:.-]+$/, '') + '…';
+  }
+
+  // Synthesise a one-sentence verdict from a panel's findings. Picks the
+  // highest-severity finding and returns its name + opening text or impact.
+  // Returns the fallback string when there are no findings.
+  function synthesiseVerdict(findings, fallback) {
+    if (!findings || !findings.length) {
+      return fallback || 'Nothing notable in this panel yet. Keep playing to surface more patterns.';
+    }
+    var pick = findings[0];
+    for (var i = 1; i < findings.length; i++) {
+      if ((findings[i].score || 0) > (pick.score || 0)) pick = findings[i];
+    }
+    var sentence = pick.openingText || pick.impactText || pick.soWhatText || pick.name || '';
+    sentence = (sentence || '').replace(/\s+/g, ' ').trim();
+    return sentence || (pick.name || '');
+  }
+
+  function renderVerdict(findings, fallback) {
+    var text = synthesiseVerdict(findings, fallback);
+    if (!text) return '';
+    return '<div class="panel-verdict">' + escapeHtml(text) + '</div>';
+  }
+
   function renderStoryCard(finding) {
     if (!finding) return '';
     var sev = finding.severity || 'n';
     var name = escapeHtml(finding.name || finding.id || 'Story');
     var sevWord = SEV_WORDS[sev] || 'Note';
+    var storyId = finding.sectionId ? (finding.sectionId + ':' + (finding.id || finding.name || '')) : (finding.id || finding.name || '');
+    var teaser = buildTeaser(finding);
 
-    var html = '<div class="ins story-card story-card-' + sev + '">';
+    var isOpen = false;
+    if (storyId && typeof window !== 'undefined' && window.sessionStorage) {
+      try { isOpen = sessionStorage.getItem('story-open:' + storyId) === '1'; } catch (e) {}
+    }
+    var classes = 'ins story-card story-card-' + sev + (isOpen ? '' : ' is-collapsed');
+
+    var html = '<div class="' + classes + '" data-story-id="' + escapeHtml(storyId) + '">';
+    html += '<div class="story-card-head">';
     html += '<div class="ins-badge ' + sev + '"><div class="ins-dot"></div><div class="ins-word">' + sevWord + '</div></div>';
     html += '<div class="ins-label">' + name + '</div>';
+    if (teaser) html += '<div class="story-teaser">' + escapeHtml(teaser) + '</div>';
+    html += '<div class="story-card-chev">&#9662;</div>';
+    html += '</div>';
+
+    html += '<div class="story-body">';
     if (finding.openingText) {
       html += '<div class="ins-text">' + escapeHtml(finding.openingText) + '</div>';
     }
@@ -266,6 +344,8 @@
     }
     html += renderExampleButtons(finding);
     html += '</div>';
+
+    html += '</div>';
     return html;
   }
 
@@ -274,11 +354,13 @@
     var parts = [];
     for (var i = 0; i < findings.length; i++) parts.push(renderStoryCard(findings[i]));
     var html = '<div class="story-grid">' + parts.join('') + '</div>';
-    // Wire example-hand buttons after the HTML is injected. The panel calls
-    // this through innerHTML or similar, so defer the wiring to a microtask.
+    // Wire example buttons and card toggles after the HTML is injected.
     setTimeout(function() {
       var nodes = document.querySelectorAll('.story-grid');
-      for (var i = 0; i < nodes.length; i++) wireExampleButtons(nodes[i]);
+      for (var i = 0; i < nodes.length; i++) {
+        wireExampleButtons(nodes[i]);
+        wireCardToggles(nodes[i]);
+      }
     }, 0);
     return html;
   }
@@ -300,6 +382,8 @@
     // rendering
     renderStoryCard: renderStoryCard,
     renderFindings: renderFindings,
+    renderVerdict: renderVerdict,
+    synthesiseVerdict: synthesiseVerdict,
     _sections: SECTIONS
   };
 })();

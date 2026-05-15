@@ -123,9 +123,8 @@
       soWhatText = 'Drop the bottom of your calling range. Pocket pairs below TT and offsuit broadway hands are usually the cuts.';
     }
 
-    // Example hands. Pull all-in spots that lost when called, or where folding
-    // gave up a spot the player would have won. Without per-hand expected
-    // equity at the shove we use outcome as the proxy.
+    // Example hands. Pull lost all-in calls (the most coachable spots) and a
+    // general "all-in pressure" set so the user always sees something useful.
     var examples = [];
     var lostCalls = pickHands(hands, function(h) { return handHadAllIn(h) && heroLost(h); }, 15);
     if (lostCalls.length) {
@@ -134,6 +133,15 @@
         label: 'All-in spots you lost',
         hands: lostCalls,
         coachingNote: 'These are the all-in spots where the chips went the wrong way. Look at what you held and whether the calling threshold should be tighter.'
+      });
+    }
+    var allAllIn = pickHands(hands, handHadAllIn, 20);
+    if (allAllIn.length) {
+      examples.push({
+        id: 'allin-all',
+        label: 'All all-in spots',
+        hands: allAllIn,
+        coachingNote: 'Every hand where an all-in pressure point came up. Use this set to spot the patterns in your shove/call decisions.'
       });
     }
 

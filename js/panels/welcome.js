@@ -16,8 +16,11 @@ function renderStyleWelcome(container, d, hands, meta, onPicked) {
     : { name: 'Shark', reason: '', confidence: 'low' };
 
   var targetCards = [
+    { key: 'Shark',   name: 'Shark',   desc: 'Tight and very aggressive. Picks spots well, hammers value.' },
     { key: 'TAG',     name: 'TAG',     desc: 'Tight-aggressive. The default winning style. Few hands, played hard.' },
     { key: 'LAG',     name: 'LAG',     desc: 'Loose-aggressive. Wider ranges with relentless pressure.' },
+    { key: 'Cannon',  name: 'Cannon',  desc: 'Loose mid-aggression. Lots of flops, light on follow-through.' },
+    { key: 'Rock',    name: 'Rock',    desc: 'Tight-passive. Selective preflop, rarely takes the lead postflop.' },
     { key: 'Nit',     name: 'Nit',     desc: 'Extremely tight. Premium hands only. Hard to bluff.' },
     { key: 'Station', name: 'Station', desc: 'Loose-passive. Plenty of hands but rarely raises.' },
     { key: 'Maniac',  name: 'Maniac',  desc: 'Hyper-aggressive. Raises everything, high variance.' }

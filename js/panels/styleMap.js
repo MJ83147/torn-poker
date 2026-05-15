@@ -11,8 +11,11 @@
 
 // Reference (VPIP, AF) anchors per style for the scatter overlay.
 var _STYLE_ANCHORS = {
-  TAG:     { vpip: 22, af: 35 },
+  Shark:   { vpip: 20, af: 40 },
+  TAG:     { vpip: 22, af: 30 },
+  Rock:    { vpip: 20, af: 18 },
   LAG:     { vpip: 32, af: 40 },
+  Cannon:  { vpip: 32, af: 25 },
   Nit:     { vpip: 12, af: 30 },
   Station: { vpip: 38, af: 15 },
   Maniac:  { vpip: 50, af: 55 }
