@@ -187,6 +187,7 @@ function _renderDashboard(d, hands, meta) {
   renderPlayers(document.getElementById('p-players'), d, hands);
   // Style Map is embedded inside My Game now (not a standalone panel).
   renderMyGame(document.getElementById('p-mygame'), d, hands);
+  renderCustomReport(document.getElementById('p-custom'), State.allHands);
   _renderStyleDisplay(d);
 
   // Filter banners (cross-cutting)
