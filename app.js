@@ -191,11 +191,8 @@ function _renderDashboard(d, hands, meta) {
   // saved hands now rendered inside log panel
   renderAllIn(document.getElementById('p-allin'), hands);
   renderPlayers(document.getElementById('p-players'), d, hands);
+  // Style Map is embedded inside My Game now (not a standalone panel).
   renderMyGame(document.getElementById('p-mygame'), d, hands);
-  if (typeof renderStyleMap === 'function') {
-    var smHost = document.getElementById('p-styleMap');
-    if (smHost) renderStyleMap(smHost, d, hands);
-  }
   _renderStyleDisplay(d);
 
   // Filter banners (cross-cutting)
@@ -211,7 +208,7 @@ function _renderDashboard(d, hands, meta) {
   }
   if (bannerParts.length) {
     var bannerHtml = '<div class="filter-banner">Showing stats for ' + bannerParts.join(' · ') + '</div>';
-    ['p-welcome', 'p-mygame', 'p-cards', 'p-position', 'p-street', 'p-actions', 'p-range', 'p-trends', 'p-showdown', 'p-log', 'p-allin', 'p-players', 'p-compare', 'p-styleMap'].forEach(function (id) {
+    ['p-welcome', 'p-mygame', 'p-cards', 'p-position', 'p-street', 'p-actions', 'p-range', 'p-trends', 'p-showdown', 'p-log', 'p-allin', 'p-players', 'p-compare'].forEach(function (id) {
       var el = document.getElementById(id);
       if (el) el.insertAdjacentHTML('afterbegin', bannerHtml);
     });

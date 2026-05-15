@@ -780,6 +780,12 @@ textarea#jin:focus {
   padding-right: var(--sp-24);
 }
 
+/* Teaser is a collapsed-state preview only. When the card expands the body
+   already shows the same content (branches / impact), so hide it. */
+.story-card:not(.is-collapsed) .story-teaser {
+  display: none;
+}
+
 .story-branches {
   margin: var(--sp-10) 0 var(--sp-14);
   padding-left: var(--sp-20);

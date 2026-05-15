@@ -62,9 +62,10 @@ function renderStyleMap(container, d, hands) {
     titleSentence = 'Your target style is ' + targetStyleName + '.';
   }
 
+  // Title is provided by the host (My Game). Just the descriptive sentence
+  // plus the chart and legend below.
   var html = '';
-  html += '<div class="panel-title">Style Map</div>';
-  html += '<div class="panel-desc">' + titleSentence + '</div>';
+  html += '<div class="desc-text mb-16">' + titleSentence + '</div>';
 
   html += '<div class="style-map-wrap">';
   html += '<div class="style-map-canvas-wrap"><canvas id="style-map-chart"></canvas></div>';

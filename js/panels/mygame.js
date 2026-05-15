@@ -147,8 +147,19 @@ function renderMyGame(container, d, hands) {
   // ── Table Dynamics reference ──
   html += renderTableDynamicsReference(hands, d);
 
+  // ── Style Map embedded under My Game ──
+  html += '<div class="sec-subtitle mt-20">Style Map</div>';
+  html += '<div id="mygame-stylemap"></div>';
+
   html += '</div>';
   container.innerHTML = html;
+
+  // renderStyleMap reads its host element and draws into a canvas, so it has
+  // to run after innerHTML has been set.
+  var smHost = container.querySelector('#mygame-stylemap');
+  if (smHost && typeof renderStyleMap === 'function') {
+    renderStyleMap(smHost, d, hands);
+  }
 }
 
 // Parse a target range like "65-75%" or "40-50%" into [lo, hi] numbers.
