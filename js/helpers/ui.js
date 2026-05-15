@@ -160,32 +160,6 @@ function renderStatsTable(rows, columns, opts) {
   return '<div class="' + wrapClass + '"><table class="' + tableClass + '">' + head + body + '</table></div>';
 }
 
-// Run the engine for a given panel and append the resulting insight cards to a
-// legacy insight-array, deduping by label.
-//   panelId:    string passed to InsightEngine.forPanel
-//   legacyArr:  array of HTML strings already produced by the panel's hand-rolled rules
-//   opts:       { limit, refine, filter }
-//     limit:    maximum engine insights to consider (default 4)
-//     refine:   function(insight) → insight  - mutate before render (used by Players)
-//     filter:   function(insight) → boolean  - drop insights whose category doesn't fit this panel
-function appendEngineInsights(panelId, legacyArr, opts) {
-  opts = opts || {};
-  if (typeof InsightEngine === 'undefined') return legacyArr;
-  var limit = opts.limit != null ? opts.limit : 4;
-  var engineIns = InsightEngine.forPanel(panelId, limit);
-  for (var i = 0; i < engineIns.length; i++) {
-    var ins = engineIns[i];
-    if (opts.filter && !opts.filter(ins)) continue;
-    if (opts.refine) ins = opts.refine(ins) || ins;
-    var dup = false;
-    for (var j = 0; j < legacyArr.length; j++) {
-      if (legacyArr[j].indexOf(ins.label) !== -1) { dup = true; break; }
-    }
-    if (!dup) legacyArr.push(renderRuleInsight(ins));
-  }
-  return legacyArr;
-}
-
 function tipWrap(label) {
   const def = TIPS[label];
   if (!def) return label;

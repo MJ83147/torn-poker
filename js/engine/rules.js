@@ -1,7 +1,6 @@
 // ── INSIGHT ENGINE: LAYER 1 - RULE COMBINATOR ────────────────────────────────
 //
-// Insight result shape (returned by evaluateRules and consumed by panels and
-// renderRuleInsight):
+// Insight result shape (returned by evaluateRules):
 //   {
 //     id: string,                          // rule id (e.g. 'cbet-low')
 //     panels: string[],                    // panels this insight surfaces in
@@ -16,9 +15,6 @@
 //     _rule: Rule,                         // back-reference to defining rule
 //     _hands: Hand[]                       // hands the rule ran against
 //   }
-// IMPORTANT: insight renderers must guard optional fields. renderRuleInsight
-// has had regressions where _rule.examples was assumed to exist on every
-// result. Always check before dereferencing.
 
 var INSIGHT_RULES = [];
 
@@ -106,24 +102,3 @@ function getInsightsForPanel(results, panelName, maxCount) {
   return filtered;
 }
 
-// Render a rule result into ins() HTML
-// Render one Insight as HTML. Defensive about missing fields - if the result
-// is malformed (no severity, no label, no text), it skips the card and logs
-// a console warning rather than crashing the whole panel.
-function renderRuleInsight(result) {
-  if (!result || !result.sev || !result.label || typeof result.text !== 'string') {
-    if (typeof console !== 'undefined' && console.warn) {
-      console.warn('renderRuleInsight: skipping malformed insight', result);
-    }
-    return '';
-  }
-  var rule = result._rule;
-  if (rule && rule.examples && result._hands) {
-    var exHands;
-    try { exHands = rule.examples(result.ctx, result._hands); } catch (_) { exHands = []; }
-    if (exHands && exHands.length) {
-      return insWithExample(result.sev, result.label, result.text, result.chips, exHands, rule.coaching || '');
-    }
-  }
-  return ins(result.sev, result.label, result.text, result.chips);
-}

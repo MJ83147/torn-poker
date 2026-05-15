@@ -1,8 +1,6 @@
 // ── STORY ENGINE ──────────────────────────────────────────────────────────────
 //
-// Section-level story runner. The framework.js bootstrap from Stage 5.1
-// composes a single four-clause sentence per defined story. This engine sits
-// alongside it and handles the richer pattern from `new structure.md`:
+// Section-level story runner. Handles the richer pattern from the design:
 //
 //   Opening statement
 //   → branched interrogations (seat count, position, hand type, etc.)
@@ -92,22 +90,35 @@
 
   // Classify a single value against a band. Returns
   // { severity: 'r'|'a'|'g'|'n', direction: 'high'|'low'|'mid', deltaUnits }.
-  // Reuses the bootstrap classifier when present so behaviour stays in sync.
+  //
+  // Severity:
+  //   'r' - significant leak (more than 1 band-width past the boundary)
+  //   'a' - slight leak (less than 1 band-width past the boundary)
+  //   'g' - on-target or strength
+  //   'n' - no band, no opinion (commentary mode)
+  // strengthSide ('high'|'low'): if set, treat deltas in that direction as
+  // strengths rather than leaks when within 1 band-width.
   function classify(value, band, strengthSide) {
-    if (typeof Insights !== 'undefined' && Insights.classifySeverity) {
-      return Insights.classifySeverity(value, band, strengthSide || null);
-    }
     if (value == null) return null;
     if (!band) return { severity: 'n', direction: 'mid', deltaUnits: 0 };
-    var lo = band.tight != null ? band.tight : band.floor;
-    var hi = band.loose != null ? band.loose : band.ceiling;
-    if (lo == null || hi == null) return { severity: 'n', direction: 'mid', deltaUnits: 0 };
-    if (value >= lo && value <= hi) return { severity: 'g', direction: 'mid', deltaUnits: 0 };
-    var width = Math.max(1, hi - lo);
+
+    var lo, hi;
+    if (band.tight != null && band.loose != null) { lo = band.tight; hi = band.loose; }
+    else if (band.floor != null && band.ceiling != null) { lo = band.floor; hi = band.ceiling; }
+    else return { severity: 'n', direction: 'mid', deltaUnits: 0 };
+
+    var bandWidth = Math.max(1, hi - lo);
+    if (value >= lo && value <= hi) {
+      return { severity: 'g', direction: 'mid', deltaUnits: 0 };
+    }
     var direction = value < lo ? 'low' : 'high';
-    var delta = direction === 'low' ? (lo - value) / width : (value - hi) / width;
-    if (delta >= 1) return { severity: 'r', direction: direction, deltaUnits: delta };
-    return { severity: 'a', direction: direction, deltaUnits: delta };
+    var deltaUnits = direction === 'low' ? (lo - value) / bandWidth : (value - hi) / bandWidth;
+
+    if (strengthSide && direction === strengthSide && deltaUnits < 1) {
+      return { severity: 'g', direction: direction, deltaUnits: deltaUnits };
+    }
+    if (deltaUnits >= 1) return { severity: 'r', direction: direction, deltaUnits: deltaUnits };
+    return { severity: 'a', direction: direction, deltaUnits: deltaUnits };
   }
 
   // Combine an array of pillar severities into the story-level severity.

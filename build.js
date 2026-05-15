@@ -28,7 +28,6 @@ var helperOrder = [
   'js/helpers/migration.js',
   'js/helpers/panel-shared.js',
   'js/helpers/opponent-stats.js',
-  'js/helpers/opponent-examples.js',
   'js/helpers/opponent-profile.js',
 ];
 
@@ -37,9 +36,7 @@ var engineOrder = [
   'js/engine/styleDetector.js',
   'js/engine/verdict.js',
   'js/engine/rules.js',
-  'js/engine/panelOverview.js',
   'js/engine/patterns.js',
-  'js/engine/narrative.js',
   'js/engine/engine.js',
   'js/engine/ruleset.js',
 ];
@@ -47,11 +44,9 @@ var engineOrder = [
 var panels = listJs('js/panels');
 
 // New insights layer (Stage 5.2 onward). Sits after the engine because
-// target-bands wraps engine/matrix.js and story-engine reads framework.js
-// helpers. Comes before panels so panels can call Sections at render time.
+// target-bands wraps engine/matrix.js. Comes before panels so panels can call
+// Sections at render time.
 var insightsOrder = [
-  'js/insights/framework.js',
-  'js/insights/panels-config.js',
   'js/insights/story-engine.js',
   'js/insights/sections/range.js',
   'js/insights/sections/position.js',

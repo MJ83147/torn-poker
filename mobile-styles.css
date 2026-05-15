@@ -129,7 +129,6 @@
   .ins { overflow: hidden; width: 100%; }
   .ins-text { padding-right: 60px; word-break: break-word; }
   .ins-label { padding-right: 60px; }
-  .engine-narrative { font-size: var(--fs-13); padding: var(--sp-10) var(--sp-12); }
 
   /* Loader */
   .l-sub { margin-bottom: var(--sp-32); }

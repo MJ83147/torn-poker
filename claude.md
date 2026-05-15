@@ -3,9 +3,6 @@
 ## Project Context
 This is an HTML/CSS/JS poker app deployed to GitHub Pages.
 
-## Before Starting Work
-- Read `CONTRIBUTING.md` before making any changes. It tracks progress and next steps between sessions.
-
 ## Build and Deploy
 - Always run `npm run build` after making changes.
 - Deploy to GitHub Pages after successful builds.

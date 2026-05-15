@@ -1106,18 +1106,6 @@ textarea#jin:focus {
   margin-top: var(--sp-8);
 }
 
-/* ENGINE NARRATIVE */
-.engine-narrative {
-  font-size: var(--fs-14);
-  color: var(--dim);
-  line-height: 1.6;
-  margin-bottom: var(--sp-16);
-  padding: var(--sp-12) var(--sp-16);
-  border-left: 3px solid var(--gold);
-  background: rgba(200, 169, 74, 0.04);
-  border-radius: 0 var(--sp-6) var(--sp-6) 0;
-}
-
 /* LAYOUT HELPERS */
 .two-col {
   display: grid;
@@ -3618,20 +3606,6 @@ tr.hrow:hover .hrow-star {
 }
 .style-display .sd-target-pick:hover {
   border-color: var(--gold);
-}
-
-/* ── PANEL OVERVIEW BLOCK ─────────────────────────────────────────────── */
-.panel-overview {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: var(--fs-14);
-  line-height: 1.55;
-  color: var(--text);
-  padding: var(--sp-14) var(--sp-16);
-  background: var(--s2);
-  border: var(--sp-1) solid var(--border);
-  border-left: 3px solid var(--gold);
-  border-radius: var(--sp-4);
-  margin-bottom: 18px;
 }
 
 /* ── FIRST-TIME WELCOME (style picker) ────────────────────────────────── */
