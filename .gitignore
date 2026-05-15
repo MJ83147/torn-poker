@@ -2,3 +2,4 @@ misc/
 plan.md
 .claude/
 node_modules/
+.DS_Store
