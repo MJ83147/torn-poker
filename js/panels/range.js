@@ -1,5 +1,5 @@
 // ── RANGE PANEL ───────────────────────────────────────────────────────────────
-// Ranges and VPIP guides are sourced from js/engine/matrix.js via adviceFor().
+// Ranges and VPIP guides are sourced from js/helpers/matrix.js via adviceFor().
 // The panel auto-detects the dominant seat bucket in the viewed hands and
 // benchmarks against that; user can pin a specific seat via the selector.
 

@@ -12,9 +12,14 @@ function listJs(dir) {
     .map(function(f) { return dir + '/' + f; });
 }
 
-// Hand-listed load order for the ordering-sensitive layers (helpers, engine,
-// root standalones). Panels are auto-discovered because their order does not
+// Hand-listed load order for the ordering-sensitive layers (helpers, root
+// standalones). Panels are auto-discovered because their order does not
 // matter and forgetting to add one used to silently break the build.
+//
+// matrix.js and styleDetector.js sit in helpers/ as shared infrastructure:
+// matrix.js owns the table-dynamics target bands, styleDetector.js owns the
+// VPIP/AF -> style classification. They load before context.js and
+// target-bands.js (which wrap matrixTarget) so those can reference them.
 var helperOrder = [
   'js/helpers/css-classes.js',
   'js/helpers/cards.js',
@@ -31,21 +36,11 @@ var helperOrder = [
   'js/helpers/opponent-profile.js',
 ];
 
-var engineOrder = [
-  'js/engine/matrix.js',
-  'js/engine/styleDetector.js',
-  'js/engine/verdict.js',
-  'js/engine/rules.js',
-  'js/engine/patterns.js',
-  'js/engine/engine.js',
-  'js/engine/ruleset.js',
-];
-
 var panels = listJs('js/panels');
 
-// New insights layer (Stage 5.2 onward). Sits after the engine because
-// target-bands wraps engine/matrix.js. Comes before panels so panels can call
-// Sections at render time.
+// Sections framework + sections. Sits before panels so panels can call
+// Sections.evaluateSections at render time. Each section's run() reads
+// matrixTarget/getUserStyle from the shared helpers above.
 var insightsOrder = [
   'js/insights/story-engine.js',
   'js/insights/sections/range.js',
@@ -63,8 +58,9 @@ var insightsOrder = [
 var files = []
   .concat(helperOrder)
   .concat(['js/stats.js'])
-  .concat(engineOrder)
   .concat([
+    'js/helpers/matrix.js',
+    'js/helpers/styleDetector.js',
     'js/helpers/context.js',
     'js/helpers/target-bands.js',
     'js/helpers/pnl-slice.js',
@@ -90,14 +86,14 @@ files.forEach(function(f) {
 });
 
 // Sanity 2: every .js file present in the audited directories must appear in
-// the manifest. This catches the "added a new helper / engine file but forgot
-// to register it" mistake, which used to silently break runtime behaviour.
-var auditedDirs = ['js/helpers', 'js/engine', 'js/panels'];
+// the manifest. Catches the "added a new helper / panel but forgot to
+// register it" mistake, which used to silently break runtime behaviour.
+var auditedDirs = ['js/helpers', 'js/panels'];
 auditedDirs.forEach(function(dir) {
   listJs(dir).forEach(function(f) {
     if (files.indexOf(f) === -1) {
       throw new Error('build.js: ' + f + ' exists on disk but is not in the load order. ' +
-        'Add it to helperOrder / engineOrder, or (for panels) it should auto-discover.');
+        'Add it to helperOrder (or, for panels, it should auto-discover).');
     }
   });
 });

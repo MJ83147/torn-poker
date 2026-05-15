@@ -1,7 +1,7 @@
 // ── TARGET BANDS ──────────────────────────────────────────────────────────────
 //
 // Centralised lookup for the target band of any metric, keyed by context. The
-// underlying tables live in js/engine/matrix.js (per seat count, per position).
+// underlying tables live in js/helpers/matrix.js (per seat count, per position).
 // This helper is the entry point sections call so future sections don't have
 // to know where the tables live.
 //

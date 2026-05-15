@@ -82,7 +82,6 @@ function _renderStyleDisplay(d) {
   if (picker) {
     picker.onchange = function() {
       if (typeof setUserStyle === 'function') setUserStyle(this.value);
-      InsightEngine._cacheKey = null;
       renderAll();
     };
   }
@@ -112,8 +111,6 @@ function _maybeShowStyleWelcome(d, hands, meta) {
     renderStyleWelcome(welcomeHost, d, hands, meta, function(/* picked */) {
       welcomeHost.style.display = 'none';
       welcomeHost.innerHTML = '';
-      // Force engine re-cache (style affects targets) and render dashboard.
-      InsightEngine._cacheKey = null;
       _renderDashboard(d, hands, meta);
     });
   }
@@ -173,9 +170,6 @@ function _renderDashboard(d, hands, meta) {
     pfEl.innerHTML += '<option value="' + sk + '"' + (pfVal == sk ? ' selected' : '') + '>' + sk + ' Players (' + sizeCounts[sk] + ')</option>';
   }
   pfEl.classList.toggle('hidden', sizeKeys.length <= 1);
-
-  // Run insight engine
-  InsightEngine.run(d, hands);
 
   // Render all panels
   renderWelcome(document.getElementById('p-welcome'), d, hands, meta);

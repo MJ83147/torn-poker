@@ -97,8 +97,12 @@ function renderMyGame(container, d, hands) {
     // verdicts via story cards now, so this panel focuses on the headline
     // player type, table-dynamics targets, and the single "Work On Next" pick.
 
-    var allLeaks = InsightEngine && typeof InsightEngine.forPanel === 'function'
-      ? InsightEngine.forPanel('mygame', 12).filter(function(i) { return i.sev === 'r' || i.sev === 'a'; })
+    // Fallback leak source for "Work On Next": the highest-severity finding
+    // from any Section. Hand-rolled threshold checks below take priority.
+    var allLeaks = (typeof Sections !== 'undefined' && typeof Sections.evaluateSections === 'function')
+      ? Sections.evaluateSections(d, {}, hands).filter(function(f) {
+          return f.severity === 'r' || f.severity === 'a';
+        })
       : [];
 
     // ── Section 6: Work on next ──
@@ -124,7 +128,7 @@ function renderMyGame(container, d, hands) {
     if (!workOn && cbetVal !== null && cbetVal < _workCbetFloor && d.cbetOpps >= 5) workOn = { sev: 'r', label: 'Low C-Bet', desc: 'You only c-bet ' + cbetVal + '% - expected floor around ' + Math.round(_workCbetFloor) + '%.', action: 'Next session: when you raised preflop and the flop comes, bet at least half the time regardless of whether you connected. Maintaining aggression wins pots.' };
     if (!workOn && wtsdVal !== null && wtsdVal > _workWtsdCeil) workOn = { sev: 'r', label: 'Paying Off Too Much', desc: 'WTSD at ' + wtsdVal + '% - ceiling around ' + _workWtsdCeil + '%.', action: 'Next session: on the river facing a big bet, ask whether your hand beats their value range. If not, fold. Saving one big call per session adds up.' };
     if (!workOn && _workEpCeil && epVpip !== null && epVpip > _workEpCeil && earlyHands >= 10) workOn = { sev: 'r', label: 'Too Loose Early', desc: 'EP VPIP at ' + epVpip + '% - ceiling around ' + _workEpCeil + '%.', action: 'Next session: from UTG/MP, only play top 25% of hands. Fold marginal suited connectors and weak aces from these seats.' };
-    if (!workOn && allLeaks.length) workOn = { sev: allLeaks[0].sev, label: allLeaks[0].label, desc: '', action: 'Focus on this pattern in your next session and track whether the stat improves.' };
+    if (!workOn && allLeaks.length) workOn = { sev: allLeaks[0].severity, label: allLeaks[0].name, desc: '', action: 'Focus on this pattern in your next session and track whether the stat improves.' };
 
     if (workOn) {
       html += '<div class="work-on-block work-on-' + workOn.sev + '">';

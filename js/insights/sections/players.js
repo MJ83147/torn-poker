@@ -42,7 +42,7 @@
   }
 
   // Classify an opponent into the eight canonical types plus Unknown. Uses
-  // the same thresholds as js/engine/styleDetector.js so the labels stay
+  // the same thresholds as js/helpers/styleDetector.js so the labels stay
   // consistent across welcome target picker, My Game and Style Map.
   function classifyVillain(vpip, af) {
     if (vpip == null || af == null) return 'Unknown';
