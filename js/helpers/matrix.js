@@ -2,7 +2,7 @@
 // Three-axis advisory model:
 //   seats (2-9)     → drives preflop opening ranges, VPIP, position guides
 //   flopBucket      → drives postflop sizing, c-bet, showdown value
-//   stackBucket     → overall regime (push/fold, squeeze, standard, deep)
+//   stackBucket     → overall regime (short / mid / deep / very-deep)
 //
 // adviceFor({seats, position, flopBucket, stackBucket}) composes all three.
 
@@ -488,32 +488,26 @@ var FLOP_MATRIX = {
 };
 
 // ── STACK_MATRIX ────────────────────────────────────────────────────────────
-// Keyed by stack bucket (short / medium / standard / deep / unknown)
+// Keyed by stack bucket from js/helpers/stack-bands.js:
+//   short ≤ 50 BB / mid ≤ 150 BB / deep ≤ 300 BB / very-deep > 300 BB / unknown.
+// Tuned for Torn: min buy-in 50 BB, max buy-in 200 BB, stacks can run past 300.
 
 var STACK_MATRIX = {
   short: {
-    label:             '< 20 BB',
-    rangeMultiplier:   null, // push/fold overrides the seat matrix
-    cbetAdjustment:    -20,  // c-bet much less - low SPR, commit or check
-    sizingAdjustment:  'Shove-or-check. Avoid min-bets that commit you without fold equity.',
-    threeBetAdjustment:'3-bets become jams. Min 3-bets are dead money.',
+    label:             '≤ 50 BB',
+    rangeMultiplier:   0.8,  // tighten 20% - below min buy-in, recovery mode
+    cbetAdjustment:    -10,
+    sizingAdjustment:  'Smaller c-bets (33-50%). At very short depth (<25 BB) prefer shove-or-check.',
+    threeBetAdjustment:'3-bets become commitment decisions. Min 3-bets are dead money once under 25 BB.',
     jamGuide: {
       BTN: '15-20 BB jam: any pair, any ace, suited broadways, suited connectors T9s+',
       SB:  '10-15 BB jam: any pair, Ax, suited broadways',
       BB:  'Call jams with pairs 66+, AQ+, AJs+; fold junk'
     },
-    notes: 'Short-stack regime: push/fold. Ranges are linear (best hands), not polarised. Speculative hands lose implied-odds value.'
+    notes: 'Short-stack regime: below min buy-in. Tighten opens, prefer linear ranges. Below 25 BB shifts toward push/fold.'
   },
-  medium: {
-    label:             '20-50 BB',
-    rangeMultiplier:   0.8,  // tighten 20%
-    cbetAdjustment:    -5,
-    sizingAdjustment:  'Smaller c-bets (33-50%). 3-bets commit you - size and hand matter.',
-    threeBetAdjustment:'3-bet as a commitment decision. Avoid light 3-bets out of position.',
-    notes: 'Squeeze-conscious. Suited connectors and small pairs lose implied-odds value. Tighten opens by ~20%. 3-bets become commitment decisions - pick your spots.'
-  },
-  standard: {
-    label:             '50-100 BB',
+  mid: {
+    label:             '50-150 BB',
     rangeMultiplier:   1.0,
     cbetAdjustment:    0,
     sizingAdjustment:  'Standard NLHE sizing - see flop-bucket guidance.',
@@ -521,7 +515,7 @@ var STACK_MATRIX = {
     notes: 'Full NLHE regime. The seat matrix applies directly. Play value hands, balance with bluffs, exploit reads.'
   },
   deep: {
-    label:             '100+ BB',
+    label:             '150-300 BB',
     rangeMultiplier:   1.15, // widen speculative edges
     cbetAdjustment:    -5,
     sizingAdjustment:  'Smaller bets with deeper protection. Overbet on the river when polarised.',
@@ -530,7 +524,19 @@ var STACK_MATRIX = {
       ['33','22','98s','97s','87s','76s','65s','54s','J9s','T8s','Q9s','K9s'],
       ['J8s','T7s','96s','86s']
     ),
-    notes: 'Deep-stack regime. Implied odds reward suited connectors, small pairs, suited gappers. Thin river value and hero calls get harder - disguised hands win more.'
+    notes: 'Deep-stack regime. Implied odds reward suited connectors, small pairs, suited gappers. Thin river value and hero calls get harder.'
+  },
+  'very-deep': {
+    label:             '300+ BB',
+    rangeMultiplier:   1.2,
+    cbetAdjustment:    -10,
+    sizingAdjustment:  'Smaller flops, bigger turns/rivers. Overbets carry more weight - SPR is enormous.',
+    threeBetAdjustment:'3-bet wider with position and suited holdings. Avoid out-of-position 3-bets without strong equity.',
+    speculativeBonus:  _rangeSet(
+      ['33','22','98s','97s','87s','76s','65s','54s','J9s','T8s','Q9s','K9s'],
+      ['J8s','T7s','96s','86s']
+    ),
+    notes: 'Very deep regime (past 300 BB). Position and implied odds dominate. Disguised hands and suited speculatives gain most. River decisions get huge - thin value is dangerous.'
   },
   unknown: {
     label:             'unknown',
@@ -694,14 +700,8 @@ function flopBucket(nFlop) {
   return 'multiway';
 }
 
-// stackBucket: effStackBB → 'short'/'medium'/'standard'/'deep'/'unknown'.
-function stackBucket(effStackBB) {
-  if (effStackBB == null || !isFinite(effStackBB)) return 'unknown';
-  if (effStackBB < 20) return 'short';
-  if (effStackBB < 50) return 'medium';
-  if (effStackBB < 100) return 'standard';
-  return 'deep';
-}
+// Stack-depth bucketing lives in js/helpers/stack-bands.js — call stackBandKey()
+// directly. Bucket keys: short / mid / deep / very-deep / unknown.
 
 // ── MATRIX COMPOSER ─────────────────────────────────────────────────────────
 
@@ -726,7 +726,8 @@ function matrixForStack(sb) {
 //   seats       (2-9 or '2p'..'9p')
 //   position    ('BTN', 'CO', ...)
 //   flopBucket  ('HU' / '3-way' / 'multiway')
-//   stackBucket ('short' / 'medium' / 'standard' / 'deep')
+//   stackBucket ('short' / 'mid' / 'deep' / 'very-deep')
+//   effStackBB  (numeric, optional - enables sub-band jam override under 25 BB)
 function adviceFor(params) {
   params = params || {};
   var seats = params.seats;
@@ -756,14 +757,16 @@ function adviceFor(params) {
     result.vpipGuide = seatEntry.guideByPos[params.position] || null;
   }
 
-  // Short-stack overrides the opening range wholesale.
-  if (result.stackBucket === 'short') {
+  // Push/fold override fires on actual stack depth, not bucket name (the short
+  // band covers 0-50 BB, but push/fold only applies under ~25 BB).
+  if (params.effStackBB != null && params.effStackBB < 25) {
     result.recommendedRange = null; // use jamGuide instead
-    result.jamGuide = stackEntry.jamGuide ? stackEntry.jamGuide[params.position] || null : null;
+    result.jamGuide = stackEntry && stackEntry.jamGuide ? stackEntry.jamGuide[params.position] || null : null;
   }
 
-  // Deep-stack: augment range with speculative hands.
-  if (result.stackBucket === 'deep' && result.recommendedRange && stackEntry.speculativeBonus) {
+  // Deep / very-deep: augment range with speculative hands.
+  if ((result.stackBucket === 'deep' || result.stackBucket === 'very-deep') &&
+      result.recommendedRange && stackEntry && stackEntry.speculativeBonus) {
     var augmented = new Set(result.recommendedRange);
     stackEntry.speculativeBonus.forEach(function(combo) { augmented.add(combo); });
     result.recommendedRange = augmented;

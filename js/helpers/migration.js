@@ -142,7 +142,7 @@ function annotateHandDynamics(hand) {
   hand.effStackBB = effBB;
   hand.seatBucket = seatBucket(seats);
   hand.flopBucket = flopBucket(active.flop);
-  hand.stackBucket = stackBucket(effBB);
+  hand.stackBucket = stackBandKey(effBB);
   hand._dyn = true;
   return hand;
 }

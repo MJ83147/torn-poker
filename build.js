@@ -26,6 +26,7 @@ var helperOrder = [
   'js/helpers/tables.js',
   'js/helpers/format.js',
   'js/helpers/hand-parsing.js',
+  'js/helpers/stack-bands.js',
   'js/helpers/analysis.js',
   'js/helpers/sessions.js',
   'js/helpers/storage.js',

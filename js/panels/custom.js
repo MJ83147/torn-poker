@@ -36,21 +36,7 @@ function _crStakeKey(bb) {
   return null;
 }
 
-// Stack depth bands (effStackBB).
-var CR_STACK_BANDS = [
-  { key: 'short',     label: 'short',      max: 25 },
-  { key: 'mid',       label: 'mid',        max: 60 },
-  { key: 'deep',      label: 'deep',       max: 150 },
-  { key: 'very-deep', label: 'very deep',  max: Infinity },
-];
-
-function _crStackKey(effBB) {
-  if (effBB == null) return null;
-  for (var i = 0; i < CR_STACK_BANDS.length; i++) {
-    if (effBB <= CR_STACK_BANDS[i].max) return CR_STACK_BANDS[i].key;
-  }
-  return null;
-}
+// Stack depth bands live in js/helpers/stack-bands.js (STACK_BANDS + stackBandKey).
 
 // Time-of-day buckets from a timestamp.
 function _crTimeBucket(ts) {
@@ -228,7 +214,7 @@ function _crBuildClauseDefs(hands) {
       label: 'My stack depth',
       kind: 'hand',
       multi: false,
-      options: CR_STACK_BANDS.map(function(b) { return { value: b.key, label: b.label }; }),
+      options: STACK_BANDS.map(function(b) { return { value: b.key, label: b.label }; }),
       phrase: function(values) {
         if (!values) return null;
         return 'with a ' + values.replace('-', ' ') + ' stack';
@@ -409,7 +395,7 @@ var CR_HAND_PREDICATES = {
     return pos === v;
   },
   depth: function(h, v) {
-    return _crStackKey(h.effStackBB) === v;
+    return stackBandKey(h.effStackBB) === v;
   },
   cards: function(h, v) {
     return _crHoleClass(h.hole) === v;
