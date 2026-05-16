@@ -139,6 +139,97 @@ function getPositionCategory(position) {
   return null;
 }
 
+// Bucket a hand by hero's preflop action. Returns one of:
+//   'rfi'                - hero raised first in (no prior raise)
+//   'vs-rfi-call'        - hero called an open raise (no 3-bet by hero)
+//   'vs-rfi-3bet'        - hero 3-bet over an open raise
+//   'rfi-vs-3bet-fold'   - hero opened, got 3-bet, folded
+//   'rfi-vs-3bet-call'   - hero opened, got 3-bet, called
+//   'rfi-vs-3bet-4bet'   - hero opened, got 3-bet, 4-bet
+//   'squeeze'            - hero 3-bet after an open and at least one cold-caller
+//   'limp-open'          - hero open-limped (called BB amount, no raise yet)
+//   'limp-behind'        - hero limped behind one or more limpers
+//   'folded-pre'         - hero folded preflop
+//   'walked'             - BB folded around to (hero made no voluntary action)
+function classifyPreflopAction(h) {
+  if (!h || !h.actions) return null;
+  var acts = parseActions(h.actions).filter(function(a) { return a.street === 'Preflop'; });
+  if (!acts.length) return null;
+  var heroAuthor = null;
+  for (var i = 0; i < acts.length; i++) { if (acts[i].isMe) { heroAuthor = acts[i].author; break; } }
+  // Hero's first voluntary action (skip blind posts, payouts, reveals).
+  var firstHero = null;
+  for (var i = 0; i < acts.length; i++) {
+    var a = acts[i];
+    if (!a.isMe) continue;
+    if (a.type === 'sb' || a.type === 'bb' || a.type === 'won') continue;
+    firstHero = a;
+    break;
+  }
+  // Count raises/limps before hero's first voluntary action.
+  var raisesBefore = 0;
+  var callsBefore = 0;
+  if (firstHero) {
+    for (var i = 0; i < acts.length; i++) {
+      var a = acts[i];
+      if (a === firstHero) break;
+      if (a.isMe) continue;
+      if (a.type === 'raise' || a.type === 'bet') raisesBefore++;
+      else if (a.type === 'call') callsBefore++;
+    }
+  }
+  // No voluntary action by hero before the street ended. If hero posted BB and
+  // everyone folded around, that's a walk. Otherwise hero must have folded.
+  if (!firstHero) {
+    var heroIsBB = acts.some(function(a) { return a.isMe && a.type === 'bb'; });
+    var heroFolded = acts.some(function(a) { return a.isMe && a.type === 'fold'; });
+    if (heroIsBB && !heroFolded && raisesBefore === 0) return 'walked';
+    return 'folded-pre';
+  }
+  if (firstHero.type === 'fold') return 'folded-pre';
+  // Hero opened (raise with no prior raisers).
+  if (raisesBefore === 0 && (firstHero.type === 'raise' || firstHero.type === 'bet')) {
+    // Did hero face a 3-bet after opening? Walk forward.
+    var sawThreeBet = false;
+    var heroResponse = null;
+    var heroOwn3betCount = 0;
+    var startedAfter = false;
+    for (var i = 0; i < acts.length; i++) {
+      var a = acts[i];
+      if (a === firstHero) { startedAfter = true; continue; }
+      if (!startedAfter) continue;
+      if (!a.isMe && (a.type === 'raise' || a.type === 'bet')) sawThreeBet = true;
+      if (sawThreeBet && a.isMe) {
+        if (a.type === 'fold') { heroResponse = 'fold'; break; }
+        if (a.type === 'call') { heroResponse = 'call'; break; }
+        if (a.type === 'raise' || a.type === 'bet') { heroResponse = '4bet'; break; }
+      }
+    }
+    if (sawThreeBet) {
+      if (heroResponse === 'fold') return 'rfi-vs-3bet-fold';
+      if (heroResponse === 'call') return 'rfi-vs-3bet-call';
+      if (heroResponse === '4bet') return 'rfi-vs-3bet-4bet';
+      return 'rfi-vs-3bet-fold';
+    }
+    return 'rfi';
+  }
+  // Hero faced a raise.
+  if (raisesBefore >= 1) {
+    if (firstHero.type === 'raise' || firstHero.type === 'bet') {
+      // 3-bet (or squeeze if a cold-caller stepped in between the open and hero).
+      if (callsBefore >= 1) return 'squeeze';
+      return 'vs-rfi-3bet';
+    }
+    if (firstHero.type === 'call') return 'vs-rfi-call';
+    return 'folded-pre';
+  }
+  // No raises before hero. Hero called -> limp.
+  if (firstHero.type === 'call') {
+    return callsBefore >= 1 ? 'limp-behind' : 'limp-open';
+  }
+  return null;
+}
+
 function detectPlayerFromActions(hands) {
   // First check if any hand has an explicit player field
   for (let i = 0; i < hands.length; i++) {

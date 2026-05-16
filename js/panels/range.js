@@ -1,358 +1,494 @@
 // ── RANGE PANEL ───────────────────────────────────────────────────────────────
-// Ranges and VPIP guides are sourced from js/helpers/matrix.js via adviceFor().
-// The panel auto-detects the dominant seat bucket in the viewed hands and
-// benchmarks against that; user can pin a specific seat via the selector.
+// Four sub-tabs (Overall, RFI, Facing RFI, RFI vs 3bet) map directly onto the
+// GTO chart set in js/data/ranges.json. Each sub-tab fetches the chart for the
+// active spot, renders a 13x13 grid where every cell shows the GTO color in
+// the background and the user's actual play as a border (played) or fade
+// (folded). State (sub-tab + selectors) is persisted in localStorage.
 
-var _rangeVpipChart = null;
+var _rangeData = null;
+var _rangeDataPromise = null;
 
-// Pick the most common seatBucket across `hands`. Returns { seats, seatBucket, count }.
-function detectDominantBucket(hands) {
-  var counts = {};
+function getRangeData() {
+  if (_rangeData) return Promise.resolve(_rangeData);
+  if (_rangeDataPromise) return _rangeDataPromise;
+  _rangeDataPromise = fetch('js/data/ranges.json')
+    .then(function(res) { return res.json(); })
+    .then(function(json) { _rangeData = json; return json; });
+  return _rangeDataPromise;
+}
+
+// App position string -> ranges.json position key for the RFI chart set.
+var POS_TO_RANGE_KEY = {
+  'UTG':   'UTG',
+  'UTG+1': 'UTG+1',
+  'MP':    'UTG+2',
+  'EP':    'UTG+2',
+  'LJ':    'Lojack',
+  'HJ':    'Hijack',
+  'CO':    'Cutoff',
+  'BTN':   'Button',
+  'SB':    'Small Blind',
+};
+
+// Hero seat selector (Facing RFI) -> "Facing RFI: X" data key.
+var FACING_HERO_TO_BUCKET = {
+  'BB':    'Big Blind',
+  'SB':    'Small Blind',
+  'BTN':   'Button',
+  'CO':    'CO',
+  'EP-MP': 'EP/MP',
+};
+
+// Opener bucket selector (RFI vs 3bet) -> "X RFI vs 3bet" data key.
+var VS3_OPENER_TO_BUCKET = {
+  'UTG':    'UTG RFI vs 3bet',
+  'UTG+1':  'UTG+1 RFI vs 3bet',
+  'UTG+2':  'UTG+2 RFI vs 3bet',
+  'LJ':     'LJ RFI vs 3bet',
+  'HJ/CO':  'HJ/CO RFI vs 3bet',
+  'BTN/SB': 'BTN/SB RFI vs 3bet',
+};
+
+// Map a hero position (app value) to the vs-3bet opener bucket key.
+function vs3OpenerForPosition(pos) {
+  if (pos === 'UTG') return 'UTG';
+  if (pos === 'UTG+1') return 'UTG+1';
+  if (pos === 'MP' || pos === 'EP') return 'UTG+2';
+  if (pos === 'LJ') return 'LJ';
+  if (pos === 'HJ' || pos === 'CO') return 'HJ/CO';
+  if (pos === 'BTN' || pos === 'SB') return 'BTN/SB';
+  return null;
+}
+
+// State key in localStorage.
+var RANGE_STATE_KEY = 'range.filters';
+
+function loadRangeState() {
+  try {
+    var raw = localStorage.getItem(RANGE_STATE_KEY);
+    if (!raw) return {};
+    return JSON.parse(raw) || {};
+  } catch (e) { return {}; }
+}
+
+function saveRangeState(state) {
+  try { localStorage.setItem(RANGE_STATE_KEY, JSON.stringify(state)); } catch (e) {}
+}
+
+var GRID_R = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2'];
+
+function rangeBuildKey(ri, ci) {
+  var r1 = GRID_R[Math.min(ri, ci)];
+  var r2 = GRID_R[Math.max(ri, ci)];
+  if (ri === ci) return r1 + r1;
+  return r1 + r2 + (ri < ci ? 's' : 'o');
+}
+
+// Convert a chart array of {hand, color} to a key-to-color map.
+function chartToColorMap(chart) {
+  var map = {};
+  if (!chart || !chart.length) return map;
+  for (var i = 0; i < chart.length; i++) map[chart[i].hand] = chart[i].color;
+  return map;
+}
+
+// Look up a chart for the active sub-tab + selectors. Returns the chart array
+// (an array of {hand, color}) or null when no reference exists for the spot.
+function lookupChart(data, subTab, selectors) {
+  if (!data) return null;
+  if (subTab === 'rfi') {
+    var key = POS_TO_RANGE_KEY[selectors.rfiPosition];
+    if (!key) return null;
+    return (data.RFI && data.RFI[key]) || null;
+  }
+  if (subTab === 'facing-rfi') {
+    var heroLabel = FACING_HERO_TO_BUCKET[selectors.facingHeroSeat];
+    if (!heroLabel) return null;
+    var bucket = data['Facing RFI: ' + heroLabel];
+    if (!bucket) return null;
+    var matchKey = facingMatchupKey(selectors.facingHeroSeat, selectors.facingOpener);
+    return bucket[matchKey] || null;
+  }
+  if (subTab === 'rfi-vs-3bet') {
+    var bucketName = VS3_OPENER_TO_BUCKET[selectors.vs3betOpener];
+    if (!bucketName) return null;
+    var bucket2 = data[bucketName];
+    if (!bucket2) return null;
+    return bucket2[selectors.vs3betMatchup] || null;
+  }
+  return null;
+}
+
+function facingMatchupKey(heroSeat, opener) {
+  if (!heroSeat || !opener) return null;
+  var hero;
+  switch (heroSeat) {
+    case 'BB':    hero = 'BB';    break;
+    case 'SB':    hero = 'SB';    break;
+    case 'BTN':   hero = 'BTN';   break;
+    case 'CO':    hero = 'CO';    break;
+    case 'EP-MP': hero = 'EP/MP'; break;
+    default:      hero = heroSeat;
+  }
+  // Openers in the data use combined keys for early seats.
+  var openerKey;
+  switch (opener) {
+    case 'UTG':
+    case 'UTG+1': openerKey = 'UTG/UTG+1'; break;
+    case 'MP':
+    case 'EP':    openerKey = 'UTG+2';     break;
+    case 'LJ':    openerKey = 'LJ';        break;
+    case 'HJ':    openerKey = 'HJ';        break;
+    case 'CO':    openerKey = 'CO';        break;
+    case 'BTN':   openerKey = 'BTN';       break;
+    case 'SB':    openerKey = 'SB';        break;
+    default:      openerKey = opener;
+  }
+  return hero + ' vs ' + openerKey;
+}
+
+// Filter hands to those matching the active sub-tab semantics.
+function filterHandsForSubTab(hands, subTab, selectors) {
+  if (subTab === 'overall') return hands;
+  var out = [];
   for (var i = 0; i < hands.length; i++) {
     var h = hands[i];
-    if (!h.seatBucket) continue;
-    counts[h.seatBucket] = (counts[h.seatBucket] || 0) + 1;
+    var act = classifyPreflopAction(h);
+    if (!act) continue;
+    var pos = h.position || null;
+    if (subTab === 'rfi') {
+      // Include hands where hero was first-to-act at the chosen seat: opens
+      // (rfi), limps (limp-open), and folds with no prior raiser/limper.
+      if (act !== 'rfi' && act !== 'limp-open' && act !== 'folded-pre') continue;
+      if (selectors.rfiPosition && pos !== selectors.rfiPosition) continue;
+      if (act === 'folded-pre' && heroHadPriorActionPre(h)) continue;
+      out.push(h);
+    } else if (subTab === 'facing-rfi') {
+      // All hands where hero faced an open from the selected seat. Includes
+      // hands hero folded (which look like leaks against the call-side chart).
+      if (act !== 'vs-rfi-call' && act !== 'vs-rfi-3bet' && act !== 'folded-pre' && act !== 'squeeze') continue;
+      var seatMatch = selectors.facingHeroSeat;
+      if (seatMatch === 'EP-MP') {
+        if (pos !== 'EP' && pos !== 'MP') continue;
+      } else if (pos !== seatMatch) continue;
+      // Verify the hand actually had a raise before hero acted; folded-pre may
+      // include hands hero folded with no raise (rare in BB scenarios but
+      // possible in others). Skip those.
+      if (act === 'folded-pre' && !heroFacedRaisePre(h)) continue;
+      out.push(h);
+    } else if (subTab === 'rfi-vs-3bet') {
+      if (act !== 'rfi-vs-3bet-fold' && act !== 'rfi-vs-3bet-call' && act !== 'rfi-vs-3bet-4bet') continue;
+      var heroBucket = vs3OpenerForPosition(pos);
+      if (heroBucket !== selectors.vs3betOpener) continue;
+      out.push(h);
+    }
   }
-  var best = null, bestN = 0;
-  for (var k in counts) {
-    if (counts[k] > bestN) { bestN = counts[k]; best = k; }
+  return out;
+}
+
+// True when at least one opponent raised, bet, or called before hero's first
+// voluntary action. Used to tell "first-in fold" apart from "fold facing action".
+function heroHadPriorActionPre(h) {
+  if (!h || !h.actions) return false;
+  var acts = parseActions(h.actions).filter(function(a) { return a.street === 'Preflop'; });
+  for (var i = 0; i < acts.length; i++) {
+    var a = acts[i];
+    if (a.type === 'sb' || a.type === 'bb') continue;
+    if (a.isMe) return false;
+    if (a.type === 'raise' || a.type === 'bet' || a.type === 'call') return true;
   }
-  if (!best) return { seats: null, seatBucket: null, count: 0 };
-  var seats = parseInt(best, 10);
-  return { seats: seats, seatBucket: best, count: bestN };
+  return false;
+}
+
+function heroFacedRaisePre(h) {
+  if (!h || !h.actions) return false;
+  var acts = parseActions(h.actions).filter(function(a) { return a.street === 'Preflop'; });
+  for (var i = 0; i < acts.length; i++) {
+    var a = acts[i];
+    // Skip blind posts (hero's bb post in particular) — they aren't "acting".
+    if (a.type === 'sb' || a.type === 'bb') continue;
+    if (a.isMe) return false;
+    if (a.type === 'raise' || a.type === 'bet') return true;
+  }
+  return false;
+}
+
+// Per-combo tally for the filtered hand set. `subTab` shapes what "played"
+// means in this view:
+//   overall      - any voluntary action (called/bet/raised at any point)
+//   rfi          - hero opened (rfi) or limped-open
+//   facing-rfi   - hero called/3-bet/squeezed (did not fold to the open)
+//   rfi-vs-3bet  - hero called or 4-bet the 3-bet (did not fold to it)
+function tallyByCombo(filtered, subTab) {
+  var played = {}, folded = {}, dealt = {}, won = {}, pnl = {};
+  for (var i = 0; i < filtered.length; i++) {
+    var h = filtered[i];
+    var k = parseHoleKey(h.hole);
+    if (!k) continue;
+    dealt[k] = (dealt[k] || 0) + 1;
+    var didPlay;
+    if (subTab === 'rfi') {
+      var actR = classifyPreflopAction(h);
+      didPlay = actR === 'rfi' || actR === 'limp-open';
+    } else if (subTab === 'facing-rfi') {
+      var actF = classifyPreflopAction(h);
+      didPlay = actF === 'vs-rfi-call' || actF === 'vs-rfi-3bet' || actF === 'squeeze';
+    } else if (subTab === 'rfi-vs-3bet') {
+      var act3 = classifyPreflopAction(h);
+      didPlay = act3 === 'rfi-vs-3bet-call' || act3 === 'rfi-vs-3bet-4bet';
+    } else {
+      var acts = parseActions(h.actions).filter(function(a) { return a.isMe; });
+      didPlay = acts.some(function(a) { return a.type === 'call' || a.type === 'raise' || a.type === 'bet'; });
+    }
+    if (didPlay) {
+      played[k] = (played[k] || 0) + 1;
+      if (h.outcome && h.outcome.result === 'won') won[k] = (won[k] || 0) + 1;
+    } else {
+      folded[k] = (folded[k] || 0) + 1;
+    }
+    if (h.outcome && typeof isCashHand === 'function' && isCashHand(h)) {
+      var inv = getInvested(h);
+      var p = h.outcome.result === 'won' ? (h.outcome.amount || 0) - inv : -inv;
+      pnl[k] = (pnl[k] || 0) + p;
+    }
+  }
+  return { played: played, folded: folded, dealt: dealt, won: won, pnl: pnl };
+}
+
+// Build the grid HTML. Each cell:
+//   data-gto = chart color (red, green, blue, grey, white) or 'none'
+//   class rc-played | rc-folded | rc-undealt
+//   data-freq = freq overlay step (Overall sub-tab only)
+function buildGridHtml(chart, tallies, opts) {
+  var colors = chartToColorMap(chart);
+  var html = '<div class="range-grid-sm">';
+  var maxPlayed = 0;
+  for (var k in tallies.played) if (tallies.played[k] > maxPlayed) maxPlayed = tallies.played[k];
+  for (var r = 0; r < 13; r++) {
+    for (var c = 0; c < 13; c++) {
+      var key = rangeBuildKey(r, c);
+      var gto = colors[key] || 'none';
+      var dealt = tallies.dealt[key] || 0;
+      var played = tallies.played[key] || 0;
+      var folded = tallies.folded[key] || 0;
+      var won = tallies.won[key] || 0;
+      var status, cls;
+      if (dealt === 0) { status = 'undealt'; cls = 'rc-undealt'; }
+      else if (played > 0) { status = 'played'; cls = 'rc-played'; }
+      else { status = 'folded'; cls = 'rc-folded'; }
+      var tip;
+      if (status === 'played') {
+        var wr = played > 0 ? Math.round((won / played) * 100) + '%' : '-';
+        tip = key + ' | played ' + played + '/' + dealt + ' · win ' + wr;
+      } else if (status === 'folded') {
+        tip = key + ' | folded ' + folded + '/' + dealt;
+      } else {
+        tip = key + ' | not dealt';
+      }
+      var freqAttr = '';
+      if (opts && opts.frequencyOverlay && played > 0 && maxPlayed > 0) {
+        var ratio = played / maxPlayed;
+        var step = 'low';
+        if (ratio > 0.8) step = 'high';
+        else if (ratio > 0.5) step = 'med-high';
+        else if (ratio > 0.25) step = 'med';
+        freqAttr = ' data-freq="' + step + '"';
+      }
+      html += '<div class="rc ' + cls + '" data-gto="' + gto + '" data-key="' + key + '"' + freqAttr + ' data-tip="' + tip + '"><span>' + key + '</span></div>';
+    }
+  }
+  html += '</div>';
+  return html;
+}
+
+function gtoLegendHtml(includeBorder) {
+  var border = includeBorder
+    ? '<div class="leg"><div class="leg-sw leg-sw-played"></div>You played</div>' +
+      '<div class="leg"><div class="leg-sw leg-sw-folded"></div>You folded</div>'
+    : '';
+  return '<div class="range-legend">' +
+    '<div class="leg"><div class="leg-sw leg-sw-gto-red"></div>Always play</div>' +
+    '<div class="leg"><div class="leg-sw leg-sw-gto-green"></div>Standard</div>' +
+    '<div class="leg"><div class="leg-sw leg-sw-gto-blue"></div>Mixed call</div>' +
+    '<div class="leg"><div class="leg-sw leg-sw-gto-grey"></div>Mixed / rare</div>' +
+    '<div class="leg"><div class="leg-sw leg-sw-gto-white"></div>Fold</div>' +
+    border +
+    '</div>';
+}
+
+function frequencyLegendHtml() {
+  return '<div class="range-legend">' +
+    '<div class="leg"><div class="leg-sw leg-sw-low"></div>Rarely</div>' +
+    '<div class="leg"><div class="leg-sw leg-sw-med"></div>Sometimes</div>' +
+    '<div class="leg"><div class="leg-sw leg-sw-high"></div>Most played</div>' +
+    '<div class="leg"><div class="leg-sw rc-unseen"></div>Not dealt</div>' +
+    '</div>';
 }
 
 function renderRange(container, d, hands) {
-  var gridR = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2'];
-  var rangePositions = ['All Positions', 'BB', 'SB', 'BTN', 'CO', 'HJ', 'LJ', 'MP', 'UTG', 'UTG+1'];
-  var advisorOn = false;
+  var stored = loadRangeState();
+  var state = {
+    subTab:           stored.subTab           || 'overall',
+    rfiPosition:      stored.rfiPosition      || 'BTN',
+    facingHeroSeat:   stored.facingHeroSeat   || 'BB',
+    facingOpener:     stored.facingOpener     || 'BTN',
+    vs3betOpener:     stored.vs3betOpener     || 'BTN/SB',
+    vs3betMatchup:    stored.vs3betMatchup    || 'BTN vs SB/BB 3bet',
+  };
+  var validSubTabs = { overall: 1, rfi: 1, 'facing-rfi': 1, 'rfi-vs-3bet': 1 };
+  if (!validSubTabs[state.subTab]) state.subTab = 'overall';
 
-  // Dominant bucket for the current hand set (auto-benchmark context).
-  var currentBucket = detectDominantBucket(hands);
-  // User-selected overrides (null = auto).
-  var pinnedSeats = null;   // integer 2..9 or null
-
-  function activeSeats() { return pinnedSeats || currentBucket.seats || 6; }
-
-  // Return { range: Set|null, guide: {ideal,tight,loose,desc}|null, advice: {...} }
-  // for a given position against the active seats benchmark.
-  function benchmarkFor(position) {
-    return adviceFor({
-      seats: activeSeats(),
-      position: position
-    });
-  }
-
-  function buildKey(ri, ci) {
-    var r1 = gridR[Math.min(ri, ci)];
-    var r2 = gridR[Math.max(ri, ci)];
-    if (ri === ci) return r1 + r1;
-    return r1 + r2 + (ri < ci ? 's' : 'o');
-  }
-
-  function wrColor(w) {
-    if (w <= 30) return 'rgb(190, 45, 45)';
-    else if (w <= 45) { var t = (w - 30) / 15; return 'rgb(' + Math.round(190 + t * 30) + ',' + Math.round(45 + t * 90) + ',' + Math.round(45) + ')'; }
-    else if (w <= 55) { var t2 = (w - 45) / 10; return 'rgb(' + Math.round(220 - t2 * 30) + ',' + Math.round(135 + t2 * 30) + ',' + Math.round(45) + ')'; }
-    else if (w <= 70) { var t3 = (w - 55) / 15; return 'rgb(' + Math.round(190 - t3 * 120) + ',' + Math.round(165 - t3 * 10) + ',' + Math.round(45 + t3 * 10) + ')'; }
-    return 'rgb(50, 170, 65)';
-  }
-
-  function buildRangeContent(filteredHands, posLabel) {
-    var rd = analyse(filteredHands);
-    var rMap = rd.rangeMap;
-    var maxP = 0;
-    Object.keys(rMap).forEach(function(k) {
-      if (rMap[k].played > maxP) maxP = rMap[k].played;
-    });
-    function playedColor(played) {
-      if (played === 0) return '#111a12';
-      var ratio = played / maxP;
-      if (ratio <= 0.15) return '#1a2e1e';
-      if (ratio <= 0.35) return '#24422a';
-      if (ratio <= 0.6) return '#2e5835';
-      if (ratio <= 0.8) return '#3a7a42';
-      return 'rgb(50, 170, 65)';
-    }
-    // Advisor: determine recommended set for this position (from matrix, bucketed)
-    var recSet = null;
-    var activeBench = null;
-    if (advisorOn && posLabel && posLabel !== 'all') {
-      activeBench = benchmarkFor(posLabel);
-      recSet = activeBench.recommendedRange || null;
-    }
-
-    // ── Pure data: build the per-cell metadata up front, no DOM strings yet ──
-    // Each cell ends up shaped:
-    //   { key, status: 'played'|'unplayed-dealt'|'undealt', advCls,
-    //     wrBg, freqBg, wrTip, freqTip, played, dealt, won, wrPct }
-    function buildCellData() {
-      var cells = [];
-      var overplayed = [];
-      var underplayed = [];
-      var matchCount = 0;
-      for (var r = 0; r < 13; r++) {
-        for (var c = 0; c < 13; c++) {
-          var key = buildKey(r, c);
-          var data = rMap[key];
-          var advCls = '';
-          if (recSet) {
-            var didPlay = data && data.played > 0;
-            var inRec = recSet.has(key);
-            if (didPlay && !inRec) { advCls = ' rc-over'; overplayed.push(key); }
-            else if (!didPlay && inRec) { advCls = ' rc-under'; underplayed.push(key); }
-            else if (didPlay && inRec) { advCls = ' rc-match'; matchCount++; }
-          }
-          if (data && data.played > 0) {
-            var wrPct = pct(data.won, data.played);
-            cells.push({
-              key: key,
-              status: 'played',
-              advCls: advCls,
-              wrBg: wrPct !== null ? wrColor(wrPct) : '#1e3020',
-              freqBg: playedColor(data.played),
-              wrTip: key + ' | Win: ' + (wrPct !== null ? wrPct + '%' : 'n/a') + ' (' + data.won + '/' + data.played + ' played, ' + data.dealt + ' dealt) · click to see hands',
-              freqTip: key + ' | Played ' + data.played + ' of ' + data.dealt + ' dealt · click to see hands',
-            });
-          } else if (data && data.dealt > 0) {
-            cells.push({
-              key: key,
-              status: 'unplayed-dealt',
-              advCls: advCls,
-              wrTip: key + ' | Dealt ' + data.dealt + ' times but never played · click to see hands',
-              freqTip: key + ' | Dealt ' + data.dealt + ' times but never played · click to see hands',
-            });
-          } else {
-            var cellLabel = (r === c) ? 'Pair' : (r < c) ? 'Suited' : 'Offsuit';
-            cells.push({
-              key: key,
-              status: 'undealt',
-              advCls: advCls,
-              wrTip: key + ' | Not yet dealt (' + cellLabel + ')',
-              freqTip: key + ' | Not yet dealt (' + cellLabel + ')',
-            });
-          }
-        }
-      }
-      return {
-        cells: cells,
-        overplayed: overplayed,
-        underplayed: underplayed,
-        matchCount: matchCount,
-      };
-    }
-
-    var cellInfo = buildCellData();
-    var overplayed = cellInfo.overplayed;
-    var underplayed = cellInfo.underplayed;
-    var matchCount = cellInfo.matchCount;
-
-    // ── Render the data into HTML ──
-    var wrGrid = '';
-    var freqGrid = '';
-    for (var ci = 0; ci < cellInfo.cells.length; ci++) {
-      var cell = cellInfo.cells[ci];
-      if (cell.status === 'played') {
-        wrGrid += '<div class="rc' + cell.advCls + '" style="background:' + cell.wrBg + ';cursor:pointer;" data-key="' + cell.key + '" data-tip="' + cell.wrTip + '"><span>' + cell.key + '</span></div>';
-        freqGrid += '<div class="rc' + cell.advCls + '" style="background:' + cell.freqBg + ';cursor:pointer;" data-key="' + cell.key + '" data-tip="' + cell.freqTip + '"><span>' + cell.key + '</span></div>';
-      } else if (cell.status === 'unplayed-dealt') {
-        wrGrid += '<div class="rc rc-unseen' + cell.advCls + '" data-key="' + cell.key + '" data-tip="' + cell.wrTip + '"><span>' + cell.key + '</span></div>';
-        freqGrid += '<div class="rc rc-unseen' + cell.advCls + '" data-key="' + cell.key + '" data-tip="' + cell.freqTip + '"><span>' + cell.key + '</span></div>';
-      } else {
-        wrGrid += '<div class="rc rc-unseen' + cell.advCls + '" data-tip="' + cell.wrTip + '"><span>' + cell.key + '</span></div>';
-        freqGrid += '<div class="rc rc-unseen' + cell.advCls + '" data-tip="' + cell.freqTip + '"><span>' + cell.key + '</span></div>';
-      }
-    }
-    var seen = Object.keys(rMap).filter(function(k) { return rMap[k].dealt > 0; }).length;
-    var totalCombos = 169;
-    var legend1 = '<div class="range-legend">' +
-      '<div class="leg"><div class="leg-sw rc-unseen"></div>Not dealt</div>' +
-      '<div class="leg"><div class="leg-sw leg-sw-bad"></div>&lt;30% win</div>' +
-      '<div class="leg"><div class="leg-sw leg-sw-mid"></div>~50% win</div>' +
-      '<div class="leg"><div class="leg-sw leg-sw-good"></div>&gt;70% win</div>' +
-      '</div>';
-    var legend2 = '<div class="range-legend">' +
-      '<div class="leg"><div class="leg-sw rc-unseen"></div>Not played</div>' +
-      '<div class="leg"><div class="leg-sw leg-sw-low"></div>Rarely</div>' +
-      '<div class="leg"><div class="leg-sw leg-sw-med"></div>Sometimes</div>' +
-      '<div class="leg"><div class="leg-sw leg-sw-high"></div>Most played</div>' +
-      '</div>';
-    return { seen: seen, totalCombos: totalCombos, wrGrid: wrGrid, freqGrid: freqGrid, legend1: legend1, legend2: legend2, rMap: rMap };
-  }
-
-  function renderRangeGrids(rc) {
-    var gridContainer = document.getElementById('range-grids');
-    if (!gridContainer) return;
-    var advLegend = advisorOn ? '<div class="range-legend range-legend-adv">' +
-      '<div class="leg"><div class="leg-sw leg-sw-match"></div>Match</div>' +
-      '<div class="leg"><div class="leg-sw leg-sw-over"></div>Overplayed</div>' +
-      '<div class="leg"><div class="leg-sw leg-sw-under"></div>Underplayed</div>' +
-      '</div>' : '';
-    gridContainer.innerHTML =
-      '<div class="meta-text mb-20">' + rc.seen + ' of ' + rc.totalCombos + ' hand combos seen · hover any hand for detail</div>' +
-      '<div class="two-col">' +
-      '<div><div class="sec-subtitle mt-0">Win Rate by Hand</div>' + rc.legend1 + advLegend + '<div class="range-grid-sm">' + rc.wrGrid + '</div></div>' +
-      '<div><div class="sec-subtitle mt-0">Hands Played</div>' + rc.legend2 + advLegend + '<div class="range-grid-sm">' + rc.freqGrid + '</div></div>' +
-      '</div>';
-  }
-
-  // Render a single bar chart: one bar per position showing the user's actual
-  // VPIP for that position at the active seat size. Bars are coloured by how
-  // far the actual sits from the target band (guide.tight..guide.loose):
-  //   green = within band, amber = close (within ~5 pts), red = significantly outside.
-  // The target band is drawn as a faint range bar behind each actual bar so the
-  // comparison is obvious without needing a separate chart per seat.
-  function renderVpipChart(posLabel) {
-    if (_rangeVpipChart) { _rangeVpipChart.destroy(); _rangeVpipChart = null; }
-    var canvas = document.getElementById('range-vpip-canvas');
-    if (!canvas) return;
-
-    var seats = activeSeats();
-    var seatEntry = matrixForSeats(seats);
-    var positions = seatEntry && seatEntry.positions ? seatEntry.positions.slice() : ['UTG', 'MP', 'CO', 'BTN', 'SB', 'BB'];
-
-    var colors = getChartColors();
-    var labels = [];
-    var actualData = [];
-    var bandData = [];
-    var actualColors = [];
-    var actualBorders = [];
-
-    for (var pi = 0; pi < positions.length; pi++) {
-      var p = positions[pi];
-      var guide = seatEntry && seatEntry.guideByPos ? seatEntry.guideByPos[p] : null;
-      if (!guide) continue;
-      labels.push(p);
-      bandData.push([guide.tight, guide.loose]);
-
-      var pm = d.posMap[p];
-      var vpip = pm && pm.hands > 0 ? pct(pm.vpip, pm.hands) : null;
-      actualData.push(vpip);
-
-      // Colour bands: green inside [tight, loose], amber within 5 pts of either
-      // edge, red further out. null = grey (no data).
-      var fill, border;
-      if (vpip === null) {
-        fill = colors.dim + '55';
-        border = colors.dim;
-      } else if (vpip >= guide.tight && vpip <= guide.loose) {
-        fill = colors.green + 'cc';
-        border = colors.green;
-      } else {
-        var dist = vpip < guide.tight ? guide.tight - vpip : vpip - guide.loose;
-        if (dist <= 5) {
-          fill = colors.amber + 'cc';
-          border = colors.amber;
-        } else {
-          fill = colors.red + 'cc';
-          border = colors.red;
-        }
-      }
-      actualColors.push(fill);
-      actualBorders.push(border);
-    }
-
-    _rangeVpipChart = createChart(canvas, 'bar', {
-      labels: labels,
-      datasets: [
-        {
-          label: 'Target Band',
-          data: bandData,
-          backgroundColor: colors.dim + '33',
-          borderColor: colors.border,
-          borderWidth: 1,
-          barPercentage: 0.9,
-          categoryPercentage: 0.8,
-          order: 2
-        },
-        {
-          label: 'Your VPIP',
-          data: actualData,
-          backgroundColor: actualColors,
-          borderColor: actualBorders,
-          borderWidth: 2,
-          barPercentage: 0.5,
-          categoryPercentage: 0.8,
-          order: 1
-        }
-      ]
-    }, {
-      aspectRatio: 2.5,
-      legend: chartLegend(colors),
-      tooltip: chartTooltip(colors, {
-        callbacks: {
-          label: function(ctx) {
-            if (ctx.datasetIndex === 0) {
-              var raw = ctx.raw;
-              return 'Target: ' + raw[0] + '-' + raw[1] + '%';
-            }
-            return 'Your VPIP: ' + (ctx.raw !== null ? ctx.raw + '%' : 'no data');
-          }
-        }
-      }),
-      scales: {
-        x: chartXScale(colors),
-        y: chartYScale(colors, { max: 80, tickCallback: function(v) { return v + '%'; } })
-      }
-    });
-  }
-
-  function refreshRange() {
-    var pos = document.getElementById('range-pos-filter').value;
-    var filtered = (pos === 'all') ? hands : hands.filter(function(h) { return (h.position || '?') === pos; });
-    var newRc = buildRangeContent(filtered, pos);
-    renderRangeGrids(newRc);
-    renderVpipChart(pos);
-    // Update advisor toggle state
-    var advBtn = document.getElementById('range-advisor-btn');
-    if (advBtn) {
-      advBtn.classList.toggle('active', advisorOn);
-      advBtn.textContent = advisorOn ? 'Advisor On' : 'Advisor Off';
-    }
-    // Disable advisor when All Positions selected
-    if (advBtn) {
-      advBtn.disabled = (pos === 'all');
-      if (pos === 'all') advBtn.classList.remove('active');
-    }
-  }
-
-  var rc = buildRangeContent(hands, 'all');
-  var posOpts = rangePositions.map(function(p) {
-    return '<option value="' + (p === 'All Positions' ? 'all' : p) + '">' + p + '</option>';
-  }).join('');
-
-  // Seat selector for benchmark context.
-  var seatBucketCounts = {};
-  for (var ri = 0; ri < hands.length; ri++) {
-    var rh = hands[ri];
-    if (rh.seatBucket) seatBucketCounts[rh.seatBucket] = (seatBucketCounts[rh.seatBucket] || 0) + 1;
-  }
-  var seatKeys = Object.keys(seatBucketCounts).sort();
-  var seatOpts = '<option value="auto">Auto (' + (currentBucket.seatBucket || '-') + ')</option>' +
-    seatKeys.map(function(k) { return '<option value="' + k + '">' + k + ' (' + seatBucketCounts[k] + ')</option>'; }).join('');
+  function persist() { saveRangeState(state); }
 
   container.innerHTML =
     '<div class="panel-title">Range</div>' +
-    '<div class="panel-desc">Full 13x13 hand grid with win rate for every combo, benchmarked against table size.</div>' +
-    renderBucketBanner() +
-    '<div id="range-stories" class="p-row"></div>' +
-    '<div class="p-row"><div class="flex-gap-6 mb-16">' +
-    '<select id="range-pos-filter" class="table-filter">' + posOpts + '</select>' +
-    '<select id="range-seat-filter" class="table-filter">' + seatOpts + '</select>' +
-    '<button id="range-advisor-btn" class="advisor-btn" disabled>Advisor Off</button>' +
+    '<div class="panel-desc">Your range against the GTO chart for the spot. Cell color is GTO; border shows what you actually did.</div>' +
+    '<div class="range-subtabs" id="range-subtabs">' +
+      subTabBtn('overall', 'Overall', state) +
+      subTabBtn('rfi', 'RFI', state) +
+      subTabBtn('facing-rfi', 'Facing RFI', state) +
+      subTabBtn('rfi-vs-3bet', 'RFI vs 3bet', state) +
     '</div>' +
-    '<div id="range-bench-notes"></div>' +
-    '<div id="range-vpip-chart-wrap">' +
-    '<div class="sec-subtitle mt-0">VPIP by Position vs Target</div>' +
-    '<canvas id="range-vpip-canvas" height="160"></canvas></div>' +
-    '<div id="range-grids"></div></div>';
-  renderRangeStories();
-  renderRangeGrids(rc);
-  renderVpipChart('all');
-  renderBenchNotes();
+    '<div id="range-subtab-body" class="p-row"></div>';
 
-  // Verdict + section stories (Width of Range, Winning Hands). Read full-data
-  // and do not change with the position filter. Computed once, rendered once.
+  var subtabs = document.getElementById('range-subtabs');
+  subtabs.addEventListener('click', function(e) {
+    var btn = e.target.closest('.range-subtab');
+    if (!btn) return;
+    var t = btn.getAttribute('data-subtab');
+    if (!t || t === state.subTab) return;
+    state.subTab = t;
+    persist();
+    refreshSubTabButtons();
+    renderBody();
+  });
+
+  function refreshSubTabButtons() {
+    subtabs.querySelectorAll('.range-subtab').forEach(function(b) {
+      b.classList.toggle('active', b.getAttribute('data-subtab') === state.subTab);
+    });
+  }
+
+  function renderBody() {
+    var body = document.getElementById('range-subtab-body');
+    if (!body) return;
+    if (state.subTab === 'overall') {
+      renderOverall(body);
+      return;
+    }
+    body.innerHTML = '<div class="range-loading">Loading GTO chart …</div>';
+    getRangeData().then(function(data) {
+      if (state.subTab === 'rfi') renderRfi(body, data);
+      else if (state.subTab === 'facing-rfi') renderFacingRfi(body, data);
+      else if (state.subTab === 'rfi-vs-3bet') renderVs3bet(body, data);
+    }).catch(function() {
+      body.innerHTML = '<div class="range-error">Failed to load GTO chart data. Reload the page to try again.</div>';
+    });
+  }
+
+  function renderOverall(body) {
+    var tallies = tallyByCombo(hands, 'overall');
+    body.innerHTML =
+      '<div id="range-stories" class="mb-16"></div>' +
+      '<div class="sec-subtitle mt-0">Your Overall Range</div>' +
+      '<div class="meta-text mb-12">Every combo you have been dealt. Bold border means you played it; faded means you folded.</div>' +
+      frequencyLegendHtml() +
+      buildGridHtml(null, tallies, { frequencyOverlay: true });
+    bindCellClicks(body, hands);
+    renderRangeStories();
+  }
+
+  function renderRfi(body, data) {
+    var positions = ['UTG', 'UTG+1', 'MP', 'EP', 'LJ', 'HJ', 'CO', 'BTN', 'SB'];
+    var selector = positionSelector('range-rfi-pos', positions, state.rfiPosition);
+    var chart = lookupChart(data, 'rfi', state);
+    var filtered = filterHandsForSubTab(hands, 'rfi', state);
+    var tallies = tallyByCombo(filtered, 'rfi');
+    var headerStats = renderHeaderStats(filtered, 'opens');
+    var note = chart ? '' : emptyChartNote(state.rfiPosition);
+    body.innerHTML =
+      '<div class="range-controls">' +
+      '<label class="range-control-label">Position</label>' + selector +
+      '</div>' +
+      headerStats +
+      note +
+      gtoLegendHtml(true) +
+      buildGridHtml(chart, tallies, {});
+    bindSelector(body, 'range-rfi-pos', function(v) { state.rfiPosition = v; persist(); renderRfi(body, data); });
+    bindCellClicks(body, filtered);
+  }
+
+  function renderFacingRfi(body, data) {
+    var heroSeats = ['BB', 'SB', 'BTN', 'CO', 'EP-MP'];
+    var openers   = ['UTG', 'UTG+1', 'MP', 'EP', 'LJ', 'HJ', 'CO', 'BTN', 'SB'];
+    var validOpeners = filterValidOpeners(state.facingHeroSeat, openers);
+    if (validOpeners.indexOf(state.facingOpener) === -1 && validOpeners.length) {
+      state.facingOpener = validOpeners[0];
+      persist();
+    }
+    var heroSelector = positionSelector('range-facing-hero', heroSeats, state.facingHeroSeat);
+    var openerSelector = positionSelector('range-facing-opener', validOpeners, state.facingOpener);
+    var chart = lookupChart(data, 'facing-rfi', state);
+    var filtered = filterHandsForSubTab(hands, 'facing-rfi', state);
+    var tallies = tallyByCombo(filtered, 'facing-rfi');
+    var headerStats = renderHeaderStats(filtered, 'defending spots');
+    var note = chart ? '<div class="meta-text mb-12">GTO target: ' + facingMatchupKey(state.facingHeroSeat, state.facingOpener) + '. Played data shows every hand you faced an open from ' + state.facingHeroSeat + ', not just from the selected opener.</div>' : '<div class="range-empty">No GTO reference for ' + state.facingHeroSeat + ' vs ' + state.facingOpener + '.</div>';
+    body.innerHTML =
+      '<div class="range-controls">' +
+      '<label class="range-control-label">Hero seat</label>' + heroSelector +
+      '<label class="range-control-label">Opener</label>' + openerSelector +
+      '</div>' +
+      headerStats +
+      note +
+      gtoLegendHtml(true) +
+      buildGridHtml(chart, tallies, {});
+    bindSelector(body, 'range-facing-hero', function(v) { state.facingHeroSeat = v; persist(); renderFacingRfi(body, data); });
+    bindSelector(body, 'range-facing-opener', function(v) { state.facingOpener = v; persist(); renderFacingRfi(body, data); });
+    bindCellClicks(body, filtered);
+  }
+
+  function renderVs3bet(body, data) {
+    var openers = Object.keys(VS3_OPENER_TO_BUCKET);
+    if (openers.indexOf(state.vs3betOpener) === -1) state.vs3betOpener = openers[0];
+    var openerSelector = positionSelector('range-vs3-opener', openers, state.vs3betOpener);
+    var bucketName = VS3_OPENER_TO_BUCKET[state.vs3betOpener];
+    var bucket = data[bucketName] || {};
+    var matchups = Object.keys(bucket);
+    if (matchups.indexOf(state.vs3betMatchup) === -1) {
+      state.vs3betMatchup = matchups[0] || '';
+      persist();
+    }
+    var matchupSelector = positionSelector('range-vs3-matchup', matchups, state.vs3betMatchup);
+    var chart = lookupChart(data, 'rfi-vs-3bet', state);
+    var filtered = filterHandsForSubTab(hands, 'rfi-vs-3bet', state);
+    var tallies = tallyByCombo(filtered, 'rfi-vs-3bet');
+    var headerStats = renderHeaderStats(filtered, 'hands where you opened and got 3-bet');
+    var note = chart ? '<div class="meta-text mb-12">GTO target: ' + state.vs3betMatchup + '. Played data shows every hand you opened from this seat range and faced a 3-bet, not just from the selected 3-bettor.</div>' : '<div class="range-empty">No GTO reference for ' + state.vs3betMatchup + '.</div>';
+    body.innerHTML =
+      '<div class="range-controls">' +
+      '<label class="range-control-label">Your opener seat</label>' + openerSelector +
+      '<label class="range-control-label">3-bettor</label>' + matchupSelector +
+      '</div>' +
+      headerStats +
+      note +
+      gtoLegendHtml(true) +
+      buildGridHtml(chart, tallies, {});
+    bindSelector(body, 'range-vs3-opener', function(v) { state.vs3betOpener = v; state.vs3betMatchup = ''; persist(); renderVs3bet(body, data); });
+    bindSelector(body, 'range-vs3-matchup', function(v) { state.vs3betMatchup = v; persist(); renderVs3bet(body, data); });
+    bindCellClicks(body, filtered);
+  }
+
+  function emptyChartNote(label) {
+    return '<div class="range-empty">No GTO reference for ' + label + '.</div>';
+  }
+
+  function renderHeaderStats(filtered, label) {
+    if (!filtered.length) {
+      return '<div class="range-stats range-stats-empty">No ' + label + ' in this dataset yet.</div>';
+    }
+    return '<div class="range-stats">' + filtered.length + ' ' + label + ' on record.</div>';
+  }
+
   function renderRangeStories() {
     var el = document.getElementById('range-stories');
     if (!el) return;
@@ -365,108 +501,98 @@ function renderRange(container, d, hands) {
     el.innerHTML = Sections.renderVerdict(rangeFindings, 'Range data is still building.') + Sections.renderFindings(rangeFindings);
   }
 
-  // Bucket banner (describes the auto-detected benchmark used for target
-  // bands only; no hands are filtered out by this).
-  function renderBucketBanner() {
-    if (!currentBucket.seatBucket) return '';
-    var seatLbl = currentBucket.seatBucket;
-    var shareTxt = '';
-    if (hands.length > 0) {
-      var share = Math.round((currentBucket.count / hands.length) * 100);
-      shareTxt = ' (' + share + '% of your hands)';
-    }
-    return '<div class="p-row"><div class="filter-banner" id="range-bucket-banner">Benchmark bands taken from ' + seatLbl + shareTxt + '. All hands shown.</div></div>';
-  }
-
-  // Notes block describing the active (seats, position) advice
-  function renderBenchNotes() {
-    var notesEl = document.getElementById('range-bench-notes');
-    if (!notesEl) return;
-    var seats = activeSeats();
-    var seatEntry = matrixForSeats(seats);
-    if (!seatEntry) { notesEl.innerHTML = ''; return; }
-    var parts = [];
-    parts.push('<div class="sec-subtitle mt-0">' + seats + '-handed</div>');
-    parts.push('<div class="desc-text">' + seatEntry.notes + '</div>');
-    parts.push('<div class="desc-text mt-6 text-muted">Open ' + seatEntry.openRaise + ' · 3-bet ' + seatEntry.threeBet + ' · c-bet ' + seatEntry.cbetFreq + '</div>');
-    notesEl.innerHTML = '<div class="p-row">' + parts.join('') + '</div>';
-  }
-
-  // Advisor toggle
-  document.getElementById('range-advisor-btn').onclick = function() {
-    var pos = document.getElementById('range-pos-filter').value;
-    if (pos === 'all') return;
-    advisorOn = !advisorOn;
-    refreshRange();
-  };
-
-  // Position filter change handler
-  document.getElementById('range-pos-filter').onchange = function() {
-    refreshRange();
-  };
-
-  // Seat bucket selector
-  document.getElementById('range-seat-filter').onchange = function() {
-    var v = this.value;
-    pinnedSeats = (v === 'auto') ? null : parseInt(v, 10);
-    refreshRange();
-    renderBenchNotes();
-  };
-
-  // Range cell click: show hand list for that combo
-  container.addEventListener('click', function(e) {
-    var cell = e.target.closest('.rc[data-key]');
-    if (!cell) return;
-    var key = cell.getAttribute('data-key');
-    if (!key) return;
-    var posFilter = document.getElementById('range-pos-filter').value;
-    var baseHands = (posFilter === 'all') ? hands : hands.filter(function(h) { return (h.position || '?') === posFilter; });
-    var matched = baseHands.filter(function(h) { return parseHoleKey(h.hole) === key; });
-    if (!matched.length) return;
-    var currentRc = buildRangeContent(baseHands);
-    var rm = currentRc.rMap[key];
-    var wr2 = rm && rm.played > 0 ? pct(rm.won, rm.played) : null;
-
-    var existing = document.getElementById('example-hand-modal');
-    if (existing) existing.remove();
-    var overlay = document.createElement('div');
-    overlay.id = 'example-hand-modal';
-    overlay.className = 'modal-overlay';
-    overlay.onclick = function(ev) { if (ev.target === overlay) closeModal(); };
-    var box = document.createElement('div');
-    box.className = 'modal-box';
-    box.style.position = 'relative';
-    box.style.maxHeight = '80vh';
-    box.style.overflowY = 'auto';
-    var summary = '<div class="modal-title">' + key + '</div>' +
-      '<div class="mb-16">' + matched.length + ' hands' +
-      (rm ? ' · played ' + rm.played + ' of ' + rm.dealt + ' dealt' : '') +
-      (wr2 !== null ? ' · ' + wr2 + '% win rate' : '') + '</div>';
-    var rows = matched.map(function(h, idx) {
-      var myActs = getActsSummary(h);
-      var res = renderResult(h, 'span', 'saved-res');
-      return '<div class="range-hand-row" data-ridx="' + idx + '">' +
-        '<div class="range-hand-row-top">' +
-        '<div class="range-hand-row-side">' +
-        '<span class="range-hand-row-pos">' + (h.position || '?') + '</span>' +
-        '<span class="range-hand-row-hole">' + (h.hole ? h.hole.join(' ') : '??') + '</span>' +
-        '<span class="range-hand-row-board">' + (h.board && h.board.length ? h.board.join(' ') : '-') + '</span>' +
-        '</div>' +
-        '<div class="range-hand-row-side">' +
-        '<span class="range-hand-row-actions">' + myActs + '</span>' +
-        res + '</div></div></div>';
-    }).join('');
-    box.innerHTML = '<button class="modal-close" id="modal-close-btn">&times;</button>' +
-      summary + '<div class="mt-12">' + rows + '</div>';
-    overlay.appendChild(box);
-    document.body.appendChild(overlay);
-    requestAnimationFrame(function() { overlay.classList.add(CSS.SHOW); });
-    document.getElementById('modal-close-btn').onclick = closeModal;
-    box.querySelectorAll('.range-hand-row').forEach(function(row) {
-      row.onclick = function() {
-        var idx = parseInt(row.getAttribute('data-ridx'));
-        if (!isNaN(idx) && matched[idx]) showExampleHandModal(matched[idx]);
-      };
+  function bindCellClicks(scope, scopedHands) {
+    if (scope._cellHandlerBound) return;
+    scope._cellHandlerBound = true;
+    scope.addEventListener('click', function(e) {
+      var cell = e.target.closest('.rc[data-key]');
+      if (!cell) return;
+      var key = cell.getAttribute('data-key');
+      if (!key) return;
+      // Re-derive scoped hands from the active state at click time so the
+      // modal always reflects whichever sub-tab/selection the user is viewing.
+      var active;
+      if (state.subTab === 'overall') active = hands;
+      else active = filterHandsForSubTab(hands, state.subTab, state);
+      var matched = active.filter(function(h) { return parseHoleKey(h.hole) === key; });
+      if (!matched.length) return;
+      openHandModal(key, matched);
     });
+  }
+
+  refreshSubTabButtons();
+  renderBody();
+}
+
+function subTabBtn(id, label, state) {
+  var active = state.subTab === id ? ' active' : '';
+  return '<button class="range-subtab' + active + '" data-subtab="' + id + '">' + label + '</button>';
+}
+
+function positionSelector(id, options, current) {
+  if (current && options.indexOf(current) === -1) options = [current].concat(options);
+  var opts = options.map(function(p) {
+    var sel = p === current ? ' selected' : '';
+    return '<option value="' + p + '"' + sel + '>' + p + '</option>';
+  }).join('');
+  return '<select id="' + id + '" class="table-filter">' + opts + '</select>';
+}
+
+function bindSelector(scope, id, cb) {
+  var el = scope.querySelector('#' + id);
+  if (!el) return;
+  el.onchange = function() { cb(el.value); };
+}
+
+// Restrict opener choices for "Facing RFI" to seats acting before hero.
+function filterValidOpeners(heroSeat, openers) {
+  var order = ['UTG', 'UTG+1', 'MP', 'EP', 'LJ', 'HJ', 'CO', 'BTN', 'SB'];
+  if (heroSeat === 'BB') return order.slice();
+  if (heroSeat === 'SB') return order.filter(function(p) { return p !== 'SB'; });
+  if (heroSeat === 'BTN') return ['UTG', 'UTG+1', 'MP', 'EP', 'LJ', 'HJ', 'CO'];
+  if (heroSeat === 'CO')  return ['UTG', 'UTG+1', 'MP', 'EP', 'LJ', 'HJ'];
+  if (heroSeat === 'EP-MP') return ['UTG', 'UTG+1'];
+  return order.slice();
+}
+
+function openHandModal(key, matched) {
+  var existing = document.getElementById('example-hand-modal');
+  if (existing) existing.remove();
+  var overlay = document.createElement('div');
+  overlay.id = 'example-hand-modal';
+  overlay.className = 'modal-overlay';
+  overlay.onclick = function(ev) { if (ev.target === overlay) closeModal(); };
+  var box = document.createElement('div');
+  box.className = 'modal-box';
+  box.style.position = 'relative';
+  box.style.maxHeight = '80vh';
+  box.style.overflowY = 'auto';
+  var summary = '<div class="modal-title">' + key + '</div>' +
+    '<div class="mb-16">' + matched.length + ' hands</div>';
+  var rows = matched.map(function(h, idx) {
+    var myActs = getActsSummary(h);
+    var res = renderResult(h, 'span', 'saved-res');
+    return '<div class="range-hand-row" data-ridx="' + idx + '">' +
+      '<div class="range-hand-row-top">' +
+      '<div class="range-hand-row-side">' +
+      '<span class="range-hand-row-pos">' + (h.position || '?') + '</span>' +
+      '<span class="range-hand-row-hole">' + (h.hole ? h.hole.join(' ') : '??') + '</span>' +
+      '<span class="range-hand-row-board">' + (h.board && h.board.length ? h.board.join(' ') : '-') + '</span>' +
+      '</div>' +
+      '<div class="range-hand-row-side">' +
+      '<span class="range-hand-row-actions">' + myActs + '</span>' +
+      res + '</div></div></div>';
+  }).join('');
+  box.innerHTML = '<button class="modal-close" id="modal-close-btn">&times;</button>' +
+    summary + '<div class="mt-12">' + rows + '</div>';
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+  requestAnimationFrame(function() { overlay.classList.add(CSS.SHOW); });
+  document.getElementById('modal-close-btn').onclick = closeModal;
+  box.querySelectorAll('.range-hand-row').forEach(function(row) {
+    row.onclick = function() {
+      var idx = parseInt(row.getAttribute('data-ridx'));
+      if (!isNaN(idx) && matched[idx]) showExampleHandModal(matched[idx]);
+    };
   });
 }

@@ -48,6 +48,17 @@
   --fs-19: 19px;
   --fs-22: 22px;
   --fs-32: 32px;
+
+  /* GTO chart palette (used by Range panel cell backgrounds + legend swatches) */
+  --gto-red:   #b8403a;
+  --gto-green: #3fad64;
+  --gto-blue:  #4a90d9;
+  --gto-grey:  #6a7068;
+  --gto-white: #d0d4cf;
+
+  /* Range cell overlays for "your action" on top of the GTO color */
+  --range-played-border: var(--gold);
+  --range-folded-opacity: 0.25;
 }
 
 * {
@@ -1626,7 +1637,7 @@ textarea#jin:focus {
   border-top: none;
 }
 
-/* Unseen range cells */
+/* Unseen range cells (legacy / Overall frequency view) */
 .rc-unseen {
   background: #0e1310;
   border: var(--sp-1) solid #1a2a1c;
@@ -1636,6 +1647,122 @@ textarea#jin:focus {
   color: #2a3e2c !important;
   font-weight: 400;
 }
+
+/* GTO chart backgrounds (used by all sub-tabs except Overall) */
+.rc[data-gto="red"]   { background: var(--gto-red); }
+.rc[data-gto="green"] { background: var(--gto-green); }
+.rc[data-gto="blue"]  { background: var(--gto-blue); }
+.rc[data-gto="grey"]  { background: var(--gto-grey); }
+.rc[data-gto="white"] { background: var(--gto-white); }
+.rc[data-gto="white"] span { color: #1a1f1a; }
+.rc[data-gto="grey"] span,
+.rc[data-gto="blue"] span { color: #fff; }
+.rc[data-gto="none"] {
+  background: #0e1310;
+  border: var(--sp-1) solid #1a2a1c;
+}
+.rc[data-gto="none"] span { color: #2a3e2c; }
+
+/* "Your action" overlay on top of GTO backgrounds */
+.rc.rc-played {
+  outline: var(--sp-2) solid var(--range-played-border);
+  outline-offset: -2px;
+  box-shadow: 0 0 0 var(--sp-1) rgba(0, 0, 0, 0.35) inset;
+}
+.rc.rc-folded {
+  opacity: var(--range-folded-opacity);
+}
+.rc.rc-undealt {
+  opacity: 0.85;
+}
+
+/* Overall sub-tab: frequency overlay on top of neutral background */
+.rc-undealt[data-gto="none"] {
+  background: #0e1310;
+}
+.rc.rc-played[data-freq="low"]      { background: #24422a; }
+.rc.rc-played[data-freq="med"]      { background: #2e5835; }
+.rc.rc-played[data-freq="med-high"] { background: #3a7a42; }
+.rc.rc-played[data-freq="high"]     { background: var(--gto-green); }
+
+/* GTO legend swatches */
+.leg-sw-gto-red   { background: var(--gto-red); }
+.leg-sw-gto-green { background: var(--gto-green); }
+.leg-sw-gto-blue  { background: var(--gto-blue); }
+.leg-sw-gto-grey  { background: var(--gto-grey); }
+.leg-sw-gto-white { background: var(--gto-white); border: var(--sp-1) solid var(--border); }
+.leg-sw-played {
+  background: var(--s1);
+  outline: var(--sp-2) solid var(--range-played-border);
+  outline-offset: -2px;
+}
+.leg-sw-folded {
+  background: var(--s1);
+  opacity: var(--range-folded-opacity);
+}
+
+/* Range panel sub-tab strip (Overall / RFI / Facing RFI / RFI vs 3bet) */
+.range-subtabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-16);
+  border-bottom: var(--sp-1) solid var(--border);
+}
+
+.range-subtab {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: var(--fs-12);
+  letter-spacing: var(--sp-1);
+  text-transform: uppercase;
+  background: none;
+  border: none;
+  color: var(--dim);
+  padding: var(--sp-10) var(--sp-16);
+  cursor: pointer;
+  border-bottom: var(--sp-2) solid transparent;
+  transition: color .15s, border-color .15s;
+}
+
+.range-subtab:hover { color: var(--text); }
+
+.range-subtab.active {
+  color: var(--gold);
+  border-bottom-color: var(--gold);
+}
+
+/* Range panel selectors row */
+.range-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-10);
+  margin-bottom: var(--sp-16);
+}
+
+.range-control-label {
+  font-size: var(--fs-12);
+  color: var(--dim);
+  text-transform: uppercase;
+  letter-spacing: var(--sp-1);
+}
+
+.range-stats {
+  font-size: var(--fs-13);
+  color: var(--text);
+  margin-bottom: var(--sp-12);
+}
+
+.range-stats-empty,
+.range-empty,
+.range-loading,
+.range-error {
+  font-size: var(--fs-13);
+  color: var(--dim);
+  margin-bottom: var(--sp-12);
+}
+
+.range-error { color: var(--red); }
 
 
 /* ── SHARED BUTTON BASE ── */
@@ -3406,101 +3533,6 @@ tr.hrow:hover .hrow-star {
   background: rgba(255, 255, 255, 0.02);
   border-radius: var(--sp-6);
   border: var(--sp-1) solid var(--border);
-}
-
-/* ── RANGE ADVISOR ──────────────────────────────────────────────────────────── */
-
-.advisor-btn {
-  padding: var(--sp-6) var(--sp-14);
-  font-size: var(--fs-13);
-  font-family: inherit;
-  background: var(--s2);
-  color: var(--dim);
-  border: var(--sp-1) solid var(--border);
-  border-radius: var(--sp-6);
-  cursor: pointer;
-  transition: background .2s, color .2s, border-color .2s;
-}
-
-.advisor-btn:hover:not(:disabled) {
-  border-color: var(--gold2);
-  color: var(--text);
-}
-
-.advisor-btn.active {
-  background: var(--gold-tint);
-  border-color: var(--gold);
-  color: var(--gold);
-}
-
-.advisor-btn:disabled {
-  opacity: 0.35;
-  cursor: not-allowed;
-}
-
-.rc.rc-over {
-  outline: var(--sp-2) solid var(--amber);
-  outline-offset: -2px;
-  background-image: repeating-linear-gradient(
-    135deg,
-    transparent,
-    transparent 3px,
-    rgba(212, 132, 42, 0.18) 3px,
-    rgba(212, 132, 42, 0.18) 5px
-  ) !important;
-}
-
-.rc.rc-under {
-  outline: var(--sp-2) solid #4a90d9;
-  outline-offset: -2px;
-  background-image: repeating-linear-gradient(
-    45deg,
-    transparent,
-    transparent 3px,
-    rgba(74, 144, 217, 0.18) 3px,
-    rgba(74, 144, 217, 0.18) 5px
-  ) !important;
-}
-
-.rc.rc-match {
-  outline: var(--sp-2) solid var(--green);
-  outline-offset: -2px;
-}
-
-.leg-sw-match {
-  background: var(--s1);
-  outline: var(--sp-2) solid var(--green);
-  outline-offset: -2px;
-}
-
-.leg-sw-over {
-  background: var(--s1);
-  outline: var(--sp-2) solid var(--amber);
-  outline-offset: -2px;
-  background-image: repeating-linear-gradient(
-    135deg,
-    transparent,
-    transparent 3px,
-    rgba(212, 132, 42, 0.18) 3px,
-    rgba(212, 132, 42, 0.18) 5px
-  );
-}
-
-.leg-sw-under {
-  background: var(--s1);
-  outline: var(--sp-2) solid #4a90d9;
-  outline-offset: -2px;
-  background-image: repeating-linear-gradient(
-    45deg,
-    transparent,
-    transparent 3px,
-    rgba(74, 144, 217, 0.18) 3px,
-    rgba(74, 144, 217, 0.18) 5px
-  );
-}
-
-.range-legend-adv {
-  margin-top: var(--sp-8);
 }
 
 /* ── HEAD TO HEAD COMPARISON ────────────────────────────────────────────────── */
