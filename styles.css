@@ -2869,6 +2869,100 @@ tr.hrow:hover .hrow-star {
   margin-bottom: var(--sp-28);
 }
 
+.welcome-whatsnew {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-12);
+  margin-bottom: var(--sp-32);
+}
+
+.welcome-whatsnew-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: var(--fs-11);
+  color: var(--dim);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: var(--sp-4);
+}
+
+.whatsnew-card {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: var(--s1);
+  border: var(--sp-1) solid var(--border);
+  border-radius: var(--sp-6);
+  padding: var(--sp-16) var(--sp-20);
+  cursor: pointer;
+  transition: background .15s, border-color .15s, transform .15s;
+  font-family: inherit;
+  color: inherit;
+}
+
+.whatsnew-card:hover {
+  background: var(--s2);
+  border-color: var(--gold2);
+  transform: translateY(-1px);
+}
+
+.whatsnew-card-static {
+  cursor: default;
+}
+
+.whatsnew-card-static:hover {
+  background: var(--s1);
+  border-color: var(--border);
+  transform: none;
+}
+
+.whatsnew-card-hero {
+  background: linear-gradient(135deg, var(--s2) 0%, var(--s1) 100%);
+  border-color: var(--gold2);
+  padding: var(--sp-20) var(--sp-24);
+}
+
+.whatsnew-card-hero:hover {
+  border-color: var(--gold);
+}
+
+.whatsnew-card-tag {
+  display: inline-block;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: var(--fs-11);
+  color: var(--gold);
+  background: var(--bg);
+  border: var(--sp-1) solid var(--gold2);
+  border-radius: var(--sp-4);
+  padding: var(--sp-2) var(--sp-8);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: var(--sp-8);
+}
+
+.whatsnew-card-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: var(--fs-19);
+  color: var(--gold);
+  margin-bottom: var(--sp-6);
+}
+
+.whatsnew-card-hero .whatsnew-card-name {
+  font-size: var(--fs-22);
+}
+
+.whatsnew-card-desc {
+  font-size: var(--fs-13);
+  color: var(--dim);
+  line-height: 1.55;
+}
+
+.whatsnew-card-cta {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: var(--fs-13);
+  color: var(--gold);
+  margin-top: var(--sp-12);
+}
+
 .welcome-intro-heading {
   font-size: clamp(24px, 4vw, 32px);
   color: var(--gold);
