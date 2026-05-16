@@ -2873,7 +2873,7 @@ tr.hrow:hover .hrow-star {
   display: flex;
   flex-direction: column;
   gap: var(--sp-12);
-  margin-bottom: var(--sp-32);
+  margin-top: var(--sp-32);
 }
 
 .welcome-whatsnew-label {

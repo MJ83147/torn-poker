@@ -83,20 +83,6 @@ function renderWelcome(container, d, hands, meta) {
     '<div class="desc-text">' + d.n + ' hands loaded. Here\'s what each tab shows.</div>' +
     '<button class="take-tour-btn" onclick="startWelcomeTour()">Take a Tour</button>' +
     '</div>' +
-    '<div class="welcome-whatsnew">' +
-      '<div class="welcome-whatsnew-label">What\'s new</div>' +
-      '<button type="button" class="whatsnew-card whatsnew-card-hero" data-goto="custom">' +
-        '<div class="whatsnew-card-tag">New</div>' +
-        '<div class="whatsnew-card-name">Custom Report</div>' +
-        '<div class="whatsnew-card-desc">Build your own slice by clicking together clauses like a sentence. Twelve filters across table, position, opponent, stake, time window, pot type and more, with a trend chart, breakdowns and a side-by-side compare mode.</div>' +
-        '<div class="whatsnew-card-cta">Open the Custom Report &rarr;</div>' +
-      '</button>' +
-      '<div class="whatsnew-card whatsnew-card-static">' +
-        '<div class="whatsnew-card-tag">Improved</div>' +
-        '<div class="whatsnew-card-name">Detailed insights</div>' +
-        '<div class="whatsnew-card-desc">Every analysis tab now ships story cards that flag strengths, leaks and patterns in your data, each with a real example hand from your session.</div>' +
-      '</div>' +
-    '</div>' +
     '<div class="welcome-body">' +
     '<div class="welcome-toc">' +
     tabDescs.map(function(t) {
@@ -123,6 +109,20 @@ function renderWelcome(container, d, hands, meta) {
     }).join('') +
     '</div>' +
     '</div>' +
+    '</div>' +
+    '<div class="welcome-whatsnew">' +
+      '<div class="welcome-whatsnew-label">What\'s new</div>' +
+      '<button type="button" class="whatsnew-card whatsnew-card-hero" data-goto="custom">' +
+        '<div class="whatsnew-card-tag">New</div>' +
+        '<div class="whatsnew-card-name">Custom Report</div>' +
+        '<div class="whatsnew-card-desc">Build your own slice by clicking together clauses like a sentence. Twelve filters across table, position, opponent, stake, time window, pot type and more, with a trend chart, breakdowns and a side-by-side compare mode.</div>' +
+        '<div class="whatsnew-card-cta">Open the Custom Report &rarr;</div>' +
+      '</button>' +
+      '<div class="whatsnew-card whatsnew-card-static">' +
+        '<div class="whatsnew-card-tag">Improved</div>' +
+        '<div class="whatsnew-card-name">Detailed insights</div>' +
+        '<div class="whatsnew-card-desc">Every analysis tab now ships story cards that flag strengths, leaks and patterns in your data, each with a real example hand from your session.</div>' +
+      '</div>' +
     '</div>' +
     '</div>';
 
