@@ -165,7 +165,7 @@ function render(d, hands, meta) {
 }
 
 function _renderDashboard(d, hands, meta) {
-  var activeTab = document.querySelector('.tab.active');
+  var activeTab = document.querySelector('.tab-item.active');
   var activeTabId = activeTab ? activeTab.dataset.tab : null;
 
   State.modalHands = hands;
