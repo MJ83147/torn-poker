@@ -119,6 +119,44 @@ function _maybeShowStyleWelcome(d, hands, meta) {
   return true;
 }
 
+// ── PANEL RENDER QUEUE ──────────────────────────────────────────────────────
+// _renderDashboard renders the active panel synchronously and pushes the rest
+// here. The queue drains one panel per idle callback so the dashboard is
+// interactive immediately. switchTab() force-drains a pending panel.
+var _pendingPanels = {};
+var _panelDrainScheduled = false;
+
+function _schedulePanelDrain() {
+  if (_panelDrainScheduled) return;
+  if (!Object.keys(_pendingPanels).length) return;
+  _panelDrainScheduled = true;
+  var schedule = window.requestIdleCallback || function (fn) { return setTimeout(fn, 0); };
+  schedule(function () {
+    _panelDrainScheduled = false;
+    var ids = Object.keys(_pendingPanels);
+    if (!ids.length) return;
+    _drainPanel(ids[0]);
+    _schedulePanelDrain();
+  });
+}
+
+function _drainPanel(tabId) {
+  var fn = _pendingPanels[tabId];
+  if (!fn) return;
+  delete _pendingPanels[tabId];
+  try { fn(); } catch (e) { console.error('Deferred panel render failed:', tabId, e); }
+}
+
+// Wrap switchTab so clicking a still-pending tab renders it on demand.
+(function () {
+  if (typeof switchTab !== 'function') return;
+  var _origSwitchTab = switchTab;
+  window.switchTab = function (tabId) {
+    _drainPanel(tabId);
+    return _origSwitchTab.apply(this, arguments);
+  };
+})();
+
 // ── MAIN RENDER (orchestrator) ──────────────────────────────────────────────
 function render(d, hands, meta) {
   // First-time users see the style welcome screen instead of the dashboard.
@@ -173,26 +211,7 @@ function _renderDashboard(d, hands, meta) {
   }
   pfEl.classList.toggle('hidden', sizeKeys.length <= 1);
 
-  // Render all panels
-  renderWelcome(document.getElementById('p-welcome'), d, hands, meta);
-  renderCards(document.getElementById('p-cards'), d, hands);
-  renderPosition(document.getElementById('p-position'), d, hands);
-  renderStreet(document.getElementById('p-street'), d, hands);
-  renderActions(document.getElementById('p-actions'), d, hands);
-  renderRange(document.getElementById('p-range'), d, hands);
-  renderTables(document.getElementById('p-tables'), hands, State.allHands, State.excludedTables, renderAll);
-  renderTrends(document.getElementById('p-trends'), hands, meta, d);
-  renderShowdown(document.getElementById('p-showdown'), hands, meta);
-  renderLog(document.getElementById('p-log'), hands);
-  // saved hands now rendered inside log panel
-  renderAllIn(document.getElementById('p-allin'), hands);
-  renderPlayers(document.getElementById('p-players'), d, hands);
-  // Style Map is embedded inside My Game now (not a standalone panel).
-  renderMyGame(document.getElementById('p-mygame'), d, hands);
-  renderCustomReport(document.getElementById('p-custom'), State.allHands);
-  _renderStyleDisplay(d);
-
-  // Filter banners (cross-cutting)
+  // Compute the filter banner up front so each panel renderer can bake it in.
   var filterEl = document.getElementById('table-filter');
   var filterVal = filterEl.value;
   var pfFilterVal = pfEl.value;
@@ -203,13 +222,50 @@ function _renderDashboard(d, hands, meta) {
   if (pfFilterVal && pfFilterVal !== 'all') {
     bannerParts.push(pfFilterVal + '-player hands');
   }
-  if (bannerParts.length) {
-    var bannerHtml = '<div class="filter-banner">Showing stats for ' + bannerParts.join(' · ') + '</div>';
-    ['p-welcome', 'p-mygame', 'p-cards', 'p-position', 'p-street', 'p-actions', 'p-range', 'p-trends', 'p-showdown', 'p-log', 'p-allin', 'p-players'].forEach(function (id) {
-      var el = document.getElementById(id);
-      if (el) el.insertAdjacentHTML('afterbegin', bannerHtml);
-    });
+  var bannerHtml = bannerParts.length
+    ? '<div class="filter-banner">Showing stats for ' + bannerParts.join(' · ') + '</div>'
+    : '';
+  var bannerPanels = { 'p-welcome':1, 'p-mygame':1, 'p-cards':1, 'p-position':1, 'p-street':1, 'p-actions':1, 'p-range':1, 'p-trends':1, 'p-showdown':1, 'p-log':1, 'p-allin':1, 'p-players':1 };
+  function _withBanner(panelId, fn) {
+    return function () {
+      fn();
+      if (bannerHtml && bannerPanels[panelId]) {
+        var el = document.getElementById(panelId);
+        if (el) el.insertAdjacentHTML('afterbegin', bannerHtml);
+      }
+    };
   }
+
+  // Build one closure per panel. The active panel runs synchronously so the
+  // dashboard is interactive immediately; the rest queue for browser idle
+  // time. switchTab() force-drains a pending panel if the user clicks its
+  // tab before the queue gets there.
+  var panelRenderers = {
+    welcome:  _withBanner('p-welcome',  function () { renderWelcome(document.getElementById('p-welcome'), d, hands, meta); }),
+    cards:    _withBanner('p-cards',    function () { renderCards(document.getElementById('p-cards'), d, hands); }),
+    position: _withBanner('p-position', function () { renderPosition(document.getElementById('p-position'), d, hands); }),
+    street:   _withBanner('p-street',   function () { renderStreet(document.getElementById('p-street'), d, hands); }),
+    actions:  _withBanner('p-actions',  function () { renderActions(document.getElementById('p-actions'), d, hands); }),
+    range:    _withBanner('p-range',    function () { renderRange(document.getElementById('p-range'), d, hands); }),
+    tables:   _withBanner('p-tables',   function () { renderTables(document.getElementById('p-tables'), hands, State.allHands, State.excludedTables, renderAll); }),
+    trends:   _withBanner('p-trends',   function () { renderTrends(document.getElementById('p-trends'), hands, meta, d); }),
+    showdown: _withBanner('p-showdown', function () { renderShowdown(document.getElementById('p-showdown'), hands, meta); }),
+    log:      _withBanner('p-log',      function () { renderLog(document.getElementById('p-log'), hands); }),
+    allin:    _withBanner('p-allin',    function () { renderAllIn(document.getElementById('p-allin'), hands); }),
+    players:  _withBanner('p-players',  function () { renderPlayers(document.getElementById('p-players'), d, hands); }),
+    mygame:   _withBanner('p-mygame',   function () { renderMyGame(document.getElementById('p-mygame'), d, hands); }),
+    custom:                              function () { renderCustomReport(document.getElementById('p-custom'), State.allHands); },
+  };
+
+  var activeId = (activeTabId && panelRenderers[activeTabId]) ? activeTabId : 'welcome';
+  // Reset any leftover queue from a previous render and run the active panel now.
+  _pendingPanels = {};
+  panelRenderers[activeId]();
+  Object.keys(panelRenderers).forEach(function (id) {
+    if (id !== activeId) _pendingPanels[id] = panelRenderers[id];
+  });
+  _schedulePanelDrain();
+  _renderStyleDisplay(d);
 
   // Table filter handler
   filterEl.onchange = function () {
