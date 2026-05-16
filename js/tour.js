@@ -49,7 +49,12 @@
 
   // ── Welcome tour: header elements + point to help button ──────────────────
   function startWelcomeTour() {
-    if (typeof introJs === 'undefined') return;
+    if (typeof introJs === 'undefined') {
+      if (typeof ensureIntroJs === 'function') {
+        ensureIntroJs(startWelcomeTour);
+      }
+      return;
+    }
 
     var steps = [
       { element: '#hero-strip', intro: '<strong>Hero Strip</strong><br>Your key session stats at a glance: total hands played, win rate, net profit/loss, VPIP (how often you voluntarily enter pots), aggression rate, and how you handle all-in situations.', position: 'bottom' },
@@ -172,7 +177,12 @@
   };
 
   function startTabTour() {
-    if (typeof introJs === 'undefined') return;
+    if (typeof introJs === 'undefined') {
+      if (typeof ensureIntroJs === 'function') {
+        ensureIntroJs(startTabTour);
+      }
+      return;
+    }
 
     var activeTab = document.querySelector('.tab.active');
     var tabId = activeTab ? activeTab.dataset.tab : null;

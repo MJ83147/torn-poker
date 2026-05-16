@@ -46,10 +46,12 @@ function checkSavedSession() {
         };
         State.setSession(hands, meta);
         try { fetch('https://script.google.com/macros/s/AKfycbyTtG1UMCpYXP15dgKQttFyG4Pe-BG8FoAftoW3oYtMBISS37Ws5lYhPPDJ0zl1GYxyQA/exec', { method: 'POST', body: JSON.stringify({ player: playerName, hands: hands.length }), mode: 'no-cors' }); } catch (_) { }
-        showImportLoader(hands.length, function () {
-          var rd = analyse(hands);
-          bucketizeAnalysis(rd, hands);
-          render(rd, hands, meta);
+        ensureChartJs(function () {
+          showImportLoader(hands.length, function () {
+            var rd = analyse(hands);
+            bucketizeAnalysis(rd, hands);
+            render(rd, hands, meta);
+          });
         });
       };
     } catch (_) { }
@@ -291,7 +293,9 @@ function process(raw) {
   try { fetch('https://script.google.com/macros/s/AKfycbyTtG1UMCpYXP15dgKQttFyG4Pe-BG8FoAftoW3oYtMBISS37Ws5lYhPPDJ0zl1GYxyQA/exec', { method: 'POST', body: JSON.stringify({ player: playerName, hands: hands.length }), mode: 'no-cors' }); } catch (_) { }
   var d = analyse(hands);
   bucketizeAnalysis(d, hands);
-  showImportLoader(hands.length, function () { render(d, hands, meta); });
+  ensureChartJs(function () {
+    showImportLoader(hands.length, function () { render(d, hands, meta); });
+  });
 }
 
 // ── INPUT HANDLERS ──────────────────────────────────────────────────────────

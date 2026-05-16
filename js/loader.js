@@ -91,3 +91,37 @@ function showImportLoader(count, callback) {
   setTimeout(deal, 100);
 }
 
+// ── LAZY CDN LOADERS ────────────────────────────────────────────────────────
+// Chart.js and intro.js are heavy and not needed for the paste screen, so they
+// load on demand instead of blocking the initial page render.
+var _chartJsPromise = null;
+function ensureChartJs(callback) {
+  if (typeof Chart !== 'undefined') { callback(); return; }
+  if (!_chartJsPromise) {
+    _chartJsPromise = new Promise(function (resolve) {
+      var s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js';
+      s.onload = resolve;
+      document.head.appendChild(s);
+    });
+  }
+  _chartJsPromise.then(callback);
+}
+
+var _introJsPromise = null;
+function ensureIntroJs(callback) {
+  if (typeof introJs !== 'undefined') { callback(); return; }
+  if (!_introJsPromise) {
+    _introJsPromise = new Promise(function (resolve) {
+      var link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = 'https://cdn.jsdelivr.net/npm/intro.js@7.2.0/minified/introjs.min.css';
+      document.head.appendChild(link);
+      var s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/intro.js@7.2.0/minified/intro.min.js';
+      s.onload = resolve;
+      document.head.appendChild(s);
+    });
+  }
+  _introJsPromise.then(callback);
+}
