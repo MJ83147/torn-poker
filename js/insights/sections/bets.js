@@ -647,7 +647,7 @@
           id: 'bets-response-folds-small',
           label: 'Folds to small bets',
           hands: foldsToSmall,
-          coachingNote: 'Hands where you folded to a small bet. Look at what you had and what the action looked like - many of these are probes you can call cheap with any pair, gutshot, or backdoor.'
+          coachingNote: 'Hands where you folded to a small bet. Look at what you had and what the action looked like. Many of these are probes you can call cheap with any pair, gutshot, or backdoor.'
         });
       }
     }

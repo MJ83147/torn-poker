@@ -233,22 +233,22 @@ function renderCompare(container, d, hands) {
       var lateNote = _oppLatePosBias && _oppLatePosBias > 0.55
         ? ' Especially in late position where they open even wider.'
         : '';
-      exploits.push(targetName + ' folds to raises ' + targetStats.foldToRaise + '% - raise wide against them.' + lateNote);
+      exploits.push(targetName + ' folds to raises ' + targetStats.foldToRaise + '%: raise wide against them.' + lateNote);
     }
     if (targetStats.cbet !== null && targetStats.cbet <= _cbetGate) {
-      exploits.push(targetName + ' c-bets only ' + targetStats.cbet + '% - float their checks on the flop and bet when they show weakness.');
+      exploits.push(targetName + ' c-bets only ' + targetStats.cbet + '%: float their checks on the flop and bet when they show weakness.');
     }
     if (targetStats.wtsd !== null && targetStats.wtsd >= _wtsdGate) {
-      exploits.push(targetName + ' goes to showdown ' + targetStats.wtsd + '% - value bet thin, they call down.');
+      exploits.push(targetName + ' goes to showdown ' + targetStats.wtsd + '%: value bet thin, they call down.');
     }
     if (targetStats.limp !== null && targetStats.limp >= _limpGate) {
-      exploits.push(targetName + ' limps ' + targetStats.limp + '% - raise their limps with a wide range.');
+      exploits.push(targetName + ' limps ' + targetStats.limp + '%: raise their limps with a wide range.');
     }
     if (targetStats.agg !== null && targetStats.agg <= _aggGate) {
-      exploits.push(targetName + ' is passive (' + targetStats.agg + '% agg) - their bets mean strength, fold more to them.');
+      exploits.push(targetName + ' is passive (' + targetStats.agg + '% agg). Their bets mean strength, fold more to them.');
     }
     if (targetStats.vpip !== null && targetStats.vpip >= _vpipGate) {
-      exploits.push(targetName + ' plays ' + targetStats.vpip + '% of hands at this table size - tighten up and value bet relentlessly.');
+      exploits.push(targetName + ' plays ' + targetStats.vpip + '% of hands at this table size: tighten up and value bet relentlessly.');
     }
 
     var exploitHtml = '';

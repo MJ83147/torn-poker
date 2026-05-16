@@ -60,12 +60,12 @@ function cacheOpponentProfiles(hands) {
 
     // Exploitation adjustments
     var adjustments = [];
-    if (foldToRaise !== null && foldToRaise >= 60) adjustments.push('Folds to raises ' + foldToRaise + '% - bluff more');
-    if (foldToRaise !== null && foldToRaise <= 25) adjustments.push('Rarely folds to raises - value bet only');
-    if (vpip !== null && vpip >= 55) adjustments.push('Plays too many hands - tighten up and value bet');
-    if (cbet !== null && cbet >= 75) adjustments.push('Auto c-bets - raise their flop bets');
-    if (agg !== null && agg < 15) adjustments.push('Very passive - steal pots with aggression');
-    if (wtsd !== null && wtsd >= 55) adjustments.push('Calls to showdown - bet every street for value');
+    if (foldToRaise !== null && foldToRaise >= 60) adjustments.push('Folds to raises ' + foldToRaise + '%: bluff more');
+    if (foldToRaise !== null && foldToRaise <= 25) adjustments.push('Rarely folds to raises: value bet only');
+    if (vpip !== null && vpip >= 55) adjustments.push('Plays too many hands: tighten up and value bet');
+    if (cbet !== null && cbet >= 75) adjustments.push('Auto c-bets: raise their flop bets');
+    if (agg !== null && agg < 15) adjustments.push('Very passive: steal pots with aggression');
+    if (wtsd !== null && wtsd >= 55) adjustments.push('Calls to showdown: bet every street for value');
 
     _opponentCache[name] = {
       name: name, hands: s.hands, vpip: vpip, pfr: pfr, agg: agg,

@@ -82,7 +82,7 @@
 
   var tabTourSteps = {
     cards: [
-      { el: '.panel-title', intro: '<strong>Cards</strong><br>This tab breaks down your performance by starting hand category - pocket pairs, broadway, suited connectors, ace-rag, and more.', pos: 'bottom' },
+      { el: '.panel-title', intro: '<strong>Cards</strong><br>This tab breaks down your performance by starting hand category: pocket pairs, broadway, suited connectors, ace-rag, and more.', pos: 'bottom' },
       { el: '.ht-stack-legend', intro: '<strong>Legend</strong><br>The colour key: green = hands won, blue = hands played but lost, grey = hands dealt but folded preflop.', pos: 'bottom' },
       { el: '.ht-stack-item', intro: '<strong>Hand Type Bars</strong><br>Each bar shows a hand category. The wider the green segment, the better your win rate. The number on the right is your win percentage for that type.', pos: 'top' },
       { el: '.story-grid', intro: '<strong>Story</strong><br>Plain-English findings about your hand-type performance, ranked by impact. Click any card to expand the breakdown and jump to an example hand.', pos: 'top',
@@ -116,7 +116,7 @@
     range: [
       { el: '.panel-title', intro: '<strong>Range</strong><br>The classic 13x13 hand matrix showing every possible starting hand combination.', pos: 'bottom' },
       { el: '#range-pos-filter', intro: '<strong>Position Filter</strong><br>Filter the grid to see which hands you play from specific positions. Great for reviewing your opening range by seat.', pos: 'bottom' },
-      { el: '.range-grid-sm', intro: '<strong>Hand Matrix</strong><br>Every starting hand combo colour-coded by win rate. Darker green = higher win rate. <strong>Click any cell</strong> to see example hands you played with that combo.', pos: 'top' },
+      { el: '.range-grid-sm', intro: '<strong>Hand Matrix</strong><br>Every starting hand combo colour-coded by win rate. Darker green = higher win rate. <strong>Click any hand</strong> to see when you played it.', pos: 'top' },
       { el: '.range-legend', intro: '<strong>Legend</strong><br>Colour scale for win rate and play frequency. Use this to read the grid at a glance.', pos: 'top' },
       { el: '.story-grid', intro: '<strong>Range Story</strong><br>Plain-English findings about your hand selection, ranked by impact. Each card expands for the breakdown and a click-through to an example hand.', pos: 'top',
         fallback: '<strong>Range Story</strong><br>Story cards appear here once your range data reveals patterns worth noting.' }
@@ -149,11 +149,11 @@
       { el: '.hrow-star', intro: '<strong>Star Hands</strong><br>Click the star on any hand to save it for later review. Starred hands appear in the Saved Hands section at the top of this page.', pos: 'left' },
       { el: '.saved-section', intro: '<strong>Saved Hands</strong><br>Your starred hands for study. Each card shows hole cards, board, and result. Click to replay. Add notes to remember what you were thinking.', pos: 'top',
         fallback: '<strong>Saved Hands</strong><br>When you star hands using the star button, they appear in a saved section at the top of this page for easy review.' },
-      { el: null, intro: '<strong>Equity Simulation</strong><br>Inside any hand replay, look for the <strong>Run Equity Simulation</strong> button. It runs a Monte Carlo simulation calculating your equity (chance of winning) on each street against a random hand. It compares your actual calls, raises, and folds against the mathematical pot odds - showing whether each decision was profitable.' }
+      { el: null, intro: '<strong>Equity Simulation</strong><br>Inside any hand replay, look for the <strong>Run Equity Simulation</strong> button. It runs a Monte Carlo simulation calculating your equity (chance of winning) on each street against a random hand. It compares your actual calls, raises, and folds against the mathematical pot odds, showing whether each decision was profitable.' }
     ],
     allin: [
       { el: '.panel-title', intro: '<strong>All-In EV</strong><br>This tab finds every hand where you went all-in at showdown and calculates whether you ran lucky or unlucky. It compares your actual results against your mathematical expected value.', pos: 'bottom' },
-      { el: '#allin-run-btn', intro: '<strong>Run Equity Simulation</strong><br>Click this to calculate your equity (win probability) for each all-in hand using Monte Carlo simulation. The panel detects all-in hands automatically - this button runs the math.', pos: 'bottom',
+      { el: '#allin-run-btn', intro: '<strong>Run Equity Simulation</strong><br>Click this to calculate your equity (win probability) for each all-in hand using Monte Carlo simulation. The panel detects all-in hands automatically. This button runs the math.', pos: 'bottom',
         fallback: '<strong>Run Equity Simulation</strong><br>Once all-in hands are detected, a button appears to run equity calculations. After simulation, you\'ll see EV diff, fair share, and a cumulative graph.' },
       { el: '.allin-table-wrap', intro: '<strong>All-In Hands Table</strong><br>Every detected all-in showdown with your hole cards, opponent cards, board, street, pot size, and result. <strong>Click any row</strong> to replay the full hand.', pos: 'top',
         fallback: '<strong>All-In Hands Table</strong><br>A table listing every all-in showdown appears here when all-in hands are found in your data.' },
@@ -162,7 +162,7 @@
       { el: '#allin-ev-chart', intro: '<strong>EV Graph</strong><br>Gold line = your actual cumulative results. Dashed line = expected value based on equity. If gold is above the dashed line, you\'re running hot. Below means you\'re running cold.', pos: 'top',
         fallback: '<strong>EV Graph</strong><br>After simulation, a cumulative graph shows your actual results vs expected value over time. The gap between the lines is your variance.' },
       { el: '.story-grid', intro: '<strong>EV Story</strong><br>Plain-English findings about variance: running hot or cold, underdog frequency, and whether luck is masking good or bad decisions. Each card expands for the breakdown.', pos: 'top',
-        fallback: '<strong>EV Story</strong><br>Story cards appear after the simulation runs and patterns emerge - running hot or cold, underdog frequency, or variance masking good decisions.' }
+        fallback: '<strong>EV Story</strong><br>Story cards appear after the simulation runs and patterns emerge: running hot or cold, underdog frequency, or variance masking good decisions.' }
     ],
     players: [
       { el: '.panel-title', intro: '<strong>Players</strong><br>Stats on every opponent you\'ve faced, with watch lists and head-to-head comparison.', pos: 'bottom' },
@@ -184,17 +184,17 @@
       { el: '#mygame-stylemap', intro: '<strong>Style Map</strong><br>Plots your VPIP and aggression on the style quadrant so you can see at a glance where you sit and where you might be drifting.', pos: 'top' }
     ],
     custom: [
-      { el: '.panel-title', intro: '<strong>Custom Report</strong><br>Build your own slice. Pick a sentence, add clauses, and see how that subset of hands performed.', pos: 'bottom' },
+      { el: '.panel-title', intro: '<strong>Custom Report</strong><br>Build your own report. Pick a sentence, add clauses, and see how that subset of hands performed.', pos: 'bottom' },
       { el: '.cr-sentence-wrap', intro: '<strong>Sentence Builder</strong><br>Click any underlined word to swap it. The headline numbers and charts re-run live as you change clauses.', pos: 'bottom' },
-      { el: '.cr-add-btn', intro: '<strong>Add a Clause</strong><br>Narrow the slice further: position, street, opponent count, stack depth, and more. Combine clauses to drill into very specific spots.', pos: 'bottom',
-        fallback: '<strong>Add a Clause</strong><br>The + add clause button sits at the end of each sentence so you can layer extra filters on the slice.' },
-      { el: '.cr-toolbar', intro: '<strong>Compare Mode</strong><br>Toggle "Compare two slices" to build a second sentence (B) and run an A/B head-to-head. Use Reset to start fresh.', pos: 'bottom' },
-      { el: '.cr-headline', intro: '<strong>Headline Stats</strong><br>The core numbers for your current slice: hands, win rate, bb/100, VPIP, aggression. In compare mode each tile shows A / Δ / B.', pos: 'top',
-        fallback: '<strong>Headline Stats</strong><br>The core numbers appear here once your slice has enough hands.' },
-      { el: '.ins-grid', intro: '<strong>Insight Cards</strong><br>Auto-generated callouts when the slice shows unusual win rate, positional skew, or action patterns vs your baseline.', pos: 'top',
-        fallback: '<strong>Insight Cards</strong><br>Callouts appear here when the slice shows patterns worth flagging.' },
-      { el: '.cr-charts', intro: '<strong>Charts</strong><br>Four views of the slice: bb/100 over time, bb/100 by position, win rate by hand class, and action breakdown. In compare mode each chart overlays A and B.', pos: 'top',
-        fallback: '<strong>Charts</strong><br>Four breakdowns of the slice appear here once the sentence matches enough hands.' }
+      { el: '.cr-add-btn', intro: '<strong>Add a Clause</strong><br>Narrow the report further: position, street, opponent count, stack depth, and more. Combine clauses to drill into very specific spots.', pos: 'bottom',
+        fallback: '<strong>Add a Clause</strong><br>The + add clause button sits at the end of each sentence so you can layer extra filters on the report.' },
+      { el: '.cr-toolbar', intro: '<strong>Compare Mode</strong><br>Toggle "Compare two reports" to build a second sentence (B) and run an A/B head-to-head. Use Reset to start fresh.', pos: 'bottom' },
+      { el: '.cr-headline', intro: '<strong>Headline Stats</strong><br>The core numbers for your current report: hands, win rate, bb/100, VPIP, aggression. In compare mode each tile shows A / Δ / B.', pos: 'top',
+        fallback: '<strong>Headline Stats</strong><br>The core numbers appear here once your report has enough hands.' },
+      { el: '.ins-grid', intro: '<strong>Insight Cards</strong><br>Auto-generated callouts when the report shows unusual win rate, positional skew, or action patterns vs your baseline.', pos: 'top',
+        fallback: '<strong>Insight Cards</strong><br>Callouts appear here when the report shows patterns worth flagging.' },
+      { el: '.cr-charts', intro: '<strong>Charts</strong><br>Four views of the report: bb/100 over time, bb/100 by position, win rate by hand class, and action breakdown. In compare mode each chart overlays A and B.', pos: 'top',
+        fallback: '<strong>Charts</strong><br>Four breakdowns of the report appear here once the sentence matches enough hands.' }
     ]
   };
 

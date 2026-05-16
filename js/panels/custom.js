@@ -643,7 +643,7 @@ var CR_RULES = [
       return {
         sev: 'g',
         title: 'Strong winner',
-        body: 'This slice is running at +' + m.bb100 + ' bb/100 across ' + m.n + ' hands. Healthy chunk of profit comes from here.',
+        body: 'This report is running at +' + m.bb100 + ' bb/100 across ' + m.n + ' hands. Healthy chunk of profit comes from here.',
         chips: [{ v: '+' + m.bb100 + ' bb/100', hi: true }, { v: m.n + ' hands' }],
       };
     },
@@ -656,7 +656,7 @@ var CR_RULES = [
       return {
         sev: 'r',
         title: 'Strong loser',
-        body: 'This slice bleeds ' + m.bb100 + ' bb/100 across ' + m.n + ' hands. Worth narrowing the spot to find what is leaking.',
+        body: 'This report bleeds ' + m.bb100 + ' bb/100 across ' + m.n + ' hands. Worth narrowing the spot to find what is leaking.',
         chips: [{ v: m.bb100 + ' bb/100', hi: true }, { v: m.n + ' hands' }],
       };
     },
@@ -670,7 +670,7 @@ var CR_RULES = [
       return {
         sev: 'a',
         title: 'Wide and passive',
-        body: 'VPIP ' + m.vpip + '% vs PFR ' + m.pfr + '% in this slice - a ' + gap + '-point gap. Calling more than raising usually leaks chips.',
+        body: 'VPIP ' + m.vpip + '% vs PFR ' + m.pfr + '% in this report: a ' + gap + '-point gap. Calling more than raising usually leaks chips.',
         chips: [{ v: 'VPIP ' + m.vpip + '%' }, { v: 'PFR ' + m.pfr + '%' }, { v: 'gap ' + gap + ' pts', hi: true }],
       };
     },
@@ -716,7 +716,7 @@ var CR_RULES = [
       return {
         sev: 'a',
         title: 'Showdown frequency ' + dir,
-        body: 'You reach showdown ' + m.wtsd + '% of the time you see a flop in this slice. Healthy range is 24-32%.',
+        body: 'You reach showdown ' + m.wtsd + '% of the time you see a flop in this report. Healthy range is 24-32%.',
         chips: [{ v: 'WTSD ' + m.wtsd + '%', hi: true }, { v: 'target 24-32%' }],
       };
     },
@@ -737,7 +737,7 @@ var CR_COMPARE_RULES = [
       return {
         sev: gap > 0 ? 'g' : 'r',
         title: 'Segment ' + winner + ' is meaningfully more profitable',
-        body: 'A runs at ' + A.bb100 + ' bb/100, B at ' + B.bb100 + ' bb/100 - a ' + Math.abs(gap) + ' bb/100 gap. Worth interrogating what is different about ' + loser + '.',
+        body: 'A runs at ' + A.bb100 + ' bb/100, B at ' + B.bb100 + ' bb/100: a ' + Math.abs(gap) + ' bb/100 gap. Worth interrogating what is different about ' + loser + '.',
         chips: [{ v: 'A: ' + A.bb100 + ' bb/100' }, { v: 'B: ' + B.bb100 + ' bb/100' }, { v: 'Δ ' + (gap > 0 ? '+' : '') + gap, hi: true }],
       };
     },
@@ -751,7 +751,7 @@ var CR_COMPARE_RULES = [
       return {
         sev: 'n',
         title: 'VPIP differs noticeably',
-        body: 'You enter ' + A.vpip + '% of pots in A vs ' + B.vpip + '% in B. The range you play in these two slices is not the same.',
+        body: 'You enter ' + A.vpip + '% of pots in A vs ' + B.vpip + '% in B. The range you play in these two reports is not the same.',
         chips: [{ v: 'A: VPIP ' + A.vpip + '%' }, { v: 'B: VPIP ' + B.vpip + '%' }],
       };
     },
@@ -764,7 +764,7 @@ function _crEvaluateRules(result, baseline) {
     return [{
       sev: 'n',
       title: 'Not enough hands',
-      body: result.sampleSize + ' hands in this slice. Below ' + CR_SAMPLE_MIN + ' the numbers are too noisy to trust - widen filters or remove a clause.',
+      body: result.sampleSize + ' hands in this report. Below ' + CR_SAMPLE_MIN + ' the numbers are too noisy to trust: widen filters or remove a clause.',
       chips: [{ v: result.sampleSize + ' / ' + CR_SAMPLE_MIN, hi: true }],
     }];
   }
@@ -908,7 +908,7 @@ function _crOpenClausePopover(targetEl, segLabel, clauseId) {
 
   var html = '<div class="cr-pop-title">' + def.label + '</div>';
   if (!def.options.length) {
-    html += '<div class="desc-text">No options available - none of your hands match this clause yet.</div>';
+    html += '<div class="desc-text">No options available. None of your hands match this clause yet.</div>';
   } else if (def.multi) {
     html += '<div class="cr-pop-list">';
     current = Array.isArray(current) ? current : [];
@@ -1080,13 +1080,13 @@ function _crRenderInto(container) {
 
   var html = '';
   html += panelTitle('Custom Report');
-  html += panelDesc('Build your own slice. Click any underlined word to change it. Add clauses to narrow further.');
+  html += panelDesc('Build your own report. Click any underlined word to change it. Add clauses to narrow further.');
 
   // Compare toggle.
   html += '<div class="cr-toolbar">';
   html += '<label class="cr-compare-toggle">';
   html += '<input type="checkbox" id="cr-compare-toggle"' + (_crState.compare ? ' checked' : '') + '>';
-  html += '<span>Compare two slices</span></label>';
+  html += '<span>Compare two reports</span></label>';
   html += '<button class="cr-reset-btn" id="cr-reset-btn">Reset filters</button>';
   html += '</div>';
 
@@ -1228,7 +1228,7 @@ function _crRenderCharts(resultA, resultB) {
       },
     }));
   } else if (trendCanvas) {
-    trendCanvas.parentNode.parentNode.innerHTML = '<div class="sec-subtitle mt-0">bb/100 over time</div><div class="desc-text">Need at least 2 sessions of cash hands in this slice.</div>';
+    trendCanvas.parentNode.parentNode.innerHTML = '<div class="sec-subtitle mt-0">bb/100 over time</div><div class="desc-text">Need at least 2 sessions of cash hands in this report.</div>';
   }
 
   // Position bars.
@@ -1262,7 +1262,7 @@ function _crRenderCharts(resultA, resultB) {
         scales: { x: chartXScale(colors), y: chartYScaleZeroLine(colors, { tickCallback: function(v) { return v + ''; } }) },
       }));
     } else {
-      posCanvas.parentNode.parentNode.innerHTML = '<div class="sec-subtitle mt-0">bb/100 by position</div><div class="desc-text">Need at least two positions with cash data in this slice.</div>';
+      posCanvas.parentNode.parentNode.innerHTML = '<div class="sec-subtitle mt-0">bb/100 by position</div><div class="desc-text">Need at least two positions with cash data in this report.</div>';
     }
   }
 
@@ -1298,7 +1298,7 @@ function _crRenderCharts(resultA, resultB) {
         scales: { x: chartXScale(colors), y: chartYScale(colors, { max: 100, tickCallback: function(v) { return v + '%'; } }) },
       }));
     } else {
-      cardsCanvas.parentNode.parentNode.innerHTML = '<div class="sec-subtitle mt-0">Win rate by hand class</div><div class="desc-text">Need at least two hand classes in this slice.</div>';
+      cardsCanvas.parentNode.parentNode.innerHTML = '<div class="sec-subtitle mt-0">Win rate by hand class</div><div class="desc-text">Need at least two hand classes in this report.</div>';
     }
   }
 
@@ -1331,7 +1331,7 @@ function _crRenderCharts(resultA, resultB) {
         },
       }));
     } else {
-      actCanvas.parentNode.parentNode.innerHTML = '<div class="sec-subtitle mt-0">Action breakdown</div><div class="desc-text">No action data in this slice.</div>';
+      actCanvas.parentNode.parentNode.innerHTML = '<div class="sec-subtitle mt-0">Action breakdown</div><div class="desc-text">No action data in this report.</div>';
     }
   }
 }

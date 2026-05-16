@@ -189,7 +189,7 @@ function renderRange(container, d, hands) {
       '<div class="leg"><div class="leg-sw leg-sw-under"></div>Underplayed</div>' +
       '</div>' : '';
     gridContainer.innerHTML =
-      '<div class="meta-text mb-20">' + rc.seen + ' of ' + rc.totalCombos + ' hand combos seen · hover any cell for detail</div>' +
+      '<div class="meta-text mb-20">' + rc.seen + ' of ' + rc.totalCombos + ' hand combos seen · hover any hand for detail</div>' +
       '<div class="two-col">' +
       '<div><div class="sec-subtitle mt-0">Win Rate by Hand</div>' + rc.legend1 + advLegend + '<div class="range-grid-sm">' + rc.wrGrid + '</div></div>' +
       '<div><div class="sec-subtitle mt-0">Hands Played</div>' + rc.legend2 + advLegend + '<div class="range-grid-sm">' + rc.freqGrid + '</div></div>' +

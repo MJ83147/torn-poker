@@ -122,12 +122,12 @@ function renderMyGame(container, d, hands) {
         ? matrixTarget('vpip', 'UTG', _domSeatsMG, getUserStyle()) : null;
       return b ? b.loose + 5 : 35;
     })();
-    if (!workOn && aggVal !== null && aggVal < _workAggFloor) workOn = { sev: 'r', label: 'Too Passive', desc: 'Only ' + aggVal + '% aggression - expected floor around ' + Math.round(_workAggFloor) + '%. You check and call when you should be betting for value.', action: 'Next 20 hands: when you have a strong hand, raise instead of calling. Track whether your aggression % moves above ' + Math.round(_workAggFloor + 5) + '%.' };
+    if (!workOn && aggVal !== null && aggVal < _workAggFloor) workOn = { sev: 'r', label: 'Too Passive', desc: 'Only ' + aggVal + '% aggression. Expected floor around ' + Math.round(_workAggFloor) + '%. You check and call when you should be betting for value.', action: 'Next 20 hands: when you have a strong hand, raise instead of calling. Track whether your aggression % moves above ' + Math.round(_workAggFloor + 5) + '%.' };
     if (!workOn && limpVal !== null && limpVal > _workLimpCeil) workOn = { sev: 'r', label: 'Limping Too Much', desc: 'You limp ' + limpVal + '% of hands at ' + (_domSeatsMG || '?') + '-max (ceiling around ' + _workLimpCeil + '%). Limping gives up initiative.', action: 'Next 20 hands: every time you want to limp, either raise or fold instead. No flat calls preflop without a raise in front.' };
-    if (!workOn && ftrVal !== null && ftrVal > _workFtrCeil && d.facedRaise >= 5) workOn = { sev: 'r', label: 'Folding To Pressure', desc: 'You fold ' + ftrVal + '% when raised - ceiling around ' + Math.round(_workFtrCeil) + '%.', action: 'Next session: when raised, pause and consider if your hand is strong enough to continue. Look for spots to call or re-raise instead of auto-folding.' };
-    if (!workOn && cbetVal !== null && cbetVal < _workCbetFloor && d.cbetOpps >= 5) workOn = { sev: 'r', label: 'Low C-Bet', desc: 'You only c-bet ' + cbetVal + '% - expected floor around ' + Math.round(_workCbetFloor) + '%.', action: 'Next session: when you raised preflop and the flop comes, bet at least half the time regardless of whether you connected. Maintaining aggression wins pots.' };
-    if (!workOn && wtsdVal !== null && wtsdVal > _workWtsdCeil) workOn = { sev: 'r', label: 'Paying Off Too Much', desc: 'WTSD at ' + wtsdVal + '% - ceiling around ' + _workWtsdCeil + '%.', action: 'Next session: on the river facing a big bet, ask whether your hand beats their value range. If not, fold. Saving one big call per session adds up.' };
-    if (!workOn && _workEpCeil && epVpip !== null && epVpip > _workEpCeil && earlyHands >= 10) workOn = { sev: 'r', label: 'Too Loose Early', desc: 'EP VPIP at ' + epVpip + '% - ceiling around ' + _workEpCeil + '%.', action: 'Next session: from UTG/MP, only play top 25% of hands. Fold marginal suited connectors and weak aces from these seats.' };
+    if (!workOn && ftrVal !== null && ftrVal > _workFtrCeil && d.facedRaise >= 5) workOn = { sev: 'r', label: 'Folding To Pressure', desc: 'You fold ' + ftrVal + '% when raised. Ceiling around ' + Math.round(_workFtrCeil) + '%.', action: 'Next session: when raised, pause and consider if your hand is strong enough to continue. Look for spots to call or re-raise instead of auto-folding.' };
+    if (!workOn && cbetVal !== null && cbetVal < _workCbetFloor && d.cbetOpps >= 5) workOn = { sev: 'r', label: 'Low C-Bet', desc: 'You only c-bet ' + cbetVal + '%. Expected floor around ' + Math.round(_workCbetFloor) + '%.', action: 'Next session: when you raised preflop and the flop comes, bet at least half the time regardless of whether you connected. Maintaining aggression wins pots.' };
+    if (!workOn && wtsdVal !== null && wtsdVal > _workWtsdCeil) workOn = { sev: 'r', label: 'Paying Off Too Much', desc: 'WTSD at ' + wtsdVal + '%. Ceiling around ' + _workWtsdCeil + '%.', action: 'Next session: on the river facing a big bet, ask whether your hand beats their value range. If not, fold. Saving one big call per session adds up.' };
+    if (!workOn && _workEpCeil && epVpip !== null && epVpip > _workEpCeil && earlyHands >= 10) workOn = { sev: 'r', label: 'Too Loose Early', desc: 'EP VPIP at ' + epVpip + '%. Ceiling around ' + _workEpCeil + '%.', action: 'Next session: from UTG/MP, only play top 25% of hands. Fold marginal suited connectors and weak aces from these seats.' };
     if (!workOn && allLeaks.length) workOn = { sev: allLeaks[0].severity, label: allLeaks[0].name, desc: '', action: 'Focus on this pattern in your next session and track whether the stat improves.' };
 
     if (workOn) {
@@ -218,7 +218,7 @@ function _fmtBand(band) {
 //   2. CONTEXT     - one-line description of the regime (general advice)
 //   3. COACHING    - what to actually do (general advice)
 function renderTableDynamicsReference(hands, d) {
-  var h = '<div class="sec-subtitle mt-20">Table Dynamics - You vs Target</div>';
+  var h = '<div class="sec-subtitle mt-20">Table Dynamics: You vs Target</div>';
   h += '<div class="desc-text mb-16">Your actual play at each table size and flop multiplicity, compared to the recommended benchmarks for your target style. <span class="v-ok">Green = on target</span>, <span class="v-low">amber = too low / too tight</span>, <span class="v-high">red = too high / too loose</span>.</div>';
 
   var styleKey = (typeof getUserStyle === 'function') ? getUserStyle() : 'TAG';
@@ -228,14 +228,14 @@ function renderTableDynamicsReference(hands, d) {
   // from the previous seat count ("Adds UTG+1") so they read as nonsense in
   // isolation. These replacements stand on their own.
   var seatCoaching = {
-    2: 'Heads-up: defend the BB very wide and open 80%+ from the button. Postflop is about fold equity - c-bet often, double-barrel turns where you have equity.',
+    2: 'Heads-up: defend the BB very wide and open 80%+ from the button. Postflop is about fold equity. C-bet often, double-barrel turns where you have equity.',
     3: '3-handed plays like heads-up with one extra seat. BTN opens 60-70%. SB defends wide vs BTN steals. Aggression and position dominate.',
-    4: '4-max: the cutoff joins late position. BTN still opens 50-60%. SB and BB need wider defends than full-ring - calling 3-bets light is fine in position.',
-    5: '5-max: the hijack starts to feel early. Late position is still where you make most of your money - BTN opens 45-55%, CO opens 30-40%.',
+    4: '4-max: the cutoff joins late position. BTN still opens 50-60%. SB and BB need wider defends than full-ring: calling 3-bets light is fine in position.',
+    5: '5-max: the hijack starts to feel early. Late position is still where you make most of your money. BTN opens 45-55%, CO opens 30-40%.',
     6: '6-max: UTG is the only true early seat. CO and BTN should be your most-played positions for opens, 3-bets, and steals. Tighten UTG to premiums only.',
     7: '7-handed adds UTG+1. Early position needs to be tight (premiums and broadway). Late position keeps attacking the blinds aggressively.',
     8: 'Full-ring 8-max. Tighten UTG and UTG+1 to premiums only. Widen CO/BTN to attack the blinds when folded to.',
-    9: 'Full-ring 9-max. Very disciplined early position - JJ+, AKs/AKo, AQs only from UTG. Exploit weak limps and small opens from the blinds when folded to.'
+    9: 'Full-ring 9-max. Very disciplined early position: JJ+, AKs/AKo, AQs only from UTG. Exploit weak limps and small opens from the blinds when folded to.'
   };
 
   // ── Seat-size cards: per-position VPIP vs target ──
@@ -259,7 +259,7 @@ function renderTableDynamicsReference(hands, d) {
 
     // ANALYSIS zone: per-position VPIP vs style-adjusted matrix target.
     // Header explicitly says "Your VPIP" so the % has a name attached.
-    h += '<div class="dynamics-zone-label dim-label">Your play - VPIP by position</div>';
+    h += '<div class="dynamics-zone-label dim-label">Your play: VPIP by position</div>';
     h += '<table class="tbl dynamics-pos-tbl"><thead><tr><th>Pos</th><th>Your VPIP</th><th>Target</th><th>Hands</th></tr></thead><tbody>';
     for (var pi = 0; pi < entry.positions.length; pi++) {
       var p = entry.positions[pi];

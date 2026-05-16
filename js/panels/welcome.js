@@ -73,7 +73,7 @@ function renderWelcome(container, d, hands, meta) {
   ];
   var tips = [
     'Insight cards have a <strong>See example hand</strong> button showing a real hand from your data.',
-    'Click any cell on the <strong>Range</strong> grid to see hands with that combo.',
+    'Click any hand on the <strong>Range</strong> grid to see when you played it.',
     'In <strong>Players</strong>, click any row to see shared hands. Star \u2606 a player to watch them.',
     'Use the <strong>table filter</strong> in the header to isolate stats to one table.',
   ];
@@ -115,7 +115,7 @@ function renderWelcome(container, d, hands, meta) {
       '<button type="button" class="whatsnew-card whatsnew-card-hero" data-goto="custom">' +
         '<div class="whatsnew-card-tag">New</div>' +
         '<div class="whatsnew-card-name">Custom Report</div>' +
-        '<div class="whatsnew-card-desc">Build your own slice by clicking together clauses like a sentence. Twelve filters across table, position, opponent, stake, time window, pot type and more, with a trend chart, breakdowns and a side-by-side compare mode.</div>' +
+        '<div class="whatsnew-card-desc">Build your own report by clicking together clauses like a sentence. Twelve filters across table, position, opponent, stake, time window, pot type and more, with a trend chart, breakdowns and a side-by-side compare mode.</div>' +
         '<div class="whatsnew-card-cta">Open the Custom Report &rarr;</div>' +
       '</button>' +
       '<div class="whatsnew-card whatsnew-card-static">' +
