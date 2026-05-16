@@ -74,12 +74,6 @@
     return null;
   }
 
-  // Format value as a percent with one decimal. Accepts null and returns ''.
-  function fmtPct(v) {
-    if (v == null || !isFinite(v)) return '';
-    return (Math.round(v * 10) / 10) + '%';
-  }
-
   // Format a band as "X to Y%". Accepts {tight, loose} or {floor, ceiling}.
   function fmtBand(band) {
     if (!band) return '';

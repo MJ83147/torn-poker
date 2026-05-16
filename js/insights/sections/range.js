@@ -475,14 +475,6 @@
     return items.slice(0, -1).join(', ') + ', and ' + items[items.length - 1];
   }
 
-  // Small currency-ish formatter that piggybacks on the global fmt() helper.
-  function fmtPnl(v) {
-    if (v == null || !isFinite(v)) return '$0';
-    var abs = Math.abs(v);
-    var formatted = (typeof fmt === 'function') ? fmt(abs) : Math.round(abs).toString();
-    return (v < 0 ? '-' : '+') + formatted;
-  }
-
   // ── REGISTER ──────────────────────────────────────────────────────────────
 
   Sections.defineSection({

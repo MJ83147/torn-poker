@@ -48,13 +48,6 @@
     return net / sd.n;
   }
 
-  function fmtPnlLocal(v) {
-    if (v == null || !isFinite(v)) return '$0';
-    var abs = Math.abs(v);
-    var formatted = (typeof fmt === 'function') ? fmt(abs) : Math.round(abs).toString();
-    return (v < 0 ? '-' : '+') + formatted;
-  }
-
   // Sort hands chronologically. Hands without timestamp drop to the back.
   function chronological(hands) {
     return hands.slice().sort(function(a, b) {
@@ -290,8 +283,8 @@
 
     var openingText = 'You have ' + sessions.length + ' sessions tracked. ' +
       (bestSession && worstSession && bestSession !== worstSession
-        ? 'Best session: ' + fmtPnlLocal(bestSession.pnl) + ' across ' + bestSession.len + ' hands. ' +
-          'Worst: ' + fmtPnlLocal(worstSession.pnl) + ' across ' + worstSession.len + ' hands.'
+        ? 'Best session: ' + fmtPnl(bestSession.pnl) + ' across ' + bestSession.len + ' hands. ' +
+          'Worst: ' + fmtPnl(worstSession.pnl) + ' across ' + worstSession.len + ' hands.'
         : 'Not enough variation between sessions to compare yet.');
 
     var branchTexts = [];
@@ -454,8 +447,8 @@
             severity: longLeakSev,
             deltaUnits: Math.abs(gap) / 10,
             branchText: 'Short sessions (around ' + Math.round(avgShort) + ' hands) run at ' +
-              fmtPnlLocal(sAgg.perHand) + ' per hand. Long sessions (around ' + Math.round(avgLong) +
-              ' hands) run at ' + fmtPnlLocal(lAgg.perHand) + ' per hand. The longer you play, the worse it gets.',
+              fmtPnl(sAgg.perHand) + ' per hand. Long sessions (around ' + Math.round(avgLong) +
+              ' hands) run at ' + fmtPnl(lAgg.perHand) + ' per hand. The longer you play, the worse it gets.',
             examples: null
           });
         }

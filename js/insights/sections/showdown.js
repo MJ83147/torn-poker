@@ -36,13 +36,6 @@
     return out;
   }
 
-  function fmtMoney(v) {
-    if (v == null || !isFinite(v)) return '$0';
-    var abs = Math.abs(v);
-    var formatted = (typeof fmt === 'function') ? fmt(abs) : Math.round(abs).toString();
-    return (v < 0 ? '-' : '+') + formatted;
-  }
-
   // Join a list of strings as "A", "A and B", or "A, B, and C".
   function joinList(items) {
     if (!items || !items.length) return '';
@@ -86,7 +79,7 @@
     }
 
     var openingText = 'You see ' + Math.round(wtsd) + '% of flops go to showdown across ' +
-      d.sawFlop + ' flopped hands. Net P&L across ' + sdCount + ' showdowns is ' + fmtMoney(sdPnl) + '.';
+      d.sawFlop + ' flopped hands. Net P&L across ' + sdCount + ' showdowns is ' + fmtPnl(sdPnl) + '.';
 
     var branchTexts = [];
 
@@ -240,7 +233,7 @@
     if (!sev) return null;
 
     var openingText = 'When you reach showdown you win ' + Math.round(wsd) + '% of the time. ' +
-      'Across ' + sdCount + ' showdowns, net showdown P&L is ' + fmtMoney(sdPnl) + '.';
+      'Across ' + sdCount + ' showdowns, net showdown P&L is ' + fmtPnl(sdPnl) + '.';
 
     var branchTexts = [];
 
@@ -344,8 +337,8 @@
     if (sdCount + nsdCount < MIN_AGG) return null;
 
     var totalPnl = sdPnl + nsdPnl;
-    var openingText = 'Your winnings split: ' + fmtMoney(sdPnl) + ' from hands that reached showdown, ' +
-      fmtMoney(nsdPnl) + ' from hands won without showdown. Total: ' + fmtMoney(totalPnl) + '.';
+    var openingText = 'Your winnings split: ' + fmtPnl(sdPnl) + ' from hands that reached showdown, ' +
+      fmtPnl(nsdPnl) + ' from hands won without showdown. Total: ' + fmtPnl(totalPnl) + '.';
 
     var branchTexts = [];
     var severity = 'g';
@@ -365,17 +358,17 @@
       soWhatText = 'Keep playing. Watch for either line drifting negative as the sample grows.';
     } else if (sdNeg && nsdNeg) {
       severity = 'r';
-      branchTexts.push('Both lines are losing. Showdowns down ' + fmtMoney(sdPnl) + ', non-showdowns down ' + fmtMoney(nsdPnl) + '.');
+      branchTexts.push('Both lines are losing. Showdowns down ' + fmtPnl(sdPnl) + ', non-showdowns down ' + fmtPnl(nsdPnl) + '.');
       impactText = 'The leak is not in one area, it is across the game. Both the bets that should fold opponents and the showdowns you call down are net negative.';
       soWhatText = 'Use the position, range, and cards sections to find which combinations of seat and street are doing the damage. The diagnosis here is not specific enough on its own.';
     } else if (sdNeg && nsdPos) {
       severity = 'r';
-      branchTexts.push('Your showdown line loses ' + fmtMoney(sdPnl) + '. Your non-showdown winnings of ' + fmtMoney(nsdPnl) + ' are carrying the result.');
+      branchTexts.push('Your showdown line loses ' + fmtPnl(sdPnl) + '. Your non-showdown winnings of ' + fmtPnl(nsdPnl) + ' are carrying the result.');
       impactText = 'You make money when opponents fold but lose money when they do not. The bluffs work; the value hands do not extract, or the river call-downs are too wide.';
       soWhatText = 'Tighten what you take to showdown when you are not the aggressor. Hero-calls are leaking; bluff-catching frequency is wider than opponents are bluffing.';
     } else if (nsdNeg && sdPos) {
       severity = 'r';
-      branchTexts.push('Your non-showdown line loses ' + fmtMoney(nsdPnl) + '. Your showdown winnings of ' + fmtMoney(sdPnl) + ' are carrying the result.');
+      branchTexts.push('Your non-showdown line loses ' + fmtPnl(nsdPnl) + '. Your showdown winnings of ' + fmtPnl(sdPnl) + ' are carrying the result.');
       impactText = 'Hands you do not get to showdown on are costing money. You are betting and being called or raised off pots without seeing the river.';
       soWhatText = 'Fewer c-bets and barrels in spots where opponents are calling. Pick bluff spots where folds are likely: dry boards, heads up, in position.';
     } else {

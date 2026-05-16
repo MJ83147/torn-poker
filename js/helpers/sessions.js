@@ -58,21 +58,18 @@ function sessionPnl(session) {
 }
 
 // Compare a single session's stats against the player's overall numbers and
-// return a list of human-readable patterns.
+// return a list of human-readable patterns. Both inputs are analyse() results
+// so the headline percentages are read off .core (single source of truth).
 function detectSessionPatterns(sessionData, overallData) {
   var patterns = [];
-  var sVpip = pct(sessionData.vpip, sessionData.n);
-  var oVpip = pct(overallData.vpip, overallData.n);
-  var sAgg = calcAggression(sessionData.raises, sessionData.calls, sessionData.checks);
-  var oAgg = calcAggression(overallData.raises, overallData.calls, overallData.checks);
-  var sLimp = pct(sessionData.limpHands, sessionData.n);
-  var oLimp = pct(overallData.limpHands, overallData.n);
-  var sPfr = pct(sessionData.pfrHands, sessionData.n);
-  var oPfr = pct(overallData.pfrHands, overallData.n);
-  var sCbet = pct(sessionData.cbetDone, sessionData.cbetOpps);
-  var oCbet = pct(overallData.cbetDone, overallData.cbetOpps);
-  var sWtsd = pct(sessionData.wentToShowdown, sessionData.sawFlop);
-  var oWtsd = pct(overallData.wentToShowdown, overallData.sawFlop);
+  var sCore = sessionData.core || {};
+  var oCore = overallData.core || {};
+  var sVpip = sCore.vpipPct, oVpip = oCore.vpipPct;
+  var sAgg  = sCore.agg,     oAgg  = oCore.agg;
+  var sLimp = sCore.limpPct, oLimp = oCore.limpPct;
+  var sPfr  = sCore.pfrPct,  oPfr  = oCore.pfrPct;
+  var sCbet = sCore.cbetPct, oCbet = oCore.cbetPct;
+  var sWtsd = sCore.wtsdPct, oWtsd = oCore.wtsdPct;
 
   var earlyPos = ['UTG', 'UTG+1', 'MP'];
   var sEpGroup = (typeof calcPositionGroupVpip === 'function') ? calcPositionGroupVpip(sessionData.posMap, earlyPos) : { vpip: null, hands: 0 };

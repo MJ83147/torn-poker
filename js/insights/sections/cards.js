@@ -32,13 +32,6 @@
     return out;
   }
 
-  function fmtMoney(v) {
-    if (v == null || !isFinite(v)) return '$0';
-    var abs = Math.abs(v);
-    var formatted = (typeof fmt === 'function') ? fmt(abs) : Math.round(abs).toString();
-    return (v < 0 ? '-' : '+') + formatted;
-  }
-
   function heroWon(h) {
     return !!(h && h.outcome && h.outcome.result === 'won');
   }
@@ -449,7 +442,7 @@
     var winRate = bucket.n > 0 ? Math.round((bucket.won / bucket.n) * 100) : 0;
 
     var openingText = 'You hold a premium made hand (set, straight, flush, full house, or better) on ' +
-      bucket.n + ' postflop hands. Net P&L is ' + fmtMoney(bucket.pnl) +
+      bucket.n + ' postflop hands. Net P&L is ' + fmtPnl(bucket.pnl) +
       ', a win rate of ' + winRate + '%.';
 
     var branchTexts = [];
@@ -474,13 +467,13 @@
     var pnlVerdict = comparePnl(perHand, overallPerHand);
     if (pnlVerdict === 'leak') {
       branchTexts.push(
-        'Premium hands are losing money on net: ' + fmtMoney(bucket.pnl) + ' across ' + bucket.n +
+        'Premium hands are losing money on net: ' + fmtPnl(bucket.pnl) + ' across ' + bucket.n +
         ' hands. This is the bucket that should carry your win rate, not drag on it.'
       );
       pillarSeverities.push('r');
     } else if (pnlVerdict === 'lift') {
       branchTexts.push(
-        'Premium hands lift your win rate as expected: ' + fmtMoney(bucket.pnl) +
+        'Premium hands lift your win rate as expected: ' + fmtPnl(bucket.pnl) +
         ' across ' + bucket.n + ' hands, well above your per-hand average.'
       );
       pillarSeverities.push('g');
@@ -560,7 +553,7 @@
     var winRate = bucket.n > 0 ? Math.round((bucket.won / bucket.n) * 100) : 0;
 
     var openingText = 'You hold a strong made hand (overpair, top pair, or two pair) on ' +
-      bucket.n + ' postflop hands. Net P&L is ' + fmtMoney(bucket.pnl) +
+      bucket.n + ' postflop hands. Net P&L is ' + fmtPnl(bucket.pnl) +
       ', a win rate of ' + winRate + '%.';
 
     var branchTexts = [];
@@ -591,7 +584,7 @@
         branchTexts.push(
           'When you called a river bet with a strong made hand, you lost ' + lossPct + '% of the time' +
           ' (' + bucket.riverCallLost + ' of ' + bucket.riverCall + '). Total cost on those river calls: ' +
-          fmtMoney(bucket.riverCallPnl) + '. Top pair is rarely the best hand by the river when stacks go in.'
+          fmtPnl(bucket.riverCallPnl) + '. Top pair is rarely the best hand by the river when stacks go in.'
         );
         pillarSeverities.push(goingSev.severity);
       } else {
@@ -603,7 +596,7 @@
     var pnlVerdict = comparePnl(perHand, overallPerHand);
     if (pnlVerdict === 'leak') {
       branchTexts.push(
-        'Strong made hands are net negative: ' + fmtMoney(bucket.pnl) +
+        'Strong made hands are net negative: ' + fmtPnl(bucket.pnl) +
         ' across ' + bucket.n + ' hands. The category that should hold its own is leaking.'
       );
       pillarSeverities.push('r');
@@ -690,7 +683,7 @@
     var winRate = bucket.n > 0 ? Math.round((bucket.won / bucket.n) * 100) : 0;
 
     var openingText = 'You hold a marginal made hand (second pair, bottom pair, or a small pocket pair below the board) on ' +
-      bucket.n + ' postflop hands. Net P&L is ' + fmtMoney(bucket.pnl) +
+      bucket.n + ' postflop hands. Net P&L is ' + fmtPnl(bucket.pnl) +
       ', a win rate of ' + winRate + '%.';
 
     var branchTexts = [];
@@ -704,7 +697,7 @@
         branchTexts.push(
           'When you called river bets with a marginal made hand you lost ' + lossPct +
           '% of the time (' + bucket.riverCallLost + ' of ' + bucket.riverCall + '). Total cost on those river calls: ' +
-          fmtMoney(bucket.riverCallPnl) + '. Bluff catching with second pair works only when opponents are bluffing.'
+          fmtPnl(bucket.riverCallPnl) + '. Bluff catching with second pair works only when opponents are bluffing.'
         );
         pillarSeverities.push(goingSev.severity);
       } else {
@@ -731,7 +724,7 @@
     var pnlVerdict = comparePnl(perHand, overallPerHand);
     if (pnlVerdict === 'leak') {
       branchTexts.push(
-        'Marginal made hands are net negative: ' + fmtMoney(bucket.pnl) +
+        'Marginal made hands are net negative: ' + fmtPnl(bucket.pnl) +
         ' across ' + bucket.n + ' hands. This category is the most expensive when discipline slips.'
       );
       pillarSeverities.push('r');
@@ -830,7 +823,7 @@
     var winRate = bucket.n > 0 ? Math.round((bucket.won / bucket.n) * 100) : 0;
 
     var openingText = 'You arrive at a postflop decision with air or overcards (no pair, no detected draw) on ' +
-      bucket.n + ' hands. Net P&L is ' + fmtMoney(bucket.pnl) +
+      bucket.n + ' hands. Net P&L is ' + fmtPnl(bucket.pnl) +
       ', a win rate of ' + winRate + '%.';
 
     var branchTexts = [];
@@ -844,7 +837,7 @@
         branchTexts.push(
           'When you called a postflop bet holding air you lost ' + lossPct + '% of the time' +
           ' (' + bucket.calledLost + ' of ' + bucket.called + '). Total cost on those calls: ' +
-          fmtMoney(bucket.calledPnl) + '. Air has no showdown value; the only profitable lines are fold or bluff.'
+          fmtPnl(bucket.calledPnl) + '. Air has no showdown value; the only profitable lines are fold or bluff.'
         );
         pillarSeverities.push(airSev.severity);
       } else {
@@ -856,7 +849,7 @@
     var pnlVerdict = comparePnl(perHand, overallPerHand);
     if (pnlVerdict === 'leak') {
       branchTexts.push(
-        'Air hands are net negative: ' + fmtMoney(bucket.pnl) +
+        'Air hands are net negative: ' + fmtPnl(bucket.pnl) +
         ' across ' + bucket.n + ' hands. Every chip in past the flop with no equity is paying for the chance to get lucky.'
       );
       pillarSeverities.push('r');
@@ -927,7 +920,7 @@
     var passivePct = 100 - aggressivePct;
 
     var openingText = 'You hold a strong draw (flush draw, open-ended straight, or combo) on ' +
-      bucket.n + ' postflop hands. Net P&L is ' + fmtMoney(bucket.pnl) +
+      bucket.n + ' postflop hands. Net P&L is ' + fmtPnl(bucket.pnl) +
       ', a win rate of ' + winRate + '%.';
 
     var branchTexts = [];
@@ -957,7 +950,7 @@
     if (bucket.called >= MIN_CL && callLossPct >= 65 && bucket.calledPnl < 0) {
       branchTexts.push(
         'When you only called with strong draws you lost ' + Math.round(callLossPct) +
-        '% of those hands (' + fmtMoney(bucket.calledPnl) + ' across ' + bucket.called + ' hands). ' +
+        '% of those hands (' + fmtPnl(bucket.calledPnl) + ' across ' + bucket.called + ' hands). ' +
         'Strong draws miss roughly two-thirds of the time; passive call lines turn that into a chip drain.'
       );
       pillarSeverities.push('a');
@@ -967,13 +960,13 @@
     var pnlVerdict = comparePnl(perHand, overallPerHand);
     if (pnlVerdict === 'leak') {
       branchTexts.push(
-        'Strong draws are net negative: ' + fmtMoney(bucket.pnl) + ' across ' + bucket.n +
+        'Strong draws are net negative: ' + fmtPnl(bucket.pnl) + ' across ' + bucket.n +
         ' hands. Even at fair pricing the bucket should not be losing money.'
       );
       pillarSeverities.push('r');
     } else if (pnlVerdict === 'lift') {
       branchTexts.push(
-        'Strong draws lift your win rate: ' + fmtMoney(bucket.pnl) + ' across ' + bucket.n +
+        'Strong draws lift your win rate: ' + fmtPnl(bucket.pnl) + ' across ' + bucket.n +
         ' hands, above your per-hand average.'
       );
     }
@@ -1040,7 +1033,7 @@
     var callPct = bucket.n > 0 ? (bucket.called / bucket.n) * 100 : 0;
 
     var openingText = 'You hold a weak draw (gutshot straight) on ' + bucket.n +
-      ' postflop hands. Net P&L is ' + fmtMoney(bucket.pnl) + ', a win rate of ' + winRate + '%.';
+      ' postflop hands. Net P&L is ' + fmtPnl(bucket.pnl) + ', a win rate of ' + winRate + '%.';
 
     var branchTexts = [];
     var pillarSeverities = [];
@@ -1054,7 +1047,7 @@
         pricingSev = { severity: 'r', deltaUnits: (callPct - 35) / 15 };
         branchTexts.push(
           'You called bets with weak draws on ' + Math.round(callPct) + '% of these hands. ' +
-          'Those calls have lost ' + fmtMoney(bucket.calledPnl) + ' across ' + bucket.called +
+          'Those calls have lost ' + fmtPnl(bucket.calledPnl) + ' across ' + bucket.called +
           ' hands. Gutshots need a 10 to 1 price plus implied odds to be profitable; most of these spots do not have that.'
         );
         pillarSeverities.push('r');
@@ -1062,7 +1055,7 @@
         pricingSev = { severity: 'a', deltaUnits: (callPct - 25) / 15 };
         branchTexts.push(
           'You called with weak draws on ' + Math.round(callPct) + '% of these hands. ' +
-          'Those calls have cost ' + fmtMoney(bucket.calledPnl) + '. Gutshots are the most price-sensitive draws in poker.'
+          'Those calls have cost ' + fmtPnl(bucket.calledPnl) + '. Gutshots are the most price-sensitive draws in poker.'
         );
         pillarSeverities.push('a');
       } else {
@@ -1074,7 +1067,7 @@
     var pnlVerdict = comparePnl(perHand, overallPerHand);
     if (pnlVerdict === 'leak') {
       branchTexts.push(
-        'Weak draws are net negative: ' + fmtMoney(bucket.pnl) + ' across ' + bucket.n + ' hands. ' +
+        'Weak draws are net negative: ' + fmtPnl(bucket.pnl) + ' across ' + bucket.n + ' hands. ' +
         'The category that should be the most disciplined in your game is leaking.'
       );
       pillarSeverities.push('r');

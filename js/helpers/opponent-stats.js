@@ -3,6 +3,127 @@
 // insight generator. Used by the players panel and by cacheOpponentProfiles()
 // in opponent-profile.js.
 
+// Walk a single hand once and produce every per-hand flag both
+// computeOpponentStats() and findInsightExamples() need. Keeps the action-
+// classification logic in one place; the two consumers just accumulate or
+// bucket from the returned object.
+function classifyHandForPlayer(h, playerName) {
+  var acts = parseActions(h ? h.actions : null);
+  var playerActs = [];
+  for (var i = 0; i < acts.length; i++) {
+    if (acts[i].author === playerName) playerActs.push(acts[i]);
+  }
+
+  var raisedPre = false, calledPre = false, foldedPre = false;
+  var seenPostFlop = false, foldedPostFlop = false;
+  var raiseCount = 0, callCheckCount = 0;
+  var aggRaises = 0, aggCalls = 0, aggChecks = 0, aggFolds = 0, aggActions = 0;
+  var playerWon = false;
+
+  for (var j = 0; j < playerActs.length; j++) {
+    var pa = playerActs[j];
+    if (pa.type === 'won') playerWon = true;
+
+    if (pa.street === 'Preflop') {
+      if (pa.type === 'raise') raisedPre = true;
+      if (pa.type === 'call') calledPre = true;
+      if (pa.type === 'fold') foldedPre = true;
+    } else {
+      seenPostFlop = true;
+      if (pa.type === 'fold') foldedPostFlop = true;
+    }
+
+    if (pa.type === 'raise' || pa.type === 'bet') raiseCount++;
+    if (pa.type === 'call' || pa.type === 'check') callCheckCount++;
+
+    if (pa.type !== 'sb' && pa.type !== 'bb' && pa.type !== 'won') {
+      aggActions++;
+      if (pa.type === 'raise' || pa.type === 'bet') aggRaises++;
+      else if (pa.type === 'call') aggCalls++;
+      else if (pa.type === 'check') aggChecks++;
+      else if (pa.type === 'fold') aggFolds++;
+    }
+  }
+
+  var limpedPre = calledPre && !raisedPre;
+
+  // C-bet: raised pre, saw flop, first flop action by player was bet/raise.
+  var cbetOpp = raisedPre && seenPostFlop;
+  var cbetDone = false;
+  if (cbetOpp) {
+    for (var ci = 0; ci < playerActs.length; ci++) {
+      if (playerActs[ci].street === 'Flop' && (playerActs[ci].type === 'raise' || playerActs[ci].type === 'bet')) {
+        cbetDone = true; break;
+      }
+    }
+  }
+
+  // Walk full action list for "opponent raise then player response on the
+  // same street". Track both per-encounter counts (for the rate denominator)
+  // and per-hand booleans (for the example-hand buckets).
+  var facedRaiseCount = 0, foldedToRaiseCount = 0;
+  var facedRaiseThisHand = false, foldedToRaiseThisHand = false, calledRaiseThisHand = false;
+  for (var ai = 0; ai < acts.length; ai++) {
+    if (acts[ai].author !== playerName && (acts[ai].type === 'raise' || acts[ai].type === 'bet')) {
+      for (var ak = ai + 1; ak < acts.length; ak++) {
+        if (acts[ak].street !== acts[ai].street) break;
+        if (acts[ak].author === playerName) {
+          facedRaiseCount++;
+          facedRaiseThisHand = true;
+          if (acts[ak].type === 'fold') {
+            foldedToRaiseCount++;
+            foldedToRaiseThisHand = true;
+          } else if (acts[ak].type === 'call') {
+            calledRaiseThisHand = true;
+          }
+          break;
+        }
+      }
+    }
+  }
+
+  // Showdown detection from the raw action lines. handHasShowdown matches any
+  // " reveals " in the hand; playerReveals only captures lines mentioning the
+  // target player and parses the strength group out of the trailing "(...)".
+  var handHasShowdown = false;
+  var playerReveals = [];
+  var raw = (h && h.actions) ? h.actions : [];
+  for (var li = 0; li < raw.length; li++) {
+    var line = raw[li] || '';
+    if (line.indexOf(' reveals ') === -1) continue;
+    handHasShowdown = true;
+    if (line.indexOf(playerName) !== -1) {
+      var sm = line.match(/\(([^)]+)\)/);
+      playerReveals.push({
+        hasStrength: !!sm,
+        isStrong: sm ? isStrongShowdownHand(sm[1]) : false
+      });
+    }
+  }
+
+  var wentToShowdown = seenPostFlop && handHasShowdown && !foldedPostFlop;
+
+  return {
+    hasPlayerActs: playerActs.length > 0,
+    playerActs: playerActs,
+    raisedPre: raisedPre, calledPre: calledPre, foldedPre: foldedPre,
+    limpedPre: limpedPre,
+    seenPostFlop: seenPostFlop, foldedPostFlop: foldedPostFlop,
+    raiseCount: raiseCount, callCheckCount: callCheckCount,
+    aggRaises: aggRaises, aggCalls: aggCalls, aggChecks: aggChecks,
+    aggFolds: aggFolds, aggActions: aggActions,
+    cbetOpp: cbetOpp, cbetDone: cbetDone,
+    facedRaiseCount: facedRaiseCount, foldedToRaiseCount: foldedToRaiseCount,
+    facedRaiseThisHand: facedRaiseThisHand,
+    foldedToRaiseThisHand: foldedToRaiseThisHand,
+    calledRaiseThisHand: calledRaiseThisHand,
+    handHasShowdown: handHasShowdown,
+    wentToShowdown: wentToShowdown,
+    playerWon: playerWon,
+    playerReveals: playerReveals
+  };
+}
+
 // Compute opponent tendencies from their actions across all shared hands.
 // Returns a stats object that the profile cache and the exploit-insight
 // generator both read from. Shape:
@@ -38,111 +159,40 @@ function computeOpponentStats(hands, playerName) {
   };
 
   for (var i = 0; i < hands.length; i++) {
-    var h = hands[i];
-    var acts = parseActions(h.actions);
-
-    var playerActs = [];
-    for (var j = 0; j < acts.length; j++) {
-      if (acts[j].author === playerName) playerActs.push(acts[j]);
-    }
-    if (!playerActs.length) continue;
+    var c = classifyHandForPlayer(hands[i], playerName);
+    if (!c.hasPlayerActs) continue;
     s.hands++;
 
-    // Preflop analysis
-    var raisedPre = false;
-    var calledPre = false;
-    var foldedPre = false;
-    for (var j = 0; j < playerActs.length; j++) {
-      var pa = playerActs[j];
-      if (pa.street !== 'Preflop') continue;
-      if (pa.type === 'raise') raisedPre = true;
-      if (pa.type === 'call') calledPre = true;
-      if (pa.type === 'fold') foldedPre = true;
-    }
+    if (c.raisedPre || c.calledPre) s.vpipHands++;
+    if (c.raisedPre) s.pfrHands++;
+    if (c.limpedPre) s.limpHands++;
+    if (c.foldedPre) s.foldPreHands++;
+    if (c.seenPostFlop) s.sawFlop++;
 
-    if (raisedPre || calledPre) s.vpipHands++;
-    if (raisedPre) s.pfrHands++;
-    if (calledPre && !raisedPre) s.limpHands++;
-    if (foldedPre) s.foldPreHands++;
+    s.totalRaises  += c.aggRaises;
+    s.totalCalls   += c.aggCalls;
+    s.totalChecks  += c.aggChecks;
+    s.totalFolds   += c.aggFolds;
+    s.totalActions += c.aggActions;
 
-    // Post-flop presence
-    var seenPostFlop = false;
-    for (var j = 0; j < playerActs.length; j++) {
-      if (playerActs[j].street !== 'Preflop') { seenPostFlop = true; break; }
-    }
-    if (seenPostFlop) s.sawFlop++;
-
-    // Aggression counts (all streets, non-blind, non-won)
-    for (var j = 0; j < playerActs.length; j++) {
-      var a = playerActs[j];
-      if (a.type === 'sb' || a.type === 'bb' || a.type === 'won') continue;
-      s.totalActions++;
-      if (a.type === 'raise' || a.type === 'bet') s.totalRaises++;
-      else if (a.type === 'call') s.totalCalls++;
-      else if (a.type === 'check') s.totalChecks++;
-      else if (a.type === 'fold') s.totalFolds++;
-    }
-
-    // C-bet: raised preflop, saw flop, bet/raised on flop
-    if (raisedPre && seenPostFlop) {
+    if (c.cbetOpp) {
       s.cbetOpps++;
-      for (var j = 0; j < playerActs.length; j++) {
-        if (playerActs[j].street === 'Flop' && (playerActs[j].type === 'raise' || playerActs[j].type === 'bet')) {
-          s.cbetDone++; break;
-        }
-      }
+      if (c.cbetDone) s.cbetDone++;
     }
 
-    // Fold to raise: scan full action list for raise then this player's response
-    for (var j = 0; j < acts.length; j++) {
-      if (acts[j].author !== playerName && (acts[j].type === 'raise' || acts[j].type === 'bet')) {
-        for (var k = j + 1; k < acts.length; k++) {
-          if (acts[k].street !== acts[j].street) break;
-          if (acts[k].author === playerName) {
-            s.facedRaise++;
-            if (acts[k].type === 'fold') s.foldedToRaise++;
-            break;
-          }
-        }
-      }
+    s.facedRaise    += c.facedRaiseCount;
+    s.foldedToRaise += c.foldedToRaiseCount;
+
+    if (c.wentToShowdown) {
+      s.wentToShowdown++;
+      if (c.playerWon) s.wonAtShowdown++;
     }
 
-    // Showdown detection
-    var handHasShowdown = false;
-    for (var j = 0; j < (h.actions || []).length; j++) {
-      if ((h.actions[j] || '').indexOf(' reveals ') !== -1) {
-        handHasShowdown = true; break;
-      }
-    }
-
-    if (seenPostFlop && handHasShowdown) {
-      var foldedPostFlop = false;
-      for (var j = 0; j < playerActs.length; j++) {
-        if (playerActs[j].street !== 'Preflop' && playerActs[j].type === 'fold') {
-          foldedPostFlop = true; break;
-        }
-      }
-      if (!foldedPostFlop) {
-        s.wentToShowdown++;
-        for (var j = 0; j < acts.length; j++) {
-          if (acts[j].author === playerName && acts[j].type === 'won') {
-            s.wonAtShowdown++; break;
-          }
-        }
-      }
-    }
-
-    // Showdown strength from reveals
-    for (var j = 0; j < (h.actions || []).length; j++) {
-      var line = h.actions[j] || '';
-      if (line.indexOf(playerName) !== -1 && line.indexOf(' reveals ') !== -1) {
-        s.reveals++;
-        var strengthMatch = line.match(/\(([^)]+)\)/);
-        if (strengthMatch) {
-          if (isStrongShowdownHand(strengthMatch[1])) s.showdownStrong++;
-          else s.showdownWeak++;
-        }
-      }
+    for (var ri = 0; ri < c.playerReveals.length; ri++) {
+      s.reveals++;
+      if (!c.playerReveals[ri].hasStrength) continue;
+      if (c.playerReveals[ri].isStrong) s.showdownStrong++;
+      else s.showdownWeak++;
     }
   }
 
@@ -170,93 +220,26 @@ function findInsightExamples(hands, playerName) {
   for (var i = hands.length - 1; i >= 0; i--) {
     if (allFull()) break;
     var h = hands[i];
-    var acts = parseActions(h.actions);
-    var playerActs = [];
-    for (var j = 0; j < acts.length; j++) {
-      if (acts[j].author === playerName) playerActs.push(acts[j]);
-    }
-    if (!playerActs.length) continue;
+    var c = classifyHandForPlayer(h, playerName);
+    if (!c.hasPlayerActs) continue;
 
-    var raisedPre = false, calledPre = false, limpedPre = false;
-    var seenPostFlop = false, foldedPostFlop = false;
-    var raiseCount = 0, callCheckCount = 0;
+    if (!full('vpip') && (c.raisedPre || c.calledPre)) ex.vpip.push(h);
+    if (!full('limp') && c.limpedPre) ex.limp.push(h);
+    if (!full('passive') && c.callCheckCount >= 2 && c.raiseCount === 0) ex.passive.push(h);
+    if (!full('aggressive') && c.raiseCount >= 2) ex.aggressive.push(h);
 
-    for (var j = 0; j < playerActs.length; j++) {
-      var pa = playerActs[j];
-      if (pa.street === 'Preflop') {
-        if (pa.type === 'raise') raisedPre = true;
-        if (pa.type === 'call') calledPre = true;
-        if (pa.type === 'call' && !raisedPre) limpedPre = true;
-      }
-      if (pa.street !== 'Preflop') seenPostFlop = true;
-      if (pa.street !== 'Preflop' && pa.type === 'fold') foldedPostFlop = true;
-      if (pa.type === 'raise' || pa.type === 'bet') raiseCount++;
-      if (pa.type === 'call' || pa.type === 'check') callCheckCount++;
-    }
+    if (!full('foldToRaise') && c.foldedToRaiseThisHand) ex.foldToRaise.push(h);
+    if (!full('callsRaise') && c.calledRaiseThisHand) ex.callsRaise.push(h);
+    if (!full('cbet') && c.cbetDone) ex.cbet.push(h);
 
-    if (!full('vpip') && (raisedPre || calledPre)) ex.vpip.push(h);
-    if (!full('limp') && limpedPre) ex.limp.push(h);
-    if (!full('passive') && callCheckCount >= 2 && raiseCount === 0) ex.passive.push(h);
-    if (!full('aggressive') && raiseCount >= 2) ex.aggressive.push(h);
+    if (!full('showdown') && c.wentToShowdown) ex.showdown.push(h);
+    if (!full('foldPostFlop') && c.foldedPostFlop) ex.foldPostFlop.push(h);
 
-    if (!full('foldToRaise')) {
-      for (var j = 0; j < acts.length; j++) {
-        if (acts[j].author !== playerName && (acts[j].type === 'raise' || acts[j].type === 'bet')) {
-          for (var k = j + 1; k < acts.length; k++) {
-            if (acts[k].street !== acts[j].street) break;
-            if (acts[k].author === playerName && acts[k].type === 'fold') {
-              ex.foldToRaise.push(h); break;
-            }
-            if (acts[k].author === playerName) break;
-          }
-          if (ex.foldToRaise[ex.foldToRaise.length - 1] === h) break;
-        }
-      }
-    }
-
-    if (!full('callsRaise')) {
-      for (var j = 0; j < acts.length; j++) {
-        if (acts[j].author !== playerName && (acts[j].type === 'raise' || acts[j].type === 'bet')) {
-          for (var k = j + 1; k < acts.length; k++) {
-            if (acts[k].street !== acts[j].street) break;
-            if (acts[k].author === playerName && acts[k].type === 'call') {
-              ex.callsRaise.push(h); break;
-            }
-            if (acts[k].author === playerName) break;
-          }
-          if (ex.callsRaise[ex.callsRaise.length - 1] === h) break;
-        }
-      }
-    }
-
-    if (!full('cbet') && raisedPre && seenPostFlop) {
-      for (var j = 0; j < playerActs.length; j++) {
-        if (playerActs[j].street === 'Flop' && (playerActs[j].type === 'raise' || playerActs[j].type === 'bet')) {
-          ex.cbet.push(h); break;
-        }
-      }
-    }
-
-    if (!full('showdown')) {
-      var handHasShowdown = false;
-      for (var j = 0; j < (h.actions || []).length; j++) {
-        if ((h.actions[j] || '').indexOf(' reveals ') !== -1) { handHasShowdown = true; break; }
-      }
-      if (seenPostFlop && handHasShowdown && !foldedPostFlop) ex.showdown.push(h);
-    }
-
-    if (!full('foldPostFlop') && foldedPostFlop) ex.foldPostFlop.push(h);
-
-    for (var j = 0; j < (h.actions || []).length; j++) {
-      var line = h.actions[j] || '';
-      if (line.indexOf(playerName) !== -1 && line.indexOf(' reveals ') !== -1) {
-        var strengthMatch = line.match(/\(([^)]+)\)/);
-        if (strengthMatch) {
-          var isStrong = isStrongShowdownHand(strengthMatch[1]);
-          if (!full('weakReveal') && !isStrong) ex.weakReveal.push(h);
-          if (!full('strongReveal') && isStrong) ex.strongReveal.push(h);
-        }
-      }
+    for (var ri = 0; ri < c.playerReveals.length; ri++) {
+      if (!c.playerReveals[ri].hasStrength) continue;
+      var isStrong = c.playerReveals[ri].isStrong;
+      if (!full('weakReveal') && !isStrong) ex.weakReveal.push(h);
+      if (!full('strongReveal') && isStrong) ex.strongReveal.push(h);
     }
   }
 

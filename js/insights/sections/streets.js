@@ -49,13 +49,6 @@
     return out;
   }
 
-  function fmtMoney(v) {
-    if (v == null || !isFinite(v)) return '$0';
-    var abs = Math.abs(v);
-    var formatted = (typeof fmt === 'function') ? fmt(abs) : Math.round(abs).toString();
-    return (v < 0 ? '-' : '+') + formatted;
-  }
-
   function joinList(items) {
     if (!items || !items.length) return '';
     if (items.length === 1) return items[0];
@@ -304,9 +297,9 @@
 
     if (pnlCbet.count >= MIN_CL || pnlGiveUp.count >= MIN_CL) {
       var cBetPP = per(pnlCbet), giveUpPP = per(pnlGiveUp);
-      var line = 'When you c-bet, net P&L is ' + fmtMoney(pnlCbet.pnl) + ' across ' + pnlCbet.count + ' hands';
+      var line = 'When you c-bet, net P&L is ' + fmtPnl(pnlCbet.pnl) + ' across ' + pnlCbet.count + ' hands';
       if (pnlGiveUp.count >= MIN_CL) {
-        line += '. When you check back instead, it is ' + fmtMoney(pnlGiveUp.pnl) + ' across ' + pnlGiveUp.count + ' hands.';
+        line += '. When you check back instead, it is ' + fmtPnl(pnlGiveUp.pnl) + ' across ' + pnlGiveUp.count + ' hands.';
       } else {
         line += '.';
       }
@@ -402,9 +395,9 @@
     var pnlContinue = sumHandPnl(hands, function(h) { return heroFacedCbet(h) && !heroFoldedToCbet(h); });
     var pnlFold = sumHandPnl(hands, function(h) { return heroFoldedToCbet(h); });
     if (pnlContinue.count >= MIN_CL || pnlFold.count >= MIN_CL) {
-      var line = 'When you fold to a c-bet, net P&L is ' + fmtMoney(pnlFold.pnl) + ' across ' + pnlFold.count + ' hands';
+      var line = 'When you fold to a c-bet, net P&L is ' + fmtPnl(pnlFold.pnl) + ' across ' + pnlFold.count + ' hands';
       if (pnlContinue.count >= MIN_CL) {
-        line += '. When you continue, it is ' + fmtMoney(pnlContinue.pnl) + ' across ' + pnlContinue.count + ' hands.';
+        line += '. When you continue, it is ' + fmtPnl(pnlContinue.pnl) + ' across ' + pnlContinue.count + ' hands.';
       } else {
         line += '.';
       }
@@ -574,9 +567,9 @@
       return false;
     });
     if (pnl3.count >= MIN_CL || pnlFlat.count >= MIN_CL) {
-      var line = '3-bet hands return ' + fmtMoney(pnl3.pnl) + ' across ' + pnl3.count;
+      var line = '3-bet hands return ' + fmtPnl(pnl3.pnl) + ' across ' + pnl3.count;
       if (pnlFlat.count >= MIN_CL) {
-        line += '; flat hands return ' + fmtMoney(pnlFlat.pnl) + ' across ' + pnlFlat.count + '.';
+        line += '; flat hands return ' + fmtPnl(pnlFlat.pnl) + ' across ' + pnlFlat.count + '.';
       } else {
         line += '.';
       }
@@ -675,9 +668,9 @@
       return c && c.heroFaced3bet && !c.heroFolded3bet;
     });
     if (pnlFold.count >= MIN_CL || pnlCont.count >= MIN_CL) {
-      var line = 'Folding to a 3-bet costs the open: ' + fmtMoney(pnlFold.pnl) + ' across ' + pnlFold.count + ' hands';
+      var line = 'Folding to a 3-bet costs the open: ' + fmtPnl(pnlFold.pnl) + ' across ' + pnlFold.count + ' hands';
       if (pnlCont.count >= MIN_CL) {
-        line += '. Continuing returns ' + fmtMoney(pnlCont.pnl) + ' across ' + pnlCont.count + ' hands.';
+        line += '. Continuing returns ' + fmtPnl(pnlCont.pnl) + ' across ' + pnlCont.count + ' hands.';
       } else {
         line += '.';
       }
@@ -788,7 +781,7 @@
     // Pillar 3 (outcome): P&L on check-fold flops.
     var pnlCF = sumHandPnl(hands, function(h) { return heroCheckFoldedFlop(h); });
     if (pnlCF.count >= MIN_CL) {
-      branchTexts.push('Net P&L on the check-fold flops is ' + fmtMoney(pnlCF.pnl) + ' across ' + pnlCF.count + ' hands.');
+      branchTexts.push('Net P&L on the check-fold flops is ' + fmtPnl(pnlCF.pnl) + ' across ' + pnlCF.count + ' hands.');
     }
 
     // Directional severity: amber if the check-fold rate is high or if the
@@ -863,9 +856,9 @@
       return c && c.flopReached && c.pfrIsHero === false && c.heroFirstFlop === 'check';
     });
     if (pnlDonk.count >= MIN_CL || pnlCheck.count >= MIN_CL) {
-      var line = 'Donk hands return ' + fmtMoney(pnlDonk.pnl) + ' across ' + pnlDonk.count;
+      var line = 'Donk hands return ' + fmtPnl(pnlDonk.pnl) + ' across ' + pnlDonk.count;
       if (pnlCheck.count >= MIN_CL) {
-        line += '; checking to the raiser returns ' + fmtMoney(pnlCheck.pnl) + ' across ' + pnlCheck.count + '.';
+        line += '; checking to the raiser returns ' + fmtPnl(pnlCheck.pnl) + ' across ' + pnlCheck.count + '.';
       } else {
         line += '.';
       }
@@ -950,9 +943,9 @@
       return c && c.pfrIsHero === true && c.heroFirstFlop === 'check' && c.turnReached && c.heroFirstTurn === 'check';
     });
     if (pnlDelay.count >= MIN_CL || pnlGiveUp.count >= MIN_CL) {
-      var line = 'Delay c-bet lines return ' + fmtMoney(pnlDelay.pnl) + ' across ' + pnlDelay.count;
+      var line = 'Delay c-bet lines return ' + fmtPnl(pnlDelay.pnl) + ' across ' + pnlDelay.count;
       if (pnlGiveUp.count >= MIN_CL) {
-        line += '; double-check lines return ' + fmtMoney(pnlGiveUp.pnl) + ' across ' + pnlGiveUp.count + '.';
+        line += '; double-check lines return ' + fmtPnl(pnlGiveUp.pnl) + ' across ' + pnlGiveUp.count + '.';
       } else {
         line += '.';
       }

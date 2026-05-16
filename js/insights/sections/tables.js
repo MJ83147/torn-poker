@@ -59,12 +59,6 @@
     return items.slice(0, -1).join(', ') + ', and ' + items[items.length - 1];
   }
 
-  function fmtPnlSafe(v) {
-    if (typeof fmtPnl === 'function') return fmtPnl(v);
-    if (typeof fmt === 'function') return (v >= 0 ? '+' : '-') + fmt(Math.abs(v));
-    return (v >= 0 ? '+' : '') + Math.round(v);
-  }
-
   // ── STORY 1: TABLE SELECTION ──────────────────────────────────────────────
 
   function buildTableSelection(d, extras, hands) {
@@ -165,11 +159,11 @@
     var openingText;
     if (best && worst && best.key !== worst.key) {
       openingText = 'Across ' + rows.length + ' tables with at least ' + MIN_TABLE_CELL + ' hands, ' +
-        'your most profitable is ' + best.label + ' (' + fmtPnlSafe(best.pnl) + ' over ' + best.n + ' hands) ' +
-        'and your worst is ' + worst.label + ' (' + fmtPnlSafe(worst.pnl) + ' over ' + worst.n + ' hands).';
+        'your most profitable is ' + best.label + ' (' + fmtPnl(best.pnl) + ' over ' + best.n + ' hands) ' +
+        'and your worst is ' + worst.label + ' (' + fmtPnl(worst.pnl) + ' over ' + worst.n + ' hands).';
     } else if (best) {
       openingText = 'Across ' + rows.length + ' tables, your strongest is ' + best.label +
-        ' (' + fmtPnlSafe(best.pnl) + ' over ' + best.n + ' hands).';
+        ' (' + fmtPnl(best.pnl) + ' over ' + best.n + ' hands).';
     } else {
       return null;
     }
@@ -206,7 +200,7 @@
         if (!primaryPattern) primaryPattern = 'dominant-loser';
         branchTexts.push(
           dominantTable.label + ' accounts for ' + Math.round(dominantShare * 100) +
-          '% of your total swing, and it is losing (' + fmtPnlSafe(dominantTable.pnl) + ' over ' +
+          '% of your total swing, and it is losing (' + fmtPnl(dominantTable.pnl) + ' over ' +
           dominantTable.n + ' hands). One table is dragging the picture.'
         );
       } else {
@@ -215,7 +209,7 @@
         if (!primaryPattern) primaryPattern = 'dominant-winner';
         branchTexts.push(
           dominantTable.label + ' accounts for ' + Math.round(dominantShare * 100) +
-          '% of your total swing, and it is winning (' + fmtPnlSafe(dominantTable.pnl) + ' over ' +
+          '% of your total swing, and it is winning (' + fmtPnl(dominantTable.pnl) + ' over ' +
           dominantTable.n + ' hands). One table is carrying the picture.'
         );
       }
@@ -228,7 +222,7 @@
       deltaUnits = Math.max(deltaUnits, 0.5);
       if (!primaryPattern) primaryPattern = 'underplayed';
       branchTexts.push(
-        underplayedWinner.label + ' is profitable (' + fmtPnlSafe(underplayedWinner.pnl) + ' over ' +
+        underplayedWinner.label + ' is profitable (' + fmtPnl(underplayedWinner.pnl) + ' over ' +
         underplayedWinner.n + ' hands) but gets less volume than your average table. There is an edge here that you are not using.'
       );
     }
@@ -287,7 +281,7 @@
           id: 'tbl-worst-losses-' + worstId,
           label: 'Losing hands at ' + worst.label,
           hands: worstLosses,
-          coachingNote: 'Your worst table by P&L: ' + fmtPnlSafe(worst.pnl) + ' over ' + worst.n + ' hands. ' +
+          coachingNote: 'Your worst table by P&L: ' + fmtPnl(worst.pnl) + ' over ' + worst.n + ' hands. ' +
             'These are the hands you lost at this table. Look for the pattern. If you cannot find one, the answer is simpler: stop sitting here.'
         });
       }
@@ -300,7 +294,7 @@
           id: 'tbl-best-wins-' + bestId,
           label: 'Winning hands at ' + best.label,
           hands: bestWins,
-          coachingNote: 'Your most profitable table: ' + fmtPnlSafe(best.pnl) + ' over ' + best.n + ' hands. ' +
+          coachingNote: 'Your most profitable table: ' + fmtPnl(best.pnl) + ' over ' + best.n + ' hands. ' +
             'These are the wins at this table. Whatever is working here is the model. Look for similar games and put more volume into them.'
         });
       }
@@ -408,9 +402,9 @@
 
     var openingText = 'You played ' + rows.length + ' sessions in this data. ' +
       'Short sessions (' + shortBucket.length + ' sessions, up to ' + shortCut + ' hands each) ran at ' +
-      (shortStats.wr != null ? shortStats.wr + '% win rate' : 'no clear win rate') + ' for ' + fmtPnlSafe(shortStats.pnl) + ' total. ' +
+      (shortStats.wr != null ? shortStats.wr + '% win rate' : 'no clear win rate') + ' for ' + fmtPnl(shortStats.pnl) + ' total. ' +
       'Long sessions (' + longBucket.length + ' sessions, ' + longCut + ' hands or more) ran at ' +
-      (longStats.wr != null ? longStats.wr + '% win rate' : 'no clear win rate') + ' for ' + fmtPnlSafe(longStats.pnl) + ' total.';
+      (longStats.wr != null ? longStats.wr + '% win rate' : 'no clear win rate') + ' for ' + fmtPnl(longStats.pnl) + ' total.';
 
     var branchTexts = [];
     var severity = 'g';

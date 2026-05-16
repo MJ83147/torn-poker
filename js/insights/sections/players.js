@@ -27,13 +27,6 @@
     return Math.round((num / den) * 1000) / 10;
   }
 
-  function fmtMoney(v) {
-    if (v == null || !isFinite(v)) return '$0';
-    var abs = Math.abs(v);
-    var formatted = (typeof fmt === 'function') ? fmt(abs) : Math.round(abs).toString();
-    return (v < 0 ? '-' : '+') + formatted;
-  }
-
   function joinList(items) {
     if (!items || !items.length) return '';
     if (items.length === 1) return items[0];
@@ -276,8 +269,8 @@
 
     var openingText = 'Across ' + matching.length + ' ' + meta.shortPlural +
       ' with ' + MIN_PROFILE_HANDS + '+ hands each you have played ' + totalHands +
-      ' hands. Net P&L vs this group: ' + fmtMoney(totalPnl) +
-      ' (' + fmtMoney(avgPerHand) + ' per hand)' +
+      ' hands. Net P&L vs this group: ' + fmtPnl(totalPnl) +
+      ' (' + fmtPnl(avgPerHand) + ' per hand)' +
       (winRate != null ? ', win rate ' + Math.round(winRate) + '%' : '') + '.';
 
     var branchTexts = [];
@@ -289,14 +282,14 @@
       var bestVs = sortedByPnl[sortedByPnl.length - 1];
       if (worstVs.heroPnl < 0 && bestVs.heroPnl > 0) {
         branchTexts.push('Within the group you are doing best vs ' + bestVs.name +
-          ' (' + fmtMoney(bestVs.heroPnl) + ' across ' + bestVs.hands + ' hands) and worst vs ' +
-          worstVs.name + ' (' + fmtMoney(worstVs.heroPnl) + ' across ' + worstVs.hands + ' hands).');
+          ' (' + fmtPnl(bestVs.heroPnl) + ' across ' + bestVs.hands + ' hands) and worst vs ' +
+          worstVs.name + ' (' + fmtPnl(worstVs.heroPnl) + ' across ' + worstVs.hands + ' hands).');
       } else if (worstVs.heroPnl < 0) {
         branchTexts.push('Worst result in the group is vs ' + worstVs.name +
-          ' at ' + fmtMoney(worstVs.heroPnl) + ' across ' + worstVs.hands + ' hands.');
+          ' at ' + fmtPnl(worstVs.heroPnl) + ' across ' + worstVs.hands + ' hands.');
       } else if (bestVs.heroPnl > 0) {
         branchTexts.push('Best result in the group is vs ' + bestVs.name +
-          ' at ' + fmtMoney(bestVs.heroPnl) + ' across ' + bestVs.hands + ' hands.');
+          ' at ' + fmtPnl(bestVs.heroPnl) + ' across ' + bestVs.hands + ' hands.');
       }
     }
 
@@ -416,7 +409,7 @@
     var verbLine = isProfitable ? 'up against' : 'down against';
 
     var leadNames = top.slice(0, 3).map(function(p) {
-      return p.name + ' (' + fmtMoney(p.heroPnl) + ', ' + p.hands + ' hands)';
+      return p.name + ' (' + fmtPnl(p.heroPnl) + ', ' + p.hands + ' hands)';
     });
     var openingText = 'You are ' + verbLine + ' ' + matching.length + ' opponents with ' + MIN_NAMED_HANDS +
       '+ hands. The leaders: ' + joinList(leadNames) + '.';
@@ -443,8 +436,8 @@
 
     // Branch: showdown vs non-showdown source.
     if (topShowdown >= 10 || Math.abs(topShowdownPnl) + Math.abs(topNonShowdownPnl) > 0) {
-      var sdLabel = fmtMoney(topShowdownPnl);
-      var nsdLabel = fmtMoney(topNonShowdownPnl);
+      var sdLabel = fmtPnl(topShowdownPnl);
+      var nsdLabel = fmtPnl(topNonShowdownPnl);
       if (isProfitable) {
         if (topShowdownPnl > topNonShowdownPnl && topShowdownPnl > 0) {
           branchTexts.push('Most of the profit against these names comes at showdown (' + sdLabel + ' showdown vs ' + nsdLabel + ' non-showdown).');
@@ -485,7 +478,7 @@
         id: 'players-' + label + '-' + p.name.toLowerCase().replace(/\W+/g, '-'),
         label: 'Hands vs ' + p.name,
         hands: phs,
-        coachingNote: 'You are ' + noteVerb + ' ' + p.name + ' for ' + fmtMoney(p.heroPnl) + ' across ' + p.hands + ' hands. ' +
+        coachingNote: 'You are ' + noteVerb + ' ' + p.name + ' for ' + fmtPnl(p.heroPnl) + ' across ' + p.hands + ' hands. ' +
           'Look for the pattern that repeats; that is where the result is coming from.'
       });
     }

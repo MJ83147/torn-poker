@@ -79,9 +79,19 @@ function avg(arr) {
   return s / arr.length;
 }
 
-// Format P&L with +/- prefix
+// Format P&L with +/- prefix. Null/NaN/Infinity render as "$0".
 function fmtPnl(val) {
-  return (val >= 0 ? '+' : '') + fmt(val);
+  if (val == null || !isFinite(val)) return '$0';
+  var abs = Math.abs(val);
+  return (val < 0 ? '-' : '+') + fmt(abs);
+}
+
+// Format a percentage value (already in 0-100 range) with one decimal.
+// Null/non-finite renders as empty string (matches the legacy story-engine
+// helper this replaced).
+function fmtPct(v) {
+  if (v == null || !isFinite(v)) return '';
+  return (Math.round(v * 10) / 10) + '%';
 }
 
 // CSS class for P&L (table cells)
