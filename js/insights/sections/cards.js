@@ -188,23 +188,12 @@
     return null;
   }
 
-  // Classify a single hand into one of the six buckets, or null if the hand
-  // never reached the flop or lacks board cards. Made hands route first; the
-  // air bucket promotes to a draw bucket when classifyMadeHand surfaced a
-  // live draw on the flop or turn.
-  function classifyHandBucket(h) {
-    if (!h || !h.hole || h.hole.length < 2) return null;
-    if (!h.board || h.board.length < 3) return null;
-    var last = lastStreetReached(h);
-    if (!last) return null;
-
-    var boardSlice;
-    if (last === 'Flop') boardSlice = h.board.slice(0, 3);
-    else if (last === 'Turn') boardSlice = h.board.slice(0, 4);
-    else boardSlice = h.board.slice(0, 5);
-
+  // Classify a single board slice (flop, turn, or river) into one of the six
+  // buckets. Returns null when the slice is too short or classifyMadeHand
+  // declines to return a label.
+  function classifyOnSlice(hole, boardSlice, streetName) {
     if (boardSlice.length < 3) return null;
-    var made = (typeof classifyMadeHand === 'function') ? classifyMadeHand(h.hole, boardSlice) : null;
+    var made = (typeof classifyMadeHand === 'function') ? classifyMadeHand(hole, boardSlice) : null;
     if (!made || !made.label) return null;
 
     var label = made.label;
@@ -213,19 +202,29 @@
     // If the board does all the work (board trips with hero kickers, board
     // straight, board flush, board full house, board two pair), strength
     // belongs to the board not hero. Treat as air - hero is on a kicker
-    // hand and the made-hand label overstates the holding.
-    if (heroPlaysBoard(h.hole, boardSlice, made)) {
-      madeBucket = 'air';
+    // hand and the made-hand label overstates the holding. Exception: a
+    // pocket pair is never air; route it to overpair/marginal so the
+    // pocket-pair-below-the-board hands don't show up in "Air".
+    if (heroPlaysBoard(hole, boardSlice, made)) {
+      var hr0 = hole[0].slice(0, -1);
+      var hr1 = hole[1].slice(0, -1);
+      if (hr0 === hr1) {
+        var pairIdx = RANKS.indexOf(hr0);
+        var topBoardIdx = -1;
+        for (var bi = 0; bi < boardSlice.length; bi++) {
+          var bIdx = RANKS.indexOf(boardSlice[bi].slice(0, -1));
+          if (bIdx > topBoardIdx) topBoardIdx = bIdx;
+        }
+        madeBucket = (pairIdx > topBoardIdx) ? 'strong' : 'marginal';
+      } else {
+        madeBucket = 'air';
+      }
     }
-    // Premium Made: tier 3 (set/trips) and above. Use tier when present, fall
-    // back to label parsing. 'Trips' (board pair + hero card matching) is
-    // strong-but-not-premium; only 'Set' (hero pocket pair on the board) is
-    // a true premium tier 3 hand.
     else if (made.tier != null) {
-      if (made.tier >= 5) madeBucket = 'premium';                      // Flush / Full House / Quads / Straight Flush
-      else if (made.tier === 4) madeBucket = 'premium';                 // Straight (board-straight handled above)
+      if (made.tier >= 5) madeBucket = 'premium';
+      else if (made.tier === 4) madeBucket = 'premium';
       else if (made.tier === 3) madeBucket = (label === 'Set') ? 'premium' : 'strong';
-      else if (made.tier === 2) madeBucket = 'strong';                  // Two Pair
+      else if (made.tier === 2) madeBucket = 'strong';
       else if (made.tier === 1) {
         if (label === 'Overpair' || label === 'Top Pair') madeBucket = 'strong';
         else if (label === 'Middle Pair' || label === 'Bottom Pair' || label === 'Pocket Pair') madeBucket = 'marginal';
@@ -242,14 +241,49 @@
       else madeBucket = 'air';
     }
 
-    // Promote air to a draw bucket when a live draw is present. Made-hand
-    // categories (pair+) keep their classification; their draws are
-    // incidental upgrades, not the primary strength.
+    // Promote air to a draw bucket when a live draw is present on this street.
     if (madeBucket === 'air') {
-      var drawBucket = classifyDrawBucket(made, last);
+      var drawBucket = classifyDrawBucket(made, streetName);
       if (drawBucket) return drawBucket;
     }
     return madeBucket;
+  }
+
+  // Bucket priority, best to worst. Used to pick the strongest classification
+  // hero held at any postflop decision point.
+  var BUCKET_PRIORITY = ['premium', 'strong', 'marginal', 'strongDraw', 'weakDraw', 'air'];
+
+  // Classify a hand by the BEST strength hero held on any postflop street they
+  // reached. Evaluating only the last street misclassifies hands like 99 on a
+  // Q-A-A flop that then runs out QAAQ3: AA99 two pair on the flop becomes
+  // "playing the board" by the river, but hero's flop call was made with a
+  // real hand. Returns null if hero never reached the flop.
+  function classifyHandBucket(h) {
+    if (!h || !h.hole || h.hole.length < 2) return null;
+    if (!h.board || h.board.length < 3) return null;
+    var last = lastStreetReached(h);
+    if (!last) return null;
+
+    var slices = [{ slice: h.board.slice(0, 3), street: 'Flop' }];
+    if ((last === 'Turn' || last === 'River') && h.board.length >= 4) {
+      slices.push({ slice: h.board.slice(0, 4), street: 'Turn' });
+    }
+    if (last === 'River' && h.board.length >= 5) {
+      slices.push({ slice: h.board.slice(0, 5), street: 'River' });
+    }
+
+    var bestBucket = null;
+    var bestRank = BUCKET_PRIORITY.length;
+    for (var s = 0; s < slices.length; s++) {
+      var bucket = classifyOnSlice(h.hole, slices[s].slice, slices[s].street);
+      if (!bucket) continue;
+      var rank = BUCKET_PRIORITY.indexOf(bucket);
+      if (rank < bestRank) {
+        bestRank = rank;
+        bestBucket = bucket;
+      }
+    }
+    return bestBucket;
   }
 
   // Hero's aggregate postflop action profile in a hand: counts of bets/raises,
