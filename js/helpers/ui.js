@@ -76,6 +76,9 @@ function switchTab(tabId) {
     item.classList.add('active');
     var menu = item.closest('.tab-menu');
     if (menu) menu.querySelector('.tab-menu-btn').classList.add('active');
+  } else {
+    var directBtn = document.querySelector('.tab-menu-btn[data-tab="' + tabId + '"]');
+    if (directBtn) directBtn.classList.add('active');
   }
   // Close any open menus and remove blur
   document.querySelectorAll('.tab-menu').forEach(function(m) { m.classList.remove('open'); });
@@ -94,6 +97,13 @@ function _toggleBackdrop(show) {
     var btn = e.target.closest('.tab-menu-btn');
     if (btn) {
       e.stopPropagation();
+      // Direct-link variant: no dropdown, just switch tabs.
+      if (btn.dataset.tab) {
+        document.querySelectorAll('.tab-menu').forEach(function(m) { m.classList.remove('open'); });
+        _toggleBackdrop(false);
+        switchTab(btn.dataset.tab);
+        return;
+      }
       var menu = btn.closest('.tab-menu');
       var wasOpen = menu.classList.contains('open');
       // Close all menus first
