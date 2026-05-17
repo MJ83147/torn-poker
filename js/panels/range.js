@@ -30,13 +30,20 @@ var POS_TO_RANGE_KEY = {
   'SB':    'Small Blind',
 };
 
-// Hero seat selector (Facing RFI) -> "Facing RFI: X" data key.
-var FACING_HERO_TO_BUCKET = {
-  'BB':  'Big Blind',
-  'SB':  'Small Blind',
-  'BTN': 'Button',
-  'CO':  'CO',
-};
+// Hero seat options for Facing RFI — mirror the data's "Facing RFI: X"
+// bucket labels verbatim.
+var FACING_HERO_BUCKETS = ['Big Blind', 'Small Blind', 'Button', 'CO', 'EP/MP'];
+
+// Map a hero-seat selector value to the app position(s) that count as that
+// seat when filtering hero's played hands.
+function facingHeroToPositions(bucket) {
+  if (bucket === 'Big Blind')   return ['BB'];
+  if (bucket === 'Small Blind') return ['SB'];
+  if (bucket === 'Button')      return ['BTN'];
+  if (bucket === 'CO')          return ['CO'];
+  if (bucket === 'EP/MP')       return ['EP', 'MP', 'LJ', 'HJ', 'UTG+1', 'UTG+2'];
+  return [];
+}
 
 // Opener bucket selector (RFI vs 3bet) -> "X RFI vs 3bet" data key.
 var VS3_OPENER_TO_BUCKET = {
@@ -101,9 +108,7 @@ function lookupChart(data, subTab, selectors) {
     return (data.RFI && data.RFI[key]) || null;
   }
   if (subTab === 'facing-rfi') {
-    var heroLabel = FACING_HERO_TO_BUCKET[selectors.facingHeroSeat];
-    if (!heroLabel) return null;
-    var bucket = data['Facing RFI: ' + heroLabel];
+    var bucket = data['Facing RFI: ' + selectors.facingHeroSeat];
     if (!bucket) return null;
     return bucket[selectors.facingMatchup] || null;
   }
@@ -138,7 +143,8 @@ function filterHandsForSubTab(hands, subTab, selectors) {
       // All hands where hero faced an open from the selected seat. Includes
       // hands hero folded (which look like leaks against the call-side chart).
       if (act !== 'vs-rfi-call' && act !== 'vs-rfi-3bet' && act !== 'folded-pre' && act !== 'squeeze') continue;
-      if (pos !== selectors.facingHeroSeat) continue;
+      var allowedSeats = facingHeroToPositions(selectors.facingHeroSeat);
+      if (allowedSeats.indexOf(pos) === -1) continue;
       // Verify the hand actually had a raise before hero acted; folded-pre may
       // include hands hero folded with no raise (rare in BB scenarios but
       // possible in others). Skip those.
@@ -390,7 +396,7 @@ function renderRange(container, d, hands) {
   var state = {
     subTab:           stored.subTab           || 'overall',
     rfiPosition:      stored.rfiPosition      || 'BTN',
-    facingHeroSeat:   stored.facingHeroSeat   || 'BB',
+    facingHeroSeat:   stored.facingHeroSeat   || 'Big Blind',
     facingMatchup:    stored.facingMatchup    || 'BB vs BTN',
     vs3betOpener:     stored.vs3betOpener     || 'BTN/SB',
     vs3betMatchup:    stored.vs3betMatchup    || 'BTN vs SB/BB 3bet',
@@ -478,15 +484,17 @@ function renderRange(container, d, hands) {
   }
 
   function renderFacingRfi(body, data) {
-    var heroSeats = ['BB', 'SB', 'BTN', 'CO'];
-    var heroLabel = FACING_HERO_TO_BUCKET[state.facingHeroSeat] || 'Big Blind';
-    var bucket = data['Facing RFI: ' + heroLabel] || {};
+    if (FACING_HERO_BUCKETS.indexOf(state.facingHeroSeat) === -1) {
+      state.facingHeroSeat = 'Big Blind';
+      persist();
+    }
+    var bucket = data['Facing RFI: ' + state.facingHeroSeat] || {};
     var matchups = Object.keys(bucket);
     if (matchups.indexOf(state.facingMatchup) === -1) {
       state.facingMatchup = matchups[0] || '';
       persist();
     }
-    var heroSelector = positionSelector('range-facing-hero', heroSeats, state.facingHeroSeat);
+    var heroSelector = positionSelector('range-facing-hero', FACING_HERO_BUCKETS, state.facingHeroSeat);
     var matchupSelector = positionSelector('range-facing-matchup', matchups, state.facingMatchup);
     var chart = lookupChart(data, 'facing-rfi', state);
     var filtered = filterHandsForSubTab(hands, 'facing-rfi', state);
