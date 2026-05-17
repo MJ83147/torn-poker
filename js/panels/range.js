@@ -106,8 +106,7 @@ function lookupChart(data, subTab, selectors) {
     if (!heroLabel) return null;
     var bucket = data['Facing RFI: ' + heroLabel];
     if (!bucket) return null;
-    var matchKey = facingMatchupKey(selectors.facingHeroSeat, selectors.facingOpener);
-    return bucket[matchKey] || null;
+    return bucket[selectors.facingMatchup] || null;
   }
   if (subTab === 'rfi-vs-3bet') {
     var bucketName = VS3_OPENER_TO_BUCKET[selectors.vs3betOpener];
@@ -119,33 +118,6 @@ function lookupChart(data, subTab, selectors) {
   return null;
 }
 
-function facingMatchupKey(heroSeat, opener) {
-  if (!heroSeat || !opener) return null;
-  var hero;
-  switch (heroSeat) {
-    case 'BB':    hero = 'BB';    break;
-    case 'SB':    hero = 'SB';    break;
-    case 'BTN':   hero = 'BTN';   break;
-    case 'CO':    hero = 'CO';    break;
-    case 'EP-MP': hero = 'EP/MP'; break;
-    default:      hero = heroSeat;
-  }
-  // Openers in the data use combined keys for early seats.
-  var openerKey;
-  switch (opener) {
-    case 'UTG':
-    case 'UTG+1': openerKey = 'UTG/UTG+1'; break;
-    case 'MP':
-    case 'EP':    openerKey = 'UTG+2';     break;
-    case 'LJ':    openerKey = 'LJ';        break;
-    case 'HJ':    openerKey = 'HJ';        break;
-    case 'CO':    openerKey = 'CO';        break;
-    case 'BTN':   openerKey = 'BTN';       break;
-    case 'SB':    openerKey = 'SB';        break;
-    default:      openerKey = opener;
-  }
-  return hero + ' vs ' + openerKey;
-}
 
 // Filter hands to those matching the active sub-tab semantics.
 function filterHandsForSubTab(hands, subTab, selectors) {
@@ -394,7 +366,7 @@ function gtoLegendHtml() {
     '<div class="leg"><div class="leg-sw leg-sw-gto-red"></div>Raise for value</div>' +
     '<div class="leg"><div class="leg-sw leg-sw-gto-blue"></div>Raise for bluff</div>' +
     '<div class="leg"><div class="leg-sw leg-sw-gto-green"></div>Call</div>' +
-    '<div class="leg"><div class="leg-sw leg-sw-gto-grey"></div>Mixed / occasional</div>' +
+    '<div class="leg"><div class="leg-sw leg-sw-gto-grey"></div>Fold (you were in this hand)</div>' +
     '<div class="leg"><div class="leg-sw leg-sw-gto-white"></div>Fold</div>' +
     '</div>';
 }
@@ -423,7 +395,7 @@ function renderRange(container, d, hands) {
     subTab:           stored.subTab           || 'overall',
     rfiPosition:      stored.rfiPosition      || 'BTN',
     facingHeroSeat:   stored.facingHeroSeat   || 'BB',
-    facingOpener:     stored.facingOpener     || 'BTN',
+    facingMatchup:    stored.facingMatchup    || 'BB vs BTN',
     vs3betOpener:     stored.vs3betOpener     || 'BTN/SB',
     vs3betMatchup:    stored.vs3betMatchup    || 'BTN vs SB/BB 3bet',
   };
@@ -511,29 +483,32 @@ function renderRange(container, d, hands) {
 
   function renderFacingRfi(body, data) {
     var heroSeats = ['BB', 'SB', 'BTN', 'CO', 'EP-MP'];
-    var openers   = ['UTG', 'UTG+1', 'MP', 'EP', 'LJ', 'HJ', 'CO', 'BTN', 'SB'];
-    var validOpeners = filterValidOpeners(state.facingHeroSeat, openers);
-    if (validOpeners.indexOf(state.facingOpener) === -1 && validOpeners.length) {
-      state.facingOpener = validOpeners[0];
+    var heroLabel = FACING_HERO_TO_BUCKET[state.facingHeroSeat] || 'Big Blind';
+    var bucket = data['Facing RFI: ' + heroLabel] || {};
+    var matchups = Object.keys(bucket);
+    if (matchups.indexOf(state.facingMatchup) === -1) {
+      state.facingMatchup = matchups[0] || '';
       persist();
     }
     var heroSelector = positionSelector('range-facing-hero', heroSeats, state.facingHeroSeat);
-    var openerSelector = positionSelector('range-facing-opener', validOpeners, state.facingOpener);
+    var matchupSelector = positionSelector('range-facing-matchup', matchups, state.facingMatchup);
     var chart = lookupChart(data, 'facing-rfi', state);
     var filtered = filterHandsForSubTab(hands, 'facing-rfi', state);
     var headerStats = renderHeaderStats(filtered, 'defending spots');
-    var note = chart ? '<div class="meta-text mb-12">GTO target: ' + facingMatchupKey(state.facingHeroSeat, state.facingOpener) + '. Played data shows every hand you faced an open from ' + state.facingHeroSeat + ', not just from the selected opener.</div>' : '<div class="range-empty">No GTO reference for ' + state.facingHeroSeat + ' vs ' + state.facingOpener + '.</div>';
+    var note = chart
+      ? '<div class="meta-text mb-12">GTO target: ' + state.facingMatchup + '. Played data shows every hand you faced an open from ' + state.facingHeroSeat + ', not just from the selected opener.</div>'
+      : '<div class="range-empty">No GTO reference for ' + state.facingMatchup + '.</div>';
     body.innerHTML =
       '<div class="range-controls">' +
       '<label class="range-control-label">Hero seat</label>' + heroSelector +
-      '<label class="range-control-label">Opener</label>' + openerSelector +
+      '<label class="range-control-label">Matchup</label>' + matchupSelector +
       '</div>' +
       headerStats +
       note +
       '<div class="range-legends"><div class="range-legend-col">' + gtoLegendHtml() + '</div><div class="range-legend-col">' + heroLegendHtml() + '</div></div>' +
       twoGridHtml(chart, filtered,'facing-rfi');
-    bindSelector(body, 'range-facing-hero', function(v) { state.facingHeroSeat = v; persist(); renderFacingRfi(body, data); });
-    bindSelector(body, 'range-facing-opener', function(v) { state.facingOpener = v; persist(); renderFacingRfi(body, data); });
+    bindSelector(body, 'range-facing-hero', function(v) { state.facingHeroSeat = v; state.facingMatchup = ''; persist(); renderFacingRfi(body, data); });
+    bindSelector(body, 'range-facing-matchup', function(v) { state.facingMatchup = v; persist(); renderFacingRfi(body, data); });
     bindCellClicks(body, filtered);
   }
 
@@ -631,17 +606,6 @@ function bindSelector(scope, id, cb) {
   var el = scope.querySelector('#' + id);
   if (!el) return;
   el.onchange = function() { cb(el.value); };
-}
-
-// Restrict opener choices for "Facing RFI" to seats acting before hero.
-function filterValidOpeners(heroSeat, openers) {
-  var order = ['UTG', 'UTG+1', 'MP', 'EP', 'LJ', 'HJ', 'CO', 'BTN', 'SB'];
-  if (heroSeat === 'BB') return order.slice();
-  if (heroSeat === 'SB') return order.filter(function(p) { return p !== 'SB'; });
-  if (heroSeat === 'BTN') return ['UTG', 'UTG+1', 'MP', 'EP', 'LJ', 'HJ', 'CO'];
-  if (heroSeat === 'CO')  return ['UTG', 'UTG+1', 'MP', 'EP', 'LJ', 'HJ'];
-  if (heroSeat === 'EP-MP') return ['UTG', 'UTG+1'];
-  return order.slice();
 }
 
 function openHandModal(key, matched) {
