@@ -32,11 +32,10 @@ var POS_TO_RANGE_KEY = {
 
 // Hero seat selector (Facing RFI) -> "Facing RFI: X" data key.
 var FACING_HERO_TO_BUCKET = {
-  'BB':    'Big Blind',
-  'SB':    'Small Blind',
-  'BTN':   'Button',
-  'CO':    'CO',
-  'EP-MP': 'EP/MP',
+  'BB':  'Big Blind',
+  'SB':  'Small Blind',
+  'BTN': 'Button',
+  'CO':  'CO',
 };
 
 // Opener bucket selector (RFI vs 3bet) -> "X RFI vs 3bet" data key.
@@ -139,10 +138,7 @@ function filterHandsForSubTab(hands, subTab, selectors) {
       // All hands where hero faced an open from the selected seat. Includes
       // hands hero folded (which look like leaks against the call-side chart).
       if (act !== 'vs-rfi-call' && act !== 'vs-rfi-3bet' && act !== 'folded-pre' && act !== 'squeeze') continue;
-      var seatMatch = selectors.facingHeroSeat;
-      if (seatMatch === 'EP-MP') {
-        if (pos !== 'EP' && pos !== 'MP') continue;
-      } else if (pos !== seatMatch) continue;
+      if (pos !== selectors.facingHeroSeat) continue;
       // Verify the hand actually had a raise before hero acted; folded-pre may
       // include hands hero folded with no raise (rare in BB scenarios but
       // possible in others). Skip those.
@@ -307,7 +303,7 @@ function buildHeroGridHtml(filtered, subTab) {
         var best = 'fold', bestN = t.fold;
         if (t.raise > bestN) { best = 'raise'; bestN = t.raise; }
         if (t.call > bestN) { best = 'call'; bestN = t.call; }
-        color = best === 'raise' ? 'red' : best === 'call' ? 'green' : 'grey';
+        color = best === 'raise' ? 'red' : best === 'call' ? 'green' : 'white';
         var parts = [];
         if (t.raise) parts.push(t.raise + ' raised');
         if (t.call)  parts.push(t.call + ' called');
@@ -375,7 +371,7 @@ function heroLegendHtml() {
   return '<div class="range-legend">' +
     '<div class="leg"><div class="leg-sw leg-sw-gto-red"></div>You raised</div>' +
     '<div class="leg"><div class="leg-sw leg-sw-gto-green"></div>You called</div>' +
-    '<div class="leg"><div class="leg-sw leg-sw-gto-grey"></div>You folded</div>' +
+    '<div class="leg"><div class="leg-sw leg-sw-gto-white"></div>You folded</div>' +
     '<div class="leg"><div class="rc-unseen leg-sw"></div>Not dealt</div>' +
     '</div>';
 }
@@ -482,7 +478,7 @@ function renderRange(container, d, hands) {
   }
 
   function renderFacingRfi(body, data) {
-    var heroSeats = ['BB', 'SB', 'BTN', 'CO', 'EP-MP'];
+    var heroSeats = ['BB', 'SB', 'BTN', 'CO'];
     var heroLabel = FACING_HERO_TO_BUCKET[state.facingHeroSeat] || 'Big Blind';
     var bucket = data['Facing RFI: ' + heroLabel] || {};
     var matchups = Object.keys(bucket);

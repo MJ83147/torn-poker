@@ -1484,7 +1484,8 @@ textarea#jin:focus {
 /* "Your range" grid: same color palette as GTO but driven by hero's action */
 .rc[data-hero="red"]   { background: var(--gto-red); }
 .rc[data-hero="green"] { background: var(--gto-green); }
-.rc[data-hero="grey"]  { background: var(--gto-grey); }
+.rc[data-hero="white"] { background: var(--gto-white); }
+.rc[data-hero="white"] span { color: #1a1f1a; }
 .rc[data-hero="none"]  {
   background: #0e1310;
   border: var(--sp-1) solid #1a2a1c;
