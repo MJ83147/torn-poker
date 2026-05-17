@@ -17,32 +17,34 @@ function getRangeData() {
   return _rangeDataPromise;
 }
 
-// App position string -> ranges.json position key for the RFI chart set.
-var POS_TO_RANGE_KEY = {
-  'UTG':   'UTG',
-  'UTG+1': 'UTG+1',
-  'MP':    'UTG+2',
-  'EP':    'UTG+2',
-  'LJ':    'Lojack',
-  'HJ':    'Hijack',
-  'CO':    'Cutoff',
-  'BTN':   'Button',
-  'SB':    'Small Blind',
-};
+// RFI chart positions, mirroring data.RFI keys verbatim.
+var RFI_POSITIONS = ['UTG', 'UTG+1', 'UTG+2', 'Lojack', 'Hijack', 'Cutoff', 'Button', 'Small Blind'];
+
+// Map a data position label to the app's hand-history position string(s).
+function dataPosToAppPositions(label) {
+  if (label === 'UTG')         return ['UTG'];
+  if (label === 'UTG+1')       return ['UTG+1'];
+  if (label === 'UTG+2')       return ['MP', 'EP'];
+  if (label === 'Lojack')      return ['LJ'];
+  if (label === 'Hijack')      return ['HJ'];
+  if (label === 'Cutoff')      return ['CO'];
+  if (label === 'Button')      return ['BTN'];
+  if (label === 'Small Blind') return ['SB'];
+  if (label === 'Big Blind')   return ['BB'];
+  return [];
+}
 
 // Hero seat options for Facing RFI — mirror the data's "Facing RFI: X"
 // bucket labels verbatim.
 var FACING_HERO_BUCKETS = ['Big Blind', 'Small Blind', 'Button', 'CO', 'EP/MP'];
 
-// Map a hero-seat selector value to the app position(s) that count as that
-// seat when filtering hero's played hands.
-function facingHeroToPositions(bucket) {
-  if (bucket === 'Big Blind')   return ['BB'];
-  if (bucket === 'Small Blind') return ['SB'];
-  if (bucket === 'Button')      return ['BTN'];
-  if (bucket === 'CO')          return ['CO'];
-  if (bucket === 'EP/MP')       return ['EP', 'MP', 'LJ', 'HJ', 'UTG+1', 'UTG+2'];
-  return [];
+// Map the active Facing RFI matchup key (e.g. "BB vs BTN", "HJ vs UTG") to the
+// app position(s) that count as the hero seat in that chart. The hero seat is
+// the substring before " vs " in the matchup key.
+function facingHeroToPositions(matchupKey) {
+  if (!matchupKey) return [];
+  var heroLabel = matchupKey.split(' vs ')[0];
+  return dataPosToAppPositions(heroLabel);
 }
 
 // Opener bucket selector (RFI vs 3bet) -> "X RFI vs 3bet" data key.
@@ -103,9 +105,7 @@ function chartToColorMap(chart) {
 function lookupChart(data, subTab, selectors) {
   if (!data) return null;
   if (subTab === 'rfi') {
-    var key = POS_TO_RANGE_KEY[selectors.rfiPosition];
-    if (!key) return null;
-    return (data.RFI && data.RFI[key]) || null;
+    return (data.RFI && data.RFI[selectors.rfiPosition]) || null;
   }
   if (subTab === 'facing-rfi') {
     var bucket = data['Facing RFI: ' + selectors.facingHeroSeat];
@@ -136,15 +136,16 @@ function filterHandsForSubTab(hands, subTab, selectors) {
       // Include hands where hero was first-to-act at the chosen seat: opens
       // (rfi), limps (limp-open), and folds with no prior raiser/limper.
       if (act !== 'rfi' && act !== 'limp-open' && act !== 'folded-pre') continue;
-      if (selectors.rfiPosition && pos !== selectors.rfiPosition) continue;
+      var rfiSeats = dataPosToAppPositions(selectors.rfiPosition);
+      if (rfiSeats.length && rfiSeats.indexOf(pos) === -1) continue;
       if (act === 'folded-pre' && heroHadPriorActionPre(h)) continue;
       out.push(h);
     } else if (subTab === 'facing-rfi') {
       // All hands where hero faced an open from the selected seat. Includes
       // hands hero folded (which look like leaks against the call-side chart).
       if (act !== 'vs-rfi-call' && act !== 'vs-rfi-3bet' && act !== 'folded-pre' && act !== 'squeeze') continue;
-      var allowedSeats = facingHeroToPositions(selectors.facingHeroSeat);
-      if (allowedSeats.indexOf(pos) === -1) continue;
+      var allowedSeats = facingHeroToPositions(selectors.facingMatchup);
+      if (!allowedSeats.length || allowedSeats.indexOf(pos) === -1) continue;
       // Verify the hand actually had a raise before hero acted; folded-pre may
       // include hands hero folded with no raise (rare in BB scenarios but
       // possible in others). Skip those.
@@ -395,7 +396,7 @@ function renderRange(container, d, hands) {
   var stored = loadRangeState();
   var state = {
     subTab:           stored.subTab           || 'overall',
-    rfiPosition:      stored.rfiPosition      || 'BTN',
+    rfiPosition:      stored.rfiPosition      || 'Button',
     facingHeroSeat:   stored.facingHeroSeat   || 'Big Blind',
     facingMatchup:    stored.facingMatchup    || 'BB vs BTN',
     vs3betOpener:     stored.vs3betOpener     || 'BTN/SB',
@@ -465,8 +466,11 @@ function renderRange(container, d, hands) {
   }
 
   function renderRfi(body, data) {
-    var positions = ['UTG', 'UTG+1', 'MP', 'EP', 'LJ', 'HJ', 'CO', 'BTN', 'SB'];
-    var selector = positionSelector('range-rfi-pos', positions, state.rfiPosition);
+    if (RFI_POSITIONS.indexOf(state.rfiPosition) === -1) {
+      state.rfiPosition = 'Button';
+      persist();
+    }
+    var selector = positionSelector('range-rfi-pos', RFI_POSITIONS, state.rfiPosition);
     var chart = lookupChart(data, 'rfi', state);
     var filtered = filterHandsForSubTab(hands, 'rfi', state);
     var headerStats = renderHeaderStats(filtered, 'opens');
