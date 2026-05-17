@@ -244,8 +244,15 @@ function renderActivePanel(forceTabId) {
   if (!State.allHands.length) return;
   var tabId = forceTabId;
   if (!tabId) {
-    var activeTab = document.querySelector('.tab-item.active');
-    tabId = activeTab ? activeTab.dataset.tab : 'welcome';
+    var activeItem = document.querySelector('.tab-item.active');
+    if (activeItem) {
+      tabId = activeItem.dataset.tab;
+    } else {
+      // Direct-link tabs (e.g. Custom Report) live on .tab-menu-btn[data-tab]
+      // with no .tab-item underneath them.
+      var activeBtn = document.querySelector('.tab-menu-btn[data-tab].active');
+      tabId = activeBtn ? activeBtn.dataset.tab : 'welcome';
+    }
   }
   var filterKey = _filterKey();
   if (_panelsRenderedFor[tabId] === filterKey) return;
@@ -294,6 +301,10 @@ function _renderHeaderControls() {
 function render(d, hands, meta) {
   // First-time users see the style welcome screen instead of the dashboard.
   if (_maybeShowStyleWelcome(d, hands, meta)) return;
+  // Strip any legacy #cr=... fragment in case someone visits an old share URL.
+  if (window.location.hash && window.location.hash.indexOf('#cr=') === 0) {
+    try { history.replaceState(null, '', window.location.pathname + window.location.search); } catch (_) {}
+  }
   _bootDashboard(meta);
   renderActivePanel();
 }

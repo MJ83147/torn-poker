@@ -341,14 +341,6 @@ function _crDefaultSegment() {
 }
 
 function _crLoadState() {
-  // URL fragment beats localStorage so shared links override locally-saved state.
-  try {
-    var hash = window.location.hash;
-    if (hash && hash.indexOf('#cr=') === 0) {
-      var data = JSON.parse(decodeURIComponent(hash.slice(4)));
-      if (data && typeof data === 'object') return data;
-    }
-  } catch (_) {}
   try {
     var raw = localStorage.getItem(CR_STORAGE_KEY);
     if (raw) return JSON.parse(raw);
@@ -358,10 +350,6 @@ function _crLoadState() {
 
 function _crSaveState(state) {
   try { localStorage.setItem(CR_STORAGE_KEY, JSON.stringify(state)); } catch (_) {}
-  try {
-    var encoded = encodeURIComponent(JSON.stringify(state));
-    history.replaceState(null, '', '#cr=' + encoded);
-  } catch (_) {}
 }
 
 // ── 4. FILTER PREDICATES ─────────────────────────────────────────────────────
