@@ -79,8 +79,10 @@ function renderWelcome(container, d, hands, meta) {
   ];
   var welcomeHtml = '<div class="welcome-wrap">' +
     '<div class="welcome-intro">' +
+    '<div class="welcome-intro-text">' +
     '<div class="welcome-intro-heading">Welcome back, ' + meta.player + '</div>' +
     '<div class="desc-text">' + d.n + ' hands loaded. Here\'s what each tab shows.</div>' +
+    '</div>' +
     '<button class="take-tour-btn" onclick="startWelcomeTour()">Take a Tour</button>' +
     '</div>' +
     '<div class="welcome-body">' +

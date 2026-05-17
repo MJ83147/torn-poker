@@ -3031,7 +3031,15 @@ tr.hrow:hover .hrow-star {
 }
 
 .welcome-intro {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--sp-20);
   margin-bottom: var(--sp-28);
+}
+
+.welcome-intro-text {
+  min-width: 0;
 }
 
 .welcome-right {
@@ -3317,7 +3325,7 @@ tr.hrow:hover .hrow-star {
 /* ── Take a Tour button (welcome panel) ──────────────────────────────────── */
 .take-tour-btn {
   display: inline-block;
-  margin-top: var(--sp-16);
+  flex-shrink: 0;
   padding: var(--sp-10) var(--sp-28);
   background: var(--gold);
   color: #07090a;
