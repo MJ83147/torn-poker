@@ -1451,6 +1451,11 @@ textarea#jin:focus {
   display: grid;
   grid-template-columns: repeat(13, 1fr);
   gap: var(--sp-1);
+  max-width: 720px;
+}
+
+.range-grid-sm .rc span {
+  font-size: var(--fs-11);
 }
 
 .rc {
@@ -1470,10 +1475,6 @@ textarea#jin:focus {
   color: #fff;
   font-weight: 600;
   pointer-events: none;
-}
-
-.range-grid-sm .rc span {
-  font-size: var(--fs-10);
 }
 
 .rc:hover {
