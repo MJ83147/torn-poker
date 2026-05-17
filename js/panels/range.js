@@ -255,46 +255,53 @@ function tallyByCombo(filtered, subTab) {
   return { played: played, folded: folded, dealt: dealt, won: won, pnl: pnl };
 }
 
-// GTO chart grid. Each cell:
-//   data-gto = chart color (red, green, blue, grey, white) or 'none'
-//   class rc-played | rc-folded | rc-undealt
-//   data-freq = freq overlay step (Overall sub-tab only)
-function buildGridHtml(chart, tallies, opts) {
+// Pristine GTO chart grid — colour only, no overlay for the user's actions.
+function buildGtoGridHtml(chart) {
   var colors = chartToColorMap(chart);
+  var html = '<div class="range-grid-sm">';
+  for (var r = 0; r < 13; r++) {
+    for (var c = 0; c < 13; c++) {
+      var key = rangeBuildKey(r, c);
+      var gto = colors[key] || 'none';
+      html += '<div class="rc" data-gto="' + gto + '" data-key="' + key + '" data-tip="' + key + '"><span>' + key + '</span></div>';
+    }
+  }
+  html += '</div>';
+  return html;
+}
+
+// Overall sub-tab grid: frequency-shaded background driven by hero's play
+// volume per combo. Bold border on combos played, faded on combos folded.
+function buildOverallGridHtml(tallies) {
   var html = '<div class="range-grid-sm">';
   var maxPlayed = 0;
   for (var k in tallies.played) if (tallies.played[k] > maxPlayed) maxPlayed = tallies.played[k];
   for (var r = 0; r < 13; r++) {
     for (var c = 0; c < 13; c++) {
       var key = rangeBuildKey(r, c);
-      var gto = colors[key] || 'none';
       var dealt = tallies.dealt[key] || 0;
       var played = tallies.played[key] || 0;
       var folded = tallies.folded[key] || 0;
       var won = tallies.won[key] || 0;
-      var status, cls;
-      if (dealt === 0) { status = 'undealt'; cls = 'rc-undealt'; }
-      else if (played > 0) { status = 'played'; cls = 'rc-played'; }
-      else { status = 'folded'; cls = 'rc-folded'; }
-      var tip;
-      if (status === 'played') {
-        var wr = played > 0 ? Math.round((won / played) * 100) + '%' : '-';
+      var cls, tip, freqAttr = '';
+      if (dealt === 0) { cls = 'rc-undealt'; tip = key + ' | not dealt'; }
+      else if (played > 0) {
+        cls = 'rc-played';
+        var wr = Math.round((won / played) * 100) + '%';
         tip = key + ' | played ' + played + '/' + dealt + ' · win ' + wr;
-      } else if (status === 'folded') {
-        tip = key + ' | folded ' + folded + '/' + dealt;
+        if (maxPlayed > 0) {
+          var ratio = played / maxPlayed;
+          var step = 'low';
+          if (ratio > 0.8) step = 'high';
+          else if (ratio > 0.5) step = 'med-high';
+          else if (ratio > 0.25) step = 'med';
+          freqAttr = ' data-freq="' + step + '"';
+        }
       } else {
-        tip = key + ' | not dealt';
+        cls = 'rc-folded';
+        tip = key + ' | folded ' + folded + '/' + dealt;
       }
-      var freqAttr = '';
-      if (opts && opts.frequencyOverlay && played > 0 && maxPlayed > 0) {
-        var ratio = played / maxPlayed;
-        var step = 'low';
-        if (ratio > 0.8) step = 'high';
-        else if (ratio > 0.5) step = 'med-high';
-        else if (ratio > 0.25) step = 'med';
-        freqAttr = ' data-freq="' + step + '"';
-      }
-      html += '<div class="rc ' + cls + '" data-gto="' + gto + '" data-key="' + key + '"' + freqAttr + ' data-tip="' + tip + '"><span>' + key + '</span></div>';
+      html += '<div class="rc ' + cls + '" data-gto="none" data-key="' + key + '"' + freqAttr + ' data-tip="' + tip + '"><span>' + key + '</span></div>';
     }
   }
   html += '</div>';
@@ -369,11 +376,11 @@ function heroActionBucket(h, subTab) {
 }
 
 // Wrap two grids (GTO + your range) in a side-by-side layout with titles.
-function twoGridHtml(chart, tallies, filtered, subTab) {
+function twoGridHtml(chart, filtered, subTab) {
   return '<div class="range-compare">' +
     '<div class="range-compare-col">' +
       '<div class="sec-subtitle mt-0">GTO chart</div>' +
-      buildGridHtml(chart, tallies, {}) +
+      buildGtoGridHtml(chart) +
     '</div>' +
     '<div class="range-compare-col">' +
       '<div class="sec-subtitle mt-0">Your range</div>' +
@@ -478,7 +485,7 @@ function renderRange(container, d, hands) {
       '<div class="sec-subtitle mt-0">Your Overall Range</div>' +
       '<div class="meta-text mb-12">Every combo you have been dealt. Bold border means you played it; faded means you folded.</div>' +
       frequencyLegendHtml() +
-      buildGridHtml(null, tallies, { frequencyOverlay: true });
+      buildOverallGridHtml(tallies);
     bindCellClicks(body, hands);
     renderRangeStories();
   }
@@ -488,7 +495,6 @@ function renderRange(container, d, hands) {
     var selector = positionSelector('range-rfi-pos', positions, state.rfiPosition);
     var chart = lookupChart(data, 'rfi', state);
     var filtered = filterHandsForSubTab(hands, 'rfi', state);
-    var tallies = tallyByCombo(filtered, 'rfi');
     var headerStats = renderHeaderStats(filtered, 'opens');
     var note = chart ? '' : emptyChartNote(state.rfiPosition);
     body.innerHTML =
@@ -498,7 +504,7 @@ function renderRange(container, d, hands) {
       headerStats +
       note +
       '<div class="range-legends"><div class="range-legend-col">' + gtoLegendHtml() + '</div><div class="range-legend-col">' + heroLegendHtml() + '</div></div>' +
-      twoGridHtml(chart, tallies, filtered, 'rfi');
+      twoGridHtml(chart, filtered,'rfi');
     bindSelector(body, 'range-rfi-pos', function(v) { state.rfiPosition = v; persist(); renderRfi(body, data); });
     bindCellClicks(body, filtered);
   }
@@ -515,7 +521,6 @@ function renderRange(container, d, hands) {
     var openerSelector = positionSelector('range-facing-opener', validOpeners, state.facingOpener);
     var chart = lookupChart(data, 'facing-rfi', state);
     var filtered = filterHandsForSubTab(hands, 'facing-rfi', state);
-    var tallies = tallyByCombo(filtered, 'facing-rfi');
     var headerStats = renderHeaderStats(filtered, 'defending spots');
     var note = chart ? '<div class="meta-text mb-12">GTO target: ' + facingMatchupKey(state.facingHeroSeat, state.facingOpener) + '. Played data shows every hand you faced an open from ' + state.facingHeroSeat + ', not just from the selected opener.</div>' : '<div class="range-empty">No GTO reference for ' + state.facingHeroSeat + ' vs ' + state.facingOpener + '.</div>';
     body.innerHTML =
@@ -526,7 +531,7 @@ function renderRange(container, d, hands) {
       headerStats +
       note +
       '<div class="range-legends"><div class="range-legend-col">' + gtoLegendHtml() + '</div><div class="range-legend-col">' + heroLegendHtml() + '</div></div>' +
-      twoGridHtml(chart, tallies, filtered, 'facing-rfi');
+      twoGridHtml(chart, filtered,'facing-rfi');
     bindSelector(body, 'range-facing-hero', function(v) { state.facingHeroSeat = v; persist(); renderFacingRfi(body, data); });
     bindSelector(body, 'range-facing-opener', function(v) { state.facingOpener = v; persist(); renderFacingRfi(body, data); });
     bindCellClicks(body, filtered);
@@ -546,7 +551,6 @@ function renderRange(container, d, hands) {
     var matchupSelector = positionSelector('range-vs3-matchup', matchups, state.vs3betMatchup);
     var chart = lookupChart(data, 'rfi-vs-3bet', state);
     var filtered = filterHandsForSubTab(hands, 'rfi-vs-3bet', state);
-    var tallies = tallyByCombo(filtered, 'rfi-vs-3bet');
     var headerStats = renderHeaderStats(filtered, 'hands where you opened and got 3-bet');
     var note = chart ? '<div class="meta-text mb-12">GTO target: ' + state.vs3betMatchup + '. Played data shows every hand you opened from this seat range and faced a 3-bet, not just from the selected 3-bettor.</div>' : '<div class="range-empty">No GTO reference for ' + state.vs3betMatchup + '.</div>';
     body.innerHTML =
@@ -557,7 +561,7 @@ function renderRange(container, d, hands) {
       headerStats +
       note +
       '<div class="range-legends"><div class="range-legend-col">' + gtoLegendHtml() + '</div><div class="range-legend-col">' + heroLegendHtml() + '</div></div>' +
-      twoGridHtml(chart, tallies, filtered, 'rfi-vs-3bet');
+      twoGridHtml(chart, filtered,'rfi-vs-3bet');
     bindSelector(body, 'range-vs3-opener', function(v) { state.vs3betOpener = v; state.vs3betMatchup = ''; persist(); renderVs3bet(body, data); });
     bindSelector(body, 'range-vs3-matchup', function(v) { state.vs3betMatchup = v; persist(); renderVs3bet(body, data); });
     bindCellClicks(body, filtered);
