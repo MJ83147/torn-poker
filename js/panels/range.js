@@ -17,55 +17,126 @@ function getRangeData() {
   return _rangeDataPromise;
 }
 
-// RFI chart positions, mirroring data.RFI keys verbatim.
-var RFI_POSITIONS = ['UTG', 'UTG+1', 'UTG+2', 'Lojack', 'Hijack', 'Cutoff', 'Button', 'Small Blind'];
-
-// Map a data position label to the app's hand-history position string(s).
-function dataPosToAppPositions(label) {
-  if (label === 'UTG')         return ['UTG'];
-  if (label === 'UTG+1')       return ['UTG+1'];
-  if (label === 'UTG+2')       return ['MP', 'EP'];
-  if (label === 'Lojack')      return ['LJ'];
-  if (label === 'Hijack')      return ['HJ'];
-  if (label === 'Cutoff')      return ['CO'];
-  if (label === 'Button')      return ['BTN'];
-  if (label === 'Small Blind') return ['SB'];
-  if (label === 'Big Blind')   return ['BB'];
-  return [];
-}
-
-// Hero seat options for Facing RFI — mirror the data's "Facing RFI: X"
-// bucket labels verbatim.
-var FACING_HERO_BUCKETS = ['Big Blind', 'Small Blind', 'Button', 'CO', 'EP/MP'];
-
-// Map the active Facing RFI matchup key (e.g. "BB vs BTN", "HJ vs UTG") to the
-// app position(s) that count as the hero seat in that chart. The hero seat is
-// the substring before " vs " in the matchup key.
-function facingHeroToPositions(matchupKey) {
-  if (!matchupKey) return [];
-  var heroLabel = matchupKey.split(' vs ')[0];
-  return dataPosToAppPositions(heroLabel);
-}
-
-// Opener bucket selector (RFI vs 3bet) -> "X RFI vs 3bet" data key.
-var VS3_OPENER_TO_BUCKET = {
-  'UTG':    'UTG RFI vs 3bet',
-  'UTG+1':  'UTG+1 RFI vs 3bet',
-  'UTG+2':  'UTG+2 RFI vs 3bet',
-  'LJ':     'LJ RFI vs 3bet',
-  'HJ/CO':  'HJ/CO RFI vs 3bet',
-  'BTN/SB': 'BTN/SB RFI vs 3bet',
+// Per-hero scenario lists. Each entry carries:
+//   label   - dropdown text
+//   key     - stable identifier (persists in localStorage)
+//   type    - 'rfi' | 'vs-rfi' | 'vs-3bet' | 'limp'  (drives hand filter + tally)
+//   bucket  - top-level key in ranges.json
+//   matchup - the chart key inside that bucket (omitted for RFI where bucket==='RFI'
+//             and we index by hero data label instead)
+//   heroDataLabel - data-side label for the hero seat (used for RFI lookup)
+var HERO_CHARTS = {
+  'UTG': [
+    { label: 'RFI',             key: 'RFI',              type: 'rfi',     bucket: 'RFI',                heroDataLabel: 'UTG' },
+    { label: 'vs UTG+1 3bet',   key: 'vs_3bet_UTG+1',    type: 'vs-3bet', bucket: 'UTG RFI vs 3bet',    matchup: 'UTG vs UTG+1 3bet' },
+    { label: 'vs UTG+2 3bet',   key: 'vs_3bet_UTG+2',    type: 'vs-3bet', bucket: 'UTG RFI vs 3bet',    matchup: 'UTG vs UTG+2 3bet' },
+    { label: 'vs LJ 3bet',      key: 'vs_3bet_LJ',       type: 'vs-3bet', bucket: 'UTG RFI vs 3bet',    matchup: 'UTG vs LJ 3bet' },
+    { label: 'vs HJ 3bet',      key: 'vs_3bet_HJ',       type: 'vs-3bet', bucket: 'UTG RFI vs 3bet',    matchup: 'UTG vs HJ 3bet' },
+    { label: 'vs CO/BTN 3bet',  key: 'vs_3bet_CO_BTN',   type: 'vs-3bet', bucket: 'UTG RFI vs 3bet',    matchup: 'UTG vs CO/BTN 3bet' },
+    { label: 'vs SB/BB 3bet',   key: 'vs_3bet_SB_BB',    type: 'vs-3bet', bucket: 'UTG RFI vs 3bet',    matchup: 'UTG vs SB/BB 3bet' },
+  ],
+  'UTG+1': [
+    { label: 'RFI',             key: 'RFI',              type: 'rfi',     bucket: 'RFI',                heroDataLabel: 'UTG+1' },
+    { label: 'vs UTG',          key: 'vs_RFI_UTG',       type: 'vs-rfi',  bucket: 'Facing RFI: EP/MP',  matchup: 'UTG+1 vs UTG' },
+    { label: 'vs UTG+2 3bet',   key: 'vs_3bet_UTG+2',    type: 'vs-3bet', bucket: 'UTG+1 RFI vs 3bet',  matchup: 'UTG+1 vs UTG+2 3bet' },
+    { label: 'vs LJ 3bet',      key: 'vs_3bet_LJ',       type: 'vs-3bet', bucket: 'UTG+1 RFI vs 3bet',  matchup: 'UTG+1 vs LJ 3bet' },
+    { label: 'vs HJ/CO 3bet',   key: 'vs_3bet_HJ_CO',    type: 'vs-3bet', bucket: 'UTG+1 RFI vs 3bet',  matchup: 'UTG+1 vs HJ/CO 3bet' },
+    { label: 'vs BTN 3bet',     key: 'vs_3bet_BTN',      type: 'vs-3bet', bucket: 'UTG+1 RFI vs 3bet',  matchup: 'UTG+1 vs BTN 3bet' },
+    { label: 'vs SB/BB 3bet',   key: 'vs_3bet_SB_BB',    type: 'vs-3bet', bucket: 'UTG+1 RFI vs 3bet',  matchup: 'UTG+1 vs SB/BB 3bet' },
+  ],
+  'UTG+2': [
+    { label: 'RFI',             key: 'RFI',              type: 'rfi',     bucket: 'RFI',                heroDataLabel: 'UTG+2' },
+    { label: 'vs UTG/UTG+1',    key: 'vs_RFI_UTG_UTG+1', type: 'vs-rfi',  bucket: 'Facing RFI: EP/MP',  matchup: 'UTG+2 vs UTG/UTG+1' },
+    { label: 'vs LJ 3bet',      key: 'vs_3bet_LJ',       type: 'vs-3bet', bucket: 'UTG+2 RFI vs 3bet',  matchup: 'UTG+2 vs LJ 3bet' },
+    { label: 'vs HJ 3bet',      key: 'vs_3bet_HJ',       type: 'vs-3bet', bucket: 'UTG+2 RFI vs 3bet',  matchup: 'UTG+2 vs HJ 3bet' },
+    { label: 'vs CO/BTN 3bet',  key: 'vs_3bet_CO_BTN',   type: 'vs-3bet', bucket: 'UTG+2 RFI vs 3bet',  matchup: 'UTG+2 vs CO/BTN 3bet' },
+    { label: 'vs SB/BB 3bet',   key: 'vs_3bet_SB_BB',    type: 'vs-3bet', bucket: 'UTG+2 RFI vs 3bet',  matchup: 'UTG+2 vs SB/BB 3bet' },
+  ],
+  'LJ': [
+    { label: 'RFI',             key: 'RFI',              type: 'rfi',     bucket: 'RFI',                heroDataLabel: 'Lojack' },
+    { label: 'vs UTG/UTG+1',    key: 'vs_RFI_UTG_UTG+1', type: 'vs-rfi',  bucket: 'Facing RFI: EP/MP',  matchup: 'LJ vs UTG/UTG+1' },
+    { label: 'vs UTG+2',        key: 'vs_RFI_UTG+2',     type: 'vs-rfi',  bucket: 'Facing RFI: EP/MP',  matchup: 'LJ vs UTG+2' },
+    { label: 'vs HJ 3bet',      key: 'vs_3bet_HJ',       type: 'vs-3bet', bucket: 'LJ RFI vs 3bet',     matchup: 'LJ vs HJ 3bet' },
+    { label: 'vs CO 3bet',      key: 'vs_3bet_CO',       type: 'vs-3bet', bucket: 'LJ RFI vs 3bet',     matchup: 'LJ vs CO 3bet' },
+    { label: 'vs BTN 3bet',     key: 'vs_3bet_BTN',      type: 'vs-3bet', bucket: 'LJ RFI vs 3bet',     matchup: 'LJ vs BTN 3bet' },
+    { label: 'vs SB 3bet',      key: 'vs_3bet_SB',       type: 'vs-3bet', bucket: 'LJ RFI vs 3bet',     matchup: 'LJ vs SB 3bet' },
+    { label: 'vs BB 3bet',      key: 'vs_3bet_BB',       type: 'vs-3bet', bucket: 'LJ RFI vs 3bet',     matchup: 'LJ vs BB 3bet' },
+  ],
+  'HJ': [
+    { label: 'RFI',             key: 'RFI',              type: 'rfi',     bucket: 'RFI',                heroDataLabel: 'Hijack' },
+    { label: 'vs UTG',          key: 'vs_RFI_UTG',       type: 'vs-rfi',  bucket: 'Facing RFI: EP/MP',  matchup: 'HJ vs UTG' },
+    { label: 'vs UTG+1',        key: 'vs_RFI_UTG+1',     type: 'vs-rfi',  bucket: 'Facing RFI: EP/MP',  matchup: 'HJ vs UTG+1' },
+    { label: 'vs UTG+2',        key: 'vs_RFI_UTG+2',     type: 'vs-rfi',  bucket: 'Facing RFI: EP/MP',  matchup: 'HJ vs UTG+2' },
+    { label: 'vs LJ',           key: 'vs_RFI_LJ',        type: 'vs-rfi',  bucket: 'Facing RFI: EP/MP',  matchup: 'HJ vs LJ' },
+    { label: 'vs CO 3bet',      key: 'vs_3bet_CO',       type: 'vs-3bet', bucket: 'HJ/CO RFI vs 3bet',  matchup: 'HJ vs CO 3bet' },
+    { label: 'vs BTN 3bet',     key: 'vs_3bet_BTN',      type: 'vs-3bet', bucket: 'HJ/CO RFI vs 3bet',  matchup: 'HJ vs BTN 3bet' },
+    { label: 'vs SB 3bet',      key: 'vs_3bet_SB',       type: 'vs-3bet', bucket: 'HJ/CO RFI vs 3bet',  matchup: 'HJ vs SB 3bet' },
+    { label: 'vs BB 3bet',      key: 'vs_3bet_BB',       type: 'vs-3bet', bucket: 'HJ/CO RFI vs 3bet',  matchup: 'HJ vs BB 3bet' },
+  ],
+  'CO': [
+    { label: 'RFI',             key: 'RFI',              type: 'rfi',     bucket: 'RFI',                heroDataLabel: 'Cutoff' },
+    { label: 'vs UTG/UTG+1',    key: 'vs_RFI_UTG_UTG+1', type: 'vs-rfi',  bucket: 'Facing RFI: CO',     matchup: 'CO vs UTG/UTG+1' },
+    { label: 'vs UTG+2',        key: 'vs_RFI_UTG+2',     type: 'vs-rfi',  bucket: 'Facing RFI: CO',     matchup: 'CO vs UTG+2' },
+    { label: 'vs LJ',           key: 'vs_RFI_LJ',        type: 'vs-rfi',  bucket: 'Facing RFI: CO',     matchup: 'CO vs LJ' },
+    { label: 'vs HJ',           key: 'vs_RFI_HJ',        type: 'vs-rfi',  bucket: 'Facing RFI: CO',     matchup: 'CO vs HJ' },
+    { label: 'vs BTN/SB 3bet',  key: 'vs_3bet_BTN_SB',   type: 'vs-3bet', bucket: 'HJ/CO RFI vs 3bet',  matchup: 'CO vs BTN/SB 3bet' },
+    { label: 'vs BB 3bet',      key: 'vs_3bet_BB',       type: 'vs-3bet', bucket: 'HJ/CO RFI vs 3bet',  matchup: 'CO vs BB 3bet' },
+  ],
+  'BTN': [
+    { label: 'RFI',             key: 'RFI',              type: 'rfi',     bucket: 'RFI',                heroDataLabel: 'Button' },
+    { label: 'vs UTG',          key: 'vs_RFI_UTG',       type: 'vs-rfi',  bucket: 'Facing RFI: Button', matchup: 'BTN vs UTG' },
+    { label: 'vs UTG+1',        key: 'vs_RFI_UTG+1',     type: 'vs-rfi',  bucket: 'Facing RFI: Button', matchup: 'BTN vs UTG+1' },
+    { label: 'vs UTG+2',        key: 'vs_RFI_UTG+2',     type: 'vs-rfi',  bucket: 'Facing RFI: Button', matchup: 'BTN vs UTG+2' },
+    { label: 'vs LJ',           key: 'vs_RFI_LJ',        type: 'vs-rfi',  bucket: 'Facing RFI: Button', matchup: 'BTN vs LJ' },
+    { label: 'vs HJ',           key: 'vs_RFI_HJ',        type: 'vs-rfi',  bucket: 'Facing RFI: Button', matchup: 'BTN vs HJ' },
+    { label: 'vs CO',           key: 'vs_RFI_CO',        type: 'vs-rfi',  bucket: 'Facing RFI: Button', matchup: 'BTN vs CO' },
+    { label: 'vs SB/BB 3bet',   key: 'vs_3bet_SB_BB',    type: 'vs-3bet', bucket: 'BTN/SB RFI vs 3bet', matchup: 'BTN vs SB/BB 3bet' },
+  ],
+  'SB': [
+    { label: 'RFI',                key: 'RFI',              type: 'rfi',     bucket: 'RFI',                    heroDataLabel: 'Small Blind' },
+    { label: 'vs UTG/UTG+1',       key: 'vs_RFI_UTG_UTG+1', type: 'vs-rfi',  bucket: 'Facing RFI: Small Blind',matchup: 'SB vs UTG/UTG+1' },
+    { label: 'vs UTG+2',           key: 'vs_RFI_UTG+2',     type: 'vs-rfi',  bucket: 'Facing RFI: Small Blind',matchup: 'SB vs UTG+2' },
+    { label: 'vs LJ',              key: 'vs_RFI_LJ',        type: 'vs-rfi',  bucket: 'Facing RFI: Small Blind',matchup: 'SB vs LJ' },
+    { label: 'vs HJ',              key: 'vs_RFI_HJ',        type: 'vs-rfi',  bucket: 'Facing RFI: Small Blind',matchup: 'SB vs HJ' },
+    { label: 'vs CO',              key: 'vs_RFI_CO',        type: 'vs-rfi',  bucket: 'Facing RFI: Small Blind',matchup: 'SB vs CO' },
+    { label: 'vs BTN',             key: 'vs_RFI_BTN',       type: 'vs-rfi',  bucket: 'Facing RFI: Small Blind',matchup: 'SB vs BTN' },
+    { label: 'vs BB 3bet',         key: 'vs_3bet_BB',       type: 'vs-3bet', bucket: 'BTN/SB RFI vs 3bet',     matchup: 'SB RFI vs BB 3bet' },
+    { label: 'Limp vs BB Raise',   key: 'limp_vs_BB_raise', type: 'limp',    bucket: 'BTN/SB RFI vs 3bet',     matchup: 'SB Limp vs BB Raise' },
+  ],
+  'BB': [
+    { label: 'vs UTG/UTG+1',    key: 'vs_RFI_UTG_UTG+1', type: 'vs-rfi',  bucket: 'Facing RFI: Big Blind', matchup: 'BB vs UTG/UTG+1' },
+    { label: 'vs UTG+2',        key: 'vs_RFI_UTG+2',     type: 'vs-rfi',  bucket: 'Facing RFI: Big Blind', matchup: 'BB vs UTG+2' },
+    { label: 'vs LJ',           key: 'vs_RFI_LJ',        type: 'vs-rfi',  bucket: 'Facing RFI: Big Blind', matchup: 'BB vs LJ' },
+    { label: 'vs HJ',           key: 'vs_RFI_HJ',        type: 'vs-rfi',  bucket: 'Facing RFI: Big Blind', matchup: 'BB vs HJ' },
+    { label: 'vs CO',           key: 'vs_RFI_CO',        type: 'vs-rfi',  bucket: 'Facing RFI: Big Blind', matchup: 'BB vs CO' },
+    { label: 'vs BTN',          key: 'vs_RFI_BTN',       type: 'vs-rfi',  bucket: 'Facing RFI: Big Blind', matchup: 'BB vs BTN' },
+    { label: 'vs SB',           key: 'vs_RFI_SB',        type: 'vs-rfi',  bucket: 'Facing RFI: Big Blind', matchup: 'BB vs SB' },
+  ],
 };
 
-// Map a hero position (app value) to the vs-3bet opener bucket key.
-function vs3OpenerForPosition(pos) {
-  if (pos === 'UTG') return 'UTG';
-  if (pos === 'UTG+1') return 'UTG+1';
-  if (pos === 'MP' || pos === 'EP') return 'UTG+2';
-  if (pos === 'LJ') return 'LJ';
-  if (pos === 'HJ' || pos === 'CO') return 'HJ/CO';
-  if (pos === 'BTN' || pos === 'SB') return 'BTN/SB';
-  return null;
+var HERO_SEATS = Object.keys(HERO_CHARTS);
+
+// Look up an entry from HERO_CHARTS by (hero, key). Falls back to the first
+// entry for the hero when key is missing or stale.
+function findScenario(hero, key) {
+  var list = HERO_CHARTS[hero] || [];
+  for (var i = 0; i < list.length; i++) if (list[i].key === key) return list[i];
+  return list[0] || null;
+}
+
+// Map a hero-seat selector value (UTG, UTG+1, …, BB) to the app's hand-history
+// position string(s) so we can filter hero's played hands by seat.
+function heroSeatToAppPositions(hero) {
+  if (hero === 'UTG')   return ['UTG'];
+  if (hero === 'UTG+1') return ['UTG+1'];
+  if (hero === 'UTG+2') return ['MP', 'EP'];
+  if (hero === 'LJ')    return ['LJ'];
+  if (hero === 'HJ')    return ['HJ'];
+  if (hero === 'CO')    return ['CO'];
+  if (hero === 'BTN')   return ['BTN'];
+  if (hero === 'SB')    return ['SB'];
+  if (hero === 'BB')    return ['BB'];
+  return [];
 }
 
 // State key in localStorage.
@@ -100,63 +171,46 @@ function chartToColorMap(chart) {
   return map;
 }
 
-// Look up a chart for the active sub-tab + selectors. Returns the chart array
-// (an array of {hand, color}) or null when no reference exists for the spot.
-function lookupChart(data, subTab, selectors) {
+// Look up the chart array for a (hero, scenario-key) pair. Returns null when
+// the spot has no reference data.
+function lookupChartFor(data, hero, key) {
   if (!data) return null;
-  if (subTab === 'rfi') {
-    return (data.RFI && data.RFI[selectors.rfiPosition]) || null;
+  var entry = findScenario(hero, key);
+  if (!entry) return null;
+  if (entry.bucket === 'RFI') {
+    return (data.RFI && data.RFI[entry.heroDataLabel]) || null;
   }
-  if (subTab === 'facing-rfi') {
-    var bucket = data['Facing RFI: ' + selectors.facingHeroSeat];
-    if (!bucket) return null;
-    return bucket[selectors.facingMatchup] || null;
-  }
-  if (subTab === 'rfi-vs-3bet') {
-    var bucketName = VS3_OPENER_TO_BUCKET[selectors.vs3betOpener];
-    if (!bucketName) return null;
-    var bucket2 = data[bucketName];
-    if (!bucket2) return null;
-    return bucket2[selectors.vs3betMatchup] || null;
-  }
-  return null;
+  var bucket = data[entry.bucket];
+  if (!bucket) return null;
+  return bucket[entry.matchup] || null;
 }
 
-
-// Filter hands to those matching the active sub-tab semantics.
-function filterHandsForSubTab(hands, subTab, selectors) {
-  if (subTab === 'overall') return hands;
+// Filter hands matching (hero seat, scenario). Returns hands where hero was at
+// the chosen seat and whose preflop action fits the scenario type.
+function filterHandsForScenario(hands, hero, key) {
+  var entry = findScenario(hero, key);
+  if (!entry) return [];
+  var allowedSeats = heroSeatToAppPositions(hero);
+  if (!allowedSeats.length) return [];
   var out = [];
   for (var i = 0; i < hands.length; i++) {
     var h = hands[i];
+    if (allowedSeats.indexOf(h.position) === -1) continue;
     var act = classifyPreflopAction(h);
     if (!act) continue;
-    var pos = h.position || null;
-    if (subTab === 'rfi') {
-      // Include hands where hero was first-to-act at the chosen seat: opens
-      // (rfi), limps (limp-open), and folds with no prior raiser/limper.
+    if (entry.type === 'rfi') {
+      // First-to-act spot: opens, limps-open, or fold first-in.
       if (act !== 'rfi' && act !== 'limp-open' && act !== 'folded-pre') continue;
-      var rfiSeats = dataPosToAppPositions(selectors.rfiPosition);
-      if (rfiSeats.length && rfiSeats.indexOf(pos) === -1) continue;
       if (act === 'folded-pre' && heroHadPriorActionPre(h)) continue;
-      out.push(h);
-    } else if (subTab === 'facing-rfi') {
-      // All hands where hero faced an open from the selected seat. Includes
-      // hands hero folded (which look like leaks against the call-side chart).
+    } else if (entry.type === 'vs-rfi') {
       if (act !== 'vs-rfi-call' && act !== 'vs-rfi-3bet' && act !== 'folded-pre' && act !== 'squeeze') continue;
-      var allowedSeats = facingHeroToPositions(selectors.facingMatchup);
-      if (!allowedSeats.length || allowedSeats.indexOf(pos) === -1) continue;
-      // Verify the hand actually had a raise before hero acted; folded-pre may
-      // include hands hero folded with no raise (rare in BB scenarios but
-      // possible in others). Skip those.
       if (act === 'folded-pre' && !heroFacedRaisePre(h)) continue;
-      out.push(h);
-    } else if (subTab === 'rfi-vs-3bet') {
+    } else if (entry.type === 'vs-3bet') {
       if (act !== 'rfi-vs-3bet-fold' && act !== 'rfi-vs-3bet-call' && act !== 'rfi-vs-3bet-4bet') continue;
-      var heroBucket = vs3OpenerForPosition(pos);
-      if (heroBucket !== selectors.vs3betOpener) continue;
-      out.push(h);
+    } else if (entry.type === 'limp') {
+      if (act !== 'limp-open' && act !== 'vs-rfi-call' && act !== 'vs-rfi-3bet' && act !== 'folded-pre') continue;
     }
+    out.push(h);
   }
   return out;
 }
@@ -188,34 +242,18 @@ function heroFacedRaisePre(h) {
   return false;
 }
 
-// Per-combo tally for the filtered hand set. `subTab` shapes what "played"
-// means in this view:
-//   overall      - any voluntary action (called/bet/raised at any point)
-//   rfi          - hero opened (rfi) or limped-open
-//   facing-rfi   - hero called/3-bet/squeezed (did not fold to the open)
-//   rfi-vs-3bet  - hero called or 4-bet the 3-bet (did not fold to it)
-function tallyByCombo(filtered, subTab) {
+// Per-combo tally for the filtered hand set. `scenarioType` shapes what
+// "played" means: rfi → hero opened, vs-rfi → hero continued, vs-3bet → hero
+// continued vs the 3-bet, limp → hero limped. 'overall' is any voluntary action.
+function tallyByCombo(filtered, scenarioType) {
   var played = {}, folded = {}, dealt = {}, won = {}, pnl = {};
   for (var i = 0; i < filtered.length; i++) {
     var h = filtered[i];
     var k = parseHoleKey(h.hole);
     if (!k) continue;
     dealt[k] = (dealt[k] || 0) + 1;
-    var didPlay;
-    if (subTab === 'rfi') {
-      var actR = classifyPreflopAction(h);
-      didPlay = actR === 'rfi' || actR === 'limp-open';
-    } else if (subTab === 'facing-rfi') {
-      var actF = classifyPreflopAction(h);
-      didPlay = actF === 'vs-rfi-call' || actF === 'vs-rfi-3bet' || actF === 'squeeze';
-    } else if (subTab === 'rfi-vs-3bet') {
-      var act3 = classifyPreflopAction(h);
-      didPlay = act3 === 'rfi-vs-3bet-call' || act3 === 'rfi-vs-3bet-4bet';
-    } else {
-      var acts = parseActions(h.actions).filter(function(a) { return a.isMe; });
-      didPlay = acts.some(function(a) { return a.type === 'call' || a.type === 'raise' || a.type === 'bet'; });
-    }
-    if (didPlay) {
+    var bucket = heroActionBucket(h, scenarioType);
+    if (bucket === 'raise' || bucket === 'call') {
       played[k] = (played[k] || 0) + 1;
       if (h.outcome && h.outcome.result === 'won') won[k] = (won[k] || 0) + 1;
     } else {
@@ -283,18 +321,18 @@ function buildOverallGridHtml(tallies) {
   return html;
 }
 
-// "Your range" grid showing hero's actual choice on this sub-tab:
-//   red  = raised (open / 3-bet / 4-bet, depending on the sub-tab semantics)
+// "Your range" grid showing hero's actual choice for the active scenario:
+//   red   = raised (open / 3-bet / 4-bet, depending on scenario)
 //   green = called
-//   grey = folded after seeing the combo
-//   none = never dealt
-function buildHeroGridHtml(filtered, subTab) {
+//   white = folded after seeing the combo
+//   none  = never dealt
+function buildHeroGridHtml(filtered, scenarioType) {
   var byKey = {};
   for (var i = 0; i < filtered.length; i++) {
     var h = filtered[i];
     var k = parseHoleKey(h.hole);
     if (!k) continue;
-    var bucket = heroActionBucket(h, subTab);
+    var bucket = heroActionBucket(h, scenarioType);
     if (!byKey[k]) byKey[k] = { raise: 0, call: 0, fold: 0, dealt: 0 };
     byKey[k][bucket]++;
     byKey[k].dealt++;
@@ -324,34 +362,39 @@ function buildHeroGridHtml(filtered, subTab) {
   return html;
 }
 
-// Hero's single dominant action on a hand for the active sub-tab. Returns
+// Hero's single dominant action for a hand under the active scenario. Returns
 // 'raise', 'call', or 'fold'.
-function heroActionBucket(h, subTab) {
+function heroActionBucket(h, scenarioType) {
   var act = classifyPreflopAction(h);
-  if (subTab === 'rfi') {
+  if (scenarioType === 'rfi') {
     if (act === 'rfi') return 'raise';
     if (act === 'limp-open') return 'call';
     return 'fold';
   }
-  if (subTab === 'facing-rfi') {
+  if (scenarioType === 'vs-rfi') {
     if (act === 'vs-rfi-3bet' || act === 'squeeze') return 'raise';
     if (act === 'vs-rfi-call') return 'call';
     return 'fold';
   }
-  if (subTab === 'rfi-vs-3bet') {
+  if (scenarioType === 'vs-3bet') {
     if (act === 'rfi-vs-3bet-4bet') return 'raise';
     if (act === 'rfi-vs-3bet-call') return 'call';
     return 'fold';
   }
-  // overall (and any fallback): collapse to raise/call/fold based on hero's
-  // first voluntary action.
+  if (scenarioType === 'limp') {
+    if (act === 'vs-rfi-3bet') return 'raise';
+    if (act === 'limp-open' || act === 'vs-rfi-call') return 'call';
+    return 'fold';
+  }
+  // overall (fallback): collapse to raise/call/fold based on hero's first
+  // voluntary action.
   if (act === 'rfi' || act === 'vs-rfi-3bet' || act === 'squeeze' || act === 'rfi-vs-3bet-4bet') return 'raise';
   if (act === 'limp-open' || act === 'limp-behind' || act === 'vs-rfi-call' || act === 'rfi-vs-3bet-call') return 'call';
   return 'fold';
 }
 
 // Wrap two grids (GTO + your range) in a side-by-side layout with titles.
-function twoGridHtml(chart, filtered, subTab) {
+function twoGridHtml(chart, filtered, scenarioType) {
   return '<div class="range-compare">' +
     '<div class="range-compare-col">' +
       '<div class="sec-subtitle mt-0">GTO chart</div>' +
@@ -359,7 +402,7 @@ function twoGridHtml(chart, filtered, subTab) {
     '</div>' +
     '<div class="range-compare-col">' +
       '<div class="sec-subtitle mt-0">Your range</div>' +
-      buildHeroGridHtml(filtered, subTab) +
+      buildHeroGridHtml(filtered, scenarioType) +
     '</div>' +
   '</div>';
 }
@@ -395,15 +438,11 @@ function frequencyLegendHtml() {
 function renderRange(container, d, hands) {
   var stored = loadRangeState();
   var state = {
-    subTab:           stored.subTab           || 'overall',
-    rfiPosition:      stored.rfiPosition      || 'Button',
-    facingHeroSeat:   stored.facingHeroSeat   || 'Big Blind',
-    facingMatchup:    stored.facingMatchup    || 'BB vs BTN',
-    vs3betOpener:     stored.vs3betOpener     || 'BTN/SB',
-    vs3betMatchup:    stored.vs3betMatchup    || 'BTN vs SB/BB 3bet',
+    subTab:   stored.subTab   || 'overall',
+    hero:     HERO_SEATS.indexOf(stored.hero) !== -1 ? stored.hero : 'BTN',
+    scenario: stored.scenario || 'RFI',
   };
-  var validSubTabs = { overall: 1, rfi: 1, 'facing-rfi': 1, 'rfi-vs-3bet': 1 };
-  if (!validSubTabs[state.subTab]) state.subTab = 'overall';
+  if (state.subTab !== 'overall' && state.subTab !== 'spot') state.subTab = 'overall';
 
   function persist() { saveRangeState(state); }
 
@@ -412,9 +451,7 @@ function renderRange(container, d, hands) {
     '<div class="panel-desc">GTO chart on the left, what you actually did on the right.</div>' +
     '<div class="range-subtabs" id="range-subtabs">' +
       subTabBtn('overall', 'Overall', state) +
-      subTabBtn('rfi', 'RFI', state) +
-      subTabBtn('facing-rfi', 'Facing RFI', state) +
-      subTabBtn('rfi-vs-3bet', 'RFI vs 3bet', state) +
+      subTabBtn('spot', 'By Spot', state) +
     '</div>' +
     '<div id="range-subtab-body" class="p-row"></div>';
 
@@ -445,9 +482,7 @@ function renderRange(container, d, hands) {
     }
     body.innerHTML = '<div class="range-loading">Loading GTO chart …</div>';
     getRangeData().then(function(data) {
-      if (state.subTab === 'rfi') renderRfi(body, data);
-      else if (state.subTab === 'facing-rfi') renderFacingRfi(body, data);
-      else if (state.subTab === 'rfi-vs-3bet') renderVs3bet(body, data);
+      renderSpot(body, data);
     }).catch(function() {
       body.innerHTML = '<div class="range-error">Failed to load GTO chart data. Reload the page to try again.</div>';
     });
@@ -465,100 +500,54 @@ function renderRange(container, d, hands) {
     renderRangeStories();
   }
 
-  function renderRfi(body, data) {
-    if (RFI_POSITIONS.indexOf(state.rfiPosition) === -1) {
-      state.rfiPosition = 'Button';
+  function renderSpot(body, data) {
+    if (HERO_SEATS.indexOf(state.hero) === -1) state.hero = 'BTN';
+    var scenarios = HERO_CHARTS[state.hero] || [];
+    var keys = scenarios.map(function(s) { return s.key; });
+    if (keys.indexOf(state.scenario) === -1) {
+      state.scenario = keys[0] || '';
       persist();
     }
-    var selector = positionSelector('range-rfi-pos', RFI_POSITIONS, state.rfiPosition);
-    var chart = lookupChart(data, 'rfi', state);
-    var filtered = filterHandsForSubTab(hands, 'rfi', state);
-    var headerStats = renderHeaderStats(filtered, 'opens');
-    var note = chart ? '' : emptyChartNote(state.rfiPosition);
+    var entry = findScenario(state.hero, state.scenario);
+    var chart = lookupChartFor(data, state.hero, state.scenario);
+    var filtered = filterHandsForScenario(hands, state.hero, state.scenario);
+    var heroSelectorHtml = positionSelector('range-hero', HERO_SEATS, state.hero);
+    var scenarioOptions = scenarios.map(function(s) {
+      var sel = s.key === state.scenario ? ' selected' : '';
+      return '<option value="' + s.key + '"' + sel + '>' + s.label + '</option>';
+    }).join('');
+    var scenarioSelectorHtml = '<select id="range-scenario" class="table-filter">' + scenarioOptions + '</select>';
+    var label = entry ? entry.label : '';
+    var headerStats = renderHeaderStats(filtered, state.hero + ' · ' + label);
+    var note = chart ? '' : '<div class="range-empty">No GTO reference for ' + state.hero + ' ' + label + '.</div>';
     body.innerHTML =
       '<div class="range-controls">' +
-      '<label class="range-control-label">Position</label>' + selector +
+      '<label class="range-control-label">Position</label>' + heroSelectorHtml +
+      '<label class="range-control-label">Scenario</label>' + scenarioSelectorHtml +
       '</div>' +
       headerStats +
       note +
       '<div class="range-legends"><div class="range-legend-col">' + gtoLegendHtml() + '</div><div class="range-legend-col">' + heroLegendHtml() + '</div></div>' +
-      twoGridHtml(chart, filtered,'rfi');
-    bindSelector(body, 'range-rfi-pos', function(v) { state.rfiPosition = v; persist(); renderRfi(body, data); });
-    bindCellClicks(body, filtered);
-  }
-
-  function renderFacingRfi(body, data) {
-    if (FACING_HERO_BUCKETS.indexOf(state.facingHeroSeat) === -1) {
-      state.facingHeroSeat = 'Big Blind';
+      twoGridHtml(chart, filtered, entry ? entry.type : 'overall');
+    bindSelector(body, 'range-hero', function(v) {
+      state.hero = v;
+      state.scenario = (HERO_CHARTS[v] && HERO_CHARTS[v][0] && HERO_CHARTS[v][0].key) || '';
       persist();
-    }
-    var bucket = data['Facing RFI: ' + state.facingHeroSeat] || {};
-    var matchups = Object.keys(bucket);
-    if (matchups.indexOf(state.facingMatchup) === -1) {
-      state.facingMatchup = matchups[0] || '';
+      renderSpot(body, data);
+    });
+    bindSelector(body, 'range-scenario', function(v) {
+      state.scenario = v;
       persist();
-    }
-    var heroSelector = positionSelector('range-facing-hero', FACING_HERO_BUCKETS, state.facingHeroSeat);
-    var matchupSelector = positionSelector('range-facing-matchup', matchups, state.facingMatchup);
-    var chart = lookupChart(data, 'facing-rfi', state);
-    var filtered = filterHandsForSubTab(hands, 'facing-rfi', state);
-    var headerStats = renderHeaderStats(filtered, 'defending spots');
-    var note = chart
-      ? '<div class="meta-text mb-12">GTO target: ' + state.facingMatchup + '. Played data shows every hand you faced an open from ' + state.facingHeroSeat + ', not just from the selected opener.</div>'
-      : '<div class="range-empty">No GTO reference for ' + state.facingMatchup + '.</div>';
-    body.innerHTML =
-      '<div class="range-controls">' +
-      '<label class="range-control-label">Hero seat</label>' + heroSelector +
-      '<label class="range-control-label">Matchup</label>' + matchupSelector +
-      '</div>' +
-      headerStats +
-      note +
-      '<div class="range-legends"><div class="range-legend-col">' + gtoLegendHtml() + '</div><div class="range-legend-col">' + heroLegendHtml() + '</div></div>' +
-      twoGridHtml(chart, filtered,'facing-rfi');
-    bindSelector(body, 'range-facing-hero', function(v) { state.facingHeroSeat = v; state.facingMatchup = ''; persist(); renderFacingRfi(body, data); });
-    bindSelector(body, 'range-facing-matchup', function(v) { state.facingMatchup = v; persist(); renderFacingRfi(body, data); });
+      renderSpot(body, data);
+    });
     bindCellClicks(body, filtered);
-  }
-
-  function renderVs3bet(body, data) {
-    var openers = Object.keys(VS3_OPENER_TO_BUCKET);
-    if (openers.indexOf(state.vs3betOpener) === -1) state.vs3betOpener = openers[0];
-    var openerSelector = positionSelector('range-vs3-opener', openers, state.vs3betOpener);
-    var bucketName = VS3_OPENER_TO_BUCKET[state.vs3betOpener];
-    var bucket = data[bucketName] || {};
-    var matchups = Object.keys(bucket);
-    if (matchups.indexOf(state.vs3betMatchup) === -1) {
-      state.vs3betMatchup = matchups[0] || '';
-      persist();
-    }
-    var matchupSelector = positionSelector('range-vs3-matchup', matchups, state.vs3betMatchup);
-    var chart = lookupChart(data, 'rfi-vs-3bet', state);
-    var filtered = filterHandsForSubTab(hands, 'rfi-vs-3bet', state);
-    var headerStats = renderHeaderStats(filtered, 'hands where you opened and got 3-bet');
-    var note = chart ? '<div class="meta-text mb-12">GTO target: ' + state.vs3betMatchup + '. Played data shows every hand you opened from this seat range and faced a 3-bet, not just from the selected 3-bettor.</div>' : '<div class="range-empty">No GTO reference for ' + state.vs3betMatchup + '.</div>';
-    body.innerHTML =
-      '<div class="range-controls">' +
-      '<label class="range-control-label">Your opener seat</label>' + openerSelector +
-      '<label class="range-control-label">3-bettor</label>' + matchupSelector +
-      '</div>' +
-      headerStats +
-      note +
-      '<div class="range-legends"><div class="range-legend-col">' + gtoLegendHtml() + '</div><div class="range-legend-col">' + heroLegendHtml() + '</div></div>' +
-      twoGridHtml(chart, filtered,'rfi-vs-3bet');
-    bindSelector(body, 'range-vs3-opener', function(v) { state.vs3betOpener = v; state.vs3betMatchup = ''; persist(); renderVs3bet(body, data); });
-    bindSelector(body, 'range-vs3-matchup', function(v) { state.vs3betMatchup = v; persist(); renderVs3bet(body, data); });
-    bindCellClicks(body, filtered);
-  }
-
-  function emptyChartNote(label) {
-    return '<div class="range-empty">No GTO reference for ' + label + '.</div>';
   }
 
   function renderHeaderStats(filtered, label) {
     if (!filtered.length) {
-      return '<div class="range-stats range-stats-empty">No ' + label + ' in this dataset yet.</div>';
+      return '<div class="range-stats range-stats-empty">No ' + label + ' hands on record yet.</div>';
     }
-    return '<div class="range-stats">' + filtered.length + ' ' + label + ' on record.</div>';
+    return '<div class="range-stats">' + filtered.length + ' ' + label + ' hand' + (filtered.length === 1 ? '' : 's') + ' on record.</div>';
   }
 
   function renderRangeStories() {
@@ -585,7 +574,7 @@ function renderRange(container, d, hands) {
       // modal always reflects whichever sub-tab/selection the user is viewing.
       var active;
       if (state.subTab === 'overall') active = hands;
-      else active = filterHandsForSubTab(hands, state.subTab, state);
+      else active = filterHandsForScenario(hands, state.hero, state.scenario);
       var matched = active.filter(function(h) { return parseHoleKey(h.hole) === key; });
       if (!matched.length) return;
       openHandModal(key, matched);
