@@ -307,10 +307,10 @@ function gtoLegendHtml(includeBorder) {
       '<div class="leg"><div class="leg-sw leg-sw-folded"></div>You folded</div>'
     : '';
   return '<div class="range-legend">' +
-    '<div class="leg"><div class="leg-sw leg-sw-gto-red"></div>Always play</div>' +
-    '<div class="leg"><div class="leg-sw leg-sw-gto-green"></div>Standard</div>' +
-    '<div class="leg"><div class="leg-sw leg-sw-gto-blue"></div>Mixed call</div>' +
-    '<div class="leg"><div class="leg-sw leg-sw-gto-grey"></div>Mixed / rare</div>' +
+    '<div class="leg"><div class="leg-sw leg-sw-gto-red"></div>Raise for value</div>' +
+    '<div class="leg"><div class="leg-sw leg-sw-gto-blue"></div>Raise for bluff</div>' +
+    '<div class="leg"><div class="leg-sw leg-sw-gto-green"></div>Call</div>' +
+    '<div class="leg"><div class="leg-sw leg-sw-gto-grey"></div>Fold (you were in this hand)</div>' +
     '<div class="leg"><div class="leg-sw leg-sw-gto-white"></div>Fold</div>' +
     border +
     '</div>';
