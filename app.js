@@ -2,25 +2,75 @@
 
 // Tab navigation is handled by click listener in helpers.js
 
-// BB toggle handler
+// BB toggle handler - only changes display units, no recompute. Just re-render
+// the active tab so its labels flip.
 document.getElementById('bb-toggle').onclick = function () {
   _displayBB = !_displayBB;
   this.querySelectorAll('.bb-opt').forEach(function (o) {
     o.classList.toggle('active', _displayBB ? o.dataset.mode === 'bb' : o.dataset.mode === 'dollar');
   });
   if (State.allHands.length) {
-    renderAll();
+    invalidateRenderedPanels();
+    renderActivePanel();
   }
 };
 
-// Central re-render: filters hands by table filter + exclusions, then renders
-function renderAll() {
+// ── PER-TAB ANALYSIS CACHE ──────────────────────────────────────────────────
+// The shared analyse() result is computed lazily on first request for a given
+// filter, then reused by any panel that needs it until the filter changes.
+var _analysisCache = null;       // { key, fd, filtered }
+var _opponentCacheKey = null;    // tracks filter the opponent profiles were built for
+var _panelsRenderedFor = {};     // tabId -> filterKey (which panel has up-to-date content)
+
+function _filterKey() {
+  var tableFilter = document.getElementById('table-filter');
+  var playersFilter = document.getElementById('players-filter');
+  var excl = [];
+  State.excludedTables.forEach(function (v) { excl.push(v); });
+  excl.sort();
+  return State.sessionEpoch + '|' +
+    (tableFilter ? tableFilter.value : 'all') + '|' +
+    (playersFilter ? playersFilter.value : 'all') + '|' +
+    excl.join(',');
+}
+
+// Lazy-build the filter-scoped analysis. Called only by panels that need d.
+function getFilteredAnalysis() {
+  var key = _filterKey();
+  if (_analysisCache && _analysisCache.key === key) return _analysisCache;
   var filtered = State.getFilteredHands();
-  if (!filtered.length) return false;
   var fd = analyse(filtered);
   bucketizeAnalysis(fd, filtered);
+  _analysisCache = { key: key, fd: fd, filtered: filtered };
+  return _analysisCache;
+}
+
+// Build opponent profiles once per filter. Called only by panels that need it
+// (Players panel). Heavy: walks every opponent across every hand.
+function ensureOpponentProfiles(filtered) {
+  var key = _filterKey();
+  if (_opponentCacheKey === key) return;
   cacheOpponentProfiles(filtered);
-  render(fd, filtered, State.meta);
+  _opponentCacheKey = key;
+}
+
+function invalidateAnalysisCache() {
+  _analysisCache = null;
+  _opponentCacheKey = null;
+}
+
+function invalidateRenderedPanels() {
+  _panelsRenderedFor = {};
+}
+
+// Central re-render entry point: invalidates cached work and re-renders the
+// active tab only. Other tabs stay stale until the user clicks into them.
+function renderAll() {
+  if (!State.allHands.length) return false;
+  invalidateAnalysisCache();
+  invalidateRenderedPanels();
+  _renderHeaderControls();
+  renderActivePanel();
   return true;
 }
 
@@ -50,6 +100,9 @@ function checkSavedSession() {
           showImportLoader(hands.length, function () {
             var rd = analyse(hands);
             bucketizeAnalysis(rd, hands);
+            State.overallAnalysis = rd;
+            invalidateAnalysisCache();
+            invalidateRenderedPanels();
             render(rd, hands, meta);
           });
         });
@@ -113,74 +166,109 @@ function _maybeShowStyleWelcome(d, hands, meta) {
     renderStyleWelcome(welcomeHost, d, hands, meta, function(/* picked */) {
       welcomeHost.style.display = 'none';
       welcomeHost.innerHTML = '';
-      _renderDashboard(d, hands, meta);
+      _bootDashboard(meta);
+      renderActivePanel();
     });
   }
   return true;
 }
 
-// ── PANEL RENDER QUEUE ──────────────────────────────────────────────────────
-// _renderDashboard renders the active panel synchronously and pushes the rest
-// here. The queue drains one panel per idle callback so the dashboard is
-// interactive immediately. switchTab() force-drains a pending panel.
-var _pendingPanels = {};
-var _panelDrainScheduled = false;
+// ── PER-TAB RENDER DISPATCH ─────────────────────────────────────────────────
+// Only the active panel is rendered. Other panels stay stale (empty) until
+// the user clicks into them. switchTab calls renderActivePanel after the
+// visual switch.
 
-function _schedulePanelDrain() {
-  if (_panelDrainScheduled) return;
-  if (!Object.keys(_pendingPanels).length) return;
-  _panelDrainScheduled = true;
-  var schedule = window.requestIdleCallback || function (fn) { return setTimeout(fn, 0); };
-  schedule(function () {
-    _panelDrainScheduled = false;
-    var ids = Object.keys(_pendingPanels);
-    if (!ids.length) return;
-    _drainPanel(ids[0]);
-    _schedulePanelDrain();
-  });
+// Which panels need the filter-scoped d from analyse(). Everything else gets
+// rendered from raw hands (showdown/tables/allin run their own analyse on a
+// subset; trends does the same; custom has its own filtering layer).
+var _PANELS_NEED_D = { mygame:1, cards:1, position:1, street:1, actions:1, range:1, players:1 };
+
+// Which panels show the "Showing stats for X table" banner.
+var _PANELS_HAVE_BANNER = { welcome:1, mygame:1, cards:1, position:1, street:1, actions:1, range:1, trends:1, showdown:1, log:1, allin:1, players:1 };
+
+function _filterBannerHtml() {
+  var filterEl = document.getElementById('table-filter');
+  var pfEl = document.getElementById('players-filter');
+  var parts = [];
+  if (filterEl && filterEl.value && filterEl.value !== 'all') {
+    parts.push(filterEl.value === 'unknown' ? 'Unknown Table' : getTableLabel(Number(filterEl.value)));
+  }
+  if (pfEl && pfEl.value && pfEl.value !== 'all') {
+    parts.push(pfEl.value + '-player hands');
+  }
+  return parts.length ? '<div class="filter-banner">Showing stats for ' + parts.join(' · ') + '</div>' : '';
 }
 
-function _drainPanel(tabId) {
-  var fn = _pendingPanels[tabId];
-  if (!fn) return;
-  delete _pendingPanels[tabId];
-  try { fn(); } catch (e) { console.error('Deferred panel render failed:', tabId, e); }
+function _drawPanel(tabId, meta) {
+  var container = document.getElementById('p-' + tabId);
+  if (!container) return;
+
+  var d = null;
+  var filtered;
+  if (_PANELS_NEED_D[tabId]) {
+    var fa = getFilteredAnalysis();
+    d = fa.fd;
+    filtered = fa.filtered;
+  } else {
+    filtered = State.getFilteredHands();
+  }
+  State.modalHands = filtered;
+
+  switch (tabId) {
+    case 'welcome':  renderWelcome(container, { n: filtered.length }, filtered, meta); break;
+    case 'mygame':   renderMyGame(container, d, filtered); break;
+    case 'cards':    renderCards(container, d, filtered); break;
+    case 'position': renderPosition(container, d, filtered); break;
+    case 'street':   renderStreet(container, d, filtered); break;
+    case 'actions':  renderActions(container, d, filtered); break;
+    case 'range':    renderRange(container, d, filtered); break;
+    case 'players':
+      ensureOpponentProfiles(filtered);
+      renderPlayers(container, d, filtered);
+      break;
+    case 'tables':   renderTables(container, filtered, State.allHands, State.excludedTables, renderAll); break;
+    case 'trends':   renderTrends(container, filtered, meta, null); break;
+    case 'showdown': renderShowdown(container, filtered, meta); break;
+    case 'log':      renderLog(container, filtered); break;
+    case 'allin':    renderAllIn(container, filtered); break;
+    case 'custom':   renderCustomReport(container, State.allHands); break;
+  }
+
+  if (_PANELS_HAVE_BANNER[tabId]) {
+    var banner = _filterBannerHtml();
+    if (banner) container.insertAdjacentHTML('afterbegin', banner);
+  }
 }
 
-// Wrap switchTab so clicking a still-pending tab renders it on demand.
+function renderActivePanel(forceTabId) {
+  if (!State.allHands.length) return;
+  var tabId = forceTabId;
+  if (!tabId) {
+    var activeTab = document.querySelector('.tab-item.active');
+    tabId = activeTab ? activeTab.dataset.tab : 'welcome';
+  }
+  var filterKey = _filterKey();
+  if (_panelsRenderedFor[tabId] === filterKey) return;
+  _panelsRenderedFor[tabId] = filterKey;
+  _drawPanel(tabId, State.meta);
+}
+
+// Wrap switchTab so the new tab actually renders its content on first visit.
 (function () {
   if (typeof switchTab !== 'function') return;
   var _origSwitchTab = switchTab;
   window.switchTab = function (tabId) {
-    _drainPanel(tabId);
-    return _origSwitchTab.apply(this, arguments);
+    var result = _origSwitchTab.apply(this, arguments);
+    if (State.allHands.length) renderActivePanel(tabId);
+    return result;
   };
 })();
 
-// ── MAIN RENDER (orchestrator) ──────────────────────────────────────────────
-function render(d, hands, meta) {
-  // First-time users see the style welcome screen instead of the dashboard.
-  if (_maybeShowStyleWelcome(d, hands, meta)) return;
-  _renderDashboard(d, hands, meta);
-}
-
-function _renderDashboard(d, hands, meta) {
-  var activeTab = document.querySelector('.tab-item.active');
-  var activeTabId = activeTab ? activeTab.dataset.tab : null;
-
-  State.modalHands = hands;
-  document.getElementById('paste-wrap').classList.add('hidden');
-  document.getElementById('upload-wrap').classList.add('hidden');
-  document.getElementById('dash').classList.add('on');
-
+// ── HEADER STRIP (one-time at session load) ─────────────────────────────────
+function _renderHeaderStrip() {
+  var d = State.overallAnalysis;
+  if (!d || !d.core) return;
   var c = d.core;
-
-  // Header meta
-  document.getElementById('page-meta').textContent = meta.player + ' · ' + new Date(meta.exportedAt).toLocaleDateString('en-GB', {
-    day: 'numeric', month: 'short', year: 'numeric',
-  }) + (State.allHands.length && hands.length < State.allHands.length ? ' · Filtered: ' + hands.length + '/' + State.allHands.length + ' hands' : '');
-
-  // Hero strip
   var sampleNote = d.n < 50
     ? '<div class="sample-warning">⚠ Small sample: ' + d.n + ' hands. The more hands you play and track, the more accurate these stats become. Aim for 100+ hands for reliable patterns.</div>'
     : '';
@@ -194,6 +282,32 @@ function _renderDashboard(d, hands, meta) {
   ].map(function (h) { return '<div class="hs"><div class="hs-l dim-label">' + tipWrap(h.l) + '</div><div class="hs-v serif-value ' + h.c + '">' + h.v + '</div></div>'; }).join('');
   var noteEl = document.getElementById('sample-note');
   if (noteEl) noteEl.innerHTML = sampleNote;
+}
+
+function _renderHeaderControls() {
+  var meta = State.meta;
+  var filtered = State.getFilteredHands();
+  document.getElementById('page-meta').textContent = (meta && meta.player ? meta.player : '') + (meta && meta.exportedAt ? ' · ' + new Date(meta.exportedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '') + (State.allHands.length && filtered.length < State.allHands.length ? ' · Filtered: ' + filtered.length + '/' + State.allHands.length + ' hands' : '');
+}
+
+// ── MAIN RENDER (orchestrator) ──────────────────────────────────────────────
+function render(d, hands, meta) {
+  // First-time users see the style welcome screen instead of the dashboard.
+  if (_maybeShowStyleWelcome(d, hands, meta)) return;
+  _bootDashboard(meta);
+  renderActivePanel();
+}
+
+// One-time dashboard scaffolding: header strip from the overall analysis,
+// filter dropdowns, style picker, button handlers. Does NOT render any panel
+// content — that's renderActivePanel's job.
+function _bootDashboard(meta) {
+  document.getElementById('paste-wrap').classList.add('hidden');
+  document.getElementById('upload-wrap').classList.add('hidden');
+  document.getElementById('dash').classList.add('on');
+
+  _renderHeaderControls();
+  _renderHeaderStrip();
 
   // Populate players-filter dropdown
   var pfEl = document.getElementById('players-filter');
@@ -211,85 +325,29 @@ function _renderDashboard(d, hands, meta) {
   }
   pfEl.classList.toggle('hidden', sizeKeys.length <= 1);
 
-  // Compute the filter banner up front so each panel renderer can bake it in.
+  _renderStyleDisplay(State.overallAnalysis);
+
+  // Filter handlers - invalidate caches, re-render active tab only.
   var filterEl = document.getElementById('table-filter');
-  var filterVal = filterEl.value;
-  var pfFilterVal = pfEl.value;
-  var bannerParts = [];
-  if (filterVal && filterVal !== 'all') {
-    bannerParts.push(filterVal === 'unknown' ? 'Unknown Table' : getTableLabel(Number(filterVal)));
-  }
-  if (pfFilterVal && pfFilterVal !== 'all') {
-    bannerParts.push(pfFilterVal + '-player hands');
-  }
-  var bannerHtml = bannerParts.length
-    ? '<div class="filter-banner">Showing stats for ' + bannerParts.join(' · ') + '</div>'
-    : '';
-  var bannerPanels = { 'p-welcome':1, 'p-mygame':1, 'p-cards':1, 'p-position':1, 'p-street':1, 'p-actions':1, 'p-range':1, 'p-trends':1, 'p-showdown':1, 'p-log':1, 'p-allin':1, 'p-players':1 };
-  function _withBanner(panelId, fn) {
-    return function () {
-      fn();
-      if (bannerHtml && bannerPanels[panelId]) {
-        var el = document.getElementById(panelId);
-        if (el) el.insertAdjacentHTML('afterbegin', bannerHtml);
-      }
-    };
-  }
-
-  // Build one closure per panel. The active panel runs synchronously so the
-  // dashboard is interactive immediately; the rest queue for browser idle
-  // time. switchTab() force-drains a pending panel if the user clicks its
-  // tab before the queue gets there.
-  var panelRenderers = {
-    welcome:  _withBanner('p-welcome',  function () { renderWelcome(document.getElementById('p-welcome'), d, hands, meta); }),
-    cards:    _withBanner('p-cards',    function () { renderCards(document.getElementById('p-cards'), d, hands); }),
-    position: _withBanner('p-position', function () { renderPosition(document.getElementById('p-position'), d, hands); }),
-    street:   _withBanner('p-street',   function () { renderStreet(document.getElementById('p-street'), d, hands); }),
-    actions:  _withBanner('p-actions',  function () { renderActions(document.getElementById('p-actions'), d, hands); }),
-    range:    _withBanner('p-range',    function () { renderRange(document.getElementById('p-range'), d, hands); }),
-    tables:   _withBanner('p-tables',   function () { renderTables(document.getElementById('p-tables'), hands, State.allHands, State.excludedTables, renderAll); }),
-    trends:   _withBanner('p-trends',   function () { renderTrends(document.getElementById('p-trends'), hands, meta, d); }),
-    showdown: _withBanner('p-showdown', function () { renderShowdown(document.getElementById('p-showdown'), hands, meta); }),
-    log:      _withBanner('p-log',      function () { renderLog(document.getElementById('p-log'), hands); }),
-    allin:    _withBanner('p-allin',    function () { renderAllIn(document.getElementById('p-allin'), hands); }),
-    players:  _withBanner('p-players',  function () { renderPlayers(document.getElementById('p-players'), d, hands); }),
-    mygame:   _withBanner('p-mygame',   function () { renderMyGame(document.getElementById('p-mygame'), d, hands); }),
-    custom:                              function () { renderCustomReport(document.getElementById('p-custom'), State.allHands); },
-  };
-
-  var activeId = (activeTabId && panelRenderers[activeTabId]) ? activeTabId : 'welcome';
-  // Reset any leftover queue from a previous render and run the active panel now.
-  _pendingPanels = {};
-  panelRenderers[activeId]();
-  Object.keys(panelRenderers).forEach(function (id) {
-    if (id !== activeId) _pendingPanels[id] = panelRenderers[id];
-  });
-  _schedulePanelDrain();
-  _renderStyleDisplay(d);
-
-  // Table filter handler
   filterEl.onchange = function () {
-    var v = this.value;
+    var prev = this.value;
     if (!renderAll()) {
       alert('No hands for this filter.');
       this.value = 'all';
       return;
     }
-    document.getElementById('table-filter').value = v;
+    this.value = prev;
   };
 
-  // Players count filter handler
   pfEl.onchange = function () {
-    var v = this.value;
+    var prev = this.value;
     if (!renderAll()) {
       alert('No hands for this filter.');
       this.value = 'all';
       return;
     }
-    document.getElementById('players-filter').value = v;
+    this.value = prev;
   };
-
-  // Style-display in header is wired via _renderStyleDisplay() above.
 
   // Reset button
   document.getElementById('reset-btn').onclick = function () {
@@ -302,17 +360,15 @@ function _renderDashboard(d, hands, meta) {
     document.getElementById('players-filter').value = 'all';
     document.getElementById('players-filter').classList.add('hidden');
     State.clear();
+    invalidateAnalysisCache();
+    invalidateRenderedPanels();
     document.querySelectorAll('.tab').forEach(function (b, i) { b.classList.toggle('active', i === 0); });
     document.querySelectorAll('.panel').forEach(function (p, i) { p.classList.toggle('on', i === 0); });
+    document.querySelectorAll('.panel').forEach(function (p) { p.innerHTML = ''; });
     checkSavedSession();
   };
 
-  // Restore active tab across re-renders
-  if (activeTabId && activeTabId !== 'welcome') {
-    switchTab(activeTabId);
-  }
-
-  // Sync BB toggle
+  // Sync BB toggle visual
   var bbBtn = document.getElementById('bb-toggle');
   if (bbBtn) {
     bbBtn.querySelectorAll('.bb-opt').forEach(function (o) {
@@ -349,6 +405,9 @@ function process(raw) {
   try { fetch('https://script.google.com/macros/s/AKfycbyTtG1UMCpYXP15dgKQttFyG4Pe-BG8FoAftoW3oYtMBISS37Ws5lYhPPDJ0zl1GYxyQA/exec', { method: 'POST', body: JSON.stringify({ player: playerName, hands: hands.length }), mode: 'no-cors' }); } catch (_) { }
   var d = analyse(hands);
   bucketizeAnalysis(d, hands);
+  State.overallAnalysis = d;
+  invalidateAnalysisCache();
+  invalidateRenderedPanels();
   ensureChartJs(function () {
     showImportLoader(hands.length, function () { render(d, hands, meta); });
   });

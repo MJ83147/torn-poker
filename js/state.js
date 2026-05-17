@@ -132,6 +132,12 @@ var State = {
   // UI flags persisted within a session. Living on State (not window) so two
   // panels can read the same value without monkey-patching globals.
   savedExpanded: true,
+  // Bumped whenever allHands changes; the panel-cache and analysis-cache use
+  // this as part of their key so a new import invalidates everything.
+  sessionEpoch: 0,
+  // One-time analysis over allHands, computed at import/restore for the header
+  // strip. Never recomputed on filter changes or tab switches.
+  overallAnalysis: null,
 
   setSession: function(hands, meta) {
     backfillHandData(hands);
@@ -149,6 +155,8 @@ var State = {
     this.save({ hands: clean, player: meta.player, exportedAt: meta.exportedAt });
     this.allHands = clean.filter(function(h) { return inferTable(h) !== null; });
     this.meta = meta;
+    this.sessionEpoch++;
+    this.overallAnalysis = null;
   },
 
   getFilteredHands: function() {
@@ -256,5 +264,7 @@ var State = {
   clear: function() {
     this.allHands = [];
     this.meta = {};
+    this.sessionEpoch++;
+    this.overallAnalysis = null;
   }
 };
