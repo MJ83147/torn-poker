@@ -1451,8 +1451,45 @@ textarea#jin:focus {
   display: grid;
   grid-template-columns: repeat(13, 1fr);
   gap: var(--sp-1);
-  max-width: 720px;
+  max-width: 560px;
 }
+
+/* Side-by-side comparison: GTO chart vs your range */
+.range-compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-24);
+  align-items: start;
+}
+
+.range-compare-col {
+  min-width: 0;
+}
+
+.range-compare-col .range-grid-sm {
+  max-width: 100%;
+}
+
+.range-legends {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-24);
+  margin-bottom: var(--sp-12);
+}
+
+.range-legend-col {
+  min-width: 0;
+}
+
+/* "Your range" grid: same color palette as GTO but driven by hero's action */
+.rc[data-hero="red"]   { background: var(--gto-red); }
+.rc[data-hero="green"] { background: var(--gto-green); }
+.rc[data-hero="grey"]  { background: var(--gto-grey); }
+.rc[data-hero="none"]  {
+  background: #0e1310;
+  border: var(--sp-1) solid #1a2a1c;
+}
+.rc[data-hero="none"] span { color: #2a3e2c; }
 
 .range-grid-sm .rc span {
   font-size: var(--fs-11);

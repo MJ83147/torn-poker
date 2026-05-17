@@ -255,7 +255,7 @@ function tallyByCombo(filtered, subTab) {
   return { played: played, folded: folded, dealt: dealt, won: won, pnl: pnl };
 }
 
-// Build the grid HTML. Each cell:
+// GTO chart grid. Each cell:
 //   data-gto = chart color (red, green, blue, grey, white) or 'none'
 //   class rc-played | rc-folded | rc-undealt
 //   data-freq = freq overlay step (Overall sub-tab only)
@@ -301,18 +301,103 @@ function buildGridHtml(chart, tallies, opts) {
   return html;
 }
 
-function gtoLegendHtml(includeBorder) {
-  var border = includeBorder
-    ? '<div class="leg"><div class="leg-sw leg-sw-played"></div>You played</div>' +
-      '<div class="leg"><div class="leg-sw leg-sw-folded"></div>You folded</div>'
-    : '';
+// "Your range" grid showing hero's actual choice on this sub-tab:
+//   red  = raised (open / 3-bet / 4-bet, depending on the sub-tab semantics)
+//   green = called
+//   grey = folded after seeing the combo
+//   none = never dealt
+function buildHeroGridHtml(filtered, subTab) {
+  var byKey = {};
+  for (var i = 0; i < filtered.length; i++) {
+    var h = filtered[i];
+    var k = parseHoleKey(h.hole);
+    if (!k) continue;
+    var bucket = heroActionBucket(h, subTab);
+    if (!byKey[k]) byKey[k] = { raise: 0, call: 0, fold: 0, dealt: 0 };
+    byKey[k][bucket]++;
+    byKey[k].dealt++;
+  }
+  var html = '<div class="range-grid-sm">';
+  for (var r = 0; r < 13; r++) {
+    for (var c = 0; c < 13; c++) {
+      var key = rangeBuildKey(r, c);
+      var t = byKey[key];
+      var color = 'none', tip = key + ' | not dealt';
+      if (t && t.dealt > 0) {
+        // Dominant action wins the cell color.
+        var best = 'fold', bestN = t.fold;
+        if (t.raise > bestN) { best = 'raise'; bestN = t.raise; }
+        if (t.call > bestN) { best = 'call'; bestN = t.call; }
+        color = best === 'raise' ? 'red' : best === 'call' ? 'green' : 'grey';
+        var parts = [];
+        if (t.raise) parts.push(t.raise + ' raised');
+        if (t.call)  parts.push(t.call + ' called');
+        if (t.fold)  parts.push(t.fold + ' folded');
+        tip = key + ' | ' + parts.join(', ');
+      }
+      html += '<div class="rc rc-hero" data-hero="' + color + '" data-key="' + key + '" data-tip="' + tip + '"><span>' + key + '</span></div>';
+    }
+  }
+  html += '</div>';
+  return html;
+}
+
+// Hero's single dominant action on a hand for the active sub-tab. Returns
+// 'raise', 'call', or 'fold'.
+function heroActionBucket(h, subTab) {
+  var act = classifyPreflopAction(h);
+  if (subTab === 'rfi') {
+    if (act === 'rfi') return 'raise';
+    if (act === 'limp-open') return 'call';
+    return 'fold';
+  }
+  if (subTab === 'facing-rfi') {
+    if (act === 'vs-rfi-3bet' || act === 'squeeze') return 'raise';
+    if (act === 'vs-rfi-call') return 'call';
+    return 'fold';
+  }
+  if (subTab === 'rfi-vs-3bet') {
+    if (act === 'rfi-vs-3bet-4bet') return 'raise';
+    if (act === 'rfi-vs-3bet-call') return 'call';
+    return 'fold';
+  }
+  // overall (and any fallback): collapse to raise/call/fold based on hero's
+  // first voluntary action.
+  if (act === 'rfi' || act === 'vs-rfi-3bet' || act === 'squeeze' || act === 'rfi-vs-3bet-4bet') return 'raise';
+  if (act === 'limp-open' || act === 'limp-behind' || act === 'vs-rfi-call' || act === 'rfi-vs-3bet-call') return 'call';
+  return 'fold';
+}
+
+// Wrap two grids (GTO + your range) in a side-by-side layout with titles.
+function twoGridHtml(chart, tallies, filtered, subTab) {
+  return '<div class="range-compare">' +
+    '<div class="range-compare-col">' +
+      '<div class="sec-subtitle mt-0">GTO chart</div>' +
+      buildGridHtml(chart, tallies, {}) +
+    '</div>' +
+    '<div class="range-compare-col">' +
+      '<div class="sec-subtitle mt-0">Your range</div>' +
+      buildHeroGridHtml(filtered, subTab) +
+    '</div>' +
+  '</div>';
+}
+
+function gtoLegendHtml() {
   return '<div class="range-legend">' +
     '<div class="leg"><div class="leg-sw leg-sw-gto-red"></div>Raise for value</div>' +
     '<div class="leg"><div class="leg-sw leg-sw-gto-blue"></div>Raise for bluff</div>' +
     '<div class="leg"><div class="leg-sw leg-sw-gto-green"></div>Call</div>' +
-    '<div class="leg"><div class="leg-sw leg-sw-gto-grey"></div>Fold (you were in this hand)</div>' +
+    '<div class="leg"><div class="leg-sw leg-sw-gto-grey"></div>Mixed / occasional</div>' +
     '<div class="leg"><div class="leg-sw leg-sw-gto-white"></div>Fold</div>' +
-    border +
+    '</div>';
+}
+
+function heroLegendHtml() {
+  return '<div class="range-legend">' +
+    '<div class="leg"><div class="leg-sw leg-sw-gto-red"></div>You raised</div>' +
+    '<div class="leg"><div class="leg-sw leg-sw-gto-green"></div>You called</div>' +
+    '<div class="leg"><div class="leg-sw leg-sw-gto-grey"></div>You folded</div>' +
+    '<div class="leg"><div class="rc-unseen leg-sw"></div>Not dealt</div>' +
     '</div>';
 }
 
@@ -342,7 +427,7 @@ function renderRange(container, d, hands) {
 
   container.innerHTML =
     '<div class="panel-title">Range</div>' +
-    '<div class="panel-desc">Your range against the GTO chart for the spot. Cell color is GTO; border shows what you actually did.</div>' +
+    '<div class="panel-desc">GTO chart on the left, what you actually did on the right.</div>' +
     '<div class="range-subtabs" id="range-subtabs">' +
       subTabBtn('overall', 'Overall', state) +
       subTabBtn('rfi', 'RFI', state) +
@@ -412,8 +497,8 @@ function renderRange(container, d, hands) {
       '</div>' +
       headerStats +
       note +
-      gtoLegendHtml(true) +
-      buildGridHtml(chart, tallies, {});
+      '<div class="range-legends"><div class="range-legend-col">' + gtoLegendHtml() + '</div><div class="range-legend-col">' + heroLegendHtml() + '</div></div>' +
+      twoGridHtml(chart, tallies, filtered, 'rfi');
     bindSelector(body, 'range-rfi-pos', function(v) { state.rfiPosition = v; persist(); renderRfi(body, data); });
     bindCellClicks(body, filtered);
   }
@@ -440,8 +525,8 @@ function renderRange(container, d, hands) {
       '</div>' +
       headerStats +
       note +
-      gtoLegendHtml(true) +
-      buildGridHtml(chart, tallies, {});
+      '<div class="range-legends"><div class="range-legend-col">' + gtoLegendHtml() + '</div><div class="range-legend-col">' + heroLegendHtml() + '</div></div>' +
+      twoGridHtml(chart, tallies, filtered, 'facing-rfi');
     bindSelector(body, 'range-facing-hero', function(v) { state.facingHeroSeat = v; persist(); renderFacingRfi(body, data); });
     bindSelector(body, 'range-facing-opener', function(v) { state.facingOpener = v; persist(); renderFacingRfi(body, data); });
     bindCellClicks(body, filtered);
@@ -471,8 +556,8 @@ function renderRange(container, d, hands) {
       '</div>' +
       headerStats +
       note +
-      gtoLegendHtml(true) +
-      buildGridHtml(chart, tallies, {});
+      '<div class="range-legends"><div class="range-legend-col">' + gtoLegendHtml() + '</div><div class="range-legend-col">' + heroLegendHtml() + '</div></div>' +
+      twoGridHtml(chart, tallies, filtered, 'rfi-vs-3bet');
     bindSelector(body, 'range-vs3-opener', function(v) { state.vs3betOpener = v; state.vs3betMatchup = ''; persist(); renderVs3bet(body, data); });
     bindSelector(body, 'range-vs3-matchup', function(v) { state.vs3betMatchup = v; persist(); renderVs3bet(body, data); });
     bindCellClicks(body, filtered);
