@@ -92,6 +92,7 @@ function renderWelcome(container, d, hands, meta) {
         '</div>';
     }).join('') +
     '</div>' +
+    '<div class="welcome-right">' +
     '<div class="welcome-tips">' +
     '<div class="dim-label mb-12">Tips</div>' +
     '<div class="tips-carousel">' +
@@ -109,7 +110,6 @@ function renderWelcome(container, d, hands, meta) {
     }).join('') +
     '</div>' +
     '</div>' +
-    '</div>' +
     '<div class="welcome-whatsnew">' +
       '<div class="welcome-whatsnew-label">What\'s new</div>' +
       '<button type="button" class="whatsnew-card whatsnew-card-hero" data-goto="custom">' +
@@ -123,6 +123,8 @@ function renderWelcome(container, d, hands, meta) {
         '<div class="whatsnew-card-name">Detailed insights</div>' +
         '<div class="whatsnew-card-desc">Every analysis tab now ships story cards that flag strengths, leaks and patterns in your data, each with a real example hand from your session.</div>' +
       '</div>' +
+    '</div>' +
+    '</div>' +
     '</div>' +
     '</div>';
 

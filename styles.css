@@ -3034,11 +3034,16 @@ tr.hrow:hover .hrow-star {
   margin-bottom: var(--sp-28);
 }
 
+.welcome-right {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-32);
+}
+
 .welcome-whatsnew {
   display: flex;
   flex-direction: column;
   gap: var(--sp-12);
-  margin-top: var(--sp-32);
 }
 
 .welcome-whatsnew-label {
