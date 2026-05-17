@@ -74,7 +74,6 @@ function detectAllInCandidates(hands) {
           if (b.street !== a.street) break;
           if (b.type === 'call' || b.type === 'raise') {
             allInCalled = true;
-            if (b.isMe) heroInAllIn = true;
             break;
           }
         }
@@ -83,6 +82,7 @@ function detectAllInCandidates(hands) {
     }
 
     if (!allInFound || !allInCalled || !heroInAllIn) continue;
+    if (allInStreet === 'River') continue;
 
     var reveals = parseReveals(h.actions);
     if (!reveals.length) continue;
@@ -195,7 +195,7 @@ function renderAllIn(container, hands) {
       '<td>' + (ti + 1) + '</td>' +
       '<td class="allin-cards">' + displayCards(ah.heroHole) + '</td>' +
       '<td class="allin-cards">' + ah.opponents.map(function (opp) { return displayCards(opp); }).join('<br>') + '</td>' +
-      '<td class="allin-cards">' + (ah.boardAtAllIn.length ? displayCards(ah.boardAtAllIn) : '\u2014') + '</td>' +
+      '<td class="allin-cards">' + (ah.fullBoard.length ? displayCards(ah.fullBoard) : '\u2014') + '</td>' +
       '<td>' + ah.street + '</td>' +
       '<td>' + fmt(ah.potAtAllIn) + '</td>' +
       '<td class="' + actCls + '">' + fmtPnl(Math.round(ah.actualResult)) + '</td>' +
@@ -317,7 +317,7 @@ function showAllInResults(container) {
       '<td>' + (ti + 1) + '</td>' +
       '<td class="allin-cards">' + displayCards(ah.heroHole) + '</td>' +
       '<td class="allin-cards">' + ah.opponents.map(function (opp) { return displayCards(opp); }).join('<br>') + '</td>' +
-      '<td class="allin-cards">' + (ah.boardAtAllIn.length ? displayCards(ah.boardAtAllIn) : '\u2014') + '</td>' +
+      '<td class="allin-cards">' + (ah.fullBoard.length ? displayCards(ah.fullBoard) : '\u2014') + '</td>' +
       '<td>' + ah.street + '</td>' +
       '<td>' + (ah.equity * 100).toFixed(1) + '%</td>' +
       '<td>' + fmt(Math.round(ah.fairShare)) + '</td>' +
