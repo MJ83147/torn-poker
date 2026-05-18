@@ -1325,12 +1325,20 @@ function _crRenderCharts(resultA, resultB) {
 }
 
 // ── 8. PUBLIC ENTRY ──────────────────────────────────────────────────────────
+// Both _crBuildClauseDefs and _crComputeBaseline walk every hand and the latter
+// calls analyse() — together they cost ~half a second at 20k+ hands. They only
+// depend on the all-hands list, so cache by State.sessionEpoch and reuse across
+// every render of this panel until a fresh import or reset bumps the epoch.
+var _crCachedEpoch = null;
 function renderCustomReport(container, hands) {
   if (!container) return;
   _crHands = hands || [];
-  // Rebuild defs against current hand list - table/opponent options depend on it.
-  _crClauseDefs = _crBuildClauseDefs(_crHands);
-  _crBaseline = _crComputeBaseline(_crHands);
+  var epoch = (typeof State !== 'undefined') ? State.sessionEpoch : null;
+  if (_crCachedEpoch !== epoch || !_crClauseDefs || !_crBaseline) {
+    _crClauseDefs = _crBuildClauseDefs(_crHands);
+    _crBaseline = _crComputeBaseline(_crHands);
+    _crCachedEpoch = epoch;
+  }
   if (!_crState) _crState = _crLoadState();
   // Drop any saved clauses that no longer exist (defensive against schema changes
   // or hand-list shrinkage that wipes an opponent / table option).

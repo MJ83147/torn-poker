@@ -37,11 +37,23 @@ function _filterKey() {
 // Lazy-build the filter-scoped analysis. Called only by panels that need d.
 function getFilteredAnalysis() {
   var key = _filterKey();
-  if (_analysisCache && _analysisCache.key === key) return _analysisCache;
+  if (_analysisCache && _analysisCache.key === key) {
+    if (window.Perf && Perf.isOn()) Perf.log('getFilteredAnalysis (cache hit)', 0);
+    return _analysisCache;
+  }
+  var t0 = performance.now();
   var filtered = State.getFilteredHands();
+  var tFilt = performance.now();
   var fd = analyse(filtered);
+  var tAnalyse = performance.now();
   bucketizeAnalysis(fd, filtered);
+  var tBucket = performance.now();
   _analysisCache = { key: key, fd: fd, filtered: filtered };
+  if (window.Perf && Perf.isOn()) {
+    Perf.log('getFilteredHands', tFilt - t0, '(' + filtered.length + ' hands)');
+    Perf.log('analyse', tAnalyse - tFilt);
+    Perf.log('bucketizeAnalysis', tBucket - tAnalyse);
+  }
   return _analysisCache;
 }
 
@@ -70,7 +82,7 @@ function renderAll() {
   invalidateAnalysisCache();
   invalidateRenderedPanels();
   _renderHeaderControls();
-  renderActivePanel();
+  renderActivePanelDeferred();
   return true;
 }
 
@@ -178,10 +190,10 @@ function _maybeShowStyleWelcome(d, hands, meta) {
 // the user clicks into them. switchTab calls renderActivePanel after the
 // visual switch.
 
-// Which panels need the filter-scoped d from analyse(). Everything else gets
-// rendered from raw hands (showdown/tables/allin run their own analyse on a
-// subset; trends does the same; custom has its own filtering layer).
-var _PANELS_NEED_D = { mygame:1, cards:1, position:1, street:1, actions:1, range:1, players:1 };
+// Which panels need the filter-scoped d from analyse(). Trends and showdown
+// both consume it for section findings; without it they call analyse(hands)
+// themselves, costing a full extra pass over the dataset per visit.
+var _PANELS_NEED_D = { mygame:1, cards:1, position:1, street:1, actions:1, range:1, players:1, trends:1, showdown:1 };
 
 // Which panels show the "Showing stats for X table" banner.
 var _PANELS_HAVE_BANNER = { welcome:1, mygame:1, cards:1, position:1, street:1, actions:1, range:1, trends:1, showdown:1, log:1, allin:1, players:1 };
@@ -202,6 +214,8 @@ function _filterBannerHtml() {
 function _drawPanel(tabId, meta) {
   var container = document.getElementById('p-' + tabId);
   if (!container) return;
+  var _perfDrawT0 = (window.Perf && Perf.isOn()) ? performance.now() : 0;
+  if (window.Perf && Perf.isOn()) Perf.note('▶ draw panel: ' + tabId);
 
   var d = null;
   var filtered;
@@ -212,6 +226,7 @@ function _drawPanel(tabId, meta) {
   } else {
     filtered = State.getFilteredHands();
   }
+  var _perfRenderT0 = (window.Perf && Perf.isOn()) ? performance.now() : 0;
   State.modalHands = filtered;
 
   switch (tabId) {
@@ -227,8 +242,8 @@ function _drawPanel(tabId, meta) {
       renderPlayers(container, d, filtered);
       break;
     case 'tables':   renderTables(container, filtered, State.allHands, State.excludedTables, renderAll); break;
-    case 'trends':   renderTrends(container, filtered, meta, null); break;
-    case 'showdown': renderShowdown(container, filtered, meta); break;
+    case 'trends':   renderTrends(container, filtered, meta, d); break;
+    case 'showdown': renderShowdown(container, filtered, meta, d); break;
     case 'log':      renderLog(container, filtered); break;
     case 'allin':    renderAllIn(container, filtered); break;
     case 'custom':   renderCustomReport(container, State.allHands); break;
@@ -238,26 +253,55 @@ function _drawPanel(tabId, meta) {
     var banner = _filterBannerHtml();
     if (banner) container.insertAdjacentHTML('afterbegin', banner);
   }
+  if (window.Perf && Perf.isOn()) {
+    Perf.log('render(' + tabId + ')', performance.now() - _perfRenderT0);
+    Perf.log('◀ total draw(' + tabId + ')', performance.now() - _perfDrawT0);
+  }
+}
+
+function _resolveActiveTabId(forceTabId) {
+  if (forceTabId) return forceTabId;
+  var activeItem = document.querySelector('.tab-item.active');
+  if (activeItem) return activeItem.dataset.tab;
+  // Direct-link tabs (e.g. Custom Report) live on .tab-menu-btn[data-tab]
+  // with no .tab-item underneath them.
+  var activeBtn = document.querySelector('.tab-menu-btn[data-tab].active');
+  return activeBtn ? activeBtn.dataset.tab : 'welcome';
 }
 
 function renderActivePanel(forceTabId) {
   if (!State.allHands.length) return;
-  var tabId = forceTabId;
-  if (!tabId) {
-    var activeItem = document.querySelector('.tab-item.active');
-    if (activeItem) {
-      tabId = activeItem.dataset.tab;
-    } else {
-      // Direct-link tabs (e.g. Custom Report) live on .tab-menu-btn[data-tab]
-      // with no .tab-item underneath them.
-      var activeBtn = document.querySelector('.tab-menu-btn[data-tab].active');
-      tabId = activeBtn ? activeBtn.dataset.tab : 'welcome';
-    }
-  }
+  var tabId = _resolveActiveTabId(forceTabId);
   var filterKey = _filterKey();
   if (_panelsRenderedFor[tabId] === filterKey) return;
   _panelsRenderedFor[tabId] = filterKey;
   _drawPanel(tabId, State.meta);
+}
+
+// Yield to the browser before doing the heavy first-visit render. Without this,
+// click → repaint → analyse → repaint runs in one tick, so the new tab looks
+// frozen even though the data is on its way. Showing a loading spinner first
+// gives the user immediate feedback that the click landed.
+// setTimeout(0) instead of rAF because rAF is throttled when the tab is
+// backgrounded — leaving the user staring at a spinner that never resolves.
+function renderActivePanelDeferred(forceTabId) {
+  if (!State.allHands.length) return;
+  var tabId = _resolveActiveTabId(forceTabId);
+  var filterKey = _filterKey();
+  if (_panelsRenderedFor[tabId] === filterKey) {
+    if (window.Perf && Perf.isOn()) Perf.note('cache hit: ' + tabId);
+    return;
+  }
+  var container = document.getElementById('p-' + tabId);
+  if (container) {
+    container.innerHTML = '<div class="panel-loading"><div class="eq-spinner-ring"></div><div class="eq-spinner-text">Crunching numbers…</div></div>';
+  }
+  var _perfQueued = (window.Perf && Perf.isOn()) ? performance.now() : 0;
+  if (window.Perf && Perf.isOn()) Perf.note('spinner shown: ' + tabId);
+  setTimeout(function () {
+    if (window.Perf && Perf.isOn()) Perf.log('setTimeout delay', performance.now() - _perfQueued);
+    renderActivePanel(tabId);
+  }, 0);
 }
 
 // Wrap switchTab so the new tab actually renders its content on first visit.
@@ -265,8 +309,11 @@ function renderActivePanel(forceTabId) {
   if (typeof switchTab !== 'function') return;
   var _origSwitchTab = switchTab;
   window.switchTab = function (tabId) {
+    if (window.Perf && Perf.isOn()) Perf.note('▶ switchTab(' + tabId + ')');
+    var t0 = (window.Perf && Perf.isOn()) ? performance.now() : 0;
     var result = _origSwitchTab.apply(this, arguments);
-    if (State.allHands.length) renderActivePanel(tabId);
+    if (window.Perf && Perf.isOn()) Perf.log('switchTab DOM swap', performance.now() - t0);
+    if (State.allHands.length) renderActivePanelDeferred(tabId);
     return result;
   };
 })();

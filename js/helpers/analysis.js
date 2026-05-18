@@ -153,6 +153,14 @@ function getPositionCategory(position) {
 //   'walked'             - BB folded around to (hero made no voluntary action)
 function classifyPreflopAction(h) {
   if (!h || !h.actions) return null;
+  if (h._preActionDone) return h._preAction;
+  var result = _classifyPreflopActionUncached(h);
+  h._preAction = result;
+  h._preActionDone = true;
+  return result;
+}
+
+function _classifyPreflopActionUncached(h) {
   var acts = parseActions(h.actions).filter(function(a) { return a.street === 'Preflop'; });
   if (!acts.length) return null;
   var heroAuthor = null;

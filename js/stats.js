@@ -469,8 +469,16 @@ function bucketizeAnalysis(topD, hands) {
   function mapGroups(groups, gateMin) {
     var out = {};
     for (var k in groups) {
-      var gd = analyse(groups[k]);
-      gd.gated = gateMin != null && gd.n < gateMin;
+      var g = groups[k];
+      // Every consumer of a gated cell only looks at .n and .gated and skips,
+      // so we can avoid the full analyse() for slices that are gated anyway.
+      // Big win when byPosSeat produces 45 cells and most fall below MIN_CELL.
+      if (gateMin != null && g.length < gateMin) {
+        out[k] = { n: g.length, hands: g, gated: true };
+        continue;
+      }
+      var gd = analyse(g);
+      gd.gated = false;
       out[k] = gd;
     }
     return out;

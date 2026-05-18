@@ -9,6 +9,37 @@ function destroyTrendsCharts() {
   _trendsCharts = [];
 }
 
+// Single-pass aggregation of the per-hand fields Trends needs. Walks each hand
+// once instead of calling analyse() per day-group (which was N * full-analyse
+// and caused multi-second freezes for 20k+ hand datasets).
+function _trendsAccumulate(stats, h) {
+  stats.n++;
+  if (h.outcome) {
+    stats.handsWithOutcome++;
+    if (h.outcome.result === 'won') stats.handsWon++;
+  }
+  var cash = isCashHand(h);
+  if (cash && h.outcome) {
+    if (h.outcome.result === 'won') stats.totalWonAmount += h.outcome.amount || 0;
+    stats.totalInvested += getInvested(h);
+  }
+  var acts = parseActions(h.actions);
+  var heroPlayed = false;
+  for (var i = 0; i < acts.length; i++) {
+    var a = acts[i];
+    if (!a.isMe) continue;
+    if (a.type === 'fold') { /* no-op for counters below */ }
+    else if (a.type === 'check') stats.checks++;
+    else if (a.type === 'call') { stats.calls++; if (!heroPlayed) heroPlayed = true; }
+    else if (a.type === 'raise' || a.type === 'bet') { stats.raises++; if (!heroPlayed) heroPlayed = true; }
+  }
+  if (heroPlayed) stats.vpip++;
+}
+
+function _newTrendsAccum() {
+  return { n: 0, handsWon: 0, handsWithOutcome: 0, vpip: 0, raises: 0, calls: 0, checks: 0, totalWonAmount: 0, totalInvested: 0 };
+}
+
 function renderTrends(container, hands, meta, overallData) {
   destroyTrendsCharts();
 
@@ -21,9 +52,18 @@ function renderTrends(container, hands, meta, overallData) {
   }
   var sessions = [];
   var dayMap = {};
+  // Group by a cheap integer day-bucket first, then format the label once per
+  // distinct day. With 20k hands across 60 days, this cuts toLocaleDateString
+  // calls from 20k (~1.7s) to ~60 (negligible).
+  var labelByBucket = {};
   for (var i = 0; i < sorted.length; i++) {
     var ts = sorted[i].timestamp || 0;
-    var day = new Date(ts).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+    var bucket = Math.floor(ts / 86400000);
+    var day = labelByBucket[bucket];
+    if (!day) {
+      day = new Date(ts).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+      labelByBucket[bucket] = day;
+    }
     if (!dayMap[day]) { dayMap[day] = []; sessions.push(day); }
     dayMap[day].push(sorted[i]);
   }
@@ -31,7 +71,8 @@ function renderTrends(container, hands, meta, overallData) {
   var cumWon = 0, cumOutcome = 0, cumVpip = 0, cumN = 0, cumRaise = 0, cumCalls = 0, cumChecks = 0, cumCashWon = 0, cumCashInvested = 0;
   for (var si = 0; si < sessions.length; si++) {
     var dayHands = dayMap[sessions[si]];
-    var dStats = analyse(dayHands);
+    var dStats = _newTrendsAccum();
+    for (var dhi = 0; dhi < dayHands.length; dhi++) _trendsAccumulate(dStats, dayHands[dhi]);
     cumWon += dStats.handsWon;
     cumOutcome += dStats.handsWithOutcome;
     cumVpip += dStats.vpip;
@@ -72,7 +113,10 @@ function renderTrends(container, hands, meta, overallData) {
   // Verdict + section stories (Direction of Travel, Session Swings).
   var trendsFindings = [];
   if (typeof Sections !== 'undefined' && typeof Sections.evaluateSections === 'function') {
-    trendsFindings = Sections.findingsForPanel(Sections.evaluateSections(overallData || analyse(hands), {}, hands), 'Tables and Trends');
+    // overallData is the filter-scoped analyse() result; it's cached upstream so
+    // reusing it avoids a second full-pass analyse on every Trends visit.
+    var sectionD = overallData || (typeof State !== 'undefined' && State.overallAnalysis) || analyse(hands);
+    trendsFindings = Sections.findingsForPanel(Sections.evaluateSections(sectionD, {}, hands), 'Tables and Trends');
     tHtml += Sections.renderVerdict(trendsFindings, 'Direction of travel is steady across sessions.');
     if (trendsFindings.length) tHtml += '<div class="p-row">' + Sections.renderFindings(trendsFindings) + '</div>';
   }

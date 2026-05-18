@@ -154,6 +154,9 @@ var State = {
     }
     this.save({ hands: clean, player: meta.player, exportedAt: meta.exportedAt });
     this.allHands = clean.filter(function(h) { return inferTable(h) !== null; });
+    // Warm per-hand caches once so the first analyse()/tab render doesn't
+    // pay the full parse cost across all hands on the click thread.
+    preparseHands(this.allHands);
     this.meta = meta;
     this.sessionEpoch++;
     this.overallAnalysis = null;

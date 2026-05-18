@@ -61,6 +61,7 @@ function isAllInAction(acts, idx) {
 // Turn a hole card array into a condensed key like "AKs" or "TT"
 function parseHoleKey(hole) {
   if (!hole || hole.length < 2) return null;
+  if (hole._keyCached) return hole._key;
   var r1 = hole[0].slice(0, -1);
   var r2 = hole[1].slice(0, -1);
   if (r1 === '10') r1 = 'T';
@@ -69,11 +70,15 @@ function parseHoleKey(hole) {
   const s2 = hole[1].slice(-1);
   const v1 = RANKS.indexOf(r1);
   const v2 = RANKS.indexOf(r2);
-  if (v1 < 0 || v2 < 0) return null;
+  if (v1 < 0 || v2 < 0) { hole._key = null; hole._keyCached = true; return null; }
   const hi = Math.max(v1, v2);
   const lo = Math.min(v1, v2);
-  if (hi === lo) return RANKS[hi] + RANKS[hi];
-  return RANKS[hi] + RANKS[lo] + (s1 === s2 ? 's' : 'o');
+  var key = hi === lo
+    ? RANKS[hi] + RANKS[hi]
+    : RANKS[hi] + RANKS[lo] + (s1 === s2 ? 's' : 'o');
+  hole._key = key;
+  hole._keyCached = true;
+  return key;
 }
 
 // Classify a hole key into a high-level hand type bucket
@@ -246,14 +251,19 @@ function calcInvestmentFromActions(actions) {
 // Determine if a hand went to showdown
 function isShowdown(hand) {
   if (!hand.outcome) return false;
+  if (hand._showdownDone) return hand._showdown;
+  var result = false;
   // Lost = stayed in and lost at showdown
-  if (hand.outcome.result === 'lost') return true;
-  // Won with reveals = showdown win
-  if (hand.outcome.result === 'won') {
+  if (hand.outcome.result === 'lost') {
+    result = true;
+  } else if (hand.outcome.result === 'won') {
+    // Won with reveals = showdown win
     var actions = hand.actions || [];
     for (var i = 0; i < actions.length; i++) {
-      if (actions[i].indexOf(' reveals ') !== -1) return true;
+      if (actions[i].indexOf(' reveals ') !== -1) { result = true; break; }
     }
   }
-  return false;
+  hand._showdown = result;
+  hand._showdownDone = true;
+  return result;
 }

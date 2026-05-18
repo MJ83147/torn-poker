@@ -3,7 +3,7 @@
 var _showdownChart = null;
 var _potSizeChart = null;
 
-function renderShowdown(container, hands, meta) {
+function renderShowdown(container, hands, meta, overallData) {
   // Destroy previous chart instance to prevent canvas reuse errors
   if (_showdownChart) { _showdownChart.destroy(); _showdownChart = null; }
   if (_potSizeChart) { _potSizeChart.destroy(); _potSizeChart = null; }
@@ -23,10 +23,14 @@ function renderShowdown(container, hands, meta) {
     return;
   }
 
-  // Build per-hand P&L split by showdown / non-showdown
+  // Build per-hand P&L split by showdown / non-showdown. Push one chart point
+  // every Nth hand instead of every hand — Chart.js bogs down past ~1000 points
+  // and a 20k-point line is visually indistinguishable from a 500-point one.
   var cumSd = 0, cumNsd = 0;
   var sdWon = 0, sdTotal = 0, nsdWon = 0, nsdTotal = 0;
   var dataSd = [], dataNsd = [], dataTotal = [], labels = [];
+  var CHART_TARGET_POINTS = 500;
+  var stride = Math.max(1, Math.floor(cash.length / CHART_TARGET_POINTS));
 
   // Pot size tracking per category
   var potSdWin = [], potSdLoss = [], potNsdWin = [], potNsdLoss = [];
@@ -50,10 +54,12 @@ function renderShowdown(container, hands, meta) {
       else { potNsdLoss.push(pot); }
     }
 
-    labels.push(i + 1);
-    dataSd.push(cumSd);
-    dataNsd.push(cumNsd);
-    dataTotal.push(cumSd + cumNsd);
+    if (i === cash.length - 1 || i % stride === 0) {
+      labels.push(i + 1);
+      dataSd.push(cumSd);
+      dataNsd.push(cumNsd);
+      dataTotal.push(cumSd + cumNsd);
+    }
   }
 
   // Pot size averages
@@ -122,8 +128,10 @@ function renderShowdown(container, hands, meta) {
   // Verdict + section stories render above the per-line breakdown and charts.
   // The Showdown section needs a `d` object; compute it locally.
   if (typeof Sections !== 'undefined' && typeof Sections.evaluateSections === 'function' && typeof analyse === 'function') {
-    var d = analyse(hands);
-    if (typeof bucketizeAnalysis === 'function') bucketizeAnalysis(d, hands);
+    // Prefer the filter-scoped d from the upstream cache. Falling back to a
+    // local analyse() here would cost a full extra pass over the dataset.
+    var d = overallData || analyse(hands);
+    if (!overallData && typeof bucketizeAnalysis === 'function') bucketizeAnalysis(d, hands);
     var sdFindings = Sections.findingsForPanel(Sections.evaluateSections(d, {}, hands), 'Showdown');
     html += Sections.renderVerdict(sdFindings, 'Showdown picture still building.');
     if (sdFindings.length) html += '<div class="p-row">' + Sections.renderFindings(sdFindings) + '</div>';

@@ -22,6 +22,7 @@ function listJs(dir) {
 // target-bands.js (which wrap matrixTarget) so those can reference them.
 var helperOrder = [
   'js/helpers/css-classes.js',
+  'js/helpers/perf.js',
   'js/helpers/cards.js',
   'js/helpers/tables.js',
   'js/helpers/format.js',

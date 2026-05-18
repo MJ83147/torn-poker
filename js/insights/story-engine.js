@@ -34,7 +34,17 @@
     SECTIONS.push(spec);
   }
 
+  // Findings are a pure function of `d` (and the `hands` that produced it).
+  // Every panel that runs section logic ends up calling this with the same
+  // cached `d` object identity until the filter changes, so memoising on
+  // `d` is safe and turns the 12+ per-tab calls into one shared computation.
+  // WeakMap auto-evicts when the old `d` is garbage-collected.
+  var _findingsByD = (typeof WeakMap !== 'undefined') ? new WeakMap() : null;
+
   function evaluateSections(d, extras, hands) {
+    if (_findingsByD && d && typeof d === 'object' && _findingsByD.has(d)) {
+      return _findingsByD.get(d);
+    }
     var findings = [];
     extras = extras || {};
     for (var i = 0; i < SECTIONS.length; i++) {
@@ -52,6 +62,7 @@
       }
     }
     findings.sort(function(a, b) { return (b.score || 0) - (a.score || 0); });
+    if (_findingsByD && d && typeof d === 'object') _findingsByD.set(d, findings);
     return findings;
   }
 

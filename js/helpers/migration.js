@@ -127,6 +127,21 @@ function backfillHandData(hands) {
   }
 }
 
+// One explicit pass over every hand to warm the per-hand caches that lots of
+// helpers lazily fill. Without this, the first analyse() call pays the parse
+// cost for all hands at once on the main thread (~500ms for 20k hands). Running
+// it as a discrete step keeps the heavy work attributable and lets callers
+// chunk it behind a spinner if needed.
+function preparseHands(hands) {
+  for (var i = 0; i < hands.length; i++) {
+    var h = hands[i];
+    if (h && h.actions) parseActions(h.actions);
+    if (h && h.hole) parseHoleKey(h.hole);
+    if (h) classifyPreflopAction(h);
+    if (h) isShowdown(h);
+  }
+}
+
 // Attach seats / active-per-street / effStackBB + bucket tags to a hand.
 // Idempotent - safe to call multiple times. Call sites: backfillHandData (on
 // import) and analyse() (safety net for hands loaded from storage).
