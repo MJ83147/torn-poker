@@ -528,10 +528,9 @@ function runCustomReport(hands, segment, clauseDefs) {
   var d = filtered.length ? analyse(filtered) : null;
 
   // Per-position bb/100.
-  var posOrder = ['UTG', 'UTG+1', 'MP', 'HJ', 'CO', 'BTN', 'SB', 'BB'];
   var byPosition = {};
-  for (var pi = 0; pi < posOrder.length; pi++) {
-    var p = posOrder[pi];
+  for (var pi = 0; pi < POSITION_ORDER.length; pi++) {
+    var p = POSITION_ORDER[pi];
     var posHands = filtered.filter(function(h) { return h.position === p && isCashHand(h); });
     if (!posHands.length) continue;
     var pBB = 0, pCount = 0;
@@ -1222,8 +1221,7 @@ function _crRenderCharts(resultA, resultB) {
   // Position bars.
   var posCanvas = document.getElementById('cr-position');
   if (posCanvas) {
-    var posOrder = ['UTG', 'UTG+1', 'MP', 'HJ', 'CO', 'BTN', 'SB', 'BB'];
-    var active = posOrder.filter(function(p) { return dataA.byPosition[p] && dataA.byPosition[p].bb100 != null; });
+    var active = POSITION_ORDER.filter(function(p) { return dataA.byPosition[p] && dataA.byPosition[p].bb100 != null; });
     if (active.length >= 2) {
       var posVals = active.map(function(p) { return dataA.byPosition[p].bb100; });
       var posDatasets = [{

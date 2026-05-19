@@ -21,20 +21,10 @@
 (function() {
   var SHOWDOWN_BAND = { tight: 24, loose: 30 };    // WTSD target.
   var WSD_BAND = { tight: 50, loose: 60 };          // Won-at-showdown target.
-  var POSITIONS_BY_PRIORITY = ['UTG', 'UTG+1', 'MP', 'LJ', 'HJ', 'CO', 'BTN', 'SB', 'BB'];
   var MIN_AGG = (typeof MIN_AGGREGATE === 'number') ? MIN_AGGREGATE : 30;
   var MIN_AX = (typeof MIN_AXIS === 'number') ? MIN_AXIS : 20;
 
   // ── SHARED HELPERS ────────────────────────────────────────────────────────
-
-  function pickHands(hands, predicate, cap) {
-    var out = [];
-    if (!hands) return out;
-    for (var i = hands.length - 1; i >= 0 && out.length < cap; i--) {
-      if (predicate(hands[i])) out.push(hands[i]);
-    }
-    return out;
-  }
 
   // Join a list of strings as "A", "A and B", or "A, B, and C".
   function joinList(items) {
@@ -46,11 +36,13 @@
 
   // True if the hand is a showdown event (uses global helper).
   function handIsShowdown(h) {
-    return (typeof isShowdown === 'function') ? !!isShowdown(h) : false;
+    return !!isShowdown(h);
   }
 
-  // True if hero won the hand outright.
-  function heroWon(h) {
+  // True if hero won the pot. Different from the global heroWon (which
+  // requires net P&L > 0). For showdown stories we want "did hero scoop the
+  // pot" since by showdown all chips are already committed.
+  function wonShowdown(h) {
     return h && h.outcome && h.outcome.result === 'won';
   }
 
@@ -68,7 +60,7 @@
 
     // Net P&L on showdowns and non-showdowns, used in the opening and impact.
     var sdPnl = 0, sdCount = 0, nsdPnl = 0, nsdCount = 0;
-    if (hands && typeof getHandPnlValue === 'function') {
+    if (hands) {
       for (var i = 0; i < hands.length; i++) {
         var h = hands[i];
         if (!h || !h.outcome) continue;
@@ -95,8 +87,8 @@
     // Pillar 2: per-position WTSD. Flag positions notably above/below the band.
     var posReads = [];
     if (d.byPosition) {
-      for (var pi = 0; pi < POSITIONS_BY_PRIORITY.length; pi++) {
-        var p = POSITIONS_BY_PRIORITY[pi];
+      for (var pi = 0; pi < POSITION_ORDER.length; pi++) {
+        var p = POSITION_ORDER[pi];
         var pd = d.byPosition[p];
         if (!pd || pd.gated || !pd.sawFlop || pd.sawFlop < 10) continue;
         var pv = (pd.wentToShowdown / pd.sawFlop) * 100;
@@ -214,15 +206,15 @@
       if (!h || !h.outcome) continue;
       if (!handIsShowdown(h)) continue;
       sdCount++;
-      var won = heroWon(h);
+      var won = wonShowdown(h);
       if (won) sdWon++;
-      sdPnl += (typeof getHandPnlValue === 'function') ? getHandPnlValue(h) : 0;
+      sdPnl += getHandPnlValue(h);
       var pos = h.position || null;
       if (pos) {
         if (!perPos[pos]) perPos[pos] = { sd: 0, won: 0, pnl: 0 };
         perPos[pos].sd++;
         if (won) perPos[pos].won++;
-        perPos[pos].pnl += (typeof getHandPnlValue === 'function') ? getHandPnlValue(h) : 0;
+        perPos[pos].pnl += getHandPnlValue(h);
       }
     }
 
@@ -285,7 +277,7 @@
     // Examples: showdowns lost (the actionable group for WSD work).
     var examples = [];
     var sdLost = pickHands(hands, function(h) {
-      return handIsShowdown(h) && !heroWon(h);
+      return handIsShowdown(h) && !wonShowdown(h);
     }, 15);
     if (sdLost.length) {
       examples.push({
@@ -329,7 +321,7 @@
     for (var i = 0; i < hands.length; i++) {
       var h = hands[i];
       if (!h || !h.outcome) continue;
-      var pnl = (typeof getHandPnlValue === 'function') ? getHandPnlValue(h) : 0;
+      var pnl = getHandPnlValue(h);
       if (handIsShowdown(h)) { sdPnl += pnl; sdCount++; }
       else { nsdPnl += pnl; nsdCount++; }
     }
@@ -381,7 +373,7 @@
     var examples = [];
     if (sdNeg) {
       var sdLosses = pickHands(hands, function(h) {
-        return handIsShowdown(h) && !heroWon(h);
+        return handIsShowdown(h) && !wonShowdown(h);
       }, 12);
       if (sdLosses.length) {
         examples.push({

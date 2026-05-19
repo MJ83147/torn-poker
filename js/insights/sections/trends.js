@@ -27,15 +27,6 @@
 
   // ── SHARED ────────────────────────────────────────────────────────────────
 
-  function pickHands(hands, predicate, cap) {
-    var out = [];
-    if (!hands) return out;
-    for (var i = hands.length - 1; i >= 0 && out.length < cap; i--) {
-      if (predicate(hands[i])) out.push(hands[i]);
-    }
-    return out;
-  }
-
   function safe(num) {
     return (num == null || !isFinite(num)) ? null : num;
   }
@@ -265,7 +256,7 @@
         var h = sHands[i];
         if (typeof isCashHand === 'function' && !isCashHand(h)) continue;
         cashHands++;
-        if (typeof getHandPnlValue === 'function') totalPnl += getHandPnlValue(h);
+        totalPnl += getHandPnlValue(h);
         if (h.outcome && h.outcome.result === 'won') wonCash++;
       }
       return {
@@ -384,7 +375,7 @@
             // Hands from losing sessions where hero played the pot.
             var lostPlayed = pickHands(losingHands, function(h) {
               if (!h || !h.actions) return false;
-              var acts = (typeof parseActions === 'function') ? parseActions(h.actions) : [];
+              var acts = parseActions(h.actions);
               for (var ai = 0; ai < acts.length; ai++) {
                 var a = acts[ai];
                 if (!a.isMe) continue;

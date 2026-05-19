@@ -69,10 +69,8 @@ function renderMyGame(container, d, hands) {
   if (!smallSample) {
 
     // ── Helper: early/late position VPIP ──
-    var earlyPos = ['UTG', 'UTG+1', 'MP'];
-    var latePos = ['CO', 'BTN'];
-    var earlyGroup = calcPositionGroupVpip(d.posMap, earlyPos);
-    var lateGroup = calcPositionGroupVpip(d.posMap, latePos);
+    var earlyGroup = calcPositionGroupVpip(d.posMap, EARLY_POSITIONS);
+    var lateGroup = calcPositionGroupVpip(d.posMap, LATE_POSITIONS);
     var epVpip = earlyGroup.vpip, earlyHands = earlyGroup.hands;
     var lpVpip = lateGroup.vpip, lateHands = lateGroup.hands;
 

@@ -16,7 +16,6 @@
 // Range still fires without it.
 
 (function() {
-  var POSITIONS_BY_PRIORITY = ['UTG', 'UTG+1', 'MP', 'LJ', 'HJ', 'CO', 'BTN', 'SB', 'BB'];
   var MIN_HAND = 10; // floor for any per-cell or per-combo reading
 
   // ── SHARED ────────────────────────────────────────────────────────────────
@@ -40,61 +39,12 @@
     return rows;
   }
 
-  // True if hero called or bet or raised at any point in the hand.
-  function heroPlayed(h) {
-    if (!h || !h.actions) return false;
-    var acts = (typeof parseActions === 'function') ? parseActions(h.actions) : [];
-    for (var i = 0; i < acts.length; i++) {
-      var a = acts[i];
-      if (!a.isMe) continue;
-      if (a.type === 'call' || a.type === 'bet' || a.type === 'raise') return true;
-    }
-    return false;
-  }
-
-  // True if hero's first preflop action was fold.
-  function heroFoldedPreflop(h) {
-    if (!h || !h.actions) return false;
-    var acts = (typeof parseActions === 'function') ? parseActions(h.actions) : [];
-    for (var i = 0; i < acts.length; i++) {
-      var a = acts[i];
-      if (!a.isMe || a.street !== 'Preflop') continue;
-      if (a.type === 'sb' || a.type === 'bb') continue;
-      return a.type === 'fold';
-    }
-    return false;
-  }
-
-  // Build a capped example-hand pool with most-recent first.
-  function pickHands(hands, predicate, cap) {
-    var out = [];
-    if (!hands) return out;
-    for (var i = hands.length - 1; i >= 0 && out.length < cap; i--) {
-      var h = hands[i];
-      if (predicate(h)) out.push(h);
-    }
-    return out;
-  }
-
-  function heroLost(h) {
-    if (!h || !h.outcome) return false;
-    if (h.outcome.result === 'won') return false;
-    var inv = (typeof getInvested === 'function') ? getInvested(h) : 0;
-    return inv > 0;
-  }
-
-  function heroWon(h) {
-    if (!h || !h.outcome || h.outcome.result !== 'won') return false;
-    var inv = (typeof getInvested === 'function') ? getInvested(h) : 0;
-    return (h.outcome.amount || 0) - inv > 0;
-  }
-
   // ── STORY 1: WIDTH OF RANGE ───────────────────────────────────────────────
 
   function buildWidthOfRange(d, extras, hands) {
     if (!d || !d.n || d.n < (typeof MIN_AGGREGATE === 'number' ? MIN_AGGREGATE : 30)) return null;
 
-    var seats = (typeof dominantSeats === 'function') ? dominantSeats(d) : null;
+    var seats = dominantSeats(d);
     var dominantPos = (typeof dominantPosition === 'function') ? dominantPosition(d) : null;
     var aggregateVpip = d.core ? d.core.vpipPct : vpipOf(d);
     if (aggregateVpip == null) return null;
@@ -142,8 +92,8 @@
     var posSeatsLabel = seats ? seats + '-handed' : null;
     if (typeof TargetBands !== 'undefined') {
       var posReads = [];
-      for (var pi = 0; pi < POSITIONS_BY_PRIORITY.length; pi++) {
-        var p = POSITIONS_BY_PRIORITY[pi];
+      for (var pi = 0; pi < POSITION_ORDER.length; pi++) {
+        var p = POSITION_ORDER[pi];
         var pd = null;
         var cellSeats = seats;
         if (seats && d.byPosSeat) {
@@ -154,7 +104,7 @@
         if (!pd && d.byPosition && d.byPosition[p] && !d.byPosition[p].gated) {
           pd = d.byPosition[p];
           // Without a known seat count, use the dominant overall.
-          if (!cellSeats && typeof dominantSeats === 'function') cellSeats = dominantSeats(d);
+          if (!cellSeats) cellSeats = dominantSeats(d);
         }
         if (!pd) continue;
         var pv = vpipOf(pd);
@@ -312,7 +262,7 @@
     if (!d || !d.rangeMap) return null;
     if (!d.n || d.n < (typeof MIN_AGGREGATE === 'number' ? MIN_AGGREGATE : 30)) return null;
 
-    var seats = (typeof dominantSeats === 'function') ? dominantSeats(d) : null;
+    var seats = dominantSeats(d);
     var dominantPos = (typeof dominantPosition === 'function') ? dominantPosition(d) : null;
     var recommended = (seats && dominantPos && typeof TargetBands !== 'undefined')
       ? TargetBands.recommendedHandsFor(dominantPos, seats)

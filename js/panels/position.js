@@ -5,8 +5,7 @@ var _positionChart = null;
 function renderPosition(container, d, hands) {
   if (_positionChart) { _positionChart.destroy(); _positionChart = null; }
 
-  var posOrder = ['UTG', 'UTG+1', 'MP', 'HJ', 'CO', 'BTN', 'SB', 'BB'];
-  var activePosOrder = posOrder.filter(function(p) { return d.posMap[p] && d.posMap[p].hands > 0; });
+  var activePosOrder = POSITION_ORDER.filter(function(p) { return d.posMap[p] && d.posMap[p].hands > 0; });
 
   var ctx = getGameContext(d);
 

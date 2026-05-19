@@ -81,8 +81,7 @@
 
   // The dominant seat bucket integer (e.g. 6 for a 6-max player), or null.
   function dominantSeatsCount(d) {
-    if (typeof dominantSeats === 'function') return dominantSeats(d);
-    return null;
+    return dominantSeats(d);
   }
 
   // Format a band as "X to Y%". Accepts {tight, loose} or {floor, ceiling}.

@@ -59,7 +59,7 @@
     // First pass: discover opponent names and which hand indices they appear in.
     var nameToHandIdx = {};
     for (var i = 0; i < hands.length; i++) {
-      var acts = (typeof parseActions === 'function') ? parseActions(hands[i].actions) : [];
+      var acts = parseActions(hands[i].actions);
       var seen = {};
       for (var j = 0; j < acts.length; j++) {
         var a = acts[j];
@@ -76,9 +76,7 @@
       if (!idxs || !idxs.length) continue;
 
       // Tendency stats via the shared helper.
-      var stats = (typeof computeOpponentStats === 'function')
-        ? computeOpponentStats(hands, name)
-        : null;
+      var stats = computeOpponentStats(hands, name);
       if (!stats) continue;
 
       var vpip = (typeof pct === 'function') ? pct(stats.vpipHands, stats.hands) : null;
@@ -98,7 +96,7 @@
         if (h.outcome.result === 'won') heroWon++;
         else if (h.outcome.result === 'folded') heroFolded++;
         else heroLost++;
-        if (typeof getHandPnlValue === 'function') heroPnl += getHandPnlValue(h);
+        heroPnl += getHandPnlValue(h);
       }
 
       profiles.push({
@@ -150,7 +148,7 @@
 
   // True if hero reached a showdown in this hand. Mirrors helper in showdown.js.
   function heroSawShowdown(h) {
-    return (typeof isShowdown === 'function') ? !!isShowdown(h) : false;
+    return !!isShowdown(h);
   }
 
   // ── PLAYSTYLE STORIES ──────────────────────────────────────────────────────
@@ -395,7 +393,7 @@
     for (var x = 0; x < topIdxs.length; x++) {
       var h = hands[topIdxs[x]];
       if (!h || !h.outcome) continue;
-      var pnl = (typeof getHandPnlValue === 'function') ? getHandPnlValue(h) : 0;
+      var pnl = getHandPnlValue(h);
       if (heroSawShowdown(h)) {
         topShowdown++;
         topShowdownPnl += pnl;

@@ -30,20 +30,10 @@
 //                          and hand-strength splits.
 
 (function() {
-  var STREETS = ['Preflop', 'Flop', 'Turn', 'River'];
   var MIN_AGG = (typeof MIN_AGGREGATE === 'number') ? MIN_AGGREGATE : 30;
   var MIN_CELL_LOCAL = (typeof MIN_CELL === 'number') ? MIN_CELL : 10;
 
   // ── HELPERS ────────────────────────────────────────────────────────────────
-
-  function pickHands(hands, predicate, cap) {
-    var out = [];
-    if (!hands) return out;
-    for (var i = hands.length - 1; i >= 0 && out.length < cap; i--) {
-      if (predicate(hands[i])) out.push(hands[i]);
-    }
-    return out;
-  }
 
   function mean(arr) {
     if (!arr || !arr.length) return 0;
@@ -78,7 +68,7 @@
   function walkHandForSizing(h) {
     var out = { heroBets: [], facedBets: [] };
     if (!h || !h.actions) return out;
-    var acts = (typeof parseActions === 'function') ? parseActions(h.actions) : [];
+    var acts = parseActions(h.actions);
     if (!acts.length) return out;
 
     var pot = 0;

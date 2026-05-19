@@ -23,36 +23,22 @@
 
   // ── HELPERS ────────────────────────────────────────────────────────────────
 
-  function pickHands(hands, predicate, cap) {
-    var out = [];
-    if (!hands) return out;
-    for (var i = hands.length - 1; i >= 0 && out.length < cap; i--) {
-      if (predicate(hands[i])) out.push(hands[i]);
-    }
-    return out;
-  }
-
-  function heroWon(h) {
+  // "Won the pot" (matches showdown.js wonShowdown). Different from the
+  // global heroWon, which requires net P&L > 0. Used when we want to count
+  // pots scooped rather than money made.
+  function wonPot(h) {
     return !!(h && h.outcome && h.outcome.result === 'won');
   }
 
-  // True when the hand was a net loss for hero, with real money invested.
-  function heroLost(h) {
-    if (!h || !h.outcome) return false;
-    if (h.outcome.result === 'won') return false;
-    var inv = (typeof getInvested === 'function') ? getInvested(h) : 0;
-    return inv > 0;
-  }
-
   function pnlOf(h) {
-    return (typeof getHandPnlValue === 'function') ? getHandPnlValue(h) : 0;
+    return getHandPnlValue(h);
   }
 
   // Return the deepest street the hand actually reached: 'Flop', 'Turn',
   // 'River', or null when no postflop action exists.
   function lastStreetReached(h) {
     if (!h || !h.actions) return null;
-    var acts = (typeof parseActions === 'function') ? parseActions(h.actions) : [];
+    var acts = parseActions(h.actions);
     var sawFlop = false, sawTurn = false, sawRiver = false;
     for (var i = 0; i < acts.length; i++) {
       var s = acts[i].street;
@@ -284,7 +270,7 @@
   // action.
   function heroPostflopProfile(h) {
     if (!h || !h.actions) return null;
-    var acts = (typeof parseActions === 'function') ? parseActions(h.actions) : [];
+    var acts = parseActions(h.actions);
     var p = { bet: 0, raise: 0, check: 0, call: 0, fold: 0, riverCall: 0, riverFold: 0, riverBet: 0, postflopActions: 0 };
     for (var i = 0; i < acts.length; i++) {
       var a = acts[i];
@@ -349,7 +335,7 @@
       b.n++;
       var pnl = pnlOf(h);
       b.pnl += pnl;
-      if (heroWon(h)) b.won++;
+      if (wonPot(h)) b.won++;
       var prof = heroPostflopProfile(h);
       if (prof) {
         if ((prof.bet + prof.raise) > 0) b.aggressive++;
@@ -500,7 +486,7 @@
     var examples = [];
     if (bucket.hands.length) {
       var passiveLost = pickHands(bucket.hands, function(h) {
-        return heroOnlyPassive(h) && !heroWon(h);
+        return heroOnlyPassive(h) && !wonPot(h);
       }, 12);
       if (passiveLost.length) {
         examples.push({
@@ -511,7 +497,7 @@
         });
       }
       var brokeEvenOrLost = pickHands(bucket.hands, function(h) {
-        if (heroWon(h)) return false;
+        if (wonPot(h)) return false;
         return pnlOf(h) <= 0;
       }, 12);
       if (brokeEvenOrLost.length) {
@@ -641,7 +627,7 @@
     }
     if (aggFired) {
       var passiveLost = pickHands(bucket.hands, function(h) {
-        return heroOnlyPassive(h) && !heroWon(h);
+        return heroOnlyPassive(h) && !wonPot(h);
       }, 12);
       if (passiveLost.length) {
         examples.push({

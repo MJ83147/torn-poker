@@ -28,7 +28,6 @@
 // branches behind MIN_CELL. Skipped stories return null cleanly.
 
 (function() {
-  var POSITIONS_BY_PRIORITY = ['UTG', 'UTG+1', 'MP', 'LJ', 'HJ', 'CO', 'BTN', 'SB', 'BB'];
   var MIN_AGG = (typeof MIN_AGGREGATE === 'number') ? MIN_AGGREGATE : 30;
   var MIN_CL = (typeof MIN_CELL === 'number') ? MIN_CELL : 10;
   var MIN_OPP = 12; // floor for any opp-count gate on a pillar
@@ -39,15 +38,6 @@
   var FOLD_TO_THREE_BET_BAND = { tight: 60, loose: 70 };
 
   // ── SHARED HELPERS ────────────────────────────────────────────────────────
-
-  function pickHands(hands, predicate, cap) {
-    var out = [];
-    if (!hands) return out;
-    for (var i = hands.length - 1; i >= 0 && out.length < cap; i--) {
-      if (predicate(hands[i])) out.push(hands[i]);
-    }
-    return out;
-  }
 
   function joinList(items) {
     if (!items || !items.length) return '';
@@ -68,7 +58,7 @@
       var h = hands[i];
       if (!h || !h.outcome) continue;
       if (predicate && !predicate(h)) continue;
-      pnl += (typeof getHandPnlValue === 'function') ? getHandPnlValue(h) : 0;
+      pnl += getHandPnlValue(h);
       count++;
     }
     return { pnl: pnl, count: count };
@@ -79,7 +69,7 @@
   // function gets called for every hand in the donk and check-fold pillars.
   function actionContext(h) {
     if (!h || !h.actions) return null;
-    var acts = (typeof parseActions === 'function') ? parseActions(h.actions) : [];
+    var acts = parseActions(h.actions);
     if (!acts.length) return null;
     var ctx = {
       heroOpened: false,
@@ -128,7 +118,7 @@
   // later flop action was fold.
   function heroCheckFoldedFlop(h) {
     if (!h || !h.actions) return false;
-    var acts = (typeof parseActions === 'function') ? parseActions(h.actions) : [];
+    var acts = parseActions(h.actions);
     var sawCheck = false;
     for (var i = 0; i < acts.length; i++) {
       var a = acts[i];
@@ -169,7 +159,7 @@
   // True if hero faced a c-bet on the flop and called or raised (continued).
   function heroFacedCbet(h) {
     if (!h || !h.actions) return false;
-    var acts = (typeof parseActions === 'function') ? parseActions(h.actions) : [];
+    var acts = parseActions(h.actions);
     var pfrAuthor = null, pfrIsHero = null;
     var heroResp = null;
     var firstFlopBetByPfr = false;
@@ -194,7 +184,7 @@
   // Hero faced a c-bet on the flop and folded.
   function heroFoldedToCbet(h) {
     if (!h || !h.actions) return false;
-    var acts = (typeof parseActions === 'function') ? parseActions(h.actions) : [];
+    var acts = parseActions(h.actions);
     var pfrAuthor = null, pfrIsHero = null;
     var firstFlopBetByPfr = false;
     for (var i = 0; i < acts.length; i++) {
@@ -221,8 +211,8 @@
     if (!d || !d.byPosition) return [];
     var rows = [];
     var floor = minOpps != null ? minOpps : MIN_OPP;
-    for (var pi = 0; pi < POSITIONS_BY_PRIORITY.length; pi++) {
-      var p = POSITIONS_BY_PRIORITY[pi];
+    for (var pi = 0; pi < POSITION_ORDER.length; pi++) {
+      var p = POSITION_ORDER[pi];
       var pd = d.byPosition[p];
       if (!pd || pd.gated) continue;
       var opps = pd[oppsKey] || 0;
@@ -269,7 +259,7 @@
     var freq = (d.cbetDone / opps) * 100;
     if (!isFinite(freq)) return null;
 
-    var seats = (typeof dominantSeats === 'function') ? dominantSeats(d) : null;
+    var seats = dominantSeats(d);
     var domPos = (typeof dominantPosition === 'function') ? dominantPosition(d) : null;
     var band = (seats && domPos && typeof TargetBands !== 'undefined')
       ? TargetBands.bandFor('cbet', domPos, seats)
@@ -529,8 +519,8 @@
 
     // Per-position rows from the inline perPos object.
     var posReads = [];
-    for (var pi = 0; pi < POSITIONS_BY_PRIORITY.length; pi++) {
-      var p = POSITIONS_BY_PRIORITY[pi];
+    for (var pi = 0; pi < POSITION_ORDER.length; pi++) {
+      var p = POSITION_ORDER[pi];
       var pc = counts.perPos[p];
       if (!pc || pc.opps < MIN_OPP) continue;
       var pf = (pc.done / pc.opps) * 100;
@@ -756,8 +746,8 @@
     // Pillar 2 (context): per-position check-fold share.
     var posRows = [];
     if (d.byPosition) {
-      for (var pi = 0; pi < POSITIONS_BY_PRIORITY.length; pi++) {
-        var p = POSITIONS_BY_PRIORITY[pi];
+      for (var pi = 0; pi < POSITION_ORDER.length; pi++) {
+        var p = POSITION_ORDER[pi];
         var pd = d.byPosition[p];
         if (!pd || pd.gated || !pd.ss || !pd.ss.Flop.seen || pd.ss.Flop.seen < MIN_OPP) continue;
         var posCheckFold = 0;

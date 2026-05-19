@@ -71,11 +71,10 @@ function detectSessionPatterns(sessionData, overallData) {
   var sCbet = sCore.cbetPct, oCbet = oCore.cbetPct;
   var sWtsd = sCore.wtsdPct, oWtsd = oCore.wtsdPct;
 
-  var earlyPos = ['UTG', 'UTG+1', 'MP'];
-  var sEpGroup = (typeof calcPositionGroupVpip === 'function') ? calcPositionGroupVpip(sessionData.posMap, earlyPos) : { vpip: null, hands: 0 };
+  var sEpGroup = calcPositionGroupVpip(sessionData.posMap, EARLY_POSITIONS);
   var sEpVpip = sEpGroup.vpip;
   var sEarlyHands = sEpGroup.hands;
-  var oEpVpip = (typeof calcPositionGroupVpip === 'function') ? calcPositionGroupVpip(overallData.posMap, earlyPos).vpip : null;
+  var oEpVpip = calcPositionGroupVpip(overallData.posMap, EARLY_POSITIONS).vpip;
 
   var THRESH = 10;
 

@@ -21,6 +21,7 @@ function listJs(dir) {
 // VPIP/AF -> style classification. They load before context.js and
 // target-bands.js (which wrap matrixTarget) so those can reference them.
 var helperOrder = [
+  'js/helpers/constants.js',
   'js/helpers/css-classes.js',
   'js/helpers/cards.js',
   'js/helpers/tables.js',
@@ -28,6 +29,7 @@ var helperOrder = [
   'js/helpers/hand-parsing.js',
   'js/helpers/stack-bands.js',
   'js/helpers/analysis.js',
+  'js/helpers/hand-predicates.js',
   'js/helpers/sessions.js',
   'js/helpers/storage.js',
   'js/helpers/ui.js',

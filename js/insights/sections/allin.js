@@ -20,27 +20,6 @@
   var FOLD_LOW  = 30; // folding under 30% is calling too light
   var WIN_FLOOR = 35; // sub 35% win rate when calling means weak calling range
 
-  function heroLost(h) {
-    if (!h || !h.outcome) return false;
-    if (h.outcome.result === 'won') return false;
-    return ((typeof getInvested === 'function') ? getInvested(h) : 0) > 0;
-  }
-
-  function heroWon(h) {
-    if (!h || !h.outcome || h.outcome.result !== 'won') return false;
-    var inv = (typeof getInvested === 'function') ? getInvested(h) : 0;
-    return (h.outcome.amount || 0) - inv > 0;
-  }
-
-  function pickHands(hands, predicate, cap) {
-    var out = [];
-    if (!hands) return out;
-    for (var i = hands.length - 1; i >= 0 && out.length < cap; i--) {
-      if (predicate(hands[i])) out.push(hands[i]);
-    }
-    return out;
-  }
-
   // True when the hand involved any all-in action either side faced. We use a
   // heuristic on the action log: if any non-hero raise has no " to " phrasing
   // it is treated as a shove, matching the rule in helpers/hand-parsing.js
@@ -48,7 +27,7 @@
   // hand where an all-in pressure point came up.
   function handHadAllIn(h) {
     if (!h || !h.actions) return false;
-    var acts = (typeof parseActions === 'function') ? parseActions(h.actions) : [];
+    var acts = parseActions(h.actions);
     for (var i = 0; i < acts.length; i++) {
       var a = acts[i];
       if (a.type !== 'raise') continue;

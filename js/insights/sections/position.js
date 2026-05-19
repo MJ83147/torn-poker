@@ -21,7 +21,6 @@
 // pillars fired. Example hands surface from whichever pillar dominates.
 
 (function() {
-  var SEAT_ORDER = ['UTG', 'UTG+1', 'MP', 'LJ', 'HJ', 'CO', 'BTN', 'SB', 'BB'];
 
   // Weight by which hand types are "weak openers" per seat group.
   // Early seats: anything outside premium pairs + broadway is suspect.
@@ -70,58 +69,6 @@
     if (g === 'early') return WEAK_TYPES_EARLY;
     if (g === 'middle') return WEAK_TYPES_MIDDLE;
     return WEAK_TYPES_LATE;
-  }
-
-  // True if hero called or bet or raised at any point. Mirrors the helper in
-  // sections/range.js so the file is self-contained; tiny so dedupe later if
-  // it becomes a pattern.
-  function heroPlayed(h) {
-    if (!h || !h.actions) return false;
-    var acts = (typeof parseActions === 'function') ? parseActions(h.actions) : [];
-    for (var i = 0; i < acts.length; i++) {
-      var a = acts[i];
-      if (!a.isMe) continue;
-      if (a.type === 'call' || a.type === 'bet' || a.type === 'raise') return true;
-    }
-    return false;
-  }
-
-  function heroFoldedPreflop(h) {
-    if (!h || !h.actions) return false;
-    var acts = (typeof parseActions === 'function') ? parseActions(h.actions) : [];
-    for (var i = 0; i < acts.length; i++) {
-      var a = acts[i];
-      if (!a.isMe || a.street !== 'Preflop') continue;
-      if (a.type === 'sb' || a.type === 'bb') continue;
-      return a.type === 'fold';
-    }
-    return false;
-  }
-
-  function pickHands(hands, predicate, cap) {
-    var out = [];
-    if (!hands) return out;
-    for (var i = hands.length - 1; i >= 0 && out.length < cap; i--) {
-      if (predicate(hands[i])) out.push(hands[i]);
-    }
-    return out;
-  }
-
-  // True when the hand was a net loss for hero. Folded preflop counts only when
-  // there was real investment (blind posts cost chips even when folding).
-  function heroLost(h) {
-    if (!h || !h.outcome) return false;
-    if (h.outcome.result === 'won') return false;
-    var inv = (typeof getInvested === 'function') ? getInvested(h) : 0;
-    return inv > 0;
-  }
-
-  function heroWon(h) {
-    if (!h || !h.outcome) return false;
-    if (h.outcome.result !== 'won') return false;
-    var amt = h.outcome.amount || 0;
-    var inv = (typeof getInvested === 'function') ? getInvested(h) : 0;
-    return amt - inv > 0;
   }
 
   // Pull the right per-seat sub-d. Prefer the seat-count cell (most precise),
@@ -454,10 +401,10 @@
     panel: 'Position',
     run: function(d, extras, hands) {
       if (!d || !d.n) return [];
-      var seats = (typeof dominantSeats === 'function') ? dominantSeats(d) : null;
+      var seats = dominantSeats(d);
       var out = [];
-      for (var i = 0; i < SEAT_ORDER.length; i++) {
-        var story = buildSeatStory(d, extras, hands, SEAT_ORDER[i], seats);
+      for (var i = 0; i < POSITION_ORDER.length; i++) {
+        var story = buildSeatStory(d, extras, hands, POSITION_ORDER[i], seats);
         if (story) out.push(story);
       }
       return out;

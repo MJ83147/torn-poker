@@ -17,15 +17,6 @@
 
   // ── SHARED HELPERS ────────────────────────────────────────────────────────
 
-  function pickHands(hands, predicate, cap) {
-    var out = [];
-    if (!hands) return out;
-    for (var i = hands.length - 1; i >= 0 && out.length < cap; i--) {
-      if (predicate(hands[i])) out.push(hands[i]);
-    }
-    return out;
-  }
-
   function safePct(num, den) {
     if (!den) return null;
     return Math.round((num / den) * 1000) / 10;
@@ -263,19 +254,9 @@
       var t = inferTable(h);
       return String(t != null ? t : 'unknown') === id;
     }
-    function wasLoss(h) {
-      if (!h || !h.outcome) return false;
-      if (h.outcome.result === 'won') return false;
-      return ((typeof getInvested === 'function') ? getInvested(h) : 0) > 0;
-    }
-    function wasWin(h) {
-      if (!h || !h.outcome || h.outcome.result !== 'won') return false;
-      var inv = (typeof getInvested === 'function') ? getInvested(h) : 0;
-      return (h.outcome.amount || 0) - inv > 0;
-    }
     if (worst && worst.hands && worst.hands.length) {
       var worstId = String(worst.key);
-      var worstLosses = pickHands(hands, function(h) { return tableMatches(h, worstId) && wasLoss(h); }, 15);
+      var worstLosses = pickHands(hands, function(h) { return tableMatches(h, worstId) && heroLost(h); }, 15);
       if (worstLosses.length) {
         examples.push({
           id: 'tbl-worst-losses-' + worstId,
@@ -288,7 +269,7 @@
     }
     if (best && best.hands && best.hands.length && best.key !== (worst && worst.key)) {
       var bestId = String(best.key);
-      var bestWins = pickHands(hands, function(h) { return tableMatches(h, bestId) && wasWin(h); }, 10);
+      var bestWins = pickHands(hands, function(h) { return tableMatches(h, bestId) && heroWon(h); }, 10);
       if (bestWins.length) {
         examples.push({
           id: 'tbl-best-wins-' + bestId,
