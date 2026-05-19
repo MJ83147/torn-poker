@@ -106,6 +106,33 @@ var combined = files
   .map(function(f) { return fs.readFileSync(path.join(__dirname, f), 'utf8'); })
   .join('\n');
 
+// Inline panel HTML templates. Each js/panels/<name>.html becomes
+// window.__TPL['<name>'] = '<minified html>'. Loaded once at bundle init so
+// panels never fetch at render time. Minify by collapsing whitespace runs
+// and trimming each line — preserves attribute values and text content
+// reading order, drops cosmetic indentation.
+function minifyHtml(src) {
+  return src
+    .replace(/<!--[\s\S]*?-->/g, '')
+    .replace(/\s+/g, ' ')
+    .replace(/>\s+</g, '><')
+    .trim();
+}
+var tplFiles = listJs('js/panels').map(function(jsPath) {
+  return jsPath.replace(/\.js$/, '.html');
+});
+var tplAssignments = [];
+tplFiles.forEach(function(htmlPath) {
+  var full = path.join(__dirname, htmlPath);
+  if (!fs.existsSync(full)) return; // optional during migration
+  var name = path.basename(htmlPath, '.html');
+  var html = minifyHtml(fs.readFileSync(full, 'utf8'));
+  tplAssignments.push("window.__TPL['" + name + "']=" + JSON.stringify(html) + ";");
+});
+if (tplAssignments.length) {
+  combined = "window.__TPL=window.__TPL||{};" + tplAssignments.join('') + '\n' + combined;
+}
+
 // Minify with esbuild.
 var result = esbuild.buildSync({
   stdin: {

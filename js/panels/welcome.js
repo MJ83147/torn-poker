@@ -8,51 +8,28 @@
 //   hands     - hand list
 //   meta      - { player, exportedAt }
 //   onPicked  - callback(styleName) invoked when the user picks a target style
+var STYLE_TARGET_CARDS = [
+  { key: 'Shark',   name: 'Shark',   desc: 'Tight and very aggressive. Picks spots well, hammers value.' },
+  { key: 'TAG',     name: 'TAG',     desc: 'Tight-aggressive. The default winning style. Few hands, played hard.' },
+  { key: 'LAG',     name: 'LAG',     desc: 'Loose-aggressive. Wider ranges with relentless pressure.' },
+  { key: 'Cannon',  name: 'Cannon',  desc: 'Loose mid-aggression. Lots of flops, light on follow-through.' },
+  { key: 'Rock',    name: 'Rock',    desc: 'Tight-passive. Selective preflop, rarely takes the lead postflop.' },
+  { key: 'Nit',     name: 'Nit',     desc: 'Extremely tight. Premium hands only. Hard to bluff.' },
+  { key: 'Station', name: 'Station', desc: 'Loose-passive. Plenty of hands but rarely raises.' },
+  { key: 'Maniac',  name: 'Maniac',  desc: 'Hyper-aggressive. Raises everything, high variance.' }
+];
+
 function renderStyleWelcome(container, d, hands, meta, onPicked) {
   if (!container) return;
-
-  var detected = (typeof detectCurrentStyle === 'function')
-    ? detectCurrentStyle(d)
-    : { name: 'Shark', reason: '', confidence: 'low' };
-
-  var targetCards = [
-    { key: 'Shark',   name: 'Shark',   desc: 'Tight and very aggressive. Picks spots well, hammers value.' },
-    { key: 'TAG',     name: 'TAG',     desc: 'Tight-aggressive. The default winning style. Few hands, played hard.' },
-    { key: 'LAG',     name: 'LAG',     desc: 'Loose-aggressive. Wider ranges with relentless pressure.' },
-    { key: 'Cannon',  name: 'Cannon',  desc: 'Loose mid-aggression. Lots of flops, light on follow-through.' },
-    { key: 'Rock',    name: 'Rock',    desc: 'Tight-passive. Selective preflop, rarely takes the lead postflop.' },
-    { key: 'Nit',     name: 'Nit',     desc: 'Extremely tight. Premium hands only. Hard to bluff.' },
-    { key: 'Station', name: 'Station', desc: 'Loose-passive. Plenty of hands but rarely raises.' },
-    { key: 'Maniac',  name: 'Maniac',  desc: 'Hyper-aggressive. Raises everything, high variance.' }
-  ];
-
-  var html = '';
-  html += '<div class="style-welcome">';
-  html += '<div class="style-welcome-inner">';
-  html += '<div class="style-welcome-eyebrow">' + (meta && meta.player ? 'Welcome, ' + meta.player : 'Welcome') + '</div>';
-  // Player-type label removed - the header style picker, My Game and Style Map
-  // already surface this. Welcome's job is target selection.
-  html += '<div class="style-welcome-headline">Pick the style you want to target.</div>';
-  html += '<div class="style-welcome-cards">';
-  for (var i = 0; i < targetCards.length; i++) {
-    var c = targetCards[i];
-    html += '<button type="button" class="style-card" data-style="' + c.key + '">';
-    html += '<div class="style-card-name">' + c.name + '</div>';
-    html += '<div class="style-card-desc">' + c.desc + '</div>';
-    html += '</button>';
-  }
-  html += '</div>';
-  html += '</div>';
-  html += '</div>';
-
-  container.innerHTML = html;
-
-  var cards = container.querySelectorAll('.style-card');
-  cards.forEach(function(card) {
+  mountTemplate(container, 'welcome');
+  bind(container, {
+    greeting: (meta && meta.player) ? ('Welcome, ' + meta.player) : 'Welcome'
+  });
+  fillRows(container, 'cards', STYLE_TARGET_CARDS, function(card, item) {
+    card.setAttribute('data-style', item.key);
     card.addEventListener('click', function() {
-      var style = this.getAttribute('data-style');
-      if (typeof setUserStyle === 'function') setUserStyle(style);
-      if (typeof onPicked === 'function') onPicked(style);
+      if (typeof setUserStyle === 'function') setUserStyle(item.key);
+      if (typeof onPicked === 'function') onPicked(item.key);
     });
   });
 }
