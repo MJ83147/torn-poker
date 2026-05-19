@@ -268,15 +268,39 @@ function tallyByCombo(filtered, scenarioType) {
   return { played: played, folded: folded, dealt: dealt, won: won, pnl: pnl };
 }
 
+// Build the multi-line hover tooltip for a single combo cell. Lines are joined
+// with \n; the CSS rule on .rc[data-tip]:hover::after uses white-space: pre-line
+// so they render stacked.
+function tipForCombo(key, tallies) {
+  var dealt  = (tallies.dealt  && tallies.dealt[key])  || 0;
+  var played = (tallies.played && tallies.played[key]) || 0;
+  var won    = (tallies.won    && tallies.won[key])    || 0;
+  var pnl    = tallies.pnl ? tallies.pnl[key] : undefined;
+  if (dealt === 0) return key + '\nNot dealt';
+  var lines = [key];
+  if (typeof pnl === 'number') lines.push('P/L: ' + fmtPnl(pnl));
+  var vpipPct = Math.round((played / dealt) * 100);
+  lines.push('Played: ' + played + '/' + dealt + ' (' + vpipPct + '%)');
+  if (played > 0) {
+    var wrPct = Math.round((won / played) * 100);
+    lines.push('Won: ' + won + '/' + played + ' (' + wrPct + '%)');
+  }
+  return lines.join('\n');
+}
+
 // Pristine GTO chart grid — colour only, no overlay for the user's actions.
-function buildGtoGridHtml(chart) {
+// `tallies` is optional; when provided, cells get the same multi-line P/L
+// tooltip as the Your-Range grid so users can compare GTO action vs. their
+// realized result for the same combo at the same position.
+function buildGtoGridHtml(chart, tallies) {
   var colors = chartToColorMap(chart);
   var html = '<div class="range-grid-sm">';
   for (var r = 0; r < 13; r++) {
     for (var c = 0; c < 13; c++) {
       var key = rangeBuildKey(r, c);
       var gto = colors[key] || 'none';
-      html += '<div class="rc" data-gto="' + gto + '" data-key="' + key + '" data-tip="' + key + '"><span>' + key + '</span></div>';
+      var tip = tallies ? tipForCombo(key, tallies) : key;
+      html += '<div class="rc" data-gto="' + gto + '" data-key="' + key + '" data-tip="' + tip + '"><span>' + key + '</span></div>';
     }
   }
   html += '</div>';
@@ -294,14 +318,10 @@ function buildOverallGridHtml(tallies) {
       var key = rangeBuildKey(r, c);
       var dealt = tallies.dealt[key] || 0;
       var played = tallies.played[key] || 0;
-      var folded = tallies.folded[key] || 0;
-      var won = tallies.won[key] || 0;
-      var cls, tip, freqAttr = '';
-      if (dealt === 0) { cls = 'rc-undealt'; tip = key + ' | not dealt'; }
+      var cls, freqAttr = '';
+      if (dealt === 0) cls = 'rc-undealt';
       else if (played > 0) {
         cls = 'rc-played';
-        var wr = Math.round((won / played) * 100) + '%';
-        tip = key + ' | played ' + played + '/' + dealt + ' · win ' + wr;
         if (maxPlayed > 0) {
           var ratio = played / maxPlayed;
           var step = 'low';
@@ -312,8 +332,8 @@ function buildOverallGridHtml(tallies) {
         }
       } else {
         cls = 'rc-folded';
-        tip = key + ' | folded ' + folded + '/' + dealt;
       }
+      var tip = tipForCombo(key, tallies);
       html += '<div class="rc ' + cls + '" data-gto="none" data-key="' + key + '"' + freqAttr + ' data-tip="' + tip + '"><span>' + key + '</span></div>';
     }
   }
@@ -326,7 +346,7 @@ function buildOverallGridHtml(tallies) {
 //   green = called
 //   white = folded after seeing the combo
 //   none  = never dealt
-function buildHeroGridHtml(filtered, scenarioType) {
+function buildHeroGridHtml(filtered, scenarioType, tallies) {
   var byKey = {};
   for (var i = 0; i < filtered.length; i++) {
     var h = filtered[i];
@@ -342,19 +362,15 @@ function buildHeroGridHtml(filtered, scenarioType) {
     for (var c = 0; c < 13; c++) {
       var key = rangeBuildKey(r, c);
       var t = byKey[key];
-      var color = 'none', tip = key + ' | not dealt';
+      var color = 'none';
       if (t && t.dealt > 0) {
         // Dominant action wins the cell color.
         var best = 'fold', bestN = t.fold;
         if (t.raise > bestN) { best = 'raise'; bestN = t.raise; }
         if (t.call > bestN) { best = 'call'; bestN = t.call; }
         color = best === 'raise' ? 'red' : best === 'call' ? 'green' : 'white';
-        var parts = [];
-        if (t.raise) parts.push(t.raise + ' raised');
-        if (t.call)  parts.push(t.call + ' called');
-        if (t.fold)  parts.push(t.fold + ' folded');
-        tip = key + ' | ' + parts.join(', ');
       }
+      var tip = tipForCombo(key, tallies);
       html += '<div class="rc rc-hero" data-hero="' + color + '" data-key="' + key + '" data-tip="' + tip + '"><span>' + key + '</span></div>';
     }
   }
@@ -394,15 +410,15 @@ function heroActionBucket(h, scenarioType) {
 }
 
 // Wrap two grids (GTO + your range) in a side-by-side layout with titles.
-function twoGridHtml(chart, filtered, scenarioType) {
+function twoGridHtml(chart, filtered, scenarioType, tallies) {
   return '<div class="range-compare">' +
     '<div class="range-compare-col">' +
       '<div class="sec-subtitle mt-0">GTO chart</div>' +
-      buildGtoGridHtml(chart) +
+      buildGtoGridHtml(chart, tallies) +
     '</div>' +
     '<div class="range-compare-col">' +
       '<div class="sec-subtitle mt-0">Your range</div>' +
-      buildHeroGridHtml(filtered, scenarioType) +
+      buildHeroGridHtml(filtered, scenarioType, tallies) +
     '</div>' +
   '</div>';
 }
@@ -511,6 +527,8 @@ function renderRange(container, d, hands) {
     var entry = findScenario(state.hero, state.scenario);
     var chart = lookupChartFor(data, state.hero, state.scenario);
     var filtered = filterHandsForScenario(hands, state.hero, state.scenario);
+    var scenarioType = entry ? entry.type : 'overall';
+    var tallies = tallyByCombo(filtered, scenarioType);
     var heroSelectorHtml = positionSelector('range-hero', HERO_SEATS, state.hero);
     var scenarioOptions = scenarios.map(function(s) {
       var sel = s.key === state.scenario ? ' selected' : '';
@@ -528,7 +546,7 @@ function renderRange(container, d, hands) {
       headerStats +
       note +
       '<div class="range-legends"><div class="range-legend-col">' + gtoLegendHtml() + '</div><div class="range-legend-col">' + heroLegendHtml() + '</div></div>' +
-      twoGridHtml(chart, filtered, entry ? entry.type : 'overall');
+      twoGridHtml(chart, filtered, scenarioType, tallies);
     bindSelector(body, 'range-hero', function(v) {
       state.hero = v;
       state.scenario = (HERO_CHARTS[v] && HERO_CHARTS[v][0] && HERO_CHARTS[v][0].key) || '';

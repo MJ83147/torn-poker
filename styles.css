@@ -1648,10 +1648,14 @@ textarea#jin:focus {
   background: #0d150f;
   border: var(--sp-1) solid var(--border);
   color: var(--text);
-  font-size: var(--fs-11);
-  padding: var(--sp-4) var(--sp-8);
+  font-size: var(--fs-12);
+  padding: var(--sp-6) var(--sp-8);
   border-radius: 3px;
-  white-space: nowrap;
+  white-space: pre-line;
+  text-align: left;
+  width: max-content;
+  max-width: 200px;
+  line-height: 1.4;
   z-index: 300;
   pointer-events: none;
 }
