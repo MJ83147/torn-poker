@@ -199,6 +199,152 @@ function computeOpponentStats(hands, playerName) {
   return s;
 }
 
+// Batch version of computeOpponentStats: walks `hands` once and produces a
+// { name -> statsObj } map for every opponent that appears. Identical numbers
+// to computeOpponentStats but O(hands) instead of O(opponents × hands), which
+// matters once the profile cache is built across tens of thousands of hands.
+function computeAllOpponentStats(hands) {
+  var byName = {};
+  function statsFor(name) {
+    var s = byName[name];
+    if (s) return s;
+    s = byName[name] = {
+      hands: 0, vpipHands: 0, pfrHands: 0, limpHands: 0, foldPreHands: 0,
+      totalRaises: 0, totalCalls: 0, totalChecks: 0, totalFolds: 0, totalActions: 0,
+      cbetOpps: 0, cbetDone: 0, facedRaise: 0, foldedToRaise: 0,
+      sawFlop: 0, wentToShowdown: 0, wonAtShowdown: 0,
+      showdownStrong: 0, showdownWeak: 0, reveals: 0,
+    };
+    return s;
+  }
+
+  for (var hi = 0; hi < hands.length; hi++) {
+    var h = hands[hi];
+    var acts = parseActions(h ? h.actions : null);
+    if (!acts.length) continue;
+
+    var perHand = {};
+    function entry(name) {
+      var p = perHand[name];
+      if (p) return p;
+      p = perHand[name] = {
+        raisedPre: false, calledPre: false, foldedPre: false,
+        seenPostFlop: false, foldedPostFlop: false,
+        aggRaises: 0, aggCalls: 0, aggChecks: 0, aggFolds: 0, aggActions: 0,
+        firstFlopActionSeen: false, cbetDone: false,
+        facedRaiseCount: 0, foldedToRaiseCount: 0,
+        playerWon: false
+      };
+      return p;
+    }
+
+    for (var ai = 0; ai < acts.length; ai++) {
+      var a = acts[ai];
+      if (!a.author || a.isMe) continue;
+      var p = entry(a.author);
+
+      if (a.type === 'won') { p.playerWon = true; continue; }
+
+      if (a.street === 'Preflop') {
+        if (a.type === 'raise') p.raisedPre = true;
+        if (a.type === 'call') p.calledPre = true;
+        if (a.type === 'fold') p.foldedPre = true;
+      } else {
+        p.seenPostFlop = true;
+        if (a.type === 'fold') p.foldedPostFlop = true;
+      }
+
+      if (a.type !== 'sb' && a.type !== 'bb') {
+        p.aggActions++;
+        if (a.type === 'raise' || a.type === 'bet') p.aggRaises++;
+        else if (a.type === 'call') p.aggCalls++;
+        else if (a.type === 'check') p.aggChecks++;
+        else if (a.type === 'fold') p.aggFolds++;
+      }
+
+      if (a.street === 'Flop' && !p.firstFlopActionSeen) {
+        p.firstFlopActionSeen = true;
+        if (a.type === 'raise' || a.type === 'bet') p.cbetDone = true;
+      }
+    }
+
+    // facedRaise: for each raise/bet at index ri by author X, find each other
+    // opponent's first response on the same street. Mirrors the per-player loop
+    // inside classifyHandForPlayer so the numbers match exactly.
+    for (var ri = 0; ri < acts.length; ri++) {
+      var r = acts[ri];
+      if (r.type !== 'raise' && r.type !== 'bet') continue;
+      if (!r.author) continue;
+      var counted = {};
+      for (var rk = ri + 1; rk < acts.length; rk++) {
+        if (acts[rk].street !== r.street) break;
+        var b = acts[rk];
+        if (!b.author || b.author === r.author) continue;
+        if (b.isMe) continue;
+        if (counted[b.author]) continue;
+        counted[b.author] = true;
+        var pp = entry(b.author);
+        pp.facedRaiseCount++;
+        if (b.type === 'fold') pp.foldedToRaiseCount++;
+      }
+    }
+
+    // Showdowns. Walk raw lines once and credit reveals to whichever known
+    // perHand author the line starts with.
+    var raw = (h && h.actions) ? h.actions : [];
+    var handHasShowdown = false;
+    var revealStrengths = {};
+    for (var li = 0; li < raw.length; li++) {
+      var line = raw[li] || '';
+      if (line.indexOf(' reveals ') === -1) continue;
+      handHasShowdown = true;
+      var sm = line.match(/\(([^)]+)\)/);
+      var info = { hasStrength: !!sm, isStrong: sm ? isStrongShowdownHand(sm[1]) : false };
+      for (var pname in perHand) {
+        if (line.indexOf(pname) !== -1) {
+          (revealStrengths[pname] = revealStrengths[pname] || []).push(info);
+          break;
+        }
+      }
+    }
+
+    for (var pname2 in perHand) {
+      var pp2 = perHand[pname2];
+      var s = statsFor(pname2);
+      s.hands++;
+      if (pp2.raisedPre || pp2.calledPre) s.vpipHands++;
+      if (pp2.raisedPre) s.pfrHands++;
+      if (pp2.calledPre && !pp2.raisedPre) s.limpHands++;
+      if (pp2.foldedPre) s.foldPreHands++;
+      if (pp2.seenPostFlop) s.sawFlop++;
+      s.totalRaises  += pp2.aggRaises;
+      s.totalCalls   += pp2.aggCalls;
+      s.totalChecks  += pp2.aggChecks;
+      s.totalFolds   += pp2.aggFolds;
+      s.totalActions += pp2.aggActions;
+      if (pp2.raisedPre && pp2.seenPostFlop) {
+        s.cbetOpps++;
+        if (pp2.cbetDone) s.cbetDone++;
+      }
+      s.facedRaise    += pp2.facedRaiseCount;
+      s.foldedToRaise += pp2.foldedToRaiseCount;
+      if (pp2.seenPostFlop && handHasShowdown && !pp2.foldedPostFlop) {
+        s.wentToShowdown++;
+        if (pp2.playerWon) s.wonAtShowdown++;
+      }
+      var revs = revealStrengths[pname2] || [];
+      for (var rvi = 0; rvi < revs.length; rvi++) {
+        s.reveals++;
+        if (!revs[rvi].hasStrength) continue;
+        if (revs[rvi].isStrong) s.showdownStrong++;
+        else s.showdownWeak++;
+      }
+    }
+  }
+
+  return byName;
+}
+
 // Walk a hand list backwards (newest first) and bucket each hand into the
 // tendency categories that the players panel surfaces. Returns up to MAX_EX
 // hands per bucket so the renderer can show illustrative examples next to

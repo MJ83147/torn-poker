@@ -2,6 +2,10 @@
 
 var _allinChart = null;
 var _allinHands = null;
+// Cache the candidate-detection pass keyed by the filtered hands array. Walking
+// 20k+ hands every time the user clicks back into the panel is the freeze.
+var _allinCandidatesFor = null;
+var _allinCandidates = null;
 
 // ── Parse reveals from action log ────────────────────────────────────────────
 function parseReveals(actions) {
@@ -150,10 +154,18 @@ function detectAllInCandidates(hands) {
 // ── Card display - uses shared displayCard/displayCards from helpers.js ───────
 
 // ── Render panel (instant - no simulation) ───────────────────────────────────
-function renderAllIn(container, hands) {
+function renderAllIn(container, d, hands) {
   if (_allinChart) { _allinChart.destroy(); _allinChart = null; }
 
-  _allinHands = detectAllInCandidates(hands);
+  // Reuse last detection when the filtered set hasn't changed identity (the
+  // upstream cache rebuilds the array only when the filter key changes).
+  if (_allinCandidatesFor === hands && _allinCandidates) {
+    _allinHands = _allinCandidates;
+  } else {
+    _allinHands = detectAllInCandidates(hands);
+    _allinCandidatesFor = hands;
+    _allinCandidates = _allinHands;
+  }
 
   if (!_allinHands.length) {
     container.innerHTML = '<div class="panel-title">All-In EV</div>' +
@@ -167,9 +179,10 @@ function renderAllIn(container, hands) {
 
   // Verdict + section story (All-in Pressure). Reads d.facedAllin / foldAllin
   // / callAllin / wonAllin so it works without running the Monte Carlo step.
-  if (typeof Sections !== 'undefined' && typeof Sections.evaluateSections === 'function' && typeof analyse === 'function') {
-    var dAllin = analyse(hands);
-    var allinFindings = Sections.findingsForPanel(Sections.evaluateSections(dAllin, {}, hands), 'All-In EV');
+  // Reuses the cached d from getFilteredAnalysis() rather than running
+  // analyse(hands) again — that second pass was a full 20k-hand walk.
+  if (typeof Sections !== 'undefined' && typeof Sections.evaluateSections === 'function' && d) {
+    var allinFindings = Sections.findingsForPanel(Sections.evaluateSections(d, {}, hands), 'All-In EV');
     html += Sections.renderVerdict(allinFindings, 'Not enough all-in spots yet to call out a pattern.');
     if (allinFindings.length) html += '<div class="p-row">' + Sections.renderFindings(allinFindings) + '</div>';
   }

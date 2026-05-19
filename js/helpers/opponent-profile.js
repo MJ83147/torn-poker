@@ -28,16 +28,12 @@ var _opponentCache = {};
 
 function cacheOpponentProfiles(hands) {
   _opponentCache = {};
-  // Collect unique opponent names
-  var names = {};
-  for (var i = 0; i < hands.length; i++) {
-    var acts = parseActions(hands[i].actions);
-    for (var j = 0; j < acts.length; j++) {
-      if (!acts[j].isMe && acts[j].author) names[acts[j].author] = true;
-    }
-  }
-  for (var name in names) {
-    var s = computeOpponentStats(hands, name);
+  // One pass over every hand produces stats for every opponent. The old
+  // version walked all hands once per opponent, which became unusable past
+  // ~10k hands and ~50 opponents.
+  var statsByName = computeAllOpponentStats(hands);
+  for (var name in statsByName) {
+    var s = statsByName[name];
     if (s.hands < 5) continue;
     var vpip = pct(s.vpipHands, s.hands);
     var pfr = pct(s.pfrHands, s.hands);

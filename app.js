@@ -181,7 +181,7 @@ function _maybeShowStyleWelcome(d, hands, meta) {
 // Which panels need the filter-scoped d from analyse(). Trends and showdown
 // both consume it for section findings; without it they call analyse(hands)
 // themselves, costing a full extra pass over the dataset per visit.
-var _PANELS_NEED_D = { mygame:1, cards:1, position:1, street:1, actions:1, range:1, players:1, trends:1, showdown:1 };
+var _PANELS_NEED_D = { mygame:1, cards:1, position:1, street:1, actions:1, range:1, players:1, trends:1, showdown:1, allin:1 };
 
 // Which panels show the "Showing stats for X table" banner.
 var _PANELS_HAVE_BANNER = { welcome:1, mygame:1, cards:1, position:1, street:1, actions:1, range:1, trends:1, showdown:1, log:1, allin:1, players:1 };
@@ -230,7 +230,7 @@ function _drawPanel(tabId, meta) {
     case 'trends':   renderTrends(container, filtered, meta, d); break;
     case 'showdown': renderShowdown(container, filtered, meta, d); break;
     case 'log':      renderLog(container, filtered); break;
-    case 'allin':    renderAllIn(container, filtered); break;
+    case 'allin':    renderAllIn(container, d, filtered); break;
     case 'custom':   renderCustomReport(container, State.allHands); break;
   }
 

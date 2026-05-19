@@ -17,7 +17,12 @@ function isStrongShowdownHand(strength) {
 
 // Get the amount the hero invested in a hand
 function getInvested(h) {
-  return h.invested || calcInvestmentFromActions(h.actions || []);
+  if (!h) return 0;
+  if (h._investedCached) return h._invested;
+  var v = h.invested || calcInvestmentFromActions(h.actions || []);
+  h._invested = v;
+  h._investedCached = true;
+  return v;
 }
 
 // Get hero actions from a hand (parsed + filtered)
