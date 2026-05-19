@@ -37,23 +37,11 @@ function _filterKey() {
 // Lazy-build the filter-scoped analysis. Called only by panels that need d.
 function getFilteredAnalysis() {
   var key = _filterKey();
-  if (_analysisCache && _analysisCache.key === key) {
-    if (window.Perf && Perf.isOn()) Perf.log('getFilteredAnalysis (cache hit)', 0);
-    return _analysisCache;
-  }
-  var t0 = performance.now();
+  if (_analysisCache && _analysisCache.key === key) return _analysisCache;
   var filtered = State.getFilteredHands();
-  var tFilt = performance.now();
   var fd = analyse(filtered);
-  var tAnalyse = performance.now();
   bucketizeAnalysis(fd, filtered);
-  var tBucket = performance.now();
   _analysisCache = { key: key, fd: fd, filtered: filtered };
-  if (window.Perf && Perf.isOn()) {
-    Perf.log('getFilteredHands', tFilt - t0, '(' + filtered.length + ' hands)');
-    Perf.log('analyse', tAnalyse - tFilt);
-    Perf.log('bucketizeAnalysis', tBucket - tAnalyse);
-  }
   return _analysisCache;
 }
 
@@ -214,8 +202,6 @@ function _filterBannerHtml() {
 function _drawPanel(tabId, meta) {
   var container = document.getElementById('p-' + tabId);
   if (!container) return;
-  var _perfDrawT0 = (window.Perf && Perf.isOn()) ? performance.now() : 0;
-  if (window.Perf && Perf.isOn()) Perf.note('▶ draw panel: ' + tabId);
 
   var d = null;
   var filtered;
@@ -226,7 +212,6 @@ function _drawPanel(tabId, meta) {
   } else {
     filtered = State.getFilteredHands();
   }
-  var _perfRenderT0 = (window.Perf && Perf.isOn()) ? performance.now() : 0;
   State.modalHands = filtered;
 
   switch (tabId) {
@@ -252,10 +237,6 @@ function _drawPanel(tabId, meta) {
   if (_PANELS_HAVE_BANNER[tabId]) {
     var banner = _filterBannerHtml();
     if (banner) container.insertAdjacentHTML('afterbegin', banner);
-  }
-  if (window.Perf && Perf.isOn()) {
-    Perf.log('render(' + tabId + ')', performance.now() - _perfRenderT0);
-    Perf.log('◀ total draw(' + tabId + ')', performance.now() - _perfDrawT0);
   }
 }
 
@@ -288,20 +269,12 @@ function renderActivePanelDeferred(forceTabId) {
   if (!State.allHands.length) return;
   var tabId = _resolveActiveTabId(forceTabId);
   var filterKey = _filterKey();
-  if (_panelsRenderedFor[tabId] === filterKey) {
-    if (window.Perf && Perf.isOn()) Perf.note('cache hit: ' + tabId);
-    return;
-  }
+  if (_panelsRenderedFor[tabId] === filterKey) return;
   var container = document.getElementById('p-' + tabId);
   if (container) {
     container.innerHTML = '<div class="panel-loading"><div class="eq-spinner-ring"></div><div class="eq-spinner-text">Crunching numbers…</div></div>';
   }
-  var _perfQueued = (window.Perf && Perf.isOn()) ? performance.now() : 0;
-  if (window.Perf && Perf.isOn()) Perf.note('spinner shown: ' + tabId);
-  setTimeout(function () {
-    if (window.Perf && Perf.isOn()) Perf.log('setTimeout delay', performance.now() - _perfQueued);
-    renderActivePanel(tabId);
-  }, 0);
+  setTimeout(function () { renderActivePanel(tabId); }, 0);
 }
 
 // Wrap switchTab so the new tab actually renders its content on first visit.
@@ -309,10 +282,7 @@ function renderActivePanelDeferred(forceTabId) {
   if (typeof switchTab !== 'function') return;
   var _origSwitchTab = switchTab;
   window.switchTab = function (tabId) {
-    if (window.Perf && Perf.isOn()) Perf.note('▶ switchTab(' + tabId + ')');
-    var t0 = (window.Perf && Perf.isOn()) ? performance.now() : 0;
     var result = _origSwitchTab.apply(this, arguments);
-    if (window.Perf && Perf.isOn()) Perf.log('switchTab DOM swap', performance.now() - t0);
     if (State.allHands.length) renderActivePanelDeferred(tabId);
     return result;
   };
