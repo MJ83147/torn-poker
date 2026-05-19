@@ -377,25 +377,6 @@ function _bootDashboard(meta) {
     this.value = prev;
   };
 
-  // Reset button
-  document.getElementById('reset-btn').onclick = function () {
-    document.getElementById('paste-wrap').classList.remove('hidden');
-    document.getElementById('upload-wrap').classList.add('hidden');
-    document.getElementById('jin').value = '';
-    document.getElementById('dash').classList.remove('on');
-    document.getElementById('table-filter').value = 'all';
-    document.getElementById('table-filter').classList.add('hidden');
-    document.getElementById('players-filter').value = 'all';
-    document.getElementById('players-filter').classList.add('hidden');
-    State.clear();
-    invalidateAnalysisCache();
-    invalidateRenderedPanels();
-    document.querySelectorAll('.tab').forEach(function (b, i) { b.classList.toggle('active', i === 0); });
-    document.querySelectorAll('.panel').forEach(function (p, i) { p.classList.toggle('on', i === 0); });
-    document.querySelectorAll('.panel').forEach(function (p) { p.innerHTML = ''; });
-    checkSavedSession();
-  };
-
   // Sync BB toggle visual
   var bbBtn = document.getElementById('bb-toggle');
   if (bbBtn) {
