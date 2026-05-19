@@ -90,7 +90,7 @@ function inferTable(hand) {
       const line = hand.actions[i];
       // Extract big blind amount
       const bbMatch = line.match(/posted big blind \$([0-9,]+)/);
-      if (bbMatch) bb = parseInt(bbMatch[1].replace(/,/g, ''), 10);
+      if (bbMatch) bb = parseAmount(bbMatch[1]);
       // Count unique players from action lines (name is word chars, spaces, underscores before first colon)
       const authorMatch = line.match(/^\s*(?:>> )?([A-Za-z0-9_ -]+?):\s/);
       if (authorMatch && !authorMatch[1].startsWith('The ')) {

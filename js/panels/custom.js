@@ -341,15 +341,11 @@ function _crDefaultSegment() {
 }
 
 function _crLoadState() {
-  try {
-    var raw = localStorage.getItem(CR_STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch (_) {}
-  return { compare: false, A: _crDefaultSegment(), B: _crDefaultSegment() };
+  return getJSON(CR_STORAGE_KEY, { compare: false, A: _crDefaultSegment(), B: _crDefaultSegment() });
 }
 
 function _crSaveState(state) {
-  try { localStorage.setItem(CR_STORAGE_KEY, JSON.stringify(state)); } catch (_) {}
+  setJSON(CR_STORAGE_KEY, state);
 }
 
 // ── 4. FILTER PREDICATES ─────────────────────────────────────────────────────

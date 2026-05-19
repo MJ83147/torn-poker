@@ -425,7 +425,7 @@
     if (!bucket || bucket.n < MIN_AX) return null;
 
     var perHand = perHandRate(bucket.pnl, bucket.n);
-    var winRate = bucket.n > 0 ? Math.round((bucket.won / bucket.n) * 100) : 0;
+    var winRate = pct(bucket.won, bucket.n) || 0;
 
     var openingText = 'You hold a premium made hand (set, straight, flush, full house, or better) on ' +
       bucket.n + ' postflop hands. Net P&L is ' + fmtPnl(bucket.pnl) +
@@ -536,7 +536,7 @@
     if (!bucket || bucket.n < MIN_AX) return null;
 
     var perHand = perHandRate(bucket.pnl, bucket.n);
-    var winRate = bucket.n > 0 ? Math.round((bucket.won / bucket.n) * 100) : 0;
+    var winRate = pct(bucket.won, bucket.n) || 0;
 
     var openingText = 'You hold a strong made hand (overpair, top pair, or two pair) on ' +
       bucket.n + ' postflop hands. Net P&L is ' + fmtPnl(bucket.pnl) +
@@ -566,7 +566,7 @@
     var goingSev = classifyGoingTooFar(bucket.riverCall, bucket.riverCallLost);
     if (goingSev) {
       if (goingSev.severity === 'r' || goingSev.severity === 'a') {
-        var lossPct = bucket.riverCall > 0 ? Math.round((bucket.riverCallLost / bucket.riverCall) * 100) : 0;
+        var lossPct = pct(bucket.riverCallLost, bucket.riverCall) || 0;
         branchTexts.push(
           'When you called a river bet with a strong made hand, you lost ' + lossPct + '% of the time' +
           ' (' + bucket.riverCallLost + ' of ' + bucket.riverCall + '). Total cost on those river calls: ' +
@@ -666,7 +666,7 @@
     if (!bucket || bucket.n < MIN_AX) return null;
 
     var perHand = perHandRate(bucket.pnl, bucket.n);
-    var winRate = bucket.n > 0 ? Math.round((bucket.won / bucket.n) * 100) : 0;
+    var winRate = pct(bucket.won, bucket.n) || 0;
 
     var openingText = 'You hold a marginal made hand (second pair, bottom pair, or a small pocket pair below the board) on ' +
       bucket.n + ' postflop hands. Net P&L is ' + fmtPnl(bucket.pnl) +
@@ -679,7 +679,7 @@
     var goingSev = classifyGoingTooFar(bucket.riverCall, bucket.riverCallLost);
     if (goingSev) {
       if (goingSev.severity === 'r' || goingSev.severity === 'a') {
-        var lossPct = bucket.riverCall > 0 ? Math.round((bucket.riverCallLost / bucket.riverCall) * 100) : 0;
+        var lossPct = pct(bucket.riverCallLost, bucket.riverCall) || 0;
         branchTexts.push(
           'When you called river bets with a marginal made hand you lost ' + lossPct +
           '% of the time (' + bucket.riverCallLost + ' of ' + bucket.riverCall + '). Total cost on those river calls: ' +
@@ -806,7 +806,7 @@
     if (!bucket || bucket.n < MIN_AX) return null;
 
     var perHand = perHandRate(bucket.pnl, bucket.n);
-    var winRate = bucket.n > 0 ? Math.round((bucket.won / bucket.n) * 100) : 0;
+    var winRate = pct(bucket.won, bucket.n) || 0;
 
     var openingText = 'You arrive at a postflop decision with air or overcards (no pair, no detected draw) on ' +
       bucket.n + ' hands. Net P&L is ' + fmtPnl(bucket.pnl) +
@@ -819,7 +819,7 @@
     var airSev = classifyAirCall(bucket.called, bucket.calledLost, bucket.calledPnl);
     if (airSev) {
       if (airSev.severity === 'r' || airSev.severity === 'a') {
-        var lossPct = bucket.called > 0 ? Math.round((bucket.calledLost / bucket.called) * 100) : 0;
+        var lossPct = pct(bucket.calledLost, bucket.called) || 0;
         branchTexts.push(
           'When you called a postflop bet holding air you lost ' + lossPct + '% of the time' +
           ' (' + bucket.calledLost + ' of ' + bucket.called + '). Total cost on those calls: ' +
@@ -901,7 +901,7 @@
     if (!bucket || bucket.n < MIN_AX) return null;
 
     var perHand = perHandRate(bucket.pnl, bucket.n);
-    var winRate = bucket.n > 0 ? Math.round((bucket.won / bucket.n) * 100) : 0;
+    var winRate = pct(bucket.won, bucket.n) || 0;
     var aggressivePct = bucket.n > 0 ? (bucket.aggressive / bucket.n) * 100 : 0;
     var passivePct = 100 - aggressivePct;
 
@@ -1015,7 +1015,7 @@
     if (!bucket || bucket.n < MIN_AX) return null;
 
     var perHand = perHandRate(bucket.pnl, bucket.n);
-    var winRate = bucket.n > 0 ? Math.round((bucket.won / bucket.n) * 100) : 0;
+    var winRate = pct(bucket.won, bucket.n) || 0;
     var callPct = bucket.n > 0 ? (bucket.called / bucket.n) * 100 : 0;
 
     var openingText = 'You hold a weak draw (gutshot straight) on ' + bucket.n +

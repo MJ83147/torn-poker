@@ -27,7 +27,7 @@ function renderPosition(container, d, hands) {
     var vp2 = pct(s.vpip, s.hands);
     var avgPot = Math.round(s.pot / s.hands);
     var avgPotDisplay = _displayBB && s.potBBCount > 0
-      ? (s.potBB / s.potBBCount).toFixed(1) + ' BB'
+      ? fmtBBRaw(s.potBB / s.potBBCount)
       : fmt(avgPot);
     // Δ vs target VPIP: positive means looser than target band, negative means tighter.
     var band = ctx.band('vpip', p);

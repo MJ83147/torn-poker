@@ -650,15 +650,13 @@ var STYLE_LIST = ['Shark', 'TAG', 'LAG', 'Cannon', 'Rock', 'Nit', 'Station', 'Ma
 
 // Read the user's chosen style. Defaults to 'TAG'. Persisted in localStorage.
 function getUserStyle() {
-  if (typeof localStorage === 'undefined') return 'TAG';
-  var s = null;
-  try { s = localStorage.getItem('tc_user_style'); } catch (_) {}
+  var s = getString('tc_user_style', null);
   return (s && STYLE_OFFSETS[s]) ? s : 'TAG';
 }
 
 function setUserStyle(style) {
   if (!STYLE_OFFSETS[style]) return;
-  try { localStorage.setItem('tc_user_style', style); } catch (_) {}
+  setString('tc_user_style', style);
 }
 
 // The persisted style now serves as the player's target playstyle. Alias

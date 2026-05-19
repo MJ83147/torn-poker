@@ -143,15 +143,11 @@ function heroSeatToAppPositions(hero) {
 var RANGE_STATE_KEY = 'range.filters';
 
 function loadRangeState() {
-  try {
-    var raw = localStorage.getItem(RANGE_STATE_KEY);
-    if (!raw) return {};
-    return JSON.parse(raw) || {};
-  } catch (e) { return {}; }
+  return getJSON(RANGE_STATE_KEY, {}) || {};
 }
 
 function saveRangeState(state) {
-  try { localStorage.setItem(RANGE_STATE_KEY, JSON.stringify(state)); } catch (e) {}
+  setJSON(RANGE_STATE_KEY, state);
 }
 
 var GRID_R = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2'];

@@ -267,12 +267,10 @@
         head.onclick = function() {
           card.classList.toggle('is-collapsed');
           var id = card.getAttribute('data-story-id');
-          if (id && window.sessionStorage) {
-            try {
-              var key = 'story-open:' + id;
-              if (card.classList.contains('is-collapsed')) sessionStorage.removeItem(key);
-              else sessionStorage.setItem(key, '1');
-            } catch (e) {}
+          if (id) {
+            var key = 'story-open:' + id;
+            if (card.classList.contains('is-collapsed')) removeSession(key);
+            else setSession(key, '1');
           }
         };
       })(cards[i]);
@@ -326,10 +324,7 @@
     var storyId = finding.sectionId ? (finding.sectionId + ':' + (finding.id || finding.name || '')) : (finding.id || finding.name || '');
     var teaser = buildTeaser(finding);
 
-    var isOpen = false;
-    if (storyId && typeof window !== 'undefined' && window.sessionStorage) {
-      try { isOpen = sessionStorage.getItem('story-open:' + storyId) === '1'; } catch (e) {}
-    }
+    var isOpen = storyId ? getSession('story-open:' + storyId, null) === '1' : false;
     var classes = 'ins story-card story-card-' + sev + (isOpen ? '' : ' is-collapsed');
 
     var html = '<div class="' + classes + '" data-story-id="' + escapeHtml(storyId) + '">';

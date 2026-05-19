@@ -332,7 +332,7 @@ function showAllInResults(container) {
       '<td class="allin-cards">' + ah.opponents.map(function (opp) { return displayCards(opp); }).join('<br>') + '</td>' +
       '<td class="allin-cards">' + (ah.fullBoard.length ? displayCards(ah.fullBoard) : '\u2014') + '</td>' +
       '<td>' + ah.street + '</td>' +
-      '<td>' + (ah.equity * 100).toFixed(1) + '%</td>' +
+      '<td>' + fmtPct(ah.equity * 100) + '</td>' +
       '<td>' + fmt(Math.round(ah.fairShare)) + '</td>' +
       '<td class="' + actCls + '">' + fmtPnl(Math.round(ah.actualResult)) + '</td>' +
       '<td class="' + evCls + '">' + (ah.evDiff >= 0 ? '+' : '') + fmt(Math.round(ah.evDiff)) + '</td>' +

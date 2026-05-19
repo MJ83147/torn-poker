@@ -1,3 +1,71 @@
+// ── STORAGE WRAPPERS ─────────────────────────────────────────────────────────
+// Thin try/catch wrappers around localStorage / sessionStorage so panels and
+// helpers never call the storage APIs directly. Read returns `fallback` on
+// any error (private mode, quota, corrupt JSON, missing key). Write logs and
+// swallows, matching the starred-hands pattern below.
+
+function getJSON(key, fallback) {
+  try {
+    var raw = localStorage.getItem(key);
+    if (raw == null) return fallback;
+    return JSON.parse(raw);
+  } catch (e) {
+    return fallback;
+  }
+}
+
+function setJSON(key, value) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch (e) {
+    console.warn('[storage] localStorage write failed for ' + key + ':', e);
+  }
+}
+
+// String variant for keys that hold raw strings, not JSON. Useful when the
+// on-disk format predates the JSON-everywhere convention or when the value is
+// a single token like 'TAG'.
+function getString(key, fallback) {
+  try {
+    var raw = localStorage.getItem(key);
+    return raw == null ? fallback : raw;
+  } catch (e) {
+    return fallback;
+  }
+}
+
+function setString(key, value) {
+  try {
+    localStorage.setItem(key, value);
+  } catch (e) {
+    console.warn('[storage] localStorage write failed for ' + key + ':', e);
+  }
+}
+
+function getSession(key, fallback) {
+  try {
+    var raw = sessionStorage.getItem(key);
+    if (raw == null) return fallback;
+    return raw;
+  } catch (e) {
+    return fallback;
+  }
+}
+
+function setSession(key, value) {
+  try {
+    sessionStorage.setItem(key, value);
+  } catch (e) {
+    console.warn('[storage] sessionStorage write failed for ' + key + ':', e);
+  }
+}
+
+function removeSession(key) {
+  try {
+    sessionStorage.removeItem(key);
+  } catch (e) { /* noop */ }
+}
+
 // ── STARRED HANDS (localStorage persistence) ─────────────────────────────────
 
 function getHandKey(h) {

@@ -191,7 +191,7 @@
     // Sort weak buckets by share to name the loudest two.
     weakBuckets.sort(function(a, b) { return b.played - a.played; });
     var top = weakBuckets.slice(0, 2).map(function(b) {
-      return b.key + ' (' + Math.round((b.played / totalPlayed) * 100) + '%)';
+      return b.key + ' (' + (pct(b.played, totalPlayed) || 0) + '%)';
     }).join(' and ');
     var branchText = 'At ' + position + ', ' + Math.round(weakPct) + '% of the hands you play are ' +
       (group === 'early' ? 'outside the premium and broadway range' :

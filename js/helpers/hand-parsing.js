@@ -1,5 +1,11 @@
 // ── HAND PARSING ──────────────────────────────────────────────────────────────
 
+// Parse a comma-formatted integer string. "$3,250" -> 3250, "1,000,000" -> 1e6.
+// Returns NaN on garbage so the caller can decide to skip.
+function parseAmount(str) {
+  return parseInt(String(str || '').replace(/,/g, ''), 10);
+}
+
 // Parse action log lines into structured events for analysis
 function parseActions(actions) {
   if (actions && actions._parsed) return actions._parsed;
@@ -29,7 +35,7 @@ function parseActions(actions) {
     const author = line.slice(0, ci);
     const msg = line.slice(ci + 2);
     const am = msg.match(/\$([0-9,]+)/);
-    const amount = am ? parseInt(am[1].replace(/,/g, '')) : 0;
+    const amount = am ? parseAmount(am[1]) : 0;
     let type = null;
     if (msg.startsWith('folded')) type = 'fold';
     else if (msg.startsWith('checked')) type = 'check';
@@ -201,7 +207,7 @@ function estimateEffStackBB(hand) {
     if (a.type === 'raise' && a.msg && a.msg.indexOf(' to ') !== -1) {
       var m = a.msg.match(/to \$?([0-9,]+)/);
       if (m) {
-        var total = parseInt(m[1].replace(/,/g, ''), 10);
+        var total = parseAmount(m[1]);
         if (!committed[a.author] || total > committed[a.author]) committed[a.author] = total;
         continue;
       }
@@ -243,7 +249,7 @@ function calcInvestmentFromActions(actions) {
     if (line.indexOf('folded') !== -1) continue;
     if (line.indexOf('checked') !== -1) continue;
     const dm = line.match(/\$([0-9,]+)/);
-    if (dm) total += parseInt(dm[1].replace(/,/g, ''), 10);
+    if (dm) total += parseAmount(dm[1]);
   }
   return total;
 }

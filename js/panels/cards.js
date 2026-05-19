@@ -25,9 +25,9 @@ function renderCards(container, d, hands) {
     '</div>';
   cardsHtml += htData.map(function(ht) {
     var s = d.htMap[ht];
-    var outerPct = Math.round(s.dealt / maxDealt * 100);
-    var wonPct = s.dealt > 0 ? Math.round(s.won / s.dealt * 100) : 0;
-    var playedNotWonPct = s.dealt > 0 ? Math.round((s.played - s.won) / s.dealt * 100) : 0;
+    var outerPct = pct(s.dealt, maxDealt) || 0;
+    var wonPct = pct(s.won, s.dealt) || 0;
+    var playedNotWonPct = pct(s.played - s.won, s.dealt) || 0;
     var unplayedPct = 100 - wonPct - playedNotWonPct;
     var wrPct = s.played > 0 ? pct(s.won, s.played) : null;
     var wrCol = wrPct === null ? 'var(--dim)' : wrPct >= 55 ? 'var(--green)' : wrPct <= 38 ? 'var(--red)' : 'var(--amber)';

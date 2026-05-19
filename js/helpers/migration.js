@@ -88,7 +88,7 @@ function backfillHandData(hands) {
       if (needPot) {
         var wonMatch = line.match(/won \$([0-9,]+)/);
         if (wonMatch) {
-          var amt = parseInt(wonMatch[1].replace(/,/g, ''), 10);
+          var amt = parseAmount(wonMatch[1]);
           if (amt > totalPot) totalPot = amt;
           if (isMe) { heroWon = true; wonAmount = amt; }
         }
@@ -97,7 +97,7 @@ function backfillHandData(hands) {
       // Track hero outcome
       if (needOutcome && isMe) {
         if (line.indexOf('folded') !== -1) heroFolded = true;
-        if (line.match(/won \$([0-9,]+)/)) { heroWon = true; wonAmount = parseInt(line.match(/\$([0-9,]+)/)[1].replace(/,/g, ''), 10); }
+        if (line.match(/won \$([0-9,]+)/)) { heroWon = true; wonAmount = parseAmount(line.match(/\$([0-9,]+)/)[1]); }
         if (line.indexOf('lost') !== -1) heroLost = true;
       }
     }

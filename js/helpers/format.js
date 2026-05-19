@@ -23,7 +23,12 @@ function fmt(n) {
 
 function fmtBB(amount, bb) {
   if (!_displayBB || !bb || bb <= 0) return fmt(amount);
-  var bbs = amount / bb;
+  return fmtBBRaw(amount / bb);
+}
+
+// Format a pre-divided BB value with the same scale rules as fmtBB. Use when
+// the caller has already done the chips/bb division.
+function fmtBBRaw(bbs) {
   if (Math.abs(bbs) >= 100) return Math.round(bbs) + ' BB';
   if (Math.abs(bbs) >= 10) return bbs.toFixed(1) + ' BB';
   return bbs.toFixed(2) + ' BB';

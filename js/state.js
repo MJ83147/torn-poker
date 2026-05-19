@@ -103,24 +103,13 @@ function _loadV1Blob(db, callback) {
     var tx = db.transaction(DB_STORE, 'readonly');
     var get = tx.objectStore(DB_STORE).get(DB_KEY);
     get.onsuccess = function() {
-      if (get.result) {
-        callback(get.result);
-      } else {
-        // IDB empty, try localStorage
-        var result = null;
-        try { result = JSON.parse(localStorage.getItem('tc_poker_analysis')); } catch (_) {}
-        callback(result);
-      }
+      callback(get.result || getJSON('tc_poker_analysis', null));
     };
     get.onerror = function() {
-      var result = null;
-      try { result = JSON.parse(localStorage.getItem('tc_poker_analysis')); } catch (_) {}
-      callback(result);
+      callback(getJSON('tc_poker_analysis', null));
     };
   } else {
-    var result = null;
-    try { result = JSON.parse(localStorage.getItem('tc_poker_analysis')); } catch (_) {}
-    callback(result);
+    callback(getJSON('tc_poker_analysis', null));
   }
 }
 
@@ -189,7 +178,7 @@ var State = {
   save: function(data) {
     _openDB(function(db) {
       if (!db) {
-        try { localStorage.setItem('tc_poker_analysis', JSON.stringify(data)); } catch (_) {}
+        setJSON('tc_poker_analysis', data);
         return;
       }
       var hands = data.hands || [];
@@ -233,9 +222,7 @@ var State = {
   loadSaved: function(callback) {
     _openDB(function(db) {
       if (!db) {
-        var result = null;
-        try { result = JSON.parse(localStorage.getItem('tc_poker_analysis')); } catch (_) {}
-        callback(result);
+        callback(getJSON('tc_poker_analysis', null));
         return;
       }
 

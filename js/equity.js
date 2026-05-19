@@ -140,7 +140,7 @@ function renderEquityResults(container, simResult) {
 
   for (var r = 0; r < results.length; r++) {
     var res = results[r];
-    var eqPct = (res.equity * 100).toFixed(1);
+    var eqPct = fmtPct(res.equity * 100);
     var barWidth = Math.round(res.equity * 100);
     var qualClass = res.guidance.quality === 'good' ? 'eq-good' : res.guidance.quality === 'bad' ? 'eq-bad' : 'eq-neutral';
 
@@ -154,7 +154,7 @@ function renderEquityResults(container, simResult) {
       var texCls = res.texture.wetness === 'wet' ? 'tex-wet' : res.texture.wetness === 'dry' ? 'tex-dry' : 'tex-med';
       html += '<span class="board-texture-badge ' + texCls + '">' + res.texture.label + '</span>';
     }
-    html += '<div class="eq-pct">' + eqPct + '%</div>';
+    html += '<div class="eq-pct">' + eqPct + '</div>';
     html += '<div class="eq-bar-track"><div class="eq-bar-fill" style="width:' + barWidth + '%"></div></div>';
     html += '</div>';
 

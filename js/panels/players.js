@@ -33,10 +33,10 @@ function renderPlayers(container, d, hands) {
   var filtered = opponents.filter(function(o) { return o.hands >= 2; });
 
   function getWatchedPlayers() {
-    try { return JSON.parse(localStorage.getItem('tc_watched_players') || '[]'); } catch(e) { return []; }
+    return getJSON('tc_watched_players', []);
   }
   function setWatchedPlayers(list) {
-    localStorage.setItem('tc_watched_players', JSON.stringify(list));
+    setJSON('tc_watched_players', list);
   }
   function toggleWatch(name) {
     var list = getWatchedPlayers();
