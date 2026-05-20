@@ -1,13 +1,3 @@
-// ── Shared Chart.js configuration and factory ──
-
-/**
- * Read CSS custom properties used by all charts.
- * Returns:
- *   { dim, border, green, gold, red, amber }   // all colour strings
- * All keys are always set (with hex fallbacks if the variables are missing).
- * The trends panel had a regression where the caller used `styles` for what
- * this helper returns as `colors` - watch for that name drift.
- */
 function getChartColors() {
   var s = getComputedStyle(document.documentElement);
   return {
@@ -20,9 +10,6 @@ function getChartColors() {
   };
 }
 
-/**
- * Shared tooltip style (everything except callbacks).
- */
 function chartTooltip(colors, callbacks) {
   return {
     backgroundColor: 'rgba(20,20,28,0.95)',
@@ -37,9 +24,6 @@ function chartTooltip(colors, callbacks) {
   };
 }
 
-/**
- * Shared legend style. Pass show=false to hide.
- */
 function chartLegend(colors, show) {
   if (show === false) return { display: false };
   return {
@@ -56,10 +40,6 @@ function chartLegend(colors, show) {
   };
 }
 
-/**
- * Build an x-scale config.
- * opts: { stacked, title, maxTicksLimit, maxRotation, tickCallback, tickSize }
- */
 function chartXScale(colors, opts) {
   opts = opts || {};
   var scale = {
@@ -85,10 +65,6 @@ function chartXScale(colors, opts) {
   return scale;
 }
 
-/**
- * Build a y-scale config.
- * opts: { stacked, max, tickCallback, gridColor, gridWidth, tickSize }
- */
 function chartYScale(colors, opts) {
   opts = opts || {};
   var scale = {
@@ -106,10 +82,6 @@ function chartYScale(colors, opts) {
   return scale;
 }
 
-/**
- * Build a zero-line y-scale (highlights the 0 line).
- * opts: { tickCallback, tickSize }
- */
 function chartYScaleZeroLine(colors, opts) {
   opts = opts || {};
   return {
@@ -130,15 +102,6 @@ function chartYScaleZeroLine(colors, opts) {
   };
 }
 
-/**
- * Create a Chart.js chart with shared defaults.
- *
- * @param {HTMLCanvasElement} canvas
- * @param {string} type - 'line' | 'bar'
- * @param {object} data - { labels, datasets }
- * @param {object} opts - overrides merged into options
- * @returns {Chart}
- */
 function createChart(canvas, type, data, opts) {
   opts = opts || {};
   var defaults = {
@@ -146,7 +109,6 @@ function createChart(canvas, type, data, opts) {
     maintainAspectRatio: true,
     aspectRatio: opts.aspectRatio || 2.8,
   };
-  // Merge interaction if provided
   if (opts.interaction) defaults.interaction = opts.interaction;
 
   defaults.plugins = {

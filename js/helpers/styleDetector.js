@@ -1,23 +1,3 @@
-// ── STYLE DETECTOR ───────────────────────────────────────────────────────────
-// Classify the player's actual play into one of eight archetypal styles based
-// on VPIP and aggression factor. Returns {name, confidence, vpip, af, pfr,
-// reason}.
-//
-// Style bands (tunable):
-//   Maniac : VPIP >= 45 AND AF >= 40
-//   LAG    : VPIP >= 28 AND AF >= 30 (and not Maniac)
-//   Cannon : VPIP >= 28 AND AF in [20, 30) (loose mid-aggression)
-//   Station: VPIP >= 28 AND AF < 20         (loose passive)
-//   Shark  : VPIP in [14, 25] AND AF >= 35  (very aggressive tight player)
-//   TAG    : VPIP in [14, 28) AND AF in [25, 35) (default tight-aggressive)
-//   Rock   : VPIP in [14, 28) AND AF < 25
-//   Nit    : VPIP < 14
-//
-// Confidence:
-//   high   : >= 100 hands
-//   medium : >=  40 hands
-//   low    : <   40 hands
-
 function _styleConfidence(n) {
   if (!n) return 'low';
   if (n >= 100) return 'high';
@@ -34,13 +14,11 @@ function _styleClassify(vpip, af) {
     return 'Station';
   }
   if (vpip < 14) return 'Nit';
-  // VPIP in [14, 28) range
   if (af >= 35) return 'Shark';
   if (af >= 25) return 'TAG';
   return 'Rock';
 }
 
-// One-line plain-English explanation of why we picked this style.
 function _styleReason(name, vpip, af, pfr) {
   var v = (vpip != null) ? Math.round(vpip) + '% VPIP' : 'unknown VPIP';
   var a = (af != null) ? Math.round(af) + '% aggression' : 'unknown aggression';
@@ -56,7 +34,6 @@ function _styleReason(name, vpip, af, pfr) {
   return v + ', ' + a + '.';
 }
 
-// Read VPIP / AF / PFR off the analyse() result.
 function _readStyleStats(d) {
   if (!d) return { vpip: null, af: null, pfr: null, n: 0 };
   var n = d.n || 0;
@@ -69,7 +46,6 @@ function _readStyleStats(d) {
   return { vpip: vpip, af: af, pfr: pfr, n: n };
 }
 
-// Public: detect the player's current style from analyse() output `d`.
 function detectCurrentStyle(d) {
   var stats = _readStyleStats(d);
   var name = _styleClassify(stats.vpip, stats.af) || 'Shark';
@@ -83,7 +59,6 @@ function detectCurrentStyle(d) {
   };
 }
 
-// Static descriptions for the welcome cards and style map title.
 var STYLE_DESCRIPTIONS = {
   Shark:   'Tight and very aggressive. Picks spots well, hammers value, applies pressure.',
   TAG:     'Tight-aggressive. The default winning style. Few hands, played hard.',

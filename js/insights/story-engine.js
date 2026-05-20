@@ -1,29 +1,3 @@
-// ── STORY ENGINE ──────────────────────────────────────────────────────────────
-//
-// Section-level story runner. Handles the richer pattern from the design:
-//
-//   Opening statement
-//   → branched interrogations (seat count, position, hand type, etc.)
-//   → Impact
-//   → So what
-//
-// Stories register through Sections.defineSection. Each section exports a
-// `run(d, extras, hands)` function that returns an array of findings. The
-// renderer calls Sections.evaluateSections to collect findings across every
-// registered section, then filters per panel.
-//
-// A finding from this engine looks like:
-//   {
-//     id, name, panel, sectionId,
-//     severity: 'r'|'a'|'g'|'n',
-//     score: number,
-//     openingText: string,
-//     branchTexts: string[],   // one per branch that fired (empty allowed)
-//     impactText: string|null,
-//     soWhatText: string|null,
-//     meta: { ... }            // free-form drill-down data
-//   }
-
 (function() {
   var SECTIONS = [];
 
@@ -34,10 +8,7 @@
     SECTIONS.push(spec);
   }
 
-  // Findings are a pure function of `d` (and the `hands` that produced it).
-  // Every panel that runs section logic ends up calling this with the same
-  // cached `d` object identity until the filter changes, so memoising on
-  // `d` is safe and turns the 12+ per-tab calls into one shared computation.
+  // Memoise on `d` identity so the 12+ per-tab calls share one computation.
   // WeakMap auto-evicts when the old `d` is garbage-collected.
   var _findingsByD = (typeof WeakMap !== 'undefined') ? new WeakMap() : null;
 
@@ -74,17 +45,10 @@
     return out;
   }
 
-  // ── HELPERS ────────────────────────────────────────────────────────────────
-  //
-  // Sections compose findings out of these primitives. Each is pure: no DOM,
-  // no state, no rendering. Keep it that way.
-
-  // The dominant seat bucket integer (e.g. 6 for a 6-max player), or null.
   function dominantSeatsCount(d) {
     return dominantSeats(d);
   }
 
-  // Format a band as "X to Y%". Accepts {tight, loose} or {floor, ceiling}.
   function fmtBand(band) {
     if (!band) return '';
     if (band.tight != null && band.loose != null) return Math.round(band.tight) + ' to ' + Math.round(band.loose) + '%';
@@ -92,16 +56,6 @@
     return '';
   }
 
-  // Classify a single value against a band. Returns
-  // { severity: 'r'|'a'|'g'|'n', direction: 'high'|'low'|'mid', deltaUnits }.
-  //
-  // Severity:
-  //   'r' - significant leak (more than 1 band-width past the boundary)
-  //   'a' - slight leak (less than 1 band-width past the boundary)
-  //   'g' - on-target or strength
-  //   'n' - no band, no opinion (commentary mode)
-  // strengthSide ('high'|'low'): if set, treat deltas in that direction as
-  // strengths rather than leaks when within 1 band-width.
   function classify(value, band, strengthSide) {
     if (value == null) return null;
     if (!band) return { severity: 'n', direction: 'mid', deltaUnits: 0 };
@@ -125,8 +79,6 @@
     return { severity: 'a', direction: direction, deltaUnits: deltaUnits };
   }
 
-  // Combine an array of pillar severities into the story-level severity.
-  // The worst wins. 'r' > 'a' > 'n' > 'g'.
   function combineSeverity(severities) {
     var rank = { r: 4, a: 3, n: 2, g: 1 };
     var best = null;
@@ -140,8 +92,6 @@
     return best || 'g';
   }
 
-  // Score for ranking findings. Mirrors the bootstrap so section findings and
-  // legacy framework findings can sort in one list.
   function score(severity, deltaUnits) {
     var base;
     if (severity === 'r') base = 30;
@@ -151,25 +101,6 @@
     return base + Math.min(10, Math.round((deltaUnits || 0) * 4));
   }
 
-  // P&L gate. Given the metric verdict on a slice plus comparator P&L, classify
-  // the pillar as one of:
-  //   'leak'         metric is off and the off-target slice is meaningfully
-  //                  worse on P&L than the comparator
-  //   'monitor'      metric is off but P&L on the off slice holds up
-  //   'play-problem' metric is on but P&L on the on slice is poor
-  //   'silent'       nothing to say
-  //
-  // Inputs:
-  //   severity       'r' | 'a' | 'g' | 'n' from classify()
-  //   pnlOff         total P&L on the off-target slice (negative = loss)
-  //   pnlOn          total P&L on the on-target slice
-  //   nOff           hand count on the off slice
-  //   nOn            hand count on the on slice
-  //   opts           { minCell, minGap }  defaults: minCell=10, minGap=0
-  //
-  // The "meaningfully below" rule: per-hand P&L on the off slice must be at
-  // least `minGap` below per-hand P&L on the on slice. When pnlOff is just
-  // outright negative and pnlOn is non-negative, treat that as meaningful too.
   function classifyPnlGate(severity, pnlOff, pnlOn, nOff, nOn, opts) {
     opts = opts || {};
     var minCell = opts.minCell != null ? opts.minCell : 10;
@@ -195,11 +126,6 @@
     return 'silent';
   }
 
-  // ── RENDERING ──────────────────────────────────────────────────────────────
-  //
-  // Section findings render as one .ins card per story with extra inner blocks
-  // for branches, impact, and so-what. Reusable by every section panel.
-
   function escapeHtml(s) {
     if (s == null) return '';
     return String(s)
@@ -212,9 +138,6 @@
 
   var SEV_WORDS = { g: 'Good', r: 'Leak', a: 'Warning', n: 'Note', o: 'Info' };
 
-  // Stash for example-hand groups. Buttons in the rendered HTML carry a data-ex
-  // id; the setTimeout wiring below reads from this map and opens the existing
-  // showExampleHandListModal. Cleared lazily as cards re-render.
   var EXAMPLE_LOOKUP = {};
 
   function renderExampleButtons(finding) {
@@ -277,8 +200,6 @@
     }
   }
 
-  // Build a short teaser from the finding's branch list or impact. Caps at
-  // ~110 chars so it sits as a single readable line under the title.
   function buildTeaser(finding) {
     var TEASER_MAX = 110;
     var raw = '';
@@ -294,9 +215,6 @@
     return raw.slice(0, TEASER_MAX - 1).replace(/[\s,;:.-]+$/, '') + '…';
   }
 
-  // Synthesise a one-sentence verdict from a panel's findings. Picks the
-  // highest-severity finding and returns its name + opening text or impact.
-  // Returns the fallback string when there are no findings.
   function synthesiseVerdict(findings, fallback) {
     if (!findings || !findings.length) {
       return fallback || 'Nothing notable in this panel yet. Keep playing to surface more patterns.';
@@ -364,7 +282,6 @@
     var parts = [];
     for (var i = 0; i < findings.length; i++) parts.push(renderStoryCard(findings[i]));
     var html = '<div class="story-grid">' + parts.join('') + '</div>';
-    // Wire example buttons and card toggles after the HTML is injected.
     setTimeout(function() {
       var nodes = document.querySelectorAll('.story-grid');
       for (var i = 0; i < nodes.length; i++) {
@@ -375,13 +292,10 @@
     return html;
   }
 
-  // ── PUBLIC API ─────────────────────────────────────────────────────────────
-
   window.Sections = {
     defineSection: defineSection,
     evaluateSections: evaluateSections,
     findingsForPanel: findingsForPanel,
-    // helpers
     classify: classify,
     combineSeverity: combineSeverity,
     classifyPnlGate: classifyPnlGate,
@@ -389,7 +303,6 @@
     fmtPct: fmtPct,
     fmtBand: fmtBand,
     score: score,
-    // rendering
     renderStoryCard: renderStoryCard,
     renderFindings: renderFindings,
     renderVerdict: renderVerdict,

@@ -1,16 +1,10 @@
-// ── ALL-IN EV PANEL (Luck Tracker) ────────────────────────────────────────────
-
 var _allinChart = null;
 var _allinHands = null;
-// Cache the candidate-detection pass keyed by the filtered hands array. Walking
-// 20k+ hands every time the user clicks back into the panel is the freeze.
 var _allinCandidatesFor = null;
 var _allinCandidates = null;
 
-// ── Parse reveals from action log ────────────────────────────────────────────
 function parseReveals(actions) {
   var results = [];
-  // Match both normalized (T♠) and raw (10spades) card formats
   var CARD_RE = /(\d{1,2}|[AKQJTakqjt])([♠♥♦♣]|[a-z]+)/g;
 
   for (var i = 0; i < (actions || []).length; i++) {
@@ -28,11 +22,9 @@ function parseReveals(actions) {
       var rank = m[1];
       var suitPart = m[2];
       if (rank === '10') rank = 'T';
-      // Already a Unicode suit symbol - use directly
       if (suitPart.length === 1 && '♠♥♦♣'.indexOf(suitPart) !== -1) {
         cards.push(rank + suitPart);
       } else {
-        // Raw suit word - convert via SUIT_WORD
         var suit = SUIT_WORD[suitPart.toLowerCase()];
         if (suit) cards.push(rank + suit);
       }
@@ -50,7 +42,6 @@ function parseReveals(actions) {
   return results;
 }
 
-// ── Detect all-in hands (fast - no equity calc) ─────────────────────────────
 function detectAllInCandidates(hands) {
   var results = [];
 
@@ -93,7 +84,6 @@ function detectAllInCandidates(hands) {
 
     var heroHole = [normCardCode(h.hole[0]), normCardCode(h.hole[1])];
 
-    // Find hero's name so we can exclude their reveal from opponents
     var heroName = null;
     for (var ni = 0; ni < acts.length; ni++) {
       if (acts[ni].isMe) { heroName = acts[ni].author; break; }
@@ -149,16 +139,9 @@ function detectAllInCandidates(hands) {
   return results;
 }
 
-// Multiway equity now flows through simulateStreet in equity-monte-carlo.js.
-
-// ── Card display - uses shared displayCard/displayCards from helpers.js ───────
-
-// ── Render panel (instant - no simulation) ───────────────────────────────────
 function renderAllIn(container, d, hands) {
   if (_allinChart) { _allinChart.destroy(); _allinChart = null; }
 
-  // Reuse last detection when the filtered set hasn't changed identity (the
-  // upstream cache rebuilds the array only when the filter key changes).
   if (_allinCandidatesFor === hands && _allinCandidates) {
     _allinHands = _allinCandidates;
   } else {
@@ -177,17 +160,12 @@ function renderAllIn(container, d, hands) {
   var html = '<div class="panel-title">All-In EV</div>';
   html += '<div class="panel-desc">Compares actual results vs expected value at all-in showdowns to measure variance.</div>';
 
-  // Verdict + section story (All-in Pressure). Reads d.facedAllin / foldAllin
-  // / callAllin / wonAllin so it works without running the Monte Carlo step.
-  // Reuses the cached d from getFilteredAnalysis() rather than running
-  // analyse(hands) again — that second pass was a full 20k-hand walk.
   if (typeof Sections !== 'undefined' && typeof Sections.evaluateSections === 'function' && d) {
     var allinFindings = Sections.findingsForPanel(Sections.evaluateSections(d, {}, hands), 'All-In EV');
     html += Sections.renderVerdict(allinFindings, 'Not enough all-in spots yet to call out a pattern.');
     if (allinFindings.length) html += '<div class="p-row">' + Sections.renderFindings(allinFindings) + '</div>';
   }
 
-  // Pre-simulation: show hand count and button
   html += '<div class="p-row"><div class="p-section cta-block">';
   html += '<div class="cta-count">' + _allinHands.length + '</div>';
   html += '<div class="dim-label mb-16">all-in showdown hands detected</div>';
@@ -195,7 +173,6 @@ function renderAllIn(container, d, hands) {
   html += '<div class="dim-label cta-note">Calculates equity for each hand using Monte Carlo simulation</div>';
   html += '</div></div>';
 
-  // Preview table (without equity columns)
   html += '<div class="p-row"><div class="p-section">';
   html += '<div class="dim-label mb-8">Detected All-In Hands</div>';
   html += '<div class="allin-table-wrap"><table class="allin-table">';
@@ -216,12 +193,10 @@ function renderAllIn(container, d, hands) {
   }
   html += '</tbody></table></div></div></div>';
 
-  // Placeholder for results after simulation
   html += '<div id="allin-results"></div>';
 
   container.innerHTML = html;
 
-  // Wire row clicks
   container.querySelectorAll('.allin-row').forEach(function (row) {
     row.onclick = function () {
       var idx = parseInt(row.getAttribute('data-allin-idx'));
@@ -229,7 +204,6 @@ function renderAllIn(container, d, hands) {
     };
   });
 
-  // Wire simulation button
   var runBtn = document.getElementById('allin-run-btn');
   if (runBtn) {
     runBtn.onclick = function () {
@@ -261,7 +235,6 @@ function renderAllIn(container, d, hands) {
   }
 }
 
-// ── Show full results after simulation completes ─────────────────────────────
 function showAllInResults(container) {
   var allInHands = _allinHands;
 
@@ -279,7 +252,6 @@ function showAllInResults(container) {
   var equityWinRate = pct(favouriteCount, allInHands.length);
   var actualWinRate = pct(actualWins, allInHands.length);
 
-  // Rebuild entire panel with full results
   var html = '<div class="panel-title">All-In EV</div>';
   html += '<div class="panel-desc">Compares actual results vs expected value at all-in showdowns to measure variance.</div>';
 
@@ -297,9 +269,6 @@ function showAllInResults(container) {
     html += '</div></div>';
   }
 
-  // Variance verdict (running hot / cold / underdog) rendered as a single
-  // sentence above the equity table. Cards retired in favour of the section
-  // story rendered earlier in the panel.
   var _aiN = allInHands.length;
   var variance = '';
   if (_aiN >= 10 && totalEvDiff > 1) {
@@ -313,7 +282,6 @@ function showAllInResults(container) {
     html += '<div class="panel-verdict">' + variance + '</div>';
   }
 
-  // Full table with equity columns
   html += '<div class="p-row"><div class="p-section">';
   html += '<div class="dim-label mb-8">All-In Hand Details</div>';
   if (cashAllIns.length < allInHands.length) {
@@ -342,7 +310,6 @@ function showAllInResults(container) {
 
   container.innerHTML = html;
 
-  // Wire row clicks
   container.querySelectorAll('.allin-row').forEach(function (row) {
     row.onclick = function () {
       var idx = parseInt(row.getAttribute('data-allin-idx'));
@@ -350,7 +317,6 @@ function showAllInResults(container) {
     };
   });
 
-  // Render chart
   if (cashAllIns.length >= 2) {
     var canvas = document.getElementById('allin-ev-chart');
     if (!canvas) return;

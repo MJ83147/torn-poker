@@ -1,5 +1,3 @@
-// ── STREET PANEL ──────────────────────────────────────────────────────────────
-
 var _streetChart = null;
 
 function renderStreet(container, d, hands) {
@@ -10,7 +8,6 @@ function renderStreet(container, d, hands) {
   var stHtml = '<div class="panel-title">Streets</div>';
   stHtml += '<div class="panel-desc">Action breakdown by preflop, flop, turn, and river.</div>';
 
-  // Verdict + section stories render above the existing per-street tables.
   var streetFindings = [];
   if (typeof Sections !== 'undefined' && typeof Sections.evaluateSections === 'function') {
     streetFindings = Sections.findingsForPanel(Sections.evaluateSections(d, {}, hands), 'Street');
@@ -31,7 +28,6 @@ function renderStreet(container, d, hands) {
   }).join('') + '</div></div>';
   stHtml += '</div></div>';
 
-  // Average bet size by street
   var stAvgBets = {};
   var stBetDisplay = {};
   var stMaxAvg = 1;
@@ -48,13 +44,11 @@ function renderStreet(container, d, hands) {
       }).join('') + '</div></div>';
   }
 
-  // Chart: Action breakdown by street
   stHtml += '<div class="p-row"><div class="sec-subtitle mt-0">Action Breakdown by Street</div>';
   stHtml += '<div class="chart-wrap-full"><canvas id="street-action-chart"></canvas></div></div>';
 
   container.innerHTML = stHtml;
 
-  // ── Render Chart.js stacked bar chart ──
   var canvas = document.getElementById('street-action-chart');
   if (!canvas) return;
 

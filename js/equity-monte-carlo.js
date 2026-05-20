@@ -1,7 +1,3 @@
-// ── EQUITY MONTE CARLO ──────────────────────────────────────────────────────
-// Fisher-Yates partial shuffle and the per-street equity simulation. Calls
-// buildDeck() and bestHand() from js/hand-evaluator.js.
-
 function shuffleDraw(deck, n) {
   for (var i = deck.length - 1; i > 0 && i >= deck.length - n; i--) {
     var j = Math.floor(Math.random() * (i + 1));
@@ -10,10 +6,6 @@ function shuffleDraw(deck, n) {
   return deck.slice(deck.length - n);
 }
 
-// ── Monte Carlo simulation ────────────────────────────────────────────────
-// Heads-up vs unknown opponent: omit villainHoles (or pass null/[]).
-// Multiway with known holes (e.g. all-in showdown): pass villainHoles as an
-// array of two-card hands. Tie share splits equity across all tied players.
 function simulateStreet(heroHole, knownBoard, iterations, villainHoles) {
   var hasKnownVillains = villainHoles && villainHoles.length > 0;
   var dead = {};
@@ -29,7 +21,6 @@ function simulateStreet(heroHole, knownBoard, iterations, villainHoles) {
   var boardNeed = 5 - knownBoard.length;
   var wins = 0, ties = 0, total = 0;
 
-  // Hero's share of the pot for one settled board (1.0 win, 0.0 loss, fractional tie).
   function shareVsKnown(fullBoard) {
     var heroScore = bestHand(heroHole.concat(fullBoard));
     var tiedCount = 0;
@@ -69,7 +60,6 @@ function simulateStreet(heroHole, knownBoard, iterations, villainHoles) {
     return { equity: (wins + ties) / total, iterations: total, exact: false };
   }
 
-  // Heads-up against one random unknown opponent.
   if (knownBoard.length === 5) {
     for (var a = 0; a < remaining.length; a++) {
       for (var b = a + 1; b < remaining.length; b++) {

@@ -1,5 +1,3 @@
-// ── CARDS PANEL ───────────────────────────────────────────────────────────────
-
 function renderCards(container, d, hands) {
   var htOrder = ['Pocket Pairs', 'Broadway', 'Ace-Rag', 'Suited Connectors', 'Suited', 'Connectors', 'Offsuit Trash'];
   var htData = htOrder.filter(function(ht) { return d.htMap[ht]; });
@@ -7,8 +5,6 @@ function renderCards(container, d, hands) {
   var cardsHtml = '<div class="panel-title">Cards</div>';
   cardsHtml += '<div class="panel-desc">Win rates by hand type: pairs, broadway, suited connectors, and more.</div>';
 
-  // Verdict + section stories. Story cards classify by postflop hand strength;
-  // the stacked bars below describe preflop hole-card type.
   var cardsFindings = [];
   if (typeof Sections !== 'undefined' && typeof Sections.evaluateSections === 'function') {
     cardsFindings = Sections.findingsForPanel(Sections.evaluateSections(d, {}, hands), 'Cards');
@@ -17,7 +13,6 @@ function renderCards(container, d, hands) {
   }
 
   cardsHtml += '<div class="p-row">';
-  // Legend
   cardsHtml += '<div class="ht-stack-legend">' +
     '<div class="ht-leg-item"><div class="ht-leg-sw leg-sw-won"></div>Won</div>' +
     '<div class="ht-leg-item"><div class="ht-leg-sw leg-sw-played"></div>Played, not won</div>' +

@@ -1,5 +1,3 @@
-// ── LOG PANEL ─────────────────────────────────────────────────────────────────
-
 var _logPage = 0;
 var _logSort = { col: null, dir: 'desc' };
 
@@ -30,7 +28,6 @@ function renderLog(container, hands) {
     var end = Math.min(start + PAGE_SIZE, sortedHands.length);
     var pageHands = sortedHands.slice(start, end);
 
-    // ── Saved hands section ──
     var savedHtml = renderSavedSection();
 
     var logHtml = '<div class="panel-title">Hand Log</div>';
@@ -50,7 +47,6 @@ function renderLog(container, hands) {
     }).join('') + '</tbody></table></div>';
     container.innerHTML = logHtml;
 
-    // Wire saved section
     wireSavedSection(container);
 
     container.querySelectorAll('.hrow[data-hand-idx]').forEach(function(row) {
@@ -92,8 +88,6 @@ function renderLog(container, hands) {
   }
   renderLogPage();
 }
-
-// ── Saved hands section (inside log panel) ────────────────────────────────────
 
 function renderSavedSection() {
   var map = getStarredHands();
@@ -201,7 +195,6 @@ function refreshSavedSection(container) {
   wireSavedSection(container);
 }
 
-// Keep renderSavedHands for backward compat (called from modal)
 function renderSavedHands() {
   var logPanel = document.getElementById('p-log');
   if (logPanel) refreshSavedSection(logPanel);

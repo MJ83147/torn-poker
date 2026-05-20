@@ -1,10 +1,3 @@
-// ── EQUITY (orchestrator + rendering) ───────────────────────────────────────
-// Wires the evaluator + Monte Carlo + guidance modules into the modal that
-// drops in next to a hand. The heavy math lives in:
-//   js/hand-evaluator.js       (5-card scoring, best-5-of-N, made-hand classifier)
-//   js/equity-monte-carlo.js   (shuffle + simulateStreet)
-//   js/equity-guidance.js      (per-street hero summary + coaching copy)
-
 function runEquitySimulation(hand) {
   var heroHole = hand.hole.map(normCard);
   var board = (hand.board || []).map(normCard);
@@ -35,12 +28,10 @@ function runEquitySimulation(hand) {
 
     var sim = simulateStreet(heroHole, streetBoard, sd.iters);
 
-    // Board texture + made hand + villain (post-flop only)
     var texture = streetBoard.length >= 3 ? classifyBoardTexture(streetBoard) : null;
     var madeHand = streetBoard.length >= 3 ? classifyMadeHand(heroHole, streetBoard) : null;
     var villainProfile = getPrimaryVillain(hand);
 
-    // Build priorStreets context for cross-street awareness
     var priorStreets = results.map(function (pr) {
       return {
         street: pr.street,
@@ -74,14 +65,11 @@ function runEquitySimulation(hand) {
 
     var potOddsStr = '';
 
-    // Pot size at this street
     var potSize = streetInfo ? (streetInfo.potBefore || 0) : 0;
-    // Add hero's action amount to get pot after action
     if (streetInfo && streetInfo.action && streetInfo.action.amount && streetInfo.action.type !== 'fold') {
       potSize += streetInfo.action.amount;
     }
 
-    // Board cards for this street (original non-normalised for display)
     var boardDisplay = (hand.board || []).slice(0, sd.boardSlice);
 
     results.push({
@@ -103,17 +91,13 @@ function runEquitySimulation(hand) {
     });
   }
 
-  // Generate hand summary
   var villainProfile = getPrimaryVillain(hand);
   var summary = generateHandSummary(results, hand, villainProfile);
 
   return { streets: results, summary: summary };
 }
 
-// ── UI rendering ──────────────────────────────────────────────────────────
-// Money formatting uses fmt() from helpers/format.js.
 function renderEquityResults(container, simResult) {
-  // Support both old (array) and new ({streets, summary}) return shapes
   var results = Array.isArray(simResult) ? simResult : simResult.streets;
   var summary = Array.isArray(simResult) ? null : simResult.summary;
 
@@ -147,7 +131,6 @@ function renderEquityResults(container, simResult) {
     curvePoints.push({ street: res.street, equity: res.equity });
 
     html += '<div class="eq-row">';
-    // Top line: street name, texture badge, equity %, bar
     html += '<div class="eq-row-top">';
     html += '<div class="eq-street">' + res.street + '</div>';
     if (res.texture) {
@@ -158,7 +141,6 @@ function renderEquityResults(container, simResult) {
     html += '<div class="eq-bar-track"><div class="eq-bar-fill" style="width:' + barWidth + '%"></div></div>';
     html += '</div>';
 
-    // Meta line: board cards, pot size, player count
     var metaParts = [];
     if (res.boardCards && res.boardCards.length > 0) {
       metaParts.push(res.boardCards.join(' '));
@@ -173,7 +155,6 @@ function renderEquityResults(container, simResult) {
       html += '<div class="eq-meta-line">' + metaParts.join(' · ') + '</div>';
     }
 
-    // Bottom section: badges + coaching
     var hasBottom = res.madeHand || res.guidance.text || res.villainProfile;
     if (hasBottom) {
       html += '<div class="eq-row-bottom">';
@@ -196,7 +177,6 @@ function renderEquityResults(container, simResult) {
     html += '</div>';
   }
 
-  // Equity curve SVG
   if (curvePoints.length >= 2) {
     var svgW = 240, svgH = 60, pad = 20;
     var plotW = svgW - pad * 2, plotH = svgH - pad;
@@ -215,7 +195,6 @@ function renderEquityResults(container, simResult) {
     html += '</svg></div>';
   }
 
-  // Hand summary
   if (summary && summary.text) {
     var sumClass = summary.quality === 'good' ? 'eq-good' : summary.quality === 'bad' ? 'eq-bad' : 'eq-neutral';
     html += '<div class="eq-summary">';
@@ -224,7 +203,6 @@ function renderEquityResults(container, simResult) {
     html += '</div>';
   }
 
-  // Caveats
   var hasFlopOrTurn = results.some(function (r) { return r.street === 'Flop' || r.street === 'Turn'; });
   var caveats = '<div class="eq-caveats">';
   caveats += 'Equity calculated against a single random hand. In multiway pots, true equity may be lower.';
@@ -238,12 +216,10 @@ function renderEquityResults(container, simResult) {
   container.innerHTML = html;
 }
 
-// ── Button injection ──────────────────────────────────────────────────────
 function injectEquityButton(box, hand) {
   var slot = box.querySelector('#equity-slot');
   if (!slot) return;
 
-  // Only show when simulation is meaningful
   if (!hand.hole || hand.hole.length !== 2) return;
   if (!hand.actions || !hand.actions.length) return;
 

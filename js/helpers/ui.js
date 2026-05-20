@@ -1,8 +1,4 @@
-// ── UI RENDERING HELPERS ──────────────────────────────────────────────────────
-
-// Human-readable tips used in tooltips throughout the UI
 const TIPS = {
-  // Hand type categories
   'Pocket Pairs': 'Two cards of the same rank (e.g. 9♠ 9♥). Strong preflop, vulnerable to overcards.',
   'Broadway': 'Any two of T, J, Q, K, A. High-card hands that connect on high boards.',
   'Ace-Rag': 'An ace paired with a weak kicker (2 to 9). Looks strong, but often loses to a better ace.',
@@ -10,7 +6,6 @@ const TIPS = {
   'Suited': 'Same suit, non-connecting. Backdoor flush potential only.',
   'Connectors': 'Consecutive ranks, different suits. Straight draw potential.',
   'Offsuit Trash': 'Non-connected, non-suited weak cards. Fold almost always.',
-  // Stats
   'VPIP': 'Voluntarily Put money In Pot. How often you choose to play a hand (calls and raises, not forced blinds).',
   'Win Rate': 'Percentage of hands won out of all hands that reached a result.',
   'Aggression': 'How often you raise vs call. Higher aggression means you are betting and raising more than calling.',
@@ -30,7 +25,6 @@ const TIPS = {
   'Fold to C-Bet': 'How often you fold when the preflop raiser bets the flop. High fold rates may indicate exploitability.',
   'Fold to 3-Bet': 'How often you fold when your opening raise is re-raised (3-bet). Very high fold rates let opponents steal your opens cheaply.',
   'Fold to 4-Bet': 'How often you fold when your 3-bet is re-raised (4-bet). Folding is often correct here unless you have a premium hand.',
-  // Positions
   'BTN': 'Button (Dealer). Best position at the table. Acts last on every street after the flop.',
   'SB': 'Small Blind. Forced half-bet posted before cards are dealt. Acts second-to-last preflop, first post-flop.',
   'BB': 'Big Blind. Forced full bet posted before cards are dealt. Defends the widest range preflop.',
@@ -40,35 +34,28 @@ const TIPS = {
   'LJ': 'Lojack. Three seats before the button. Early-middle position, start of the steal zone.',
   'HJ': 'Hijack. Two seats before the button. Late-middle position with decent steal opportunity.',
   'CO': 'Cutoff. One seat before the button. Strong stealing position, second best seat.',
-  // Streets
   'Preflop': 'The betting round before any community cards are dealt. Each player has only their two hole cards.',
   'Flop': 'The first three community cards dealt face up. This is where hand strength becomes clearer.',
   'Turn': 'The fourth community card. Bets typically double here.',
   'River': 'The fifth and final community card. Last chance to bet or bluff.',
-  // Actions
   'Fold': 'Discard your hand and forfeit any chips already in the pot.',
   'Check': 'Pass the action without betting, only available if nobody has bet in the current round.',
   'Bet': 'Place the first wager in a betting round. Distinct from a raise, which increases an existing bet.',
   'Call': 'Match the current bet to stay in the hand.',
   'Raise': 'Increase the current bet, forcing others to put in more to continue.',
-  // Betting concepts
   'Bluff': 'Betting or raising with a weak hand to make opponents fold better hands.',
   'Semi-Bluff': 'Betting with a drawing hand that could improve. You win if they fold now or if you hit your draw.',
   'Value Bet': 'Betting a strong hand to extract chips from weaker hands that will call.',
-  // Showdown & equity
   'Showdown': 'When remaining players reveal their cards after the final betting round to determine the winner.',
   'Equity': 'Your share of the pot based on the probability of winning. 50% equity in a $100 pot means $50 expected value.',
   'EV Diff': 'The difference between your actual result and your expected value. Positive means you ran above expectation.',
   'Fair Share': 'The portion of the pot you "deserve" based on your equity at the time of an all-in.',
 };
 
-// Switch active tab and panel
 function switchTab(tabId) {
-  // Switch panel
   document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('on'); });
   var panel = document.getElementById('p-' + tabId);
   if (panel) panel.classList.add('on');
-  // Highlight active item and active group button
   document.querySelectorAll('.tab-item').forEach(function(t) { t.classList.remove('active'); });
   document.querySelectorAll('.tab-menu-btn').forEach(function(b) { b.classList.remove('active'); });
   var item = document.querySelector('.tab-item[data-tab="' + tabId + '"]');
@@ -80,7 +67,6 @@ function switchTab(tabId) {
     var directBtn = document.querySelector('.tab-menu-btn[data-tab="' + tabId + '"]');
     if (directBtn) directBtn.classList.add('active');
   }
-  // Close any open menus and remove blur
   document.querySelectorAll('.tab-menu').forEach(function(m) { m.classList.remove('open'); });
   var pw = document.getElementById('panels-wrap');
   if (pw) pw.classList.remove('blurred');
@@ -91,13 +77,11 @@ function _toggleBackdrop(show) {
   if (pw) pw.classList.toggle('blurred', show);
 }
 
-// Tab menu open/close logic
 (function() {
   document.addEventListener('click', function(e) {
     var btn = e.target.closest('.tab-menu-btn');
     if (btn) {
       e.stopPropagation();
-      // Direct-link variant: no dropdown, just switch tabs.
       if (btn.dataset.tab) {
         document.querySelectorAll('.tab-menu').forEach(function(m) { m.classList.remove('open'); });
         _toggleBackdrop(false);
@@ -106,7 +90,6 @@ function _toggleBackdrop(show) {
       }
       var menu = btn.closest('.tab-menu');
       var wasOpen = menu.classList.contains('open');
-      // Close all menus first
       document.querySelectorAll('.tab-menu').forEach(function(m) { m.classList.remove('open'); });
       if (!wasOpen) {
         menu.classList.add('open');
@@ -122,15 +105,11 @@ function _toggleBackdrop(show) {
       switchTab(item.getAttribute('data-tab'));
       return;
     }
-    // Click outside closes all menus
     document.querySelectorAll('.tab-menu').forEach(function(m) { m.classList.remove('open'); });
     _toggleBackdrop(false);
   });
 })();
 
-// Render a row of mini stat boxes.
-//   items: [{ l, v, c, dot }] - label, value, colour key (g/r/a/text/var-name), optional dot class
-//   opts:  { columns, dim }   - optional grid-template-columns override; dim=true applies opacity 0.45
 function renderMiniRow(items, opts) {
   opts = opts || {};
   var rowAttrs = '';
@@ -144,15 +123,6 @@ function renderMiniRow(items, opts) {
   }).join('') + '</div>';
 }
 
-// Render a stats table with consistent header / row structure.
-//   columns: [{ key, label, fmt?, cls?, tip? }]
-//     key:   the property name on each row OR a function(row, idx) returning the cell value
-//     label: header text (passed through tipWrap if tip option set)
-//     fmt:   optional function(cellValue, row, idx) returning HTML for the cell
-//     cls:   optional cell class
-//     tip:   true → wrap header label in a tooltip via tipWrap
-//   rows:    array of objects (rendered in order; sort upstream)
-//   opts:    { tableClass, wrapClass } - default 'tbl', 'overflow-x'
 function renderStatsTable(rows, columns, opts) {
   opts = opts || {};
   var wrapClass = opts.wrapClass || 'overflow-x';
@@ -176,16 +146,6 @@ function tipWrap(label) {
   return '<span class="tooltip">' + label + ' <span class="tip-q">?</span><span class="tip-box">' + def + '</span></span>';
 }
 
-// Render an insight card.
-//   sev      - 'g' | 'r' | 'a' | 'n' | 'o'  (good / leak / warning / note / info)
-//   label    - title shown under the badge
-//   text     - the ANALYSIS line. What the player actually did from their data.
-//              Keep this strictly observational ("you fold 60% to 3-bets").
-//   chips    - optional [{ v, hi }] chips
-//   coaching - optional. The COACHING line. General poker advice independent
-//              of the player's specific hands ("defend wider with strong hands
-//              against 3-bets"). Renders below the analysis with a clear
-//              divider so the user knows which is which.
 function ins(sev, label, text, chips, coaching) {
   const words = { g: 'Good', r: 'Leak', a: 'Warning', n: 'Note', o: 'Info' };
   const chipHtml = chips && chips.length
@@ -201,14 +161,8 @@ function ins(sev, label, text, chips, coaching) {
   return '<div class="ins"><div class="ins-badge ' + sev + '"><div class="ins-dot"></div><div class="ins-word">' + words[sev] + '</div></div><div class="ins-label">' + label + '</div><div class="ins-text">' + text + '</div>' + chipHtml + coachingHtml + '</div>';
 }
 
-// Insight helper that injects a "See example hands" button and wires its click.
-// exampleHands can be a single hand or an array of hands.
-//   coachingNote - shown in the example-hand modal (can reference "this hand").
-//   coaching     - optional general-advice line shown inline on the card
-//                  (independent of any specific hand).
 function insWithExample(sev, label, text, chips, exampleHands, coachingNote, coaching) {
   const base = ins(sev, label, text, chips, coaching);
-  // Normalise to array
   var handsList = !exampleHands ? [] : Array.isArray(exampleHands) ? exampleHands : [exampleHands];
   if (!handsList.length) return base;
   const btnId = 'ex-' + Math.random().toString(36).slice(2, 8);
@@ -225,7 +179,6 @@ function insWithExample(sev, label, text, chips, exampleHands, coachingNote, coa
   return result;
 }
 
-// Wrap insight array: join them, add a fallback "needs more data" if empty
 function renderInsights(insArr, fallbackLabel, fallbackText) {
   if (!insArr.length) {
     insArr.push(ins('n', fallbackLabel, fallbackText || 'More hands needed for ' + fallbackLabel.toLowerCase() + ' patterns.', []));
@@ -233,14 +186,11 @@ function renderInsights(insArr, fallbackLabel, fallbackText) {
   return '<div class="ins-grid">' + insArr.join('') + '</div>';
 }
 
-// Render a result element: <tag class="baseClass cls">text</tag>
 function renderResult(h, tag, baseClass) {
   var pnl = getHandPnl(h);
   return '<' + tag + ' class="' + baseClass + ' ' + pnl.cls + '">' + pnl.text + '</' + tag + '>';
 }
 
-// Render the table-dynamics chips for a hand: seats · flop-bucket.
-// Returns '' if the hand hasn't been annotated yet (e.g. called before analyse()).
 function handTagsHtml(h) {
   if (!h || !h.seatBucket) return '';
   var parts = [];
@@ -251,8 +201,6 @@ function handTagsHtml(h) {
   return '<span class="ht-tags">' + parts.join('') + '</span>';
 }
 
-// Render a single hand row (used in log and player hand lists)
-// opts.starHtml: optional star column HTML (for log panel)
 function renderHandRow(h, idx, opts) {
   var myActs = getActsSummary(h);
   var res = renderResult(h, 'td', 'hrow-res');
@@ -269,7 +217,6 @@ function renderHandRow(h, idx, opts) {
     res + '</tr>';
 }
 
-// Render prev/next pagination controls
 function renderPagination(page, totalItems, pageSize, prevId, nextId) {
   var totalPages = Math.ceil(totalItems / pageSize);
   if (totalPages <= 1) return '';

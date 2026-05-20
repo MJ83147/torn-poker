@@ -1,12 +1,3 @@
-// ── OPPONENT STATS ───────────────────────────────────────────────────────────
-// Per-opponent tendency calculator, illustrative-hand finder, and exploit-
-// insight generator. Used by the players panel and by cacheOpponentProfiles()
-// in opponent-profile.js.
-
-// Walk a single hand once and produce every per-hand flag both
-// computeOpponentStats() and findInsightExamples() need. Keeps the action-
-// classification logic in one place; the two consumers just accumulate or
-// bucket from the returned object.
 function classifyHandForPlayer(h, playerName) {
   var acts = parseActions(h ? h.actions : null);
   var playerActs = [];
@@ -47,7 +38,6 @@ function classifyHandForPlayer(h, playerName) {
 
   var limpedPre = calledPre && !raisedPre;
 
-  // C-bet: raised pre, saw flop, first flop action by player was bet/raise.
   var cbetOpp = raisedPre && seenPostFlop;
   var cbetDone = false;
   if (cbetOpp) {
@@ -58,9 +48,6 @@ function classifyHandForPlayer(h, playerName) {
     }
   }
 
-  // Walk full action list for "opponent raise then player response on the
-  // same street". Track both per-encounter counts (for the rate denominator)
-  // and per-hand booleans (for the example-hand buckets).
   var facedRaiseCount = 0, foldedToRaiseCount = 0;
   var facedRaiseThisHand = false, foldedToRaiseThisHand = false, calledRaiseThisHand = false;
   for (var ai = 0; ai < acts.length; ai++) {
@@ -82,9 +69,6 @@ function classifyHandForPlayer(h, playerName) {
     }
   }
 
-  // Showdown detection from the raw action lines. handHasShowdown matches any
-  // " reveals " in the hand; playerReveals only captures lines mentioning the
-  // target player and parses the strength group out of the trailing "(...)".
   var handHasShowdown = false;
   var playerReveals = [];
   var raw = (h && h.actions) ? h.actions : [];
@@ -124,16 +108,6 @@ function classifyHandForPlayer(h, playerName) {
   };
 }
 
-// Compute opponent tendencies from their actions across all shared hands.
-// Returns a stats object that the profile cache and the exploit-insight
-// generator both read from. Shape:
-//   {
-//     hands, vpipHands, pfrHands, limpHands, foldPreHands,
-//     totalRaises, totalCalls, totalChecks, totalFolds, totalActions,
-//     cbetOpps, cbetDone, facedRaise, foldedToRaise,
-//     sawFlop, wentToShowdown, wonAtShowdown,
-//     showdownStrong, showdownWeak, reveals
-//   }
 function computeOpponentStats(hands, playerName) {
   var s = {
     hands: 0,
@@ -199,10 +173,6 @@ function computeOpponentStats(hands, playerName) {
   return s;
 }
 
-// Batch version of computeOpponentStats: walks `hands` once and produces a
-// { name -> statsObj } map for every opponent that appears. Identical numbers
-// to computeOpponentStats but O(hands) instead of O(opponents × hands), which
-// matters once the profile cache is built across tens of thousands of hands.
 function computeAllOpponentStats(hands) {
   var byName = {};
   function statsFor(name) {
@@ -268,9 +238,6 @@ function computeAllOpponentStats(hands) {
       }
     }
 
-    // facedRaise: for each raise/bet at index ri by author X, find each other
-    // opponent's first response on the same street. Mirrors the per-player loop
-    // inside classifyHandForPlayer so the numbers match exactly.
     for (var ri = 0; ri < acts.length; ri++) {
       var r = acts[ri];
       if (r.type !== 'raise' && r.type !== 'bet') continue;
@@ -289,8 +256,6 @@ function computeAllOpponentStats(hands) {
       }
     }
 
-    // Showdowns. Walk raw lines once and credit reveals to whichever known
-    // perHand author the line starts with.
     var raw = (h && h.actions) ? h.actions : [];
     var handHasShowdown = false;
     var revealStrengths = {};
@@ -345,10 +310,6 @@ function computeAllOpponentStats(hands) {
   return byName;
 }
 
-// Walk a hand list backwards (newest first) and bucket each hand into the
-// tendency categories that the players panel surfaces. Returns up to MAX_EX
-// hands per bucket so the renderer can show illustrative examples next to
-// each tendency. Called by generateExploitInsights below.
 function findInsightExamples(hands, playerName) {
   var MAX_EX = 20;
   var ex = {
@@ -392,9 +353,6 @@ function findInsightExamples(hands, playerName) {
   return ex;
 }
 
-// Generate exploit insights based on opponent tendencies. `s` is the stats
-// object from computeOpponentStats(); each insight gets an illustrative hand
-// attached via findInsightExamples() above.
 function generateExploitInsights(s, playerName, hands) {
   var insights = [];
   var MIN_HANDS = 10;
@@ -407,7 +365,6 @@ function generateExploitInsights(s, playerName, hands) {
     return insights;
   }
 
-  // Find example hands for each insight type
   var examples = findInsightExamples(hands || [], playerName);
 
   var vpip = pct(s.vpipHands, s.hands);
@@ -418,7 +375,6 @@ function generateExploitInsights(s, playerName, hands) {
   var cbet = pct(s.cbetDone, s.cbetOpps);
   var wtsd = pct(s.wentToShowdown, s.sawFlop);
 
-  // VPIP
   if (vpip !== null) {
     if (vpip >= 55) {
       insights.push(insWithExample('r', 'Very Loose', playerName + ' plays ' + vpip + '% of hands. They enter pots with weak holdings constantly.', [{ v: 'VPIP: ' + vpip + '%' }], examples.vpip, 'This hand shows ' + playerName + ' entering the pot. Typical of their loose play style.'));
@@ -429,12 +385,10 @@ function generateExploitInsights(s, playerName, hands) {
     }
   }
 
-  // Limp
   if (limp !== null && limp >= 30) {
     insights.push(insWithExample('r', 'Limps Often', playerName + ' limps ' + limp + '% of hands. They rarely open-raise, preferring cheap flops.', [{ v: 'Limp: ' + limp + '%' }], examples.limp, playerName + ' limps in here instead of raising. A common pattern for them.'));
   }
 
-  // Aggression
   if (agg !== null) {
     if (agg < 15) {
       insights.push(insWithExample('r', 'Passive', playerName + ' only raises ' + agg + '% of the time. Calls and checks dominate.', [{ v: 'Aggression: ' + agg + '%' }], examples.passive, 'Watch how ' + playerName + ' checks and calls through this hand instead of raising.'));
@@ -443,7 +397,6 @@ function generateExploitInsights(s, playerName, hands) {
     }
   }
 
-  // Fold to raise
   if (foldToRaise !== null && s.facedRaise >= 5) {
     if (foldToRaise >= 65) {
       insights.push(insWithExample('r', 'Folds to Pressure', playerName + ' folds ' + foldToRaise + '% when raised. Aggression prints money against them.', [{ v: 'Fold to raise: ' + foldToRaise + '%' }], examples.foldToRaise, playerName + ' folds here when facing a raise. Very exploitable.'));
@@ -452,7 +405,6 @@ function generateExploitInsights(s, playerName, hands) {
     }
   }
 
-  // C-bet
   if (cbet !== null && s.cbetOpps >= 5) {
     if (cbet >= 75) {
       insights.push(insWithExample('a', 'Auto C-Bets', playerName + ' continuation bets ' + cbet + '% of the time. Their flop bets often mean nothing.', [{ v: 'C-bet: ' + cbet + '%' }], examples.cbet, playerName + ' fires a c-bet on the flop after raising preflop. They do this almost automatically.'));
@@ -461,7 +413,6 @@ function generateExploitInsights(s, playerName, hands) {
     }
   }
 
-  // WTSD
   if (wtsd !== null && s.sawFlop >= 10) {
     if (wtsd >= 55) {
       insights.push(insWithExample('a', 'Showdown Bound', playerName + ' goes to showdown ' + wtsd + '% of the time. They hate folding post-flop.', [{ v: 'WTSD: ' + wtsd + '%' }], examples.showdown, playerName + ' hangs on all the way to showdown in this hand.'));
@@ -470,7 +421,6 @@ function generateExploitInsights(s, playerName, hands) {
     }
   }
 
-  // Showdown strength
   if (s.reveals >= 5) {
     var weakPct = pct(s.showdownWeak, s.reveals);
     if (weakPct >= 60) {
@@ -480,7 +430,6 @@ function generateExploitInsights(s, playerName, hands) {
     }
   }
 
-  // Exploit plan (needs more data)
   if (s.hands >= EXPLOIT_HANDS && insights.length > 0) {
     var exploits = [];
 

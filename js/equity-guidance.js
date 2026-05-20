@@ -1,7 +1,3 @@
-// ── EQUITY GUIDANCE ─────────────────────────────────────────────────────────
-// Text generators that turn equity numbers into coaching copy: hero action
-// summary per street, situational guidance, hand summary lines.
-
 function getHeroStreetActions(hand) {
   var parsed = parseActions(hand.actions);
   var streets = {};
@@ -29,25 +25,21 @@ function getHeroStreetActions(hand) {
     var amountToCall = 0;
     var potAtHeroAction = potRunning;
 
-    // Track villain action that prompted hero's response
     var villainAction = null;
     var lastVillainBet = null;
 
-    // Count active players on this street
     var activePlayers = {};
     var foldedPlayers = {};
 
     var allHeroActions = [];
     for (var ai = 0; ai < acts.length; ai++) {
       var a = acts[ai];
-      // Track active players (anyone who acts and doesn't fold)
       if (a.type !== 'won') {
         activePlayers[a.author] = true;
       }
       if (a.type === 'fold') {
         foldedPlayers[a.author] = true;
       }
-      // Track the last villain bet/raise before hero acts
       if (!a.isMe && (a.type === 'bet' || a.type === 'raise') && a.amount) {
         lastVillainBet = a;
       }
@@ -67,7 +59,6 @@ function getHeroStreetActions(hand) {
       if (!foldedPlayers[ap]) numActive++;
     }
 
-    // Pick the most significant action: fold > call/raise/bet > check
     if (allHeroActions.length > 0) {
       var picked = allHeroActions[allHeroActions.length - 1];
       for (var hi = 0; hi < allHeroActions.length; hi++) {
@@ -97,7 +88,6 @@ function getHeroStreetActions(hand) {
       } else if (heroAction.type === 'raise' || heroAction.type === 'bet') {
         amountToCall = heroAction.amount;
       } else if (heroAction.type === 'fold') {
-        // Find the bet/raise the hero was facing when they folded
         for (var fi = acts.length - 1; fi >= 0; fi--) {
           if (!acts[fi].isMe && (acts[fi].type === 'raise' || acts[fi].type === 'bet') && acts[fi].amount) {
             amountToCall = acts[fi].amount;
@@ -109,13 +99,11 @@ function getHeroStreetActions(hand) {
 
       var potOdds = amountToCall > 0 ? amountToCall / (potAtHeroAction + amountToCall) : 0;
 
-      // Calculate villain bet as % of pot
       var villainBetPct = null;
       if (villainAction && villainAction.amount && potBefore > 0) {
         villainBetPct = Math.round((villainAction.amount / potBefore) * 100);
       }
 
-      // Count callers before hero on this street
       var callersBefore = 0;
       for (var ci = 0; ci < acts.length; ci++) {
         if (acts[ci].isMe) break;
@@ -144,21 +132,18 @@ function generateGuidance(equity, streetInfo, texture, madeHand, villainProfile,
   var potOdds = streetInfo.potOdds * 100;
   var pot = streetInfo.potBefore || 0;
   var text = '';
-  var quality = 'neutral'; // 'good', 'neutral', 'bad'
+  var quality = 'neutral';
   priorStreets = priorStreets || [];
 
-  // Bet sizing as % of pot (for bets/raises)
   var betPotPct = (act.amount && pot > 0 && (act.type === 'bet' || act.type === 'raise'))
     ? Math.round((act.amount / pot) * 100) : null;
 
-  // Villain action context
   var vAct = streetInfo.villainAction;
   var vBetPct = streetInfo.villainBetPct;
   var playersActive = streetInfo.playersActive || 0;
   var callersBefore = streetInfo.callersBefore || 0;
   var multiway = playersActive > 2;
 
-  // Villain shorthand
   var vName = villainProfile ? villainProfile.name : null;
   var vFolds = villainProfile && villainProfile.foldToRaise !== null ? villainProfile.foldToRaise : null;
   var vLoose = villainProfile && (villainProfile.type === 'LAP' || villainProfile.type === 'LAG');
@@ -167,7 +152,6 @@ function generateGuidance(equity, streetInfo, texture, madeHand, villainProfile,
   var vPassive = villainProfile && villainProfile.agg !== null && villainProfile.agg < 15;
   var vHands = villainProfile ? villainProfile.hands : 0;
 
-  // ── Cross-street pattern analysis ──
   var heroActionLine = priorStreets.map(function (ps) { return ps.heroActionType || ''; });
   var villainActionLine = priorStreets.map(function (ps) { return ps.villainActionType || ''; });
   var heroCallCount = heroActionLine.filter(function (a) { return a === 'call'; }).length;
@@ -176,7 +160,6 @@ function generateGuidance(equity, streetInfo, texture, madeHand, villainProfile,
   var heroPassiveStreets = heroCallCount + heroCheckCount;
   var isPassiveLine = heroPassiveStreets >= 2;
 
-  // ── Board-relative hand strength awareness ──
   var isBoardPairHand = madeHand && madeHand.label.indexOf('board') !== -1;
   var isEffectivelyHighCard = isBoardPairHand || (madeHand && madeHand.tier === 0);
   var boardIsPaired = texture && texture.label && (texture.label.indexOf('Paired') !== -1 || texture.label.indexOf('paired') !== -1);
@@ -189,7 +172,6 @@ function generateGuidance(equity, streetInfo, texture, madeHand, villainProfile,
     boardIsDoublePaired = bpCount >= 2;
   }
 
-  // Build villain action description
   var facingDesc = '';
   if (vAct) {
     var vSizeDesc = '';
@@ -202,27 +184,22 @@ function generateGuidance(equity, streetInfo, texture, madeHand, villainProfile,
     facingDesc = 'Facing ' + vAct.author + '\'s ' + fmt(vAct.amount) + ' ' + vAct.type + vSizeDesc + '. ';
   }
 
-  // Multiway context
   var mwDesc = '';
   if (multiway) {
     mwDesc = playersActive + '-way pot' + (callersBefore > 0 ? ' (' + callersBefore + ' caller' + (callersBefore > 1 ? 's' : '') + ' before you)' : '') + '. ';
   }
 
-  // Villain line description for cross-street context
   var vLineDesc = '';
   if (villainBetCount >= 2 && vName) {
     vLineDesc = vName + ' has bet ' + villainBetCount + ' street' + (villainBetCount > 1 ? 's' : '') + ' so far. ';
   }
 
-  // ── Blinds ──
   if (act.type === 'sb' || act.type === 'bb') {
     if (eq > 55) { text = 'Strong starting hand.'; quality = 'good'; }
     else if (eq >= 40) { text = 'Playable hand from the blinds.'; quality = 'neutral'; }
     else { text = 'Weak hand. Defend selectively.'; quality = 'bad'; }
 
-    // ── Check ──
   } else if (act.type === 'check') {
-    // Board-relative: checking ace high on paired/double-paired board is often fine
     if (isEffectivelyHighCard && boardIsPaired) {
       text = facingDesc + mwDesc + heroHighCardCheckText(eq, madeHand, boardIsDoublePaired, vName, vFolds, vCalls, vHands);
       quality = eq >= 40 ? 'neutral' : 'good';
@@ -257,11 +234,9 @@ function generateGuidance(equity, streetInfo, texture, madeHand, villainProfile,
       quality = 'good';
     }
 
-    // ── Call ──
   } else if (act.type === 'call') {
     text = facingDesc;
 
-    // Cross-street passive line warning
     if (heroCallCount >= 1 && isEffectivelyHighCard && !multiway) {
       text += vLineDesc + 'You\'ve called ' + (heroCallCount + 1) + ' streets with ' + (madeHand ? madeHand.label : 'a marginal hand') + '. ';
       if (boardIsDoublePaired) {
@@ -296,7 +271,6 @@ function generateGuidance(equity, streetInfo, texture, madeHand, villainProfile,
       text += vLineDesc + 'Unprofitable call. ' + Math.round(eq) + '% equity but needed ' + Math.round(potOdds) + '%.';
       quality = 'bad';
     }
-    // Sizing commentary for calls
     if (vBetPct !== null) {
       if (vBetPct <= 33) {
         text += ' Small sizing: you\'re getting a great price.';
@@ -305,7 +279,6 @@ function generateGuidance(equity, streetInfo, texture, madeHand, villainProfile,
       }
     }
 
-    // ── Raise ──
   } else if (act.type === 'raise') {
     text = facingDesc + vLineDesc;
     if (eq > 55) {
@@ -327,7 +300,6 @@ function generateGuidance(equity, streetInfo, texture, madeHand, villainProfile,
       text += 'Bluff raise with ' + Math.round(eq) + '% equity. Relying on fold equity.';
       quality = 'neutral';
     }
-    // Bet sizing for raises
     if (betPotPct !== null) {
       if (vCalls && betPotPct < 60 && eq > 55) {
         text += ' Your ' + betPotPct + '% pot sizing is small. ' + vName + ' goes to showdown ' + villainProfile.wtsd + '%, size up.';
@@ -336,7 +308,6 @@ function generateGuidance(equity, streetInfo, texture, madeHand, villainProfile,
       }
     }
 
-    // ── Bet ──
   } else if (act.type === 'bet') {
     text = vLineDesc;
     if (eq > 55) {
@@ -355,7 +326,6 @@ function generateGuidance(equity, streetInfo, texture, madeHand, villainProfile,
       text += 'Bluff bet with ' + Math.round(eq) + '% equity. Need villain to fold.';
       quality = 'neutral';
     }
-    // Bet sizing
     if (betPotPct !== null) {
       if (vCalls && betPotPct < 60 && eq > 55) {
         text += ' Your ' + betPotPct + '% pot sizing is small. ' + vName + ' goes to showdown ' + villainProfile.wtsd + '%, size up.';
@@ -366,7 +336,6 @@ function generateGuidance(equity, streetInfo, texture, madeHand, villainProfile,
       }
     }
 
-    // ── Fold ──
   } else if (act.type === 'fold') {
     text = facingDesc + vLineDesc;
     if (eq > 40 && vLoose) {
@@ -392,7 +361,6 @@ function generateGuidance(equity, streetInfo, texture, madeHand, villainProfile,
     }
   }
 
-  // ── Board texture adjustments (post-flop) ──
   if (texture) {
     if (texture.wetness === 'dry' && act.type === 'fold' && eq > 40) {
       text += ' Dry board makes this fold worse: fewer draws threaten you.';
@@ -407,7 +375,6 @@ function generateGuidance(equity, streetInfo, texture, madeHand, villainProfile,
     }
   }
 
-  // ── Draw-aware notes ──
   if (madeHand && madeHand.draws.length > 0) {
     if (act.type === 'call' && potOdds > 0) {
       var totalOuts = 0;
@@ -423,7 +390,6 @@ function generateGuidance(equity, streetInfo, texture, madeHand, villainProfile,
     }
   }
 
-  // ── Made hand context (post-flop) - only add if actionable ──
   if (madeHand && texture && !isEffectivelyHighCard) {
     if (madeHand.label === 'Top Pair' && texture.wetness === 'wet' && act.type === 'check') {
       text += ' Top pair on a wet board: bet to deny free cards.';
@@ -439,7 +405,6 @@ function generateGuidance(equity, streetInfo, texture, madeHand, villainProfile,
   return { text: text, quality: quality };
 }
 
-// ── Helper for check guidance on paired boards with high-card hands ──
 function heroHighCardCheckText(eq, madeHand, boardIsDoublePaired, vName, vFolds, vCalls, vHands) {
   var label = madeHand ? madeHand.label : 'high card';
   var text = '';
@@ -463,7 +428,6 @@ function heroHighCardCheckText(eq, madeHand, boardIsDoublePaired, vName, vFolds,
   return text;
 }
 
-// ── Hand Summary (rendered after all streets) ─────────────────────────────
 function generateHandSummary(results, hand, villainProfile) {
   if (!results || results.length < 2) return null;
 
@@ -479,7 +443,6 @@ function generateHandSummary(results, hand, villainProfile) {
   var folded = outcome.result === 'folded';
   var pnl = won ? (outcome.amount || 0) - invested : -invested;
 
-  // Hero's action line
   var heroActions = [];
   var villainActions = [];
   for (var i = 0; i < results.length; i++) {
@@ -492,7 +455,6 @@ function generateHandSummary(results, hand, villainProfile) {
     if (r.villainActionType) villainActions.push(r.street + ': ' + r.villainActionType);
   }
 
-  // Describe hero's line
   var postflopResults = results.filter(function (r) { return r.street !== 'Preflop'; });
   var heroPostflopTypes = postflopResults.map(function (r) { return r.heroActionType || ''; });
   var allCalls = heroPostflopTypes.every(function (t) { return t === 'call'; });
@@ -500,14 +462,12 @@ function generateHandSummary(results, hand, villainProfile) {
   var allPassive = heroPostflopTypes.every(function (t) { return t === 'call' || t === 'check'; });
   var streetsPlayed = postflopResults.length;
 
-  // Describe villain's line
   var villainPostflopTypes = postflopResults.map(function (r) { return r.villainActionType || ''; });
   var villainBets = villainPostflopTypes.filter(function (t) { return t === 'bet' || t === 'raise'; }).length;
 
   var vName = villainProfile ? villainProfile.name : null;
   var vHands = villainProfile ? villainProfile.hands : 0;
 
-  // Parse showdown reveals
   var villainRevealed = null;
   var villainHandDesc = null;
   if (hand.actions) {
@@ -522,14 +482,11 @@ function generateHandSummary(results, hand, villainProfile) {
     }
   }
 
-  // Final made hand
   var finalMadeHand = postflopResults.length > 0 ? postflopResults[postflopResults.length - 1].madeHand : null;
   var finalLabel = finalMadeHand ? finalMadeHand.label : '';
 
-  // Build summary text
   var parts = [];
 
-  // 1. Hero's line through the hand
   if (allCalls && streetsPlayed >= 2) {
     parts.push('You called ' + streetsPlayed + ' streets' + (finalLabel ? ' with ' + finalLabel : '') + ', investing ' + fmt(invested) + '.');
   } else if (allChecks && streetsPlayed >= 2) {
@@ -540,7 +497,6 @@ function generateHandSummary(results, hand, villainProfile) {
     parts.push('You folded on the ' + (outcome.foldStreet || '').toLowerCase() + ', saving further investment after putting in ' + fmt(invested) + '.');
   }
 
-  // 2. Villain's line
   if (vName && villainBets >= 2) {
     parts.push(vName + ' bet ' + villainBets + ' of ' + streetsPlayed + ' streets, applying consistent pressure.');
   } else if (vName && villainBets === 1 && streetsPlayed >= 2) {
@@ -548,10 +504,8 @@ function generateHandSummary(results, hand, villainProfile) {
     parts.push(vName + ' bet once then checked ' + checkStreets + ' street' + (checkStreets > 1 ? 's' : '') + '.');
   }
 
-  // 3. Showdown reveal and what it means
   if (villainRevealed && villainHandDesc && vName) {
     parts.push(vName + ' showed ' + villainRevealed + ' (' + villainHandDesc + ').');
-    // Contextualise what that means on this board
     var boardIsDoublePaired = false;
     if (postflopResults.length > 0) {
       var lastTex = postflopResults[postflopResults.length - 1].texture;
@@ -564,7 +518,6 @@ function generateHandSummary(results, hand, villainProfile) {
     }
   }
 
-  // 4. Opponent profile insight
   if (villainProfile && vHands >= 10) {
     var exploitNote = '';
     if (allPassive && villainProfile.foldToRaise !== null && villainProfile.foldToRaise >= 60) {
@@ -577,7 +530,6 @@ function generateHandSummary(results, hand, villainProfile) {
     if (exploitNote) parts.push(exploitNote);
   }
 
-  // 5. P&L
   if (won) {
     parts.push('Result: won ' + fmt(outcome.amount) + ' (profit ' + fmt(pnl) + ').');
   } else if (folded) {
@@ -586,7 +538,6 @@ function generateHandSummary(results, hand, villainProfile) {
     parts.push('Result: lost ' + fmt(invested) + ' at showdown.');
   }
 
-  // Determine overall quality
   var overallQuality = 'neutral';
   var goodCount = 0, badCount = 0;
   for (var qi = 0; qi < results.length; qi++) {

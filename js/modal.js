@@ -1,5 +1,3 @@
-// ── MODAL (example hand modal system) ─────────────────────────────────────────
-
 function showExampleHandModal(hand, coachingNote) {
   var existing = document.getElementById('example-hand-modal');
   if (existing) existing.remove();
@@ -13,7 +11,6 @@ function showExampleHandModal(hand, coachingNote) {
   box.className = 'modal-box';
   box.style.position = 'relative';
 
-  // Ensure bucket tags are populated (hand may come from storage unprocessed).
   if (typeof annotateHandDynamics === 'function') annotateHandDynamics(hand);
 
   var closeBtn = '<button class="modal-close" id="modal-close-btn">&times;</button>';
@@ -96,7 +93,6 @@ function showExampleHandModal(hand, coachingNote) {
     this.title = nowStarred ? 'Unsave hand' : 'Save hand';
     var notesEl = document.getElementById('modal-notes');
     if (notesEl) notesEl.classList.toggle(CSS.SHOW, nowStarred);
-    // refresh saved hands section in log panel
     renderSavedHands();
   };
 
@@ -134,8 +130,6 @@ function findExampleHand(filterFn) {
   return results;
 }
 
-// Hand-list modal: shows a scrollable list of hands, click any to open detail.
-// Same visual pattern as the range grid cell click modal.
 function buildHandRow(h, idx) {
   var myActs = getActsSummary(h);
   var res = renderResult(h, 'span', 'saved-res range-hand-row-result');

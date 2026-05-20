@@ -1,19 +1,10 @@
-// ── ANALYSE (pure data-in/data-out) ───────────────────────────────────────────
-// The heavy lifting used to live in one 400-line `analyse()` function. It is
-// now an orchestrator that walks `hands` once and dispatches each hand to a
-// set of focused helpers. Each helper mutates a shared `state` object whose
-// shape matches the eventual return value.
-
 // Sample-size gates for the layered-verdict engine. Slices below the gate are
-// still computed (so the renderer can display "(N hands)") but tagged
-// `gated: true` and excluded from weighted-target computation and verdicts.
+// still computed but tagged `gated: true` and excluded from weighted-target
+// computation and verdicts.
 var MIN_AGGREGATE = 30;
 var MIN_AXIS = 20;
 var MIN_CELL = 10;
 
-// Builds the empty accumulator that every per-hand helper writes into. Keys
-// here match the keys read by the rest of the app (panels, engine, etc.) so
-// the eventual `return state;` is shape-compatible with the old return object.
 function _newAnalyseState(n, hands) {
   var streets = ['Preflop', 'Flop', 'Turn', 'River'];
   var ss = {}, betAmts = {}, betAmtsBB = {}, betOpps = {};
@@ -65,8 +56,7 @@ function _newAnalyseState(n, hands) {
   };
 }
 
-// Per-position counters and per-hand outcome (won/lost amount, P&L, pot). Must
-// run before the other helpers because it creates the posMap entry that the
+// Must run before _aggregateRangeAndPfr: creates the posMap entry that the
 // range/PFR helper later increments (vpip, foldPre).
 function _aggregatePosition(state, h) {
   var p = h.position || '?';
@@ -95,13 +85,11 @@ function _aggregatePosition(state, h) {
       state.posMap[p].won++;
       if (cash) state.posMap[p].pnl += profit;
     } else {
-      // folded or lost: investment is the loss
       if (cash) state.posMap[p].pnl -= invested;
     }
   }
 }
 
-// Range grid (rangeMap), hand-type breakdown (htMap), VPIP, PFR, limp, foldPre.
 function _aggregateRangeAndPfr(state, h) {
   var hkey = parseHoleKey(h.hole);
   if (!hkey) return;
@@ -128,7 +116,6 @@ function _aggregateRangeAndPfr(state, h) {
     state.rangeMap[hkey].won++;
   }
 
-  // Track P&L per hand combo
   if (h.outcome && cash) {
     var inv = getInvested(h);
     if (h.outcome.result === 'won') {
@@ -138,13 +125,11 @@ function _aggregateRangeAndPfr(state, h) {
     }
   }
 
-  // PFR: hero raised preflop
   var heroRaisedPre = myActs.some(function (a) {
     return a.street === 'Preflop' && (a.type === 'raise' || a.type === 'bet');
   });
   if (heroRaisedPre) state.pfrHands++;
 
-  // Limp: hero called preflop without raising, and no prior raise existed
   if (!heroRaisedPre) {
     var heroCalledPre = myActs.some(function (a) {
       return a.street === 'Preflop' && a.type === 'call';
@@ -173,9 +158,6 @@ function _aggregateRangeAndPfr(state, h) {
   if (didPlay && h.outcome && h.outcome.result === 'won') state.htMap[ht].won++;
 }
 
-// Action stats (folds/checks/calls/raises), per-street counts (ss), bet
-// amounts, bet opportunities, all-in detection, sawFlop / wentToShowdown,
-// facedRaise / foldedToRaise. Everything that walks the action list once.
 function _aggregateStreetActions(state, h) {
   var acts = parseActions(h.actions);
   var cash = isCashHand(h);
@@ -185,7 +167,6 @@ function _aggregateStreetActions(state, h) {
   for (var ai = 0; ai < acts.length; ai++) {
     var a = acts[ai];
 
-    // Aggregate hero action counts
     if (a.isMe) {
       state.totalActs++;
       if (a.type === 'fold') state.folds++;
@@ -194,12 +175,10 @@ function _aggregateStreetActions(state, h) {
       else if (a.type === 'raise' || a.type === 'bet') state.raises++;
     }
 
-    // Hero "seen this street" tracking (excludes blind posts)
     if (a.isMe && a.type !== 'sb' && a.type !== 'bb' && !heroSeenStreets.has(a.street)) {
       heroSeenStreets.add(a.street);
       if (state.ss[a.street]) state.ss[a.street].seen++;
     }
-    // Per-street action breakdown (hero only)
     if (a.isMe && state.ss[a.street]) {
       if (a.type === 'fold') state.ss[a.street].f++;
       else if (a.type === 'check') state.ss[a.street].ch++;
@@ -207,7 +186,6 @@ function _aggregateStreetActions(state, h) {
       else if (a.type === 'raise' || a.type === 'bet') state.ss[a.street].ra++;
     }
 
-    // Bet amounts ($ and BB-normalised)
     if (a.type === 'raise' || a.type === 'bet') {
       if (a.amount > 0 && state.betAmts[a.street]) {
         state.betAmts[a.street].push(a.amount);
@@ -220,13 +198,11 @@ function _aggregateStreetActions(state, h) {
       }
     }
 
-    // Hero post-flop bet opportunity tracking
     if (a.isMe && a.street !== 'Preflop' && state.betOpps[a.street] && a.type !== 'sb' && a.type !== 'bb' && a.type !== 'won') {
       state.betOpps[a.street].t++;
       if (a.type === 'raise' || a.type === 'bet') state.betOpps[a.street].b++;
     }
 
-    // All-in detection: count once per hand, on the opponent's all-in shove
     if (!allinCountedThisHand && !a.isMe && isAllInAction(acts, ai)) {
       var heroResp = acts.filter(function (b) { return b.isMe && b.street === a.street; });
       var foldResp = heroResp.find(function (b) { return b.type === 'fold'; });
@@ -246,7 +222,6 @@ function _aggregateStreetActions(state, h) {
   if (heroSeenStreets.has('Flop')) state.sawFlop++;
   if (isShowdown(h)) state.wentToShowdown++;
 
-  // facedRaise / foldedToRaise (post-flop only)
   for (var fri = 0; fri < acts.length; fri++) {
     var fa = acts[fri];
     if (!fa.isMe && (fa.type === 'raise' || fa.type === 'bet') && fa.street !== 'Preflop') {
@@ -262,7 +237,6 @@ function _aggregateStreetActions(state, h) {
   }
 }
 
-// 3-bet detection: did hero face a preflop 3-bet, and how often did they fold?
 function _aggregateThreeBet(state, h) {
   var acts = parseActions(h.actions);
   var preActs = acts.filter(function (a) { return a.street === 'Preflop'; });
@@ -282,9 +256,6 @@ function _aggregateThreeBet(state, h) {
   }
 }
 
-// Situational stats: c-bet, delayed c-bet, donk, fold-to-cbet, fold-to-3bet,
-// fold-to-4bet. Each is gated by the same preflop raise structure, so we
-// derive that once at the top.
 function _aggregateSituational(state, h) {
   var acts = parseActions(h.actions);
   var preflopActs = acts.filter(function (a) { return a.street === 'Preflop'; });
@@ -316,25 +287,21 @@ function _aggregateSituational(state, h) {
   var heroFirstFlop = heroFirstAction(acts, 'Flop');
   var heroFirstTurn = heroFirstAction(acts, 'Turn');
 
-  // C-Bet
   if (pfr && pfr.isMe && flopReached && heroFirstFlop) {
     state.cbetOpps++;
     if (heroFirstFlop.type === 'raise' || heroFirstFlop.type === 'bet') state.cbetDone++;
   }
 
-  // Delayed C-Bet
   if (pfr && pfr.isMe && flopReached && heroFirstFlop && heroFirstFlop.type === 'check' && turnReached && heroFirstTurn) {
     state.delayCbetOpps++;
     if (heroFirstTurn.type === 'raise' || heroFirstTurn.type === 'bet') state.delayCbetDone++;
   }
 
-  // Donk Bet
   if (pfr && !pfr.isMe && sitRaiseLevel >= 1 && flopReached && heroFirstFlop) {
     state.donkOpps++;
     if (heroFirstFlop.type === 'raise' || heroFirstFlop.type === 'bet') state.donkDone++;
   }
 
-  // Fold to C-Bet
   if (pfr && !pfr.isMe && flopReached) {
     var flopActs = acts.filter(function (a) { return a.street === 'Flop'; });
     var firstFlopBetIdx = flopActs.findIndex(function (a) { return a.type === 'raise' || a.type === 'bet'; });
@@ -349,7 +316,6 @@ function _aggregateSituational(state, h) {
     }
   }
 
-  // Fold to 3-Bet (hero opened)
   if (heroOpenedPF) {
     var threeBettor = raisers.find(function (r) { return r.level === 2 && !r.isMe; });
     if (threeBettor) {
@@ -368,7 +334,6 @@ function _aggregateSituational(state, h) {
     }
   }
 
-  // Fold to 4-Bet (hero 3-bet)
   if (hero3betPF) {
     var fourBettor = raisers.find(function (r) { return r.level === 3 && !r.isMe; });
     if (fourBettor) {
@@ -388,7 +353,6 @@ function _aggregateSituational(state, h) {
   }
 }
 
-// Single source of truth for the percentages every panel reads off `d.core`.
 function _computeCoreMetrics(state) {
   return {
     wr:        pct(state.handsWon, state.handsWithOutcome),
@@ -404,12 +368,9 @@ function _computeCoreMetrics(state) {
   };
 }
 
-// Top-level orchestrator. Walks `hands` once and applies each per-hand helper
-// in order. Order matters: position must run before the range helper because
-// the range helper increments fields on the posMap entry created by the
-// position helper.
+// Order matters: _aggregatePosition must run before _aggregateRangeAndPfr,
+// which increments fields on the posMap entry created by the position helper.
 function analyse(hands) {
-  // Safety net: ensure every hand has the three-axis dynamics tags. Idempotent.
   if (typeof annotateHandDynamics === 'function') {
     for (var ai = 0; ai < hands.length; ai++) annotateHandDynamics(hands[ai]);
   }
@@ -429,18 +390,13 @@ function analyse(hands) {
   return state;
 }
 
-// Group hands by the dynamics axes and compute a sub-`d` per bucket. Returns
-// { bySeatBucket, byFlopBucket, byStackBucket, byPosition, byPosSeat,
-//   composition, mixCells } attached to the top-level `d` in render().
-// Sub-`d`s are regular analyse() results so every metric is available at every
-// level of granularity.
 function bucketizeAnalysis(topD, hands) {
   var seatGroups = {};
   var flopGroups = {};
   var stackGroups = {};
   var posGroups = {};
   var posSeatGroups = {};
-  var composition = {}; // { 'stack|seat': count }
+  var composition = {};
 
   for (var i = 0; i < hands.length; i++) {
     var h = hands[i];
@@ -470,9 +426,8 @@ function bucketizeAnalysis(topD, hands) {
     var out = {};
     for (var k in groups) {
       var g = groups[k];
-      // Every consumer of a gated cell only looks at .n and .gated and skips,
-      // so we can avoid the full analyse() for slices that are gated anyway.
-      // Big win when byPosSeat produces 45 cells and most fall below MIN_CELL.
+      // Skip analyse() for gated cells: consumers only check .n and .gated.
+      // Saves work when byPosSeat produces many sub-MIN_CELL cells.
       if (gateMin != null && g.length < gateMin) {
         out[k] = { n: g.length, hands: g, gated: true };
         continue;
@@ -491,8 +446,6 @@ function bucketizeAnalysis(topD, hands) {
   topD.byPosSeat = mapGroups(posSeatGroups, MIN_CELL);
   topD.stackSeatComposition = composition;
 
-  // Flat list of {position, seatBucket, hands} for every cell that passes the
-  // per-cell gate. Used by the verdict layer to compute weighted targets.
   var mixCells = [];
   for (var pk in topD.byPosSeat) {
     var cell = topD.byPosSeat[pk];

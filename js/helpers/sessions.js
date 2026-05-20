@@ -1,17 +1,3 @@
-// ── SESSIONS ──────────────────────────────────────────────────────────────────
-//
-// Group raw hand records into sessions plus the helpers built on top:
-//   buildSessions          group by table id, 15-minute gap, 2-day span.
-//   sessionPnl             P&L for one session (cash hands only).
-//   detectSessionPatterns  compare a session's stats against the player's
-//                          overall and return human-readable patterns.
-//   renderBestWorstSessions HTML block for the Trends panel showing the
-//                          best and worst sessions side by side.
-//   splitSessionHalves     split each session at its own midpoint and
-//                          aggregate across sessions for within-session
-//                          decline analysis (engine/patterns.js and the
-//                          new Trends section both call this).
-
 function buildSessions(hands) {
   if (!hands.length) return [];
 
@@ -46,7 +32,6 @@ function buildSessions(hands) {
   });
 }
 
-// P&L for a single session (cash hands only). Tournament hands ignored.
 function sessionPnl(session) {
   var pnl = 0;
   for (var i = 0; i < session.hands.length; i++) {
@@ -57,9 +42,6 @@ function sessionPnl(session) {
   return pnl;
 }
 
-// Compare a single session's stats against the player's overall numbers and
-// return a list of human-readable patterns. Both inputs are analyse() results
-// so the headline percentages are read off .core (single source of truth).
 function detectSessionPatterns(sessionData, overallData) {
   var patterns = [];
   var sCore = sessionData.core || {};
@@ -109,7 +91,6 @@ function detectSessionPatterns(sessionData, overallData) {
   return patterns;
 }
 
-// Best & Worst Sessions block for the Trends panel.
 function renderBestWorstSessions(hands, overallData) {
   var sessions = buildSessions(hands);
   if (sessions.length < 3) return '';
@@ -185,10 +166,7 @@ function renderBestWorstSessions(hands, overallData) {
   return html;
 }
 
-// Split each session at its own midpoint, aggregating across sessions.
 // Sessions shorter than minSession are skipped because halving them is noise.
-// Used by engine/patterns.js (session-half dimension) and engine/ruleset.js
-// (second-half-decline rule) and the Trends section.
 function splitSessionHalves(hands, minSession) {
   var MIN = minSession || 20;
   var sessions = buildSessions(hands);

@@ -1,7 +1,4 @@
-// ── DATA MIGRATION & BACKFILL ─────────────────────────────────────────────────
-
-// Backfill missing board, pot, and outcome from action lines.
-// Some TC Poker exports omit these structured fields even though the
+// Some TC Poker exports omit board/pot/outcome structured fields even though the
 // full hand history is present in the actions array.
 function backfillHandData(hands) {
   var CARD_RE = /(\d{1,2}|[AKQJT])([a-z]+|[\u2665\u2666\u2663\u2660])/gi;
@@ -23,7 +20,6 @@ function backfillHandData(hands) {
   for (var i = 0; i < hands.length; i++) {
     var h = hands[i];
 
-    // Normalize existing hole/board cards (API may send "3hearts" format)
     if (h.hole && h.hole.length) {
       for (var n = 0; n < h.hole.length; n++) h.hole[n] = normCard(h.hole[n]);
     }
@@ -34,7 +30,7 @@ function backfillHandData(hands) {
     var actions = h.actions || [];
     if (!actions.length) continue;
 
-    // Deduplicate consecutive identical action lines (TM script sometimes logs twice)
+    // TM script sometimes logs identical lines twice in a row.
     var deduped = [actions[0]];
     for (var d = 1; d < actions.length; d++) {
       if (actions[d].replace(/\s+/g, ' ').trim() !== actions[d - 1].replace(/\s+/g, ' ').trim()) {
@@ -48,7 +44,7 @@ function backfillHandData(hands) {
     var needPot = !h.pot;
     var needOutcome = !h.outcome;
 
-    // Extract board cards BEFORE normalizing action strings,
+    // Must extract board cards BEFORE normalizing action strings,
     // because parseCardsFromStreet expects alphabetic suit names.
     var board = [];
     if (needBoard) {
@@ -62,7 +58,6 @@ function backfillHandData(hands) {
       }
     }
 
-    // Normalize card names in action strings: "10spades" → "T♠"
     for (var a = 0; a < actions.length; a++) {
       actions[a] = actions[a].replace(/(\d{1,2}|[AKQJT])([a-z]{4,8})/gi, function(_, r, s) {
         var rank = (r === '10') ? 'T' : r;
@@ -84,7 +79,6 @@ function backfillHandData(hands) {
       var isMe = raw.indexOf('>>') === 0;
       var line = raw.replace(/^>>\s*/, '').replace(/^\s+/, '').trim();
 
-      // Track pot from all dollar amounts in betting actions
       if (needPot) {
         var wonMatch = line.match(/won \$([0-9,]+)/);
         if (wonMatch) {
@@ -94,7 +88,6 @@ function backfillHandData(hands) {
         }
       }
 
-      // Track hero outcome
       if (needOutcome && isMe) {
         if (line.indexOf('folded') !== -1) heroFolded = true;
         if (line.match(/won \$([0-9,]+)/)) { heroWon = true; wonAmount = parseAmount(line.match(/\$([0-9,]+)/)[1]); }
@@ -121,17 +114,14 @@ function backfillHandData(hands) {
     }
   }
 
-  // Second pass: annotate each hand with the three table-dynamics axes.
   for (var ii = 0; ii < hands.length; ii++) {
     annotateHandDynamics(hands[ii]);
   }
 }
 
-// One explicit pass over every hand to warm the per-hand caches that lots of
-// helpers lazily fill. Without this, the first analyse() call pays the parse
-// cost for all hands at once on the main thread (~500ms for 20k hands). Running
-// it as a discrete step keeps the heavy work attributable and lets callers
-// chunk it behind a spinner if needed.
+// One explicit pass to warm the per-hand caches that lots of helpers lazily fill.
+// Without this, the first analyse() call pays the parse cost for all hands at
+// once on the main thread (~500ms for 20k hands).
 function preparseHands(hands) {
   for (var i = 0; i < hands.length; i++) {
     var h = hands[i];
@@ -143,8 +133,7 @@ function preparseHands(hands) {
 }
 
 // Attach seats / active-per-street / effStackBB + bucket tags to a hand.
-// Idempotent - safe to call multiple times. Call sites: backfillHandData (on
-// import) and analyse() (safety net for hands loaded from storage).
+// Idempotent - safe to call multiple times.
 function annotateHandDynamics(hand) {
   if (hand._dyn) return hand; // already annotated this session
 

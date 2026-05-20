@@ -1,13 +1,3 @@
-// ── TABLE-DYNAMICS MATRIX ─────────────────────────────────────────────────────
-// Three-axis advisory model:
-//   seats (2-9)     → drives preflop opening ranges, VPIP, position guides
-//   flopBucket      → drives postflop sizing, c-bet, showdown value
-//   stackBucket     → overall regime (short / mid / deep / very-deep)
-//
-// adviceFor({seats, position, flopBucket, stackBucket}) composes all three.
-
-// ── Range building blocks ─────────────────────────────────────────────────────
-
 var _RANGE_PAIRS_ALL   = ['AA','KK','QQ','JJ','TT','99','88','77','66','55','44','33','22'];
 var _RANGE_SUITED_ACES = ['AKs','AQs','AJs','ATs','A9s','A8s','A7s','A6s','A5s','A4s','A3s','A2s'];
 var _RANGE_SUITED_KINGS= ['KQs','KJs','KTs','K9s','K8s','K7s','K6s','K5s','K4s','K3s','K2s'];
@@ -27,20 +17,8 @@ function _rangeSet(/* ...arrays */) {
   return s;
 }
 
-// ── SEAT_MATRIX ─────────────────────────────────────────────────────────────
-// Keyed 2..9. Each entry:
-//   positions:     ordered list of seats (earliest → latest)
-//   rangesByPos:   { POS: Set<combo> }        - recommended open range at standard depth
-//   guideByPos:    { POS: { ideal, tight, loose, desc } }
-//   openRaise:     preflop sizing text
-//   threeBet:      suggested 3-bet frequency text
-//   cbetFreq:      seat-level c-bet default text
-//   aggression:    one-line narrative about the regime
-//   notes:         longer paragraph describing the table size
-
 var SEAT_MATRIX = {};
 
-// 2-handed (heads-up)
 SEAT_MATRIX[2] = {
   positions: ['BTN', 'BB'],
   rangesByPos: {
@@ -68,7 +46,6 @@ SEAT_MATRIX[2] = {
   notes:      'Button is massive: you act first preflop but have position postflop. Play 80-90% of hands on the BTN, defend the BB wide. Postflop bet 33-66% pot, polarise to 75-100% on turn/river.'
 };
 
-// 3-handed
 SEAT_MATRIX[3] = {
   positions: ['BTN', 'SB', 'BB'],
   rangesByPos: {
@@ -106,7 +83,6 @@ SEAT_MATRIX[3] = {
   notes:      'Button is dominant. Postflop 33-50% in position, 50-75% out of position. Polarise 75-100% on turn/river.'
 };
 
-// 4-handed
 SEAT_MATRIX[4] = {
   positions: ['CO', 'BTN', 'SB', 'BB'],
   rangesByPos: {
@@ -150,7 +126,6 @@ SEAT_MATRIX[4] = {
   notes:      'Button strong, cutoff becomes relevant. Postflop 40-60% pot on flop, 60-80% turn/river value.'
 };
 
-// 5-handed
 SEAT_MATRIX[5] = {
   positions: ['HJ', 'CO', 'BTN', 'SB', 'BB'],
   rangesByPos: {
@@ -201,7 +176,6 @@ SEAT_MATRIX[5] = {
   notes:      'Early position (HJ) starts to matter. Postflop 50-66% pot. Turn/river 66-100% when value betting or polarised.'
 };
 
-// 6-handed
 SEAT_MATRIX[6] = {
   positions: ['UTG', 'HJ', 'CO', 'BTN', 'SB', 'BB'],
   rangesByPos: {
@@ -258,7 +232,6 @@ SEAT_MATRIX[6] = {
   notes:      'Early position tight. Need strong hands (JJ+, AQ+, suited broadway) to open UTG. Postflop 50-75% pot, turn/river 75-100%.'
 };
 
-// 7-handed (extrapolated - add UTG+1)
 SEAT_MATRIX[7] = {
   positions: ['UTG', 'UTG+1', 'HJ', 'CO', 'BTN', 'SB', 'BB'],
   rangesByPos: {
@@ -320,7 +293,6 @@ SEAT_MATRIX[7] = {
   notes:      'Adds UTG+1. Early position very disciplined; late position still attacks.'
 };
 
-// 8-handed (extrapolated - add MP)
 SEAT_MATRIX[8] = {
   positions: ['UTG', 'UTG+1', 'MP', 'HJ', 'CO', 'BTN', 'SB', 'BB'],
   rangesByPos: {
@@ -387,7 +359,6 @@ SEAT_MATRIX[8] = {
   notes:      'Full-ring territory. Early position demands premium hands.'
 };
 
-// 9-handed (extrapolated - add LJ)
 SEAT_MATRIX[9] = {
   positions: ['UTG', 'UTG+1', 'MP', 'LJ', 'HJ', 'CO', 'BTN', 'SB', 'BB'],
   rangesByPos: {
@@ -460,9 +431,6 @@ SEAT_MATRIX[9] = {
   notes:      'Full-ring 9-max. Very disciplined early position; exploit weak opens from blinds when folded to.'
 };
 
-// ── FLOP_MATRIX ─────────────────────────────────────────────────────────────
-// Keyed by flop bucket (HU / 3-way / multiway)
-
 var FLOP_MATRIX = {
   HU: {
     cbetFreq:      '65-75%',
@@ -487,11 +455,8 @@ var FLOP_MATRIX = {
   }
 };
 
-// ── STACK_MATRIX ────────────────────────────────────────────────────────────
-// Keyed by stack bucket from js/helpers/stack-bands.js:
-//   short ≤ 50 BB / mid ≤ 150 BB / deep ≤ 300 BB / very-deep > 300 BB / unknown.
+// Bucket keys: short ≤ 50 BB / mid ≤ 150 BB / deep ≤ 300 BB / very-deep > 300 BB / unknown.
 // Tuned for Torn: min buy-in 50 BB, max buy-in 200 BB, stacks can run past 300.
-
 var STACK_MATRIX = {
   short: {
     label:             '≤ 50 BB',
@@ -548,13 +513,6 @@ var STACK_MATRIX = {
   }
 };
 
-// ── PER-METRIC TARGET BANDS ─────────────────────────────────────────────────
-// Drives the layered-verdict engine. Each metric has a {tight, ideal, loose}
-// band per (seats, position) cell. VPIP comes straight from guideByPos; PFR
-// derives from VPIP (early position opens are nearly all raises, late
-// position adds limps); AF / cbet / foldToRaise are seats-driven defaults
-// that don't strongly vary by position.
-
 var _EARLY_POS = { UTG: 1, 'UTG+1': 1, MP: 1, LJ: 1 };
 
 var _AF_BY_SEATS = {
@@ -590,7 +548,7 @@ var _FTR_BY_SEATS = {
   9: { tight: 35, ideal: 50, loose: 65 }
 };
 
-// Parse "15-20%" → midpoint number. Falls back to (tight+loose)/2 in metricTargets.
+// Parse "15-20%" -> midpoint number. Falls back to (tight+loose)/2 in metricTargets.
 function _parseIdealMid(s) {
   if (!s) return null;
   var m = String(s).match(/(\d+)\s*-\s*(\d+)/);
@@ -598,8 +556,6 @@ function _parseIdealMid(s) {
   return Math.round((parseInt(m[1], 10) + parseInt(m[2], 10)) / 2);
 }
 
-// Returns {vpip, pfr, af, cbet, foldToRaise} bands for one (seats, position)
-// cell, or null if the cell isn't in the matrix.
 function metricTargets(seats, position) {
   var seatEntry = matrixForSeats(seats);
   if (!seatEntry) return null;
@@ -610,8 +566,7 @@ function metricTargets(seats, position) {
   if (vpipMid == null) vpipMid = Math.round((guide.tight + guide.loose) / 2);
   var vpip = { tight: guide.tight, ideal: vpipMid, loose: guide.loose };
 
-  // PFR ≈ ratio × VPIP. Early position is nearly all raises (0.85), late
-  // position adds limps and flats (0.7).
+  // PFR ratio: early position is nearly all raises (0.85), late position adds limps and flats (0.7).
   var ratio = _EARLY_POS[position] ? 0.85 : 0.7;
   var pfr = {
     tight: Math.max(0, Math.round(vpip.tight * ratio)),
@@ -630,11 +585,8 @@ function metricTargets(seats, position) {
   };
 }
 
-// ── PLAYSTYLE OFFSETS ───────────────────────────────────────────────────────
 // Each style is an additive point shift applied at lookup time on top of the
-// matrix bands. TAG is the baseline (no shift). Numbers are starting points
-// - calibrate by eye.
-
+// matrix bands. TAG is the baseline (no shift).
 var STYLE_OFFSETS = {
   TAG:     { vpip: 0,   pfr: 0,   af: 0,   cbet: 0,   foldToRaise: 0 },
   Shark:   { vpip: -2,  pfr: 0,   af: 6,   cbet: 4,   foldToRaise: 2 },
@@ -648,7 +600,6 @@ var STYLE_OFFSETS = {
 
 var STYLE_LIST = ['Shark', 'TAG', 'LAG', 'Cannon', 'Rock', 'Nit', 'Station', 'Maniac'];
 
-// Read the user's chosen style. Defaults to 'TAG'. Persisted in localStorage.
 function getUserStyle() {
   var s = getString('tc_user_style', null);
   return (s && STYLE_OFFSETS[s]) ? s : 'TAG';
@@ -659,13 +610,8 @@ function setUserStyle(style) {
   setString('tc_user_style', style);
 }
 
-// The persisted style now serves as the player's target playstyle. Alias
-// getUserStyle so callers can read it under the clearer name.
 function getTargetStyle() { return getUserStyle(); }
 
-// Leaf lookup: returns the {tight, ideal, loose} band for a single metric in
-// a single cell, with the user's playstyle offset applied. style optional -
-// defaults to the persisted user style.
 function matrixTarget(metric, position, seats, style) {
   var targets = metricTargets(seats, position);
   if (!targets || !targets[metric]) return null;
@@ -679,17 +625,12 @@ function matrixTarget(metric, position, seats, style) {
   };
 }
 
-// ── BUCKET HELPERS ──────────────────────────────────────────────────────────
-
-// seatBucket: raw count 2-9 → '2p'..'9p'. Over 9 clamps to '9p'.
 function seatBucket(n) {
   if (!n || n < 2) return null;
   if (n > 9) n = 9;
   return n + 'p';
 }
 
-// flopBucket: count of players seeing the flop → 'HU' / '3-way' / 'multiway'.
-// null when the hand ended preflop.
 function flopBucket(nFlop) {
   if (nFlop == null) return null;
   if (nFlop <= 1) return null;          // everyone folded preflop (or only hero)
@@ -698,12 +639,6 @@ function flopBucket(nFlop) {
   return 'multiway';
 }
 
-// Stack-depth bucketing lives in js/helpers/stack-bands.js — call stackBandKey()
-// directly. Bucket keys: short / mid / deep / very-deep / unknown.
-
-// ── MATRIX COMPOSER ─────────────────────────────────────────────────────────
-
-// Look up the seat entry, clamping 2-9.
 function matrixForSeats(seats) {
   if (!seats || seats < 2) return null;
   var n = seats > 9 ? 9 : seats;
@@ -719,13 +654,6 @@ function matrixForStack(sb) {
   return STACK_MATRIX[sb || 'unknown'];
 }
 
-// Compose advice for a specific situation. All fields optional; absent fields
-// yield partial advice.
-//   seats       (2-9 or '2p'..'9p')
-//   position    ('BTN', 'CO', ...)
-//   flopBucket  ('HU' / '3-way' / 'multiway')
-//   stackBucket ('short' / 'mid' / 'deep' / 'very-deep')
-//   effStackBB  (numeric, optional - enables sub-band jam override under 25 BB)
 function adviceFor(params) {
   params = params || {};
   var seats = params.seats;
@@ -742,7 +670,6 @@ function adviceFor(params) {
     seatEntry: seatEntry,
     flopEntry: flopEntry,
     stackEntry: stackEntry,
-    // Composed outputs:
     recommendedRange: null,
     vpipGuide: null,
     cbetFreq: flopEntry ? flopEntry.cbetFreq : null,
@@ -762,7 +689,6 @@ function adviceFor(params) {
     result.jamGuide = stackEntry && stackEntry.jamGuide ? stackEntry.jamGuide[params.position] || null : null;
   }
 
-  // Deep / very-deep: augment range with speculative hands.
   if ((result.stackBucket === 'deep' || result.stackBucket === 'very-deep') &&
       result.recommendedRange && stackEntry && stackEntry.speculativeBonus) {
     var augmented = new Set(result.recommendedRange);

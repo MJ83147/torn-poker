@@ -1,5 +1,3 @@
-// ── POSITION PANEL ────────────────────────────────────────────────────────────
-
 var _positionChart = null;
 
 function renderPosition(container, d, hands) {
@@ -12,7 +10,6 @@ function renderPosition(container, d, hands) {
   var posHtml = '<div class="panel-title">Position</div>';
   posHtml += '<div class="panel-desc">Which seats make and lose you money.</div>';
 
-  // Verdict + section stories (one per seat) render above the per-seat table.
   var posFindings = [];
   if (typeof Sections !== 'undefined' && typeof Sections.evaluateSections === 'function') {
     posFindings = Sections.findingsForPanel(Sections.evaluateSections(d, {}, hands), 'Position');
@@ -29,7 +26,6 @@ function renderPosition(container, d, hands) {
     var avgPotDisplay = _displayBB && s.potBBCount > 0
       ? fmtBBRaw(s.potBB / s.potBBCount)
       : fmt(avgPot);
-    // Δ vs target VPIP: positive means looser than target band, negative means tighter.
     var band = ctx.band('vpip', p);
     var deltaCell = '-';
     if (band && vp2 !== null) {
@@ -47,7 +43,6 @@ function renderPosition(container, d, hands) {
   }).join('');
   posHtml += '</tbody></table></div></div>';
 
-  // Chart: Net P&L by Position - this panel's job is "which seats make money"
   if (activePosOrder.length >= 2) {
     posHtml += '<div class="p-row"><div class="sec-subtitle mt-0">Net P&L by Position</div>';
     posHtml += '<div class="chart-wrap-full"><canvas id="position-chart"></canvas></div></div>';
@@ -55,7 +50,6 @@ function renderPosition(container, d, hands) {
 
   container.innerHTML = posHtml;
 
-  // ── Render Chart.js chart: Net P&L by position ──
   var canvas = document.getElementById('position-chart');
   if (!canvas || activePosOrder.length < 2) return;
 

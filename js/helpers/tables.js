@@ -1,6 +1,3 @@
-// ── TABLE METADATA ────────────────────────────────────────────────────────────
-
-// Table metadata (blind levels, max seats, tournament flag)
 const TABLE_META = {
   2:  { name: 'Newbie Corner',   bb: 10,        sb: 5,        max: 9 },
   3:  { name: 'Hobo Holdem',     bb: 25,        sb: 13,       max: 9 },
@@ -43,10 +40,8 @@ const TABLE_META = {
   44: { name: 'tsop test 2',     bb: 500,       sb: 250,      max: 7, tournament: true },
 };
 
-// Cash tables used to separate tournaments from cash games
 const CASH_TABLE_IDS = new Set([2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28]);
 
-// Map of big blind amount -> table entries with max seats (for blind-based inference)
 const BB_TO_TABLES = (() => {
   const map = {};
   for (const [id, t] of Object.entries(TABLE_META)) {
@@ -57,5 +52,4 @@ const BB_TO_TABLES = (() => {
   return map;
 })();
 
-// BB display toggle state
 let _displayBB = false;

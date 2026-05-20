@@ -1,5 +1,3 @@
-// ── BETTING PANEL (Actions + Bets) ───────────────────────────────────────────
-
 function renderActions(container, d, hands) {
   var streets = ['Preflop', 'Flop', 'Turn', 'River'];
   var aggPct = calcAggression(d.raises, d.calls, d.checks);
@@ -9,7 +7,6 @@ function renderActions(container, d, hands) {
   var caPct = pct(d.calls, actTotal);
   var raPct = pct(d.raises, actTotal);
 
-  // ── Game-context lookups ─────────────────────────────────────────────────
   var ctx = getGameContext(d);
   var _domSeats = ctx.seats;
   var _domFb = ctx.flopBucket;
@@ -21,8 +18,6 @@ function renderActions(container, d, hands) {
   var actHtml = '<div class="panel-title">Betting</div>';
   actHtml += '<div class="panel-desc">How you size your bets and choose your actions.</div>';
 
-  // Verdict + section stories (Bet Sizing Shape, Value vs Bluff Sizing,
-  // Response to Sizing) render above the widgets.
   var bettingFindings = [];
   if (typeof Sections !== 'undefined' && typeof Sections.evaluateSections === 'function') {
     bettingFindings = Sections.findingsForPanel(Sections.evaluateSections(d, {}, hands), 'Betting');
@@ -30,8 +25,6 @@ function renderActions(container, d, hands) {
     if (bettingFindings.length) actHtml += '<div class="p-row">' + Sections.renderFindings(bettingFindings) + '</div>';
   }
 
-  // Aggression mini-box dropped - the header hero strip already shows your
-  // headline aggression number always.
   actHtml += '<div class="p-row">' + renderMiniRow([
     { l: 'Total Actions', v: actTotal, c: 'o' },
     { l: 'Folds', v: d.folds, c: 'r' },
@@ -51,11 +44,8 @@ function renderActions(container, d, hands) {
   actHtml += '<div class="stack-bar">' + segs.map(function (s) { return '<div class="stack-seg" style="width:' + s.p + '%;background:' + s.c + ';"></div>'; }).join('') + '</div>';
   actHtml += '<div class="stack-labels">' + segs.map(function (s) { return '<div class="stack-li"><div class="stack-dot" style="background:' + s.c + ';"></div>' + s.l + '</div>'; }).join('') + '</div>';
 
-  // "By street" table dropped - the Streets panel owns action-mix-by-street
-  // (it's the panel's whole job; richer stacked-bar chart there).
   actHtml += '</div>';
 
-  // Situational stats
   actHtml += '<div class="p-row"><div class="sec-subtitle mt-0">Situational stats</div>';
   actHtml += '<div class="bar-group">';
 
@@ -105,7 +95,6 @@ function renderActions(container, d, hands) {
 
   actHtml += '</div></div>';
 
-  // ── Bet Sizing Section (merged from Bets panel) ──
   var avgBets = {};
   var avgBetsBB = {};
   streets.forEach(function(s) {

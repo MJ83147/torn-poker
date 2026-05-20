@@ -1,10 +1,4 @@
-// ── PLAYERS PANEL ─────────────────────────────────────────────────────────────
-// Rendering only. Tendency stats, exploit insights, example hands, and the
-// opponent profile cache live in js/helpers/opponent-stats.js,
-// opponent-examples.js, and opponent-profile.js respectively.
-
 function renderPlayers(container, d, hands) {
-  // Build opponent map
   var oppMap = {};
   for (var i = 0; i < hands.length; i++) {
     var h = hands[i];
@@ -84,7 +78,6 @@ function renderPlayers(container, d, hands) {
     var html = '<div class="panel-title">Players</div>';
     html += '<div class="panel-desc">Opponent records, head-to-head stats, and watch list.</div>';
 
-    // Verdict + section stories (vs playstyle, profitable/unprofitable names).
     var playersFindings = [];
     if (typeof Sections !== 'undefined' && typeof Sections.evaluateSections === 'function') {
       playersFindings = Sections.findingsForPanel(Sections.evaluateSections(d, {}, hands), 'Players');
@@ -164,7 +157,6 @@ function renderPlayers(container, d, hands) {
       };
     });
 
-    // Compare Players modal button
     var cmpBtn = document.getElementById('open-compare-btn');
     if (cmpBtn) {
       cmpBtn.onclick = function() {
@@ -208,7 +200,6 @@ function renderPlayers(container, d, hands) {
       ph += '<span class="player-detail-name">' + playerName + '</span></div>';
       ph += '<div class="meta-text">' + opp.hands + ' hands · ' + (wr !== null ? wr + '% win' : '-') + ' · ' + fmtPnl(opp.profit) + '</div></div>';
 
-      // ── Opponent tendency minis with severity ──
       var vpip = pct(oppStats.vpipHands, oppStats.hands);
       var pfr = pct(oppStats.pfrHands, oppStats.hands);
       var limp = pct(oppStats.limpHands, oppStats.hands);
@@ -233,7 +224,6 @@ function renderPlayers(container, d, hands) {
         ph += '<div class="sec-subtitle mt-0">Tendencies</div>';
         ph += renderMiniRow(minis);
 
-        // ── Exploit insights ──
         var exploitIns = generateExploitInsights(oppStats, playerName, hands);
         if (exploitIns.length) {
           ph += '<div class="ins-grid mb-16">' + exploitIns.join('') + '</div>';
@@ -242,7 +232,6 @@ function renderPlayers(container, d, hands) {
         ph += '<div class="panel-verdict">Need ' + Math.max(0, 5 - oppStats.hands) + ' more shared hands to show tendency stats (' + oppStats.hands + '/5 hands).</div>';
       }
 
-      // ── Hand list ──
       ph += '<div class="sec-subtitle">Shared Hands</div>';
       if (totalPages > 1) {
         ph += '<div class="flex-gap-6 mb-8 flex-end">' +
@@ -271,14 +260,9 @@ function renderPlayers(container, d, hands) {
   renderPlayerList();
 }
 
-// ── HEADS-UP COMPARISON ───────────────────────────────────────────────────────
-// Modal sub-renderer triggered from the Players panel "Compare" button.
-// Not a standalone panel, so it lives here rather than as its own file.
-
 function renderCompare(container, d, hands) {
   var heroName = State.meta.player;
 
-  // Build player list from all actions
   var playerSet = {};
   for (var i = 0; i < hands.length; i++) {
     var acts = parseActions(hands[i].actions);
@@ -301,7 +285,6 @@ function renderCompare(container, d, hands) {
     return;
   }
 
-  // Default selections: hero vs most-played opponent
   var p1Default = heroName;
   var p2Default = playerNames[0] === heroName ? playerNames[1] : playerNames[0];
 
@@ -369,8 +352,6 @@ function renderCompare(container, d, hands) {
   function edgeText(stat, v1, v2, n1, n2) {
     if (v1 === null || v2 === null) return '';
     var diff = v1 - v2;
-    // Sample-scaled trigger gap: small samples need a wider gap before the
-    // edge surfaces.
     var smaller = Math.min(n1 || 0, n2 || 0);
     var gate = 3 * Math.max(1, Math.sqrt(40 / Math.max(1, smaller)));
     if (Math.abs(diff) < gate) return '';
@@ -433,7 +414,6 @@ function renderCompare(container, d, hands) {
     }
     tableHtml += '</tbody></table>';
 
-    // Head-to-head record: find shared hands
     var sharedHands = [];
     var p1Wins = 0;
     var p2Wins = 0;
@@ -470,14 +450,10 @@ function renderCompare(container, d, hands) {
     }
     h2hHtml += '</div>';
 
-    // ── Exploit tips ────────────────────────────────────────────────────
     var exploits = [];
     var targetName = (p2Name !== heroName) ? p2Name : p1Name;
     var targetStats = (targetName === p1Name) ? s1 : s2;
 
-    // Dominant seat-count for the table mix where these two players overlap;
-    // drives the exploit thresholds (HU expects different numbers from
-    // 6-max).
     var _seatsCmp = (function() {
       if (!d || !d.bySeatBucket) return null;
       var best = null, bestN = 0;
@@ -489,15 +465,11 @@ function renderCompare(container, d, hands) {
       }
       return best ? Math.max(2, Math.min(9, best)) : null;
     })();
-    // Pull what we know about the opponent's positional tendencies from the
-    // shared opponent cache. Used to qualify the "from late position" tips.
     var _oppProf = (typeof _opponentCache !== 'undefined' && targetName)
       ? _opponentCache[targetName] : null;
     var _oppLatePosBias = _oppProf && _oppProf.raw && typeof _oppProf.raw.latePos === 'number'
       ? _oppProf.raw.latePos : null;
 
-    // Dynamic thresholds: HU/3-handed compress everything (defenders fold
-    // less, openers play wider), so adjust gates by table size.
     var _ftrGate = _seatsCmp && _seatsCmp <= 2 ? 50 : _seatsCmp && _seatsCmp <= 4 ? 55 : 60;
     var _cbetGate = _seatsCmp && _seatsCmp <= 2 ? 55 : _seatsCmp && _seatsCmp <= 4 ? 45 : 35;
     var _wtsdGate = _seatsCmp && _seatsCmp <= 2 ? 45 : 40;
@@ -536,7 +508,6 @@ function renderCompare(container, d, hands) {
       exploitHtml += '</div></div>';
     }
 
-    // Insufficient data warning
     var warnHtml = '';
     if (s1.hands < 10 || s2.hands < 10) {
       var lowName = s1.hands < 10 ? p1Name : p2Name;
@@ -546,7 +517,6 @@ function renderCompare(container, d, hands) {
 
     body.innerHTML = warnHtml + '<div class="p-row">' + tableHtml + '</div>' + h2hHtml + exploitHtml;
 
-    // Wire shared hands button
     if (sharedHands.length > 0) {
       var sharedBtn = container.querySelector('#compare-shared-btn');
       if (sharedBtn) {

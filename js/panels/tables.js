@@ -1,5 +1,3 @@
-// ── TABLES PANEL ──────────────────────────────────────────────────────────────
-
 function renderTables(container, hands, allHands, excludedTables, onRerender) {
   var allTableGroups = {};
   for (var i = 0; i < allHands.length; i++) {
@@ -10,7 +8,6 @@ function renderTables(container, hands, allHands, excludedTables, onRerender) {
     allTableGroups[key].push(h);
   }
 
-  // Populate the header table-filter dropdown
   var filterEl = document.getElementById('table-filter');
   var prevVal = filterEl.value || 'all';
   filterEl.innerHTML = '<option value="all">All Tables (' + allHands.length + ')</option>';
@@ -59,8 +56,6 @@ function renderTables(container, hands, allHands, excludedTables, onRerender) {
     tablesHtml += '<div class="panel-title">Tables</div>';
     tablesHtml += '<div class="panel-desc">Compare stats across different stakes.</div>';
 
-    // Verdict + section stories (Table Selection, Time at Table). Section
-    // always reads allHands so cross-table comparisons survive the dropdown.
     var tblFindings = [];
     if (typeof Sections !== 'undefined' && typeof Sections.evaluateSections === 'function') {
       var sectionInput = (allHands && allHands.length) ? allHands : hands;
@@ -96,7 +91,6 @@ function renderTables(container, hands, allHands, excludedTables, onRerender) {
   }
   container.innerHTML = tablesHtml;
 
-  // Wire exclude/include buttons
   container.querySelectorAll('.exclude-table-btn').forEach(function(btn) {
     btn.onclick = function(e) {
       e.stopPropagation();
@@ -110,7 +104,6 @@ function renderTables(container, hands, allHands, excludedTables, onRerender) {
         excludedTables.delete(btnTid);
         return;
       }
-      // Switch back to tables tab
       switchTab('tables');
     };
   });

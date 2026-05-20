@@ -1,37 +1,11 @@
-// ── TRENDS SECTION ────────────────────────────────────────────────────────────
-//
-// Two stories.
-//
-//   Direction of Travel  How have the headline metrics moved across the
-//                        player's tracked history? Splits hands into an
-//                        early third and a recent third by hand count, runs
-//                        analyse() on each, and compares VPIP, PFR,
-//                        aggression, win rate, and per-hand P&L. Calls out
-//                        drift, the loudest mover, and whether results are
-//                        following the change.
-//
-//   Session Swings       How does play vary within and between sessions?
-//                        Compares first-half and second-half hands across
-//                        sessions (within-session decline), winning vs
-//                        losing sessions (loose-when-losing), and long vs
-//                        short sessions (fatigue leak).
-//
-// Both stories work on partitioned hand sets and re-run analyse() on each
-// partition. The framework helpers (Sections.classify, etc.) are not used
-// here because Trends compares slices against one another rather than
-// against fixed target bands.
-
 (function() {
   var MIN_PARTITION = 30;  // floor for any partitioned sub-d
-  var MIN_SESSION_HALF = 20; // floor for the session-half split (cap matches sessions.js default)
-
-  // ── SHARED ────────────────────────────────────────────────────────────────
+  var MIN_SESSION_HALF = 20; // floor for the session-half split
 
   function safe(num) {
     return (num == null || !isFinite(num)) ? null : num;
   }
 
-  // Per-hand P&L for an analyse() result. d.core.netPnl is the cash net P&L.
   function perHandPnl(sd) {
     if (!sd || !sd.n || !sd.core) return null;
     var net = sd.core.netPnl;
@@ -39,15 +13,13 @@
     return net / sd.n;
   }
 
-  // Sort hands chronologically. Hands without timestamp drop to the back.
+  // Hands without timestamp drop to the back.
   function chronological(hands) {
     return hands.slice().sort(function(a, b) {
       return (a.timestamp || 0) - (b.timestamp || 0);
     });
   }
 
-  // Compare two metric values and classify the movement.
-  // Returns { dir: 'up'|'down'|'flat', delta, abs }.
   function moveOf(early, recent, gate) {
     if (early == null || recent == null) return { dir: 'flat', delta: 0, abs: 0 };
     var delta = recent - early;
@@ -55,8 +27,6 @@
     if (abs < gate) return { dir: 'flat', delta: delta, abs: abs };
     return { dir: delta > 0 ? 'up' : 'down', delta: delta, abs: abs };
   }
-
-  // ── STORY 1: DIRECTION OF TRAVEL ──────────────────────────────────────────
 
   function buildDirectionOfTravel(d, extras, hands) {
     if (!d || !d.n || d.n < (typeof MIN_AGGREGATE === 'number' ? MIN_AGGREGATE : 30)) return null;
@@ -75,9 +45,6 @@
     var dR = analyse(recent);
     if (!dE || !dR || !dE.core || !dR.core) return null;
 
-    // Movement gates. Win rate is in percentage points already; the rest are
-    // percentages too. P&L per hand is in chips so gate it relative to
-    // typical pot size if we can.
     var moves = {
       vpip: moveOf(safe(dE.core.vpipPct), safe(dR.core.vpipPct), 5),
       pfr:  moveOf(safe(dE.core.pfrPct),  safe(dR.core.pfrPct),  5),
@@ -88,7 +55,6 @@
     var recentPerHand = perHandPnl(dR);
     moves.pnl = moveOf(earlyPerHand, recentPerHand, 2);
 
-    // Headline opening: state where the player started and where they are.
     var openingText = 'Across your history you have moved from a ' +
       Math.round(dE.core.vpipPct || 0) + '% VPIP early on to ' +
       Math.round(dR.core.vpipPct || 0) + '% in recent hands' +
@@ -104,14 +70,11 @@
       var k = keys[i];
       if (moves[k].dir !== 'flat') movers.push({ key: k, move: moves[k] });
     }
-    // Sort movers by absolute size of move, biggest first.
     movers.sort(function(a, b) { return b.move.abs - a.move.abs; });
 
-    // Win rate move drives severity.
     var wrMove = moves.wr;
     var pnlMove = moves.pnl;
 
-    // Branch: multiple metrics drifting the same way.
     var sameDirCount = { up: 0, down: 0 };
     for (var mi = 0; mi < movers.length; mi++) {
       if (movers[mi].key === 'wr' || movers[mi].key === 'pnl') continue;
@@ -135,7 +98,6 @@
         (loud.key === 'pnl' ? '' : '%') + '.'
       );
     } else if (movers.filter(function(m) { return m.key !== 'wr' && m.key !== 'pnl'; }).length === 1) {
-      // Single metric drift, no others moving.
       var solo = movers.filter(function(m) { return m.key !== 'wr' && m.key !== 'pnl'; })[0];
       branchTexts.push(
         'One metric is shifting while the rest hold steady: ' + labels[solo.key] +
@@ -143,20 +105,16 @@
       );
     }
 
-    // Branch: results following or diverging.
     if (wrMove.dir === 'up') {
       branchTexts.push('Your win rate is climbing, up ' + Math.round(wrMove.abs) + ' points from where you started.');
     } else if (wrMove.dir === 'down') {
       branchTexts.push('Your win rate is dropping, down ' + Math.round(wrMove.abs) + ' points from where you started.');
     } else if (movers.length === 0) {
-      // Truly flat. Story stays quiet.
       return null;
     } else {
       branchTexts.push('Your win rate has held steady, even with the changes underneath.');
     }
 
-    // Severity. Red if win rate down meaningfully, amber if drift but win
-    // rate flat, green if everything stable.
     var severity;
     var direction;
     if (wrMove.dir === 'down' && wrMove.abs >= 5) { severity = 'r'; direction = 'down'; }
@@ -165,10 +123,8 @@
     else if (wrMove.dir === 'up') { severity = 'g'; direction = 'up'; }
     else { severity = 'g'; direction = 'flat'; }
 
-    // Suppress display for fully green-flat stories.
     if (severity === 'g' && direction === 'flat' && !movers.length) return null;
 
-    // Impact and so-what.
     var impactText = null;
     var soWhatText = null;
     if (severity === 'r' || (severity === 'a' && wrMove.dir === 'down')) {
@@ -186,7 +142,6 @@
       soWhatText = 'Whatever you are doing differently is working. Keep playing the same way and resist the urge to mix it up while you are in a winning rhythm.';
     }
 
-    // Example hands. Pull from the slice that drives severity.
     var examples = [];
     if (severity === 'r' || (severity === 'a' && wrMove.dir === 'down')) {
       var recentLosses = pickHands(recent, function(h) {
@@ -238,8 +193,6 @@
     };
   }
 
-  // ── STORY 2: SESSION SWINGS ───────────────────────────────────────────────
-
   function buildSessionSwings(d, extras, hands) {
     if (!d || !d.n || d.n < (typeof MIN_AGGREGATE === 'number' ? MIN_AGGREGATE : 30)) return null;
     if (!hands || !hands.length) return null;
@@ -248,7 +201,6 @@
     var sessions = buildSessions(hands);
     if (!sessions.length) return null;
 
-    // Per-session summary: cash hands only for P&L attribution.
     var sessSummaries = sessions.map(function(s) {
       var sHands = s.hands;
       var totalPnl = 0, cashHands = 0, wonCash = 0;
@@ -279,9 +231,8 @@
         : 'Not enough variation between sessions to compare yet.');
 
     var branchTexts = [];
-    var pillars = []; // { id, severity, deltaUnits, branchText, examples }
+    var pillars = [];
 
-    // Pillar A: within-session decline (first half vs second half across sessions).
     var halves = splitSessionHalves(hands, MIN_SESSION_HALF);
     var decline = null;
     if (halves.firstHalf.length >= MIN_PARTITION && halves.secondHalf.length >= MIN_PARTITION) {
@@ -319,7 +270,6 @@
               branchText: 'Across the second half of your sessions, ' + pieces.join(' and ') + '. Your game shifts the longer you sit.',
               examples: null
             };
-            // Examples: hands from the second half of sessions.
             var lateHands = halves.secondHalf.slice(-12);
             if (lateHands.length) {
               decline.examples = {
@@ -335,7 +285,6 @@
       }
     }
 
-    // Pillar B: loose-when-losing pattern (VPIP in losing sessions vs winning).
     var losingHands = [];
     var winningHands = [];
     for (var si = 0; si < sessSummaries.length; si++) {
@@ -372,7 +321,6 @@
               Math.round(vpipWin) + '% in winning sessions. You play ' + direction + ' when you are down.';
 
             var swingExamples = null;
-            // Hands from losing sessions where hero played the pot.
             var lostPlayed = pickHands(losingHands, function(h) {
               if (!h || !h.actions) return false;
               var acts = parseActions(h.actions);
@@ -404,7 +352,6 @@
       }
     }
 
-    // Pillar C: long sessions vs short sessions per-hand P&L.
     if (sessSummaries.length >= 4) {
       var sorted = sessSummaries.slice().sort(function(a, b) { return a.len - b.len; });
       var half = Math.floor(sorted.length / 2);
@@ -425,7 +372,6 @@
       if (sAgg.hands >= MIN_PARTITION && lAgg.hands >= MIN_PARTITION &&
           sAgg.perHand != null && lAgg.perHand != null) {
         var gap = sAgg.perHand - lAgg.perHand;
-        // Long sessions perform worse: gap > 0 means short are better.
         var longLeakSev = 'g';
         if (gap > 5 && lAgg.perHand < 0) longLeakSev = 'r';
         else if (gap > 2) longLeakSev = 'a';
@@ -454,7 +400,6 @@
 
     var severity = Sections.combineSeverity(pillars.map(function(p) { return p.severity; }));
 
-    // Worst case: within-session decline plus long-session leak together.
     var hasDecline = pillars.some(function(p) { return p.id === 'within-session' && (p.severity === 'r' || p.severity === 'a'); });
     var hasLongLeak = pillars.some(function(p) { return p.id === 'long-session-leak' && (p.severity === 'r' || p.severity === 'a'); });
     var hasLooseLosing = pillars.some(function(p) { return p.id === 'loose-losing' && (p.severity === 'r' || p.severity === 'a'); });
@@ -479,7 +424,6 @@
       soWhatText = 'Cap session length to roughly the volume of your short sessions. The curve is telling you where to stop.';
     }
 
-    // Merge examples from whichever pillars produced them.
     var examples = [];
     for (var p = 0; p < pillars.length; p++) {
       if (pillars[p].examples) examples.push(pillars[p].examples);
@@ -510,8 +454,6 @@
       }
     };
   }
-
-  // ── REGISTER ──────────────────────────────────────────────────────────────
 
   Sections.defineSection({
     id: 'trends',

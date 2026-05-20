@@ -1,8 +1,5 @@
 // Stack-depth bands, tuned to Torn's buy-in range.
 // Min buy-in: 50 BB. Max buy-in: 200 BB. Players can run stacks past the cap by winning.
-// Single source of truth — consumed by custom report filters, matrix advice engine,
-// and migration's per-hand annotation. Edit thresholds here only.
-
 var STACK_BANDS = [
   { key: 'short',     label: 'short',     max: 50 },
   { key: 'mid',       label: 'mid',       max: 150 },

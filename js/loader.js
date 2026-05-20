@@ -1,4 +1,3 @@
-// ── INITIAL LOADER (cards only, no counter) ─────────────────────────────────
 (function() {
   const cs = document.querySelectorAll('.lc');
   let i = 0;
@@ -21,7 +20,6 @@
     setTimeout(() => {
       loader.style.display = 'none';
       app.classList.add(CSS.ON);
-      // After the intro animation, check for a saved session to restore
       if (typeof checkSavedSession === 'function') {
         checkSavedSession();
       }
@@ -31,7 +29,6 @@
   setTimeout(deal, 220);
 })();
 
-// ── IMPORT LOADER (real count, shown after analyse click) ───────────────────
 function showImportLoader(count, callback) {
   const loader = document.getElementById('loader');
   const num = document.getElementById('lnum');
@@ -43,7 +40,6 @@ function showImportLoader(count, callback) {
     return;
   }
 
-  // Reset state
   num.textContent = '0';
   prog.style.width = '0%';
   cs.forEach(c => c.classList.remove(CSS.SHOW));
@@ -91,9 +87,6 @@ function showImportLoader(count, callback) {
   setTimeout(deal, 100);
 }
 
-// ── LAZY CDN LOADERS ────────────────────────────────────────────────────────
-// Chart.js and intro.js are heavy and not needed for the paste screen, so they
-// load on demand instead of blocking the initial page render.
 var _chartJsPromise = null;
 function ensureChartJs(callback) {
   if (typeof Chart !== 'undefined') { callback(); return; }

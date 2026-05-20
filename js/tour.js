@@ -1,5 +1,3 @@
-// ── GUIDED TOUR (Intro.js) ───────────────────────────────────────────────────
-
 (function() {
 
   var tourOptions = {
@@ -16,17 +14,16 @@
     tooltipClass: 'tc-tour-tooltip'
   };
 
-  // Helper: find element in panel, check it's actually rendered (has dimensions)
+  // Uses getBoundingClientRect (works even when offsetParent is null, e.g.
+  // inside canvas or overflow containers).
   function findEl(panel, sel) {
     var el = panel.querySelector(sel);
     if (!el) return null;
-    // Use getBoundingClientRect - works even when offsetParent is null (canvas, overflow, etc.)
     var rect = el.getBoundingClientRect();
     if (rect.width === 0 && rect.height === 0) return null;
     return el;
   }
 
-  // Helper: build steps from defs, attach to elements or fall back to floating
   function buildSteps(panel, defs) {
     var steps = [];
     for (var i = 0; i < defs.length; i++) {
@@ -36,18 +33,15 @@
         if (el) {
           steps.push({ element: el, intro: d.intro, position: d.pos || 'top' });
         } else if (d.fallback) {
-          // Show as floating tooltip when element doesn't exist
           steps.push({ intro: d.fallback });
         }
       } else {
-        // Floating step (no element)
         steps.push({ intro: d.intro });
       }
     }
     return steps;
   }
 
-  // ── Welcome tour: header elements + point to help button ──────────────────
   function startWelcomeTour() {
     if (typeof introJs === 'undefined') {
       if (typeof ensureIntroJs === 'function') {
@@ -72,13 +66,6 @@
     intro.setOptions({ steps: steps });
     intro.start();
   }
-
-  // ── Per-tab tour definitions ──────────────────────────────────────────────
-  // Each step: { el, intro, pos, fallback }
-  //   el: CSS selector to target (within the panel)
-  //   intro: HTML shown in the tooltip
-  //   pos: tooltip position
-  //   fallback: if el not found, show this as a floating tooltip instead (optional)
 
   var tabTourSteps = {
     cards: [
@@ -228,7 +215,6 @@
     intro.start();
   }
 
-  // Expose globally
   window.startWelcomeTour = startWelcomeTour;
   window.startGuidedTour = startTabTour;
 

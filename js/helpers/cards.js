@@ -1,10 +1,6 @@
-// ── CARD UTILITIES ────────────────────────────────────────────────────────────
-
-// Ranks in ascending order for hand key parsing/classification
 const RANKS = ['2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A'];
 const SUITS = ['\u2660', '\u2665', '\u2666', '\u2663'];
 
-// Suit mappings - single source of truth for all card formatting
 var SUIT_WORD = {
   'diamonds': '♦', 'hearts': '♥', 'spades': '♠', 'clubs': '♣',
   'diamond': '♦', 'heart': '♥', 'spade': '♠', 'club': '♣'
@@ -16,19 +12,16 @@ var SUIT_CLASS   = { h: 'r', d: 'r', c: 'b', s: 'b' };
 // Normalise any card format ("3hearts", "10♥", "Ts") → "T♠" style
 function normCard(c) {
   if (!c || typeof c !== 'string') return c;
-  // Word format: "3hearts" → "3♥"
   var m = c.match(/^(\d{1,2}|[AKQJT])([a-z]+)$/i);
   if (m) {
     var rank = m[1]; if (rank === '10') rank = 'T';
     var suit = SUIT_WORD[m[2].toLowerCase()];
     return suit ? rank + suit : c;
   }
-  // "10x" → "Tx"
   if (c.length > 2 && c.slice(0, 2) === '10') return 'T' + c.slice(2);
   return c;
 }
 
-// Normalise card to short code format ("3hearts", "3♥") → "3h"
 function normCardCode(c) {
   if (!c) return c;
   var n = normCard(c);
@@ -37,7 +30,6 @@ function normCardCode(c) {
   return code ? n.slice(0, -1) + code : n;
 }
 
-// Render a card as styled HTML
 function displayCard(c) {
   if (!c || c.length < 2) return c;
   var rank = c.slice(0, -1);
@@ -50,14 +42,12 @@ function displayCards(cards) {
   return cards.map(displayCard).join(' ');
 }
 
-// ── Board Texture Classification ──────────────────────────────────────────
 function classifyBoardTexture(boardCards) {
   if (!boardCards || boardCards.length < 3) return null;
   var cards = boardCards.map(normCard);
   var ranks = cards.map(function(c) { return RANKS.indexOf(c.slice(0, -1)); });
   var suits = cards.map(function(c) { return c.slice(-1); });
 
-  // Suit counts
   var suitCounts = {};
   for (var i = 0; i < suits.length; i++) {
     suitCounts[suits[i]] = (suitCounts[suits[i]] || 0) + 1;
@@ -70,14 +60,12 @@ function classifyBoardTexture(boardCards) {
   var rainbow = Object.keys(suitCounts).length >= 3;
   var flushDraw = !monotone && maxSuit >= 3;
 
-  // Rank analysis
   var sorted = ranks.slice().sort(function(a, b) { return a - b; });
   var paired = false;
   for (var p = 1; p < sorted.length; p++) {
     if (sorted[p] === sorted[p - 1]) { paired = true; break; }
   }
 
-  // Connectedness: count how many cards within a 4-rank span
   var connected = false;
   var straightDraw = false;
   var unique = [];
@@ -95,7 +83,6 @@ function classifyBoardTexture(boardCards) {
 
   var highCard = RANKS[sorted[sorted.length - 1]];
 
-  // Wetness score (0-10)
   var score = 0;
   if (monotone) score += 3;
   else if (twoTone) score += 2;

@@ -1,5 +1,3 @@
-// ── TRENDS PANEL ──────────────────────────────────────────────────────────────
-
 var _trendsCharts = [];
 
 function destroyTrendsCharts() {
@@ -9,9 +7,8 @@ function destroyTrendsCharts() {
   _trendsCharts = [];
 }
 
-// Single-pass aggregation of the per-hand fields Trends needs. Walks each hand
-// once instead of calling analyse() per day-group (which was N * full-analyse
-// and caused multi-second freezes for 20k+ hand datasets).
+// Walk each hand once instead of calling analyse() per day-group — at 20k+
+// hands the per-group analyse() turns into multi-second freezes.
 function _trendsAccumulate(stats, h) {
   stats.n++;
   if (h.outcome) {
@@ -52,9 +49,8 @@ function renderTrends(container, hands, meta, overallData) {
   }
   var sessions = [];
   var dayMap = {};
-  // Group by a cheap integer day-bucket first, then format the label once per
-  // distinct day. With 20k hands across 60 days, this cuts toLocaleDateString
-  // calls from 20k (~1.7s) to ~60 (negligible).
+  // Bucket by integer day first, format the label once per distinct day —
+  // 20k toLocaleDateString calls cost ~1.7s, ~60 calls is negligible.
   var labelByBucket = {};
   for (var i = 0; i < sorted.length; i++) {
     var ts = sorted[i].timestamp || 0;
@@ -110,10 +106,9 @@ function renderTrends(container, hands, meta, overallData) {
   var tHtml = '<div class="panel-title">Trends</div>';
   tHtml += '<div class="panel-desc">Session-over-session charts for win rate, VPIP, and P&L.</div>';
 
-  // Verdict + section stories (Direction of Travel, Session Swings).
   var trendsFindings = [];
   if (typeof Sections !== 'undefined' && typeof Sections.evaluateSections === 'function') {
-    // overallData is the filter-scoped analyse() result; it's cached upstream so
+    // overallData is the filter-scoped analyse() result, cached upstream —
     // reusing it avoids a second full-pass analyse on every Trends visit.
     var sectionD = overallData || (typeof State !== 'undefined' && State.overallAnalysis) || analyse(hands);
     trendsFindings = Sections.findingsForPanel(Sections.evaluateSections(sectionD, {}, hands), 'Tables and Trends');
@@ -131,16 +126,12 @@ function renderTrends(container, hands, meta, overallData) {
   }
   tHtml += '</div></div>';
 
-  // Best & Worst Sessions block (moved from My Game; this is the natural home
-  // for "session over time" content).
   if (overallData) {
     var bwHtml = renderBestWorstSessions(hands, overallData);
     if (bwHtml) tHtml += '<div class="p-row">' + bwHtml + '</div>';
   }
 
   tHtml += '<div class="p-row"><div class="sec-subtitle mt-0">Session Breakdown</div>';
-  // VPIP and Aggression columns dropped - they're already shown as cumulative
-  // line charts above; restating them as columns is a duplicate.
   tHtml += '<div class="overflow-x"><table class="tbl"><thead><tr><th>Date</th><th>Hands</th><th>Session ' + tipWrap('Win Rate') + '</th><th>Cumulative ' + tipWrap('Win Rate') + '</th></tr></thead><tbody>';
   for (var pi = points.length - 1; pi >= 0; pi--) {
     var pt = points[pi];
@@ -153,7 +144,6 @@ function renderTrends(container, hands, meta, overallData) {
 
   container.innerHTML = tHtml;
 
-  // ── Render Chart.js charts ──
   var labels = points.map(function(p) { return p.label; });
 
   for (var ci = 0; ci < chartConfigs.length; ci++) {

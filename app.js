@@ -1,9 +1,3 @@
-// ── APP SHELL (orchestrator) ─────────────────────────────────────────────────
-
-// Tab navigation is handled by click listener in helpers.js
-
-// BB toggle handler - only changes display units, no recompute. Just re-render
-// the active tab so its labels flip.
 document.getElementById('bb-toggle').onclick = function () {
   _displayBB = !_displayBB;
   this.querySelectorAll('.bb-opt').forEach(function (o) {
@@ -15,12 +9,9 @@ document.getElementById('bb-toggle').onclick = function () {
   }
 };
 
-// ── PER-TAB ANALYSIS CACHE ──────────────────────────────────────────────────
-// The shared analyse() result is computed lazily on first request for a given
-// filter, then reused by any panel that needs it until the filter changes.
-var _analysisCache = null;       // { key, fd, filtered }
-var _opponentCacheKey = null;    // tracks filter the opponent profiles were built for
-var _panelsRenderedFor = {};     // tabId -> filterKey (which panel has up-to-date content)
+var _analysisCache = null;
+var _opponentCacheKey = null;
+var _panelsRenderedFor = {};
 
 function _filterKey() {
   var tableFilter = document.getElementById('table-filter');
@@ -34,7 +25,6 @@ function _filterKey() {
     excl.join(',');
 }
 
-// Lazy-build the filter-scoped analysis. Called only by panels that need d.
 function getFilteredAnalysis() {
   var key = _filterKey();
   if (_analysisCache && _analysisCache.key === key) return _analysisCache;
@@ -45,8 +35,6 @@ function getFilteredAnalysis() {
   return _analysisCache;
 }
 
-// Build opponent profiles once per filter. Called only by panels that need it
-// (Players panel). Heavy: walks every opponent across every hand.
 function ensureOpponentProfiles(filtered) {
   var key = _filterKey();
   if (_opponentCacheKey === key) return;
@@ -63,8 +51,6 @@ function invalidateRenderedPanels() {
   _panelsRenderedFor = {};
 }
 
-// Central re-render entry point: invalidates cached work and re-renders the
-// active tab only. Other tabs stay stale until the user clicks into them.
 function renderAll() {
   if (!State.allHands.length) return false;
   invalidateAnalysisCache();
@@ -74,7 +60,6 @@ function renderAll() {
   return true;
 }
 
-// Saved session: check IndexedDB and wire restore button
 function checkSavedSession() {
   State.loadSaved(function (json) {
     if (!json) return;
@@ -111,8 +96,6 @@ function checkSavedSession() {
   });
 }
 
-// Render the header "You: <current> -> Target: <target>" display, with an
-// inline picker that lets the user swap the target playstyle.
 function _renderStyleDisplay(d) {
   var host = document.getElementById('style-display');
   if (!host) return;
@@ -142,8 +125,6 @@ function _renderStyleDisplay(d) {
   }
 }
 
-// First-time welcome screen guard. Returns true when the welcome screen was
-// shown (caller must NOT proceed to dashboard render).
 function _maybeShowStyleWelcome(d, hands, meta) {
   var existing = null;
   try { existing = localStorage.getItem('tc_user_style'); } catch (_) {}
@@ -157,7 +138,6 @@ function _maybeShowStyleWelcome(d, hands, meta) {
   }
   welcomeHost.style.display = 'block';
 
-  // Hide dashboard / paste while welcome is up.
   document.getElementById('paste-wrap').classList.add('hidden');
   document.getElementById('upload-wrap').classList.add('hidden');
   document.getElementById('dash').classList.remove('on');
@@ -173,17 +153,8 @@ function _maybeShowStyleWelcome(d, hands, meta) {
   return true;
 }
 
-// ── PER-TAB RENDER DISPATCH ─────────────────────────────────────────────────
-// Only the active panel is rendered. Other panels stay stale (empty) until
-// the user clicks into them. switchTab calls renderActivePanel after the
-// visual switch.
-
-// Which panels need the filter-scoped d from analyse(). Trends and showdown
-// both consume it for section findings; without it they call analyse(hands)
-// themselves, costing a full extra pass over the dataset per visit.
 var _PANELS_NEED_D = { mygame:1, cards:1, position:1, street:1, actions:1, range:1, players:1, trends:1, showdown:1, allin:1 };
 
-// Which panels show the "Showing stats for X table" banner.
 var _PANELS_HAVE_BANNER = { welcome:1, mygame:1, cards:1, position:1, street:1, actions:1, range:1, trends:1, showdown:1, log:1, allin:1, players:1 };
 
 function _filterBannerHtml() {
@@ -244,8 +215,6 @@ function _resolveActiveTabId(forceTabId) {
   if (forceTabId) return forceTabId;
   var activeItem = document.querySelector('.tab-item.active');
   if (activeItem) return activeItem.dataset.tab;
-  // Direct-link tabs (e.g. Custom Report) live on .tab-menu-btn[data-tab]
-  // with no .tab-item underneath them.
   var activeBtn = document.querySelector('.tab-menu-btn[data-tab].active');
   return activeBtn ? activeBtn.dataset.tab : 'welcome';
 }
@@ -259,12 +228,8 @@ function renderActivePanel(forceTabId) {
   _drawPanel(tabId, State.meta);
 }
 
-// Yield to the browser before doing the heavy first-visit render. Without this,
-// click → repaint → analyse → repaint runs in one tick, so the new tab looks
-// frozen even though the data is on its way. Showing a loading spinner first
-// gives the user immediate feedback that the click landed.
 // setTimeout(0) instead of rAF because rAF is throttled when the tab is
-// backgrounded — leaving the user staring at a spinner that never resolves.
+// backgrounded, leaving the user staring at a spinner that never resolves.
 function renderActivePanelDeferred(forceTabId) {
   if (!State.allHands.length) return;
   var tabId = _resolveActiveTabId(forceTabId);
@@ -277,7 +242,6 @@ function renderActivePanelDeferred(forceTabId) {
   setTimeout(function () { renderActivePanel(tabId); }, 0);
 }
 
-// Wrap switchTab so the new tab actually renders its content on first visit.
 (function () {
   if (typeof switchTab !== 'function') return;
   var _origSwitchTab = switchTab;
@@ -288,7 +252,6 @@ function renderActivePanelDeferred(forceTabId) {
   };
 })();
 
-// ── HEADER STRIP (one-time at session load) ─────────────────────────────────
 function _renderHeaderStrip() {
   var d = State.overallAnalysis;
   if (!d || !d.core) return;
@@ -314,11 +277,8 @@ function _renderHeaderControls() {
   document.getElementById('page-meta').textContent = (meta && meta.player ? meta.player : '') + (meta && meta.exportedAt ? ' · ' + new Date(meta.exportedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '') + (State.allHands.length && filtered.length < State.allHands.length ? ' · Filtered: ' + filtered.length + '/' + State.allHands.length + ' hands' : '');
 }
 
-// ── MAIN RENDER (orchestrator) ──────────────────────────────────────────────
 function render(d, hands, meta) {
-  // First-time users see the style welcome screen instead of the dashboard.
   if (_maybeShowStyleWelcome(d, hands, meta)) return;
-  // Strip any legacy #cr=... fragment in case someone visits an old share URL.
   if (window.location.hash && window.location.hash.indexOf('#cr=') === 0) {
     try { history.replaceState(null, '', window.location.pathname + window.location.search); } catch (_) {}
   }
@@ -326,9 +286,6 @@ function render(d, hands, meta) {
   renderActivePanel();
 }
 
-// One-time dashboard scaffolding: header strip from the overall analysis,
-// filter dropdowns, style picker, button handlers. Does NOT render any panel
-// content — that's renderActivePanel's job.
 function _bootDashboard(meta) {
   document.getElementById('paste-wrap').classList.add('hidden');
   document.getElementById('upload-wrap').classList.add('hidden');
@@ -337,7 +294,6 @@ function _bootDashboard(meta) {
   _renderHeaderControls();
   _renderHeaderStrip();
 
-  // Populate players-filter dropdown
   var pfEl = document.getElementById('players-filter');
   var pfVal = pfEl.value;
   var sizeCounts = {};
@@ -355,7 +311,6 @@ function _bootDashboard(meta) {
 
   _renderStyleDisplay(State.overallAnalysis);
 
-  // Filter handlers - invalidate caches, re-render active tab only.
   var filterEl = document.getElementById('table-filter');
   filterEl.onchange = function () {
     var prev = this.value;
@@ -377,7 +332,6 @@ function _bootDashboard(meta) {
     this.value = prev;
   };
 
-  // Sync BB toggle visual
   var bbBtn = document.getElementById('bb-toggle');
   if (bbBtn) {
     bbBtn.querySelectorAll('.bb-opt').forEach(function (o) {
@@ -386,7 +340,6 @@ function _bootDashboard(meta) {
   }
 }
 
-// ── PROCESS ─────────────────────────────────────────────────────────────────
 function process(raw) {
   var json;
   try {
@@ -422,7 +375,6 @@ function process(raw) {
   });
 }
 
-// ── INPUT HANDLERS ──────────────────────────────────────────────────────────
 document.getElementById('go-btn').onclick = function () {
   var v = document.getElementById('jin').value.trim();
   if (v) process(v);
@@ -463,7 +415,6 @@ document.getElementById('hiw-modal').onclick = function (e) {
   if (e.target === this) this.classList.remove('show');
 };
 
-// ── TOOLTIPS ────────────────────────────────────────────────────────────────
 function positionTip(tooltipEl) {
   var tipBox = tooltipEl.querySelector('.tip-box');
   if (!tipBox) return;
@@ -508,7 +459,6 @@ window.addEventListener('resize', function () {
   if (active) positionTip(active);
 });
 
-// ── UPLOAD / MERGE HANDLERS ─────────────────────────────────────────────────
 var _uploadedHands = [];
 
 document.getElementById('upload-nav-btn').onclick = function () {
@@ -610,7 +560,6 @@ document.getElementById('upload-analyse-btn').onclick = function () {
   process(JSON.stringify(merged));
 };
 
-// ── BOOT ────────────────────────────────────────────────────────────────────
 initStorage(function () {
   checkSavedSession();
 });
