@@ -1,31 +1,8 @@
-// ── CARDS SECTION ─────────────────────────────────────────────────────────────
-//
-// Six stories cover postflop performance by hand strength held at the moment
-// of decision.
-//
-//   Premium Made   Set or better.
-//   Strong Made    Overpair, Top Pair, Two Pair.
-//   Marginal Made  Middle Pair, Bottom Pair, Pocket Pair below the board.
-//   Strong Draws   Flush draw, open-ended straight draw, or combo of both
-//                  (held on the flop or turn before the river).
-//   Weak Draws     Gutshot straight draw only.
-//   Air            High card hands with no significant draw.
-//
-// Hand strength is computed once per hand using classifyMadeHand on the last
-// street the hand actually reached. Hands that fold preflop without a flop
-// are skipped here. The result is one bucket per hand; pillars aggregate
-// over the bucket.
-
 (function() {
   var MIN_AGG  = (typeof MIN_AGGREGATE === 'number') ? MIN_AGGREGATE : 30;
   var MIN_AX   = (typeof MIN_AXIS === 'number') ? MIN_AXIS : 20;
   var MIN_CL   = (typeof MIN_CELL === 'number') ? MIN_CELL : 10;
 
-  // ── HELPERS ────────────────────────────────────────────────────────────────
-
-  // "Won the pot" (matches showdown.js wonShowdown). Different from the
-  // global heroWon, which requires net P&L > 0. Used when we want to count
-  // pots scooped rather than money made.
   function wonPot(h) {
     return !!(h && h.outcome && h.outcome.result === 'won');
   }
@@ -34,8 +11,6 @@
     return getHandPnlValue(h);
   }
 
-  // Return the deepest street the hand actually reached: 'Flop', 'Turn',
-  // 'River', or null when no postflop action exists.
   function lastStreetReached(h) {
     if (!h || !h.actions) return null;
     var acts = parseActions(h.actions);
@@ -52,11 +27,6 @@
     return null;
   }
 
-  // Detect cases where hero is "playing the board" - the board contains the
-  // strong hand on its own and hero contributes only kickers. These hands
-  // must NOT classify as premium even when classifyMadeHand returns Set,
-  // Trips, Straight, Flush, etc. Returns true when the strength belongs to
-  // the board.
   function heroPlaysBoard(hole, boardSlice, made) {
     if (!hole || hole.length < 2) return false;
     if (!boardSlice || boardSlice.length < 3) return false;
@@ -67,9 +37,6 @@
     var boardRanks = boardSlice.map(function(c) { return c.slice(0, -1); });
     var boardSuits = boardSlice.map(function(c) { return c.slice(-1); });
 
-    // Trips on board: any board rank appears 3+ times AND hero has no card of
-    // that rank. The made label will be 'Trips' (not 'Set' which is hero's
-    // pocket pair hitting the board).
     if (made.tier === 3 && made.label === 'Trips') {
       var boardCounts = {};
       for (var i = 0; i < boardRanks.length; i++) {
@@ -80,7 +47,6 @@
       }
     }
 
-    // Full house on board (rare but possible: e.g. AAA22 with hero KQ).
     if (made.tier === 6) {
       var bc6 = {};
       for (var j = 0; j < boardRanks.length; j++) {
@@ -94,9 +60,7 @@
       if (trips && pair && holeRanks.indexOf(trips) === -1 && holeRanks.indexOf(pair) === -1) return true;
     }
 
-    // Straight: board itself has 5 in a row, hero contributes nothing.
     if (made.tier === 4 && boardRanks.length >= 5) {
-      // Build sorted unique board rank indexes.
       var bIdx = boardRanks.map(function(r) { return RANKS.indexOf(r); });
       var uniq = [];
       for (var u = 0; u < bIdx.length; u++) {
@@ -105,20 +69,16 @@
       uniq.sort(function(a, b) { return a - b; });
       // Ace-low wheel.
       if (uniq.indexOf(12) !== -1) uniq.unshift(-1);
-      // Scan windows of 5 consecutive ranks.
       for (var w = 0; w <= uniq.length - 5; w++) {
         if (uniq[w + 4] - uniq[w] === 4 &&
             uniq[w + 1] === uniq[w] + 1 &&
             uniq[w + 2] === uniq[w] + 2 &&
             uniq[w + 3] === uniq[w] + 3) {
-          return true; // board straight
+          return true;
         }
       }
     }
 
-    // Flush: 5+ cards of one suit on board AND hero has no card of that suit
-    // higher than the lowest board card of that suit. The simple test: hero
-    // has no card of that suit at all.
     if (made.tier === 5) {
       var suitCount = {};
       for (var s = 0; s < boardSuits.length; s++) {
@@ -129,7 +89,6 @@
       }
     }
 
-    // Two pair on the board with hero having neither rank.
     if (made.tier === 2) {
       var bc2 = {};
       for (var k = 0; k < boardRanks.length; k++) {
@@ -147,11 +106,6 @@
     return false;
   }
 
-  // Map the made-hand draws array onto strong-draw / weak-draw buckets.
-  // classifyMadeHand emits strings like 'Flush draw (9 outs)', 'OESD (8 outs)',
-  // and 'Gutshot (4 outs)'. The river has no draws (last street). Returns
-  // 'strong-draw' for flush draw or OESD (or combo), 'weak-draw' for gutshot
-  // only, or null when there is nothing to classify.
   function classifyDrawBucket(made, lastStreet) {
     if (!made || !made.draws || !made.draws.length) return null;
     if (lastStreet === 'River') return null; // draws are not live on the river
@@ -167,9 +121,6 @@
     return null;
   }
 
-  // Classify a single board slice (flop, turn, or river) into one of the six
-  // buckets. Returns null when the slice is too short or classifyMadeHand
-  // declines to return a label.
   function classifyOnSlice(hole, boardSlice, streetName) {
     if (boardSlice.length < 3) return null;
     var made = (typeof classifyMadeHand === 'function') ? classifyMadeHand(hole, boardSlice) : null;
@@ -178,12 +129,8 @@
     var label = made.label;
     var madeBucket = null;
 
-    // If the board does all the work (board trips with hero kickers, board
-    // straight, board flush, board full house, board two pair), strength
-    // belongs to the board not hero. Treat as air - hero is on a kicker
-    // hand and the made-hand label overstates the holding. Exception: a
-    // pocket pair is never air; route it to overpair/marginal so the
-    // pocket-pair-below-the-board hands don't show up in "Air".
+    // When the board does the work, treat as air. Exception: a pocket pair
+    // is never air; route it to overpair/marginal instead.
     if (heroPlaysBoard(hole, boardSlice, made)) {
       var hr0 = hole[0].slice(0, -1);
       var hr1 = hole[1].slice(0, -1);
@@ -220,7 +167,6 @@
       else madeBucket = 'air';
     }
 
-    // Promote air to a draw bucket when a live draw is present on this street.
     if (madeBucket === 'air') {
       var drawBucket = classifyDrawBucket(made, streetName);
       if (drawBucket) return drawBucket;
@@ -228,15 +174,10 @@
     return madeBucket;
   }
 
-  // Bucket priority, best to worst. Used to pick the strongest classification
-  // hero held at any postflop decision point.
   var BUCKET_PRIORITY = ['premium', 'strong', 'marginal', 'strongDraw', 'weakDraw', 'air'];
 
-  // Classify a hand by the BEST strength hero held on any postflop street they
-  // reached. Evaluating only the last street misclassifies hands like 99 on a
-  // Q-A-A flop that then runs out QAAQ3: AA99 two pair on the flop becomes
-  // "playing the board" by the river, but hero's flop call was made with a
-  // real hand. Returns null if hero never reached the flop.
+  // Classify by the BEST strength hero held on any postflop street reached.
+  // The last street alone misclassifies hands that later become "playing the board".
   function classifyHandBucket(h) {
     if (!h || !h.hole || h.hole.length < 2) return null;
     if (!h.board || h.board.length < 3) return null;
@@ -265,9 +206,6 @@
     return bestBucket;
   }
 
-  // Hero's aggregate postflop action profile in a hand: counts of bets/raises,
-  // checks, calls, folds across flop/turn/river. Returns null when no postflop
-  // action.
   function heroPostflopProfile(h) {
     if (!h || !h.actions) return null;
     var acts = parseActions(h.actions);
@@ -292,29 +230,21 @@
     return p;
   }
 
-  // True when hero called at least one river bet in this hand.
   function heroCalledRiver(h) {
     var p = heroPostflopProfile(h);
     return !!(p && p.riverCall > 0);
   }
 
-  // True when hero made an aggressive postflop action (bet or raise).
   function heroBetOrRaisedPostflop(h) {
     var p = heroPostflopProfile(h);
     return !!(p && (p.bet + p.raise) > 0);
   }
 
-  // True when hero only ever checked or called postflop (no bets, no raises).
   function heroOnlyPassive(h) {
     var p = heroPostflopProfile(h);
     if (!p) return false;
     return (p.bet + p.raise) === 0;
   }
-
-  // ── BUCKET ROLL-UP ─────────────────────────────────────────────────────────
-  //
-  // Walk all hands once and produce per-bucket aggregates plus the hand list
-  // so each story can filter without re-running classification.
 
   function buildBuckets(hands) {
     var buckets = {
@@ -342,15 +272,11 @@
         else b.passive++;
       }
       if (id === 'air' || id === 'weakDraw') {
-        // For these, "called" tracks any postflop call (the leak: paying off
-        // with no equity or thin equity).
         if (prof && prof.call > 0) {
           b.called++;
           if (heroLost(h)) { b.calledLost++; b.calledPnl += pnl; }
         }
       } else if (id === 'strongDraw') {
-        // Strong draws also track call-down losses but the headline pillar is
-        // semi-bluff frequency (bet/raise on the draw street).
         if (prof && prof.call > 0) {
           b.called++;
           if (heroLost(h)) { b.calledLost++; b.calledPnl += pnl; }
@@ -360,7 +286,6 @@
           b.semibluffPnl += pnl;
         }
       } else {
-        // Made hands: river-call frequency is the "going too far" probe.
         if (prof && prof.riverCall > 0) {
           b.riverCall++;
           if (heroLost(h)) { b.riverCallLost++; b.riverCallPnl += pnl; }
@@ -370,18 +295,11 @@
     return buckets;
   }
 
-  // ── PILLAR HELPERS ────────────────────────────────────────────────────────
-
-  // Per-hand rate as a small currency number with sign.
   function perHandRate(total, n) {
     if (!n) return 0;
     return total / n;
   }
 
-  // Severity rule for aggression-when-strong (premium/strong):
-  //   aggressive < 50% with n >= MIN_CELL  : 'r'
-  //   aggressive < 65% with n >= MIN_CELL  : 'a'
-  //   otherwise                            : 'g' (silent unless P&L is bad)
   function classifyAggression(aggressive, total) {
     if (!total || total < MIN_CL) return null;
     var pctAgg = (aggressive / total) * 100;
@@ -390,9 +308,6 @@
     return { severity: 'g', direction: 'mid', deltaUnits: 0, value: pctAgg };
   }
 
-  // Severity for "going too far" with a bucket: river-call losing rate.
-  //   riverCallLost / riverCall >= 70% : 'r'
-  //   riverCallLost / riverCall >= 55% : 'a'
   function classifyGoingTooFar(riverCall, riverCallLost) {
     if (!riverCall || riverCall < MIN_CL) return null;
     var lossPct = (riverCallLost / riverCall) * 100;
@@ -401,8 +316,6 @@
     return { severity: 'g', direction: 'mid', deltaUnits: 0, value: lossPct };
   }
 
-  // Severity for the air-call leak: how often hero called postflop with air,
-  // and did those calls lose money.
   function classifyAirCall(called, calledLost, calledPnl) {
     if (!called || called < MIN_CL) return null;
     var lossPct = (calledLost / called) * 100;
@@ -411,15 +324,12 @@
     return { severity: 'g', direction: 'mid', deltaUnits: 0, value: lossPct };
   }
 
-  // Per-hand P&L direction vs overall. Returns 'leak' / 'lift' / 'flat'.
   function comparePnl(bucketPerHand, overallPerHand) {
     var gap = bucketPerHand - overallPerHand;
     if (bucketPerHand < 0 && gap < 0) return 'leak';
     if (bucketPerHand > 0 && gap > 0) return 'lift';
     return 'flat';
   }
-
-  // ── STORY 1: PREMIUM MADE HANDS ───────────────────────────────────────────
 
   function buildPremium(d, bucket, overallPerHand) {
     if (!bucket || bucket.n < MIN_AX) return null;
@@ -434,7 +344,6 @@
     var branchTexts = [];
     var pillarSeverities = [];
 
-    // Pillar 1: aggression on premiums. Strong hands should bet or raise.
     var aggressivePct = bucket.n > 0 ? (bucket.aggressive / bucket.n) * 100 : 0;
     var aggSev = classifyAggression(bucket.aggressive, bucket.n);
     if (aggSev) {
@@ -449,7 +358,6 @@
       }
     }
 
-    // Pillar 2: P&L direction on the bucket vs overall.
     var pnlVerdict = comparePnl(perHand, overallPerHand);
     if (pnlVerdict === 'leak') {
       branchTexts.push(
@@ -465,7 +373,6 @@
       pillarSeverities.push('g');
     }
 
-    // Impact and so-what.
     var severity = pillarSeverities.length ? Sections.combineSeverity(pillarSeverities) : 'g';
     var impactText = null;
     var soWhatText = null;
@@ -481,8 +388,6 @@
     var fired = branchTexts.length > 0 || severity === 'r' || severity === 'a';
     if (!fired) return null;
 
-    // Example hands: premium hands where hero stayed passive AND failed to win,
-    // or premium hands that lost outright. Filtered to the verdict above.
     var examples = [];
     if (bucket.hands.length) {
       var passiveLost = pickHands(bucket.hands, function(h) {
@@ -530,8 +435,6 @@
     };
   }
 
-  // ── STORY 2: STRONG MADE HANDS ────────────────────────────────────────────
-
   function buildStrong(d, bucket, overallPerHand) {
     if (!bucket || bucket.n < MIN_AX) return null;
 
@@ -545,8 +448,6 @@
     var branchTexts = [];
     var pillarSeverities = [];
 
-    // Pillar 1: aggression. Strong made hands need to bet for value and
-    // protection.
     var aggressivePct = bucket.n > 0 ? (bucket.aggressive / bucket.n) * 100 : 0;
     var aggSev = classifyAggression(bucket.aggressive, bucket.n);
     if (aggSev) {
@@ -561,8 +462,6 @@
       }
     }
 
-    // Pillar 2: going too far. River-call losses with one pair are the
-    // central leak for this bucket.
     var goingSev = classifyGoingTooFar(bucket.riverCall, bucket.riverCallLost);
     if (goingSev) {
       if (goingSev.severity === 'r' || goingSev.severity === 'a') {
@@ -578,7 +477,6 @@
       }
     }
 
-    // Pillar 3: P&L direction vs overall.
     var pnlVerdict = comparePnl(perHand, overallPerHand);
     if (pnlVerdict === 'leak') {
       branchTexts.push(
@@ -612,7 +510,6 @@
     var fired = branchTexts.length > 0 || severity === 'r' || severity === 'a';
     if (!fired) return null;
 
-    // Example hands: river-call losses are the strongest "going too far" signal.
     var examples = [];
     var riverCallLosses = pickHands(bucket.hands, function(h) {
       return heroCalledRiver(h) && heroLost(h);
@@ -660,8 +557,6 @@
     };
   }
 
-  // ── STORY 3: MARGINAL MADE HANDS ──────────────────────────────────────────
-
   function buildMarginal(d, bucket, overallPerHand) {
     if (!bucket || bucket.n < MIN_AX) return null;
 
@@ -675,7 +570,6 @@
     var branchTexts = [];
     var pillarSeverities = [];
 
-    // Pillar 1: going too far. Bluff-catching with marginal hands.
     var goingSev = classifyGoingTooFar(bucket.riverCall, bucket.riverCallLost);
     if (goingSev) {
       if (goingSev.severity === 'r' || goingSev.severity === 'a') {
@@ -691,8 +585,6 @@
       }
     }
 
-    // Pillar 2: pot building with marginals (the trap). Counter-intuitive
-    // aggression: leading too often with weak made hands.
     var leadPct = bucket.n > 0 ? (bucket.aggressive / bucket.n) * 100 : 0;
     var leadSev = null;
     if (bucket.n >= MIN_CL) {
@@ -706,7 +598,6 @@
       pillarSeverities.push(leadSev.severity);
     }
 
-    // Pillar 3: P&L direction vs overall.
     var pnlVerdict = comparePnl(perHand, overallPerHand);
     if (pnlVerdict === 'leak') {
       branchTexts.push(
@@ -740,8 +631,6 @@
     var fired = branchTexts.length > 0 || severity === 'r' || severity === 'a';
     if (!fired) return null;
 
-    // Example hands: hero called a river with a marginal hand and lost. Falls
-    // back to losing marginal hands overall when river-call sample is thin.
     var examples = [];
     var riverCallLosses = pickHands(bucket.hands, function(h) {
       return heroCalledRiver(h) && heroLost(h);
@@ -800,8 +689,6 @@
     };
   }
 
-  // ── STORY 4: AIR OR OVERCARDS ─────────────────────────────────────────────
-
   function buildAir(d, bucket, overallPerHand) {
     if (!bucket || bucket.n < MIN_AX) return null;
 
@@ -815,7 +702,6 @@
     var branchTexts = [];
     var pillarSeverities = [];
 
-    // Pillar 1: calling with air.
     var airSev = classifyAirCall(bucket.called, bucket.calledLost, bucket.calledPnl);
     if (airSev) {
       if (airSev.severity === 'r' || airSev.severity === 'a') {
@@ -831,7 +717,6 @@
       }
     }
 
-    // Pillar 2: P&L direction.
     var pnlVerdict = comparePnl(perHand, overallPerHand);
     if (pnlVerdict === 'leak') {
       branchTexts.push(
@@ -858,8 +743,6 @@
     var fired = branchTexts.length > 0 || severity === 'r' || severity === 'a';
     if (!fired) return null;
 
-    // Example hands: air hands where hero called and lost. The "paying off
-    // with no equity" leak.
     var examples = [];
     var calledLost = pickHands(bucket.hands, function(h) {
       var p = heroPostflopProfile(h);
@@ -895,8 +778,6 @@
     };
   }
 
-  // ── STORY 5: STRONG DRAWS ────────────────────────────────────────────────
-
   function buildStrongDraws(d, bucket, overallPerHand) {
     if (!bucket || bucket.n < MIN_AX) return null;
 
@@ -912,9 +793,6 @@
     var branchTexts = [];
     var pillarSeverities = [];
 
-    // Pillar 1: semi-bluffing. Strong draws are the best semi-bluffing hands
-    // because they have equity when called. Below 30% aggression frequency
-    // means too many passive calls with these draws.
     var semibluffSev = null;
     if (bucket.n >= MIN_CL) {
       if (aggressivePct < 20) semibluffSev = { severity: 'r', deltaUnits: (30 - aggressivePct) / 15 };
@@ -930,8 +808,6 @@
       pillarSeverities.push('g');
     }
 
-    // Pillar 2: paying off when the draw bricks. If called frequently and the
-    // P&L on those call lines is negative, that is realising equity poorly.
     var callLossPct = bucket.called > 0 ? (bucket.calledLost / bucket.called) * 100 : 0;
     if (bucket.called >= MIN_CL && callLossPct >= 65 && bucket.calledPnl < 0) {
       branchTexts.push(
@@ -942,7 +818,6 @@
       pillarSeverities.push('a');
     }
 
-    // Pillar 3: P&L direction vs overall.
     var pnlVerdict = comparePnl(perHand, overallPerHand);
     if (pnlVerdict === 'leak') {
       branchTexts.push(
@@ -972,8 +847,6 @@
     var fired = branchTexts.length > 0 || severity === 'r' || severity === 'a';
     if (!fired) return null;
 
-    // Examples: strong draws where hero only called and lost (passive equity
-    // realisation gone wrong). Filtered to the verdict.
     var examples = [];
     var passiveLosses = pickHands(bucket.hands, function(h) {
       return heroOnlyPassive(h) && heroLost(h);
@@ -1009,8 +882,6 @@
     };
   }
 
-  // ── STORY 6: WEAK DRAWS ──────────────────────────────────────────────────
-
   function buildWeakDraws(d, bucket, overallPerHand) {
     if (!bucket || bucket.n < MIN_AX) return null;
 
@@ -1024,8 +895,6 @@
     var branchTexts = [];
     var pillarSeverities = [];
 
-    // Pillar 1: pricing discipline. Gutshots are about 8 percent per street.
-    // Calling them often without the right price is the central leak.
     var pricingSev = null;
     if (bucket.called >= MIN_CL) {
       var callLossPct = (bucket.calledLost / bucket.called) * 100;
@@ -1049,7 +918,6 @@
       }
     }
 
-    // Pillar 2: P&L direction.
     var pnlVerdict = comparePnl(perHand, overallPerHand);
     if (pnlVerdict === 'leak') {
       branchTexts.push(
@@ -1074,7 +942,6 @@
     var fired = branchTexts.length > 0 || severity === 'r' || severity === 'a';
     if (!fired) return null;
 
-    // Examples: weak draws called and lost.
     var examples = [];
     var calledLost = pickHands(bucket.hands, function(h) {
       var prof = heroPostflopProfile(h);
@@ -1108,8 +975,6 @@
       }
     };
   }
-
-  // ── REGISTER ──────────────────────────────────────────────────────────────
 
   Sections.defineSection({
     id: 'cards',

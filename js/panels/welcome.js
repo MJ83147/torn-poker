@@ -1,13 +1,3 @@
-// ── WELCOME PANEL ─────────────────────────────────────────────────────────────
-
-// First-time welcome screen: shown before the user has picked a target style.
-// Replaces the dashboard until a target style is chosen.
-//
-//   container - element to render into (full-screen overlay or panel)
-//   d         - analyse() output for the loaded session
-//   hands     - hand list
-//   meta      - { player, exportedAt }
-//   onPicked  - callback(styleName) invoked when the user picks a target style
 var STYLE_TARGET_CARDS = [
   { key: 'Shark',   name: 'Shark',   desc: 'Tight and very aggressive. Picks spots well, hammers value.' },
   { key: 'TAG',     name: 'TAG',     desc: 'Tight-aggressive. The default winning style. Few hands, played hard.' },
@@ -119,7 +109,6 @@ function renderWelcome(container, d, hands, meta) {
     };
   });
 
-  // Tips carousel
   var tipSlides = container.querySelectorAll('.welcome-tip');
   var tipDots = container.querySelectorAll('.tips-dot');
   var tipIdx = 0;

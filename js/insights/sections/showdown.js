@@ -1,32 +1,9 @@
-// ── SHOWDOWN SECTION ──────────────────────────────────────────────────────────
-//
-// Three stories about what happens once the river is reached.
-//
-//   Going to Showdown      How often the player gets to showdown. Aggregate
-//                          WTSD plus per-position breakdown.
-//
-//   Winning at Showdown    How often the player wins when they do reach
-//                          showdown. WSD aggregate plus per-position spread.
-//
-//   Showdown vs Non-       Where the money actually comes from. Splits net
-//   Showdown Winnings      P&L into showdown and non-showdown lines and reads
-//                          the pattern.
-//
-// Pillar 3 of Going to Showdown (pot-size band) and pillar 2 of Winning at
-// Showdown (river hand strength) are deferred: there is no pre-aggregated
-// slice for pot-size band or river hand strength on `d`, and walking every
-// hand to bucket by river pot inflates this section's cost. Both pillars
-// will land once the analyse() pipeline emits the buckets.
-
 (function() {
   var SHOWDOWN_BAND = { tight: 24, loose: 30 };    // WTSD target.
   var WSD_BAND = { tight: 50, loose: 60 };          // Won-at-showdown target.
   var MIN_AGG = (typeof MIN_AGGREGATE === 'number') ? MIN_AGGREGATE : 30;
   var MIN_AX = (typeof MIN_AXIS === 'number') ? MIN_AXIS : 20;
 
-  // ── SHARED HELPERS ────────────────────────────────────────────────────────
-
-  // Join a list of strings as "A", "A and B", or "A, B, and C".
   function joinList(items) {
     if (!items || !items.length) return '';
     if (items.length === 1) return items[0];
@@ -34,19 +11,13 @@
     return items.slice(0, -1).join(', ') + ', and ' + items[items.length - 1];
   }
 
-  // True if the hand is a showdown event (uses global helper).
   function handIsShowdown(h) {
     return !!isShowdown(h);
   }
 
-  // True if hero won the pot. Different from the global heroWon (which
-  // requires net P&L > 0). For showdown stories we want "did hero scoop the
-  // pot" since by showdown all chips are already committed.
   function wonShowdown(h) {
     return h && h.outcome && h.outcome.result === 'won';
   }
-
-  // ── STORY 1: GOING TO SHOWDOWN ────────────────────────────────────────────
 
   function buildGoingToShowdown(d, extras, hands) {
     if (!d || !d.n || d.n < MIN_AGG) return null;
@@ -58,7 +29,6 @@
     var sev = Sections.classify(wtsd, SHOWDOWN_BAND, null);
     if (!sev) return null;
 
-    // Net P&L on showdowns and non-showdowns, used in the opening and impact.
     var sdPnl = 0, sdCount = 0, nsdPnl = 0, nsdCount = 0;
     if (hands) {
       for (var i = 0; i < hands.length; i++) {
@@ -75,7 +45,6 @@
 
     var branchTexts = [];
 
-    // Pillar 1 read: aggregate band fit.
     if (sev.severity === 'r' || sev.severity === 'a') {
       var dirWord = sev.direction === 'high' ? 'above' : 'below';
       branchTexts.push(
@@ -84,7 +53,6 @@
       );
     }
 
-    // Pillar 2: per-position WTSD. Flag positions notably above/below the band.
     var posReads = [];
     if (d.byPosition) {
       for (var pi = 0; pi < POSITION_ORDER.length; pi++) {
@@ -123,7 +91,6 @@
       branchTexts.push('Per-position WTSD reads in-band across the seats with sample.');
     }
 
-    // Impact and so-what, keyed by aggregate direction and P&L shape.
     var impactText = null;
     var soWhatText = null;
     var sdPerHand = sdCount > 0 ? sdPnl / sdCount : 0;
@@ -152,7 +119,6 @@
       soWhatText = 'Tighten the range you take to showdown. The frequency is fine; the hand strength at the river needs to improve.';
     }
 
-    // Example hands: showdowns reached, capped at 15.
     var examples = [];
     if (hands) {
       var sdHands = pickHands(hands, function(h) { return handIsShowdown(h); }, 15);
@@ -192,13 +158,10 @@
     };
   }
 
-  // ── STORY 2: WINNING AT SHOWDOWN ──────────────────────────────────────────
-
   function buildWinningAtShowdown(d, extras, hands) {
     if (!d || !d.n || d.n < MIN_AGG) return null;
     if (!hands || !hands.length) return null;
 
-    // Aggregate WSD from the raw hand stream.
     var sdCount = 0, sdWon = 0, sdPnl = 0;
     var perPos = {};
     for (var i = 0; i < hands.length; i++) {
@@ -229,7 +192,6 @@
 
     var branchTexts = [];
 
-    // Pillar 1: aggregate WSD band fit.
     if (sev.severity === 'r' || sev.severity === 'a') {
       var dirWord = sev.direction === 'high' ? 'above' : 'below';
       branchTexts.push(
@@ -238,7 +200,6 @@
       );
     }
 
-    // Pillar 2 (data-permitting): WSD spread by position.
     var posRows = [];
     for (var p in perPos) {
       var r = perPos[p];
@@ -258,7 +219,6 @@
       }
     }
 
-    // Impact and so-what.
     var impactText = null;
     var soWhatText = null;
     if (sev.severity === 'r' || sev.severity === 'a') {
@@ -274,7 +234,6 @@
       soWhatText = 'Review the largest losing showdowns. The pattern is usually paying off value on the river with one-pair hands you should have folded.';
     }
 
-    // Examples: showdowns lost (the actionable group for WSD work).
     var examples = [];
     var sdLost = pickHands(hands, function(h) {
       return handIsShowdown(h) && !wonShowdown(h);
@@ -311,8 +270,6 @@
     };
   }
 
-  // ── STORY 3: SHOWDOWN vs NON-SHOWDOWN WINNINGS ────────────────────────────
-
   function buildShowdownSplit(d, extras, hands) {
     if (!d || !d.n || d.n < MIN_AGG) return null;
     if (!hands || !hands.length) return null;
@@ -342,7 +299,6 @@
     var sdPos = sdPnl > 0;
     var nsdPos = nsdPnl > 0;
 
-    // The four patterns from the spec.
     if (sdPos && nsdPos) {
       severity = 'g';
       branchTexts.push('Both lines profit. You win when you show down and you win when you do not.');
@@ -364,12 +320,10 @@
       impactText = 'Hands you do not get to showdown on are costing money. You are betting and being called or raised off pots without seeing the river.';
       soWhatText = 'Fewer c-bets and barrels in spots where opponents are calling. Pick bluff spots where folds are likely: dry boards, heads up, in position.';
     } else {
-      // Mixed (one zero, one not). Soft note.
       severity = 'n';
       branchTexts.push('One line is near flat. Read the showdown and non-showdown stats above to see which is driving total P&L.');
     }
 
-    // Examples: hands by line, each capped at 12.
     var examples = [];
     if (sdNeg) {
       var sdLosses = pickHands(hands, function(h) {
@@ -420,8 +374,6 @@
       }
     };
   }
-
-  // ── REGISTER ──────────────────────────────────────────────────────────────
 
   Sections.defineSection({
     id: 'showdown',

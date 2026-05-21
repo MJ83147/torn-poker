@@ -2,7 +2,6 @@ var esbuild = require('esbuild');
 var fs = require('fs');
 var path = require('path');
 
-// Lists every .js file in `dir` (relative to this script), alphabetically.
 function listJs(dir) {
   var full = path.join(__dirname, dir);
   if (!fs.existsSync(full)) return [];
@@ -12,14 +11,6 @@ function listJs(dir) {
     .map(function(f) { return dir + '/' + f; });
 }
 
-// Hand-listed load order for the ordering-sensitive layers (helpers, root
-// standalones). Panels are auto-discovered because their order does not
-// matter and forgetting to add one used to silently break the build.
-//
-// matrix.js and styleDetector.js sit in helpers/ as shared infrastructure:
-// matrix.js owns the table-dynamics target bands, styleDetector.js owns the
-// VPIP/AF -> style classification. They load before context.js and
-// target-bands.js (which wrap matrixTarget) so those can reference them.
 var helperOrder = [
   'js/helpers/constants.js',
   'js/helpers/css-classes.js',
@@ -41,9 +32,6 @@ var helperOrder = [
 
 var panels = listJs('js/panels');
 
-// Sections framework + sections. Sits before panels so panels can call
-// Sections.evaluateSections at render time. Each section's run() reads
-// matrixTarget/getUserStyle from the shared helpers above.
 var insightsOrder = [
   'js/insights/story-engine.js',
   'js/insights/sections/range.js',
@@ -81,16 +69,12 @@ var files = []
     'app.js',
   ]);
 
-// Sanity 1: every file we plan to read must exist.
 files.forEach(function(f) {
   if (!fs.existsSync(path.join(__dirname, f))) {
     throw new Error('build.js: missing source file ' + f);
   }
 });
 
-// Sanity 2: every .js file present in the audited directories must appear in
-// the manifest. Catches the "added a new helper / panel but forgot to
-// register it" mistake, which used to silently break runtime behaviour.
 var auditedDirs = ['js/helpers', 'js/panels'];
 auditedDirs.forEach(function(dir) {
   listJs(dir).forEach(function(f) {
@@ -101,16 +85,10 @@ auditedDirs.forEach(function(dir) {
   });
 });
 
-// Concatenate all source files in order.
 var combined = files
   .map(function(f) { return fs.readFileSync(path.join(__dirname, f), 'utf8'); })
   .join('\n');
 
-// Inline panel HTML templates. Each js/panels/<name>.html becomes
-// window.__TPL['<name>'] = '<minified html>'. Loaded once at bundle init so
-// panels never fetch at render time. Minify by collapsing whitespace runs
-// and trimming each line — preserves attribute values and text content
-// reading order, drops cosmetic indentation.
 function minifyHtml(src) {
   return src
     .replace(/<!--[\s\S]*?-->/g, '')
@@ -124,7 +102,7 @@ var tplFiles = listJs('js/panels').map(function(jsPath) {
 var tplAssignments = [];
 tplFiles.forEach(function(htmlPath) {
   var full = path.join(__dirname, htmlPath);
-  if (!fs.existsSync(full)) return; // optional during migration
+  if (!fs.existsSync(full)) return;
   var name = path.basename(htmlPath, '.html');
   var html = minifyHtml(fs.readFileSync(full, 'utf8'));
   tplAssignments.push("window.__TPL['" + name + "']=" + JSON.stringify(html) + ";");
@@ -133,7 +111,6 @@ if (tplAssignments.length) {
   combined = "window.__TPL=window.__TPL||{};" + tplAssignments.join('') + '\n' + combined;
 }
 
-// Minify with esbuild.
 var result = esbuild.buildSync({
   stdin: {
     contents: combined,

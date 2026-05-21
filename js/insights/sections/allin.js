@@ -1,30 +1,8 @@
-// ── ALL-IN EV SECTION ─────────────────────────────────────────────────────────
-//
-// One story for the All-In EV panel. The spec lists All-in EV among the ten
-// sections (§6) but does not detail the stories. This is the pragmatic shape:
-//
-//   All-in Pressure
-//     A directional read on how the player handles all-in spots. Combines
-//     three signals: fold-to-all-in rate, win-rate when calling, and the
-//     overall volume of all-in spots. The narrative says whether the player
-//     is folding too cheaply, calling too light, or hovering in a healthy
-//     middle.
-//
-// The existing All-in EV panel already runs Monte Carlo equity simulations on
-// detected all-in showdowns. This section sits above that, framing the
-// behavioural read so the user has a verdict before they touch the equity
-// widget.
-
 (function() {
   var FOLD_HIGH = 70; // folding to more than 70% of all-ins is escapism
   var FOLD_LOW  = 30; // folding under 30% is calling too light
   var WIN_FLOOR = 35; // sub 35% win rate when calling means weak calling range
 
-  // True when the hand involved any all-in action either side faced. We use a
-  // heuristic on the action log: if any non-hero raise has no " to " phrasing
-  // it is treated as a shove, matching the rule in helpers/hand-parsing.js
-  // isAllInAction(). We do not require hero to have called - we want every
-  // hand where an all-in pressure point came up.
   function handHadAllIn(h) {
     if (!h || !h.actions) return false;
     var acts = parseActions(h.actions);
@@ -102,8 +80,6 @@
       soWhatText = 'Drop the bottom of your calling range. Pocket pairs below TT and offsuit broadway hands are usually the cuts.';
     }
 
-    // Example hands. Pull lost all-in calls (the most coachable spots) and a
-    // general "all-in pressure" set so the user always sees something useful.
     var examples = [];
     var lostCalls = pickHands(hands, function(h) { return handHadAllIn(h) && heroLost(h); }, 15);
     if (lostCalls.length) {

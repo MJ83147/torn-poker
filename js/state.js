@@ -1,5 +1,3 @@
-// ── STATE (centralized app state) ─────────────────────────────────────────────
-
 var _db = null;
 var DB_NAME = 'tc_poker';
 var DB_STORE = 'session';
@@ -7,16 +5,15 @@ var DB_KEY = 'tc_poker_analysis';
 
 function _openDB(cb) {
   if (_db) return cb(_db);
-  var req = indexedDB.open(DB_NAME, 2);  // bumped from 1
+  var req = indexedDB.open(DB_NAME, 2);
   req.onupgradeneeded = function(e) {
     var db = e.target.result;
 
-    // v1 store - keep for migration source, don't delete yet
+    // v1 store kept as a migration source; do not delete it.
     if (!db.objectStoreNames.contains(DB_STORE)) {
       db.createObjectStore(DB_STORE);
     }
 
-    // v2 stores
     if (!db.objectStoreNames.contains('hands')) {
       var store = db.createObjectStore('hands', { autoIncrement: true });
       store.createIndex('timestamp', 'timestamp');
@@ -36,26 +33,21 @@ function _openDB(cb) {
   req.onerror = function() { cb(null); };
 }
 
-// Boot: migrate localStorage/v1 blob → per-hand records if needed, then call back.
-// This MUST complete before any reads happen.
+// MUST complete before any reads happen.
 function initStorage(callback) {
   _openDB(function(db) {
     if (!db) { callback(); return; }
 
-    // Check if per-hand migration has already run
     var metaTx = db.transaction('meta', 'readonly');
     var metaGet = metaTx.objectStore('meta').get('session_meta');
     metaGet.onsuccess = function() {
       if (metaGet.result && metaGet.result.migrated) {
-        // Already migrated to per-hand format
         callback();
         return;
       }
 
-      // Need to migrate. Try the v1 IDB blob first, then localStorage.
       _loadV1Blob(db, function(blob) {
         if (!blob) {
-          // Nothing to migrate - brand new user
           callback();
           return;
         }
@@ -66,7 +58,6 @@ function initStorage(callback) {
 
         if (!hands.length) { callback(); return; }
 
-        // Write each hand individually with dedup
         var tx = db.transaction(['hands', 'meta'], 'readwrite');
         var store = tx.objectStore('hands');
         for (var i = 0; i < hands.length; i++) {
@@ -75,7 +66,6 @@ function initStorage(callback) {
           store.add(h);
         }
 
-        // Write meta
         tx.objectStore('meta').put({
           player: blob.player || 'Unknown',
           exportedAt: blob.exportedAt || null,
@@ -97,7 +87,6 @@ function initStorage(callback) {
   });
 }
 
-// Read the v1 blob from either the old IDB session store or localStorage
 function _loadV1Blob(db, callback) {
   if (db.objectStoreNames.contains(DB_STORE)) {
     var tx = db.transaction(DB_STORE, 'readonly');
@@ -174,7 +163,6 @@ var State = {
     return filtered;
   },
 
-  // Save to IndexedDB (with localStorage fallback) - per-hand records
   save: function(data) {
     _openDB(function(db) {
       if (!db) {
@@ -205,7 +193,6 @@ var State = {
         })(hands[i]);
       }
 
-      // Update meta
       var metaPut = tx.objectStore('meta').put({
         player: data.player || 'Unknown',
         exportedAt: data.exportedAt || new Date().toISOString(),
@@ -218,7 +205,6 @@ var State = {
     });
   },
 
-  // Load from IndexedDB per-hand store (with localStorage fallback). Async.
   loadSaved: function(callback) {
     _openDB(function(db) {
       if (!db) {
@@ -226,14 +212,12 @@ var State = {
         return;
       }
 
-      // Read meta
       var metaTx = db.transaction('meta', 'readonly');
       var metaGet = metaTx.objectStore('meta').get('session_meta');
       metaGet.onsuccess = function() {
         var meta = metaGet.result;
         if (!meta) { callback(null); return; }
 
-        // Read all hands
         var handsTx = db.transaction('hands', 'readonly');
         var handsGet = handsTx.objectStore('hands').getAll();
         handsGet.onsuccess = function() {

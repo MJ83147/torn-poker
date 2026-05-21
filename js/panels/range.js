@@ -1,10 +1,3 @@
-// ── RANGE PANEL ───────────────────────────────────────────────────────────────
-// Four sub-tabs (Overall, RFI, Facing RFI, RFI vs 3bet) map directly onto the
-// GTO chart set in js/data/ranges.json. Each sub-tab fetches the chart for the
-// active spot, renders a 13x13 grid where every cell shows the GTO color in
-// the background and the user's actual play as a border (played) or fade
-// (folded). State (sub-tab + selectors) is persisted in localStorage.
-
 var _rangeData = null;
 var _rangeDataPromise = null;
 
@@ -17,14 +10,6 @@ function getRangeData() {
   return _rangeDataPromise;
 }
 
-// Per-hero scenario lists. Each entry carries:
-//   label   - dropdown text
-//   key     - stable identifier (persists in localStorage)
-//   type    - 'rfi' | 'vs-rfi' | 'vs-3bet' | 'limp'  (drives hand filter + tally)
-//   bucket  - top-level key in ranges.json
-//   matchup - the chart key inside that bucket (omitted for RFI where bucket==='RFI'
-//             and we index by hero data label instead)
-//   heroDataLabel - data-side label for the hero seat (used for RFI lookup)
 var HERO_CHARTS = {
   'UTG': [
     { label: 'RFI',             key: 'RFI',              type: 'rfi',     bucket: 'RFI',                heroDataLabel: 'UTG' },
@@ -116,16 +101,12 @@ var HERO_CHARTS = {
 
 var HERO_SEATS = Object.keys(HERO_CHARTS);
 
-// Look up an entry from HERO_CHARTS by (hero, key). Falls back to the first
-// entry for the hero when key is missing or stale.
 function findScenario(hero, key) {
   var list = HERO_CHARTS[hero] || [];
   for (var i = 0; i < list.length; i++) if (list[i].key === key) return list[i];
   return list[0] || null;
 }
 
-// Map a hero-seat selector value (UTG, UTG+1, …, BB) to the app's hand-history
-// position string(s) so we can filter hero's played hands by seat.
 function heroSeatToAppPositions(hero) {
   if (hero === 'UTG')   return ['UTG'];
   if (hero === 'UTG+1') return ['UTG+1'];
@@ -139,7 +120,6 @@ function heroSeatToAppPositions(hero) {
   return [];
 }
 
-// State key in localStorage.
 var RANGE_STATE_KEY = 'range.filters';
 
 function loadRangeState() {
@@ -159,7 +139,6 @@ function rangeBuildKey(ri, ci) {
   return r1 + r2 + (ri < ci ? 's' : 'o');
 }
 
-// Convert a chart array of {hand, color} to a key-to-color map.
 function chartToColorMap(chart) {
   var map = {};
   if (!chart || !chart.length) return map;
@@ -167,8 +146,6 @@ function chartToColorMap(chart) {
   return map;
 }
 
-// Look up the chart array for a (hero, scenario-key) pair. Returns null when
-// the spot has no reference data.
 function lookupChartFor(data, hero, key) {
   if (!data) return null;
   var entry = findScenario(hero, key);
@@ -181,8 +158,6 @@ function lookupChartFor(data, hero, key) {
   return bucket[entry.matchup] || null;
 }
 
-// Filter hands matching (hero seat, scenario). Returns hands where hero was at
-// the chosen seat and whose preflop action fits the scenario type.
 function filterHandsForScenario(hands, hero, key) {
   var entry = findScenario(hero, key);
   if (!entry) return [];
@@ -195,7 +170,6 @@ function filterHandsForScenario(hands, hero, key) {
     var act = classifyPreflopAction(h);
     if (!act) continue;
     if (entry.type === 'rfi') {
-      // First-to-act spot: opens, limps-open, or fold first-in.
       if (act !== 'rfi' && act !== 'limp-open' && act !== 'folded-pre') continue;
       if (act === 'folded-pre' && heroHadPriorActionPre(h)) continue;
     } else if (entry.type === 'vs-rfi') {
@@ -211,8 +185,6 @@ function filterHandsForScenario(hands, hero, key) {
   return out;
 }
 
-// True when at least one opponent raised, bet, or called before hero's first
-// voluntary action. Used to tell "first-in fold" apart from "fold facing action".
 function heroHadPriorActionPre(h) {
   if (!h || !h.actions) return false;
   var acts = parseActions(h.actions).filter(function(a) { return a.street === 'Preflop'; });
@@ -238,9 +210,6 @@ function heroFacedRaisePre(h) {
   return false;
 }
 
-// Per-combo tally for the filtered hand set. `scenarioType` shapes what
-// "played" means: rfi → hero opened, vs-rfi → hero continued, vs-3bet → hero
-// continued vs the 3-bet, limp → hero limped. 'overall' is any voluntary action.
 function tallyByCombo(filtered, scenarioType) {
   var played = {}, folded = {}, dealt = {}, won = {}, pnl = {};
   for (var i = 0; i < filtered.length; i++) {
@@ -264,9 +233,8 @@ function tallyByCombo(filtered, scenarioType) {
   return { played: played, folded: folded, dealt: dealt, won: won, pnl: pnl };
 }
 
-// Build the multi-line hover tooltip for a single combo cell. Lines are joined
-// with \n; the CSS rule on .rc[data-tip]:hover::after uses white-space: pre-line
-// so they render stacked.
+// Lines are joined with \n; the .rc[data-tip]:hover::after CSS rule uses
+// white-space: pre-line to render them stacked.
 function tipForCombo(key, tallies) {
   var dealt  = (tallies.dealt  && tallies.dealt[key])  || 0;
   var played = (tallies.played && tallies.played[key]) || 0;
@@ -284,10 +252,6 @@ function tipForCombo(key, tallies) {
   return lines.join('\n');
 }
 
-// Pristine GTO chart grid — colour only, no overlay for the user's actions.
-// `tallies` is optional; when provided, cells get the same multi-line P/L
-// tooltip as the Your-Range grid so users can compare GTO action vs. their
-// realized result for the same combo at the same position.
 function buildGtoGridHtml(chart, tallies) {
   var colors = chartToColorMap(chart);
   var html = '<div class="range-grid-sm">';
@@ -303,8 +267,6 @@ function buildGtoGridHtml(chart, tallies) {
   return html;
 }
 
-// Overall sub-tab grid: frequency-shaded background driven by hero's play
-// volume per combo. Bold border on combos played, faded on combos folded.
 function buildOverallGridHtml(tallies) {
   var html = '<div class="range-grid-sm">';
   var maxPlayed = 0;
@@ -337,11 +299,6 @@ function buildOverallGridHtml(tallies) {
   return html;
 }
 
-// "Your range" grid showing hero's actual choice for the active scenario:
-//   red   = raised (open / 3-bet / 4-bet, depending on scenario)
-//   green = called
-//   white = folded after seeing the combo
-//   none  = never dealt
 function buildHeroGridHtml(filtered, scenarioType, tallies) {
   var byKey = {};
   for (var i = 0; i < filtered.length; i++) {
@@ -360,7 +317,6 @@ function buildHeroGridHtml(filtered, scenarioType, tallies) {
       var t = byKey[key];
       var color = 'none';
       if (t && t.dealt > 0) {
-        // Dominant action wins the cell color.
         var best = 'fold', bestN = t.fold;
         if (t.raise > bestN) { best = 'raise'; bestN = t.raise; }
         if (t.call > bestN) { best = 'call'; bestN = t.call; }
@@ -374,8 +330,6 @@ function buildHeroGridHtml(filtered, scenarioType, tallies) {
   return html;
 }
 
-// Hero's single dominant action for a hand under the active scenario. Returns
-// 'raise', 'call', or 'fold'.
 function heroActionBucket(h, scenarioType) {
   var act = classifyPreflopAction(h);
   if (scenarioType === 'rfi') {
@@ -398,14 +352,11 @@ function heroActionBucket(h, scenarioType) {
     if (act === 'limp-open' || act === 'vs-rfi-call') return 'call';
     return 'fold';
   }
-  // overall (fallback): collapse to raise/call/fold based on hero's first
-  // voluntary action.
   if (act === 'rfi' || act === 'vs-rfi-3bet' || act === 'squeeze' || act === 'rfi-vs-3bet-4bet') return 'raise';
   if (act === 'limp-open' || act === 'limp-behind' || act === 'vs-rfi-call' || act === 'rfi-vs-3bet-call') return 'call';
   return 'fold';
 }
 
-// Wrap two grids (GTO + your range) in a side-by-side layout with titles.
 function twoGridHtml(chart, filtered, scenarioType, tallies) {
   return '<div class="range-compare">' +
     '<div class="range-compare-col">' +

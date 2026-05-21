@@ -1,39 +1,6 @@
-// ── BETS SECTION ──────────────────────────────────────────────────────────────
-//
-// Three stories.
-//
-//   Bet Sizing Shape       What does the player's bet sizing distribution
-//                          look like per street? Scattered, single-size, or
-//                          sensibly varied?
-//
-//   Value vs Bluff Sizing  MVP only: does bet size correlate with eventual
-//                          showdown outcome? Without hand-strength-at-decision
-//                          data we infer retrospectively from whether the
-//                          hand won. If the signal is too noisy we skip.
-//
-//   Response to Sizing     When the player faces a bet, do their fold/call/
-//                          raise frequencies scale sensibly with the size of
-//                          the bet faced?
-//
-// Sizing is normalised to "fraction of pot at bet time" by walking each hand's
-// action stream and tracking the running pot. That gives a workable
-// approximation without rebuilding the whole pot-tracker pipeline. Bets where
-// we cannot recover a pot context (hand's first action, missing amount, etc.)
-// are dropped.
-//
-// Pillars deferred because the data is not aggregated yet:
-//   - Bet Sizing Shape:    players-in-pot and board-texture splits.
-//   - Value vs Bluff:      hand-strength-at-decision (not derivable without
-//                          a board evaluator on every street). Only the
-//                          retrospective showdown-outcome MVP fires.
-//   - Response to Sizing:  street, position, players-in-pot, board-texture,
-//                          and hand-strength splits.
-
 (function() {
   var MIN_AGG = (typeof MIN_AGGREGATE === 'number') ? MIN_AGGREGATE : 30;
   var MIN_CELL_LOCAL = (typeof MIN_CELL === 'number') ? MIN_CELL : 10;
-
-  // ── HELPERS ────────────────────────────────────────────────────────────────
 
   function mean(arr) {
     if (!arr || !arr.length) return 0;
@@ -42,7 +9,6 @@
     return t / arr.length;
   }
 
-  // Coefficient of variation (stddev / mean). Used to flag "scattered" sizing.
   function cov(arr) {
     if (!arr || arr.length < 3) return 0;
     var m = mean(arr);
@@ -56,15 +22,6 @@
     return sd / m;
   }
 
-  // Walk a hand's actions and compute, for each hero bet/raise, the bet as a
-  // fraction of the pot at the time the bet went in. Also for each bet the
-  // hero faced. Returns { heroBets: [...], facedBets: [...] }.
-  // Each entry: { street, amount, potBefore, fracOfPot, response? }.
-  //
-  // Caveat: amounts in raise lines parse as the "to" total (e.g. "raised $200
-  // to $500"), but for our purposes - sizing relative to pot - we treat the
-  // recorded amount as the chips going in at that step. This is rough but
-  // consistent across hands. Hands with no parseable pot context are skipped.
   function walkHandForSizing(h) {
     var out = { heroBets: [], facedBets: [] };
     if (!h || !h.actions) return out;
@@ -74,7 +31,6 @@
     var pot = 0;
     for (var i = 0; i < acts.length; i++) {
       var a = acts[i];
-      // Blinds seed the pot but are not bets we read.
       if (a.type === 'sb' || a.type === 'bb' || a.type === 'won') {
         if (a.amount > 0) pot += a.amount;
         continue;
@@ -88,7 +44,6 @@
           if (a.isMe) {
             out.heroBets.push({ street: a.street, amount: a.amount, potBefore: potBefore, fracOfPot: frac });
           } else {
-            // Look ahead for hero's response on this street to this bet.
             var resp = null;
             for (var j = i + 1; j < acts.length; j++) {
               if (acts[j].street !== a.street) break;
@@ -112,7 +67,6 @@
     return out;
   }
 
-  // Group hero bets by street.
   function groupByStreet(rows) {
     var g = { Preflop: [], Flop: [], Turn: [], River: [] };
     for (var i = 0; i < rows.length; i++) {
@@ -122,12 +76,11 @@
     return g;
   }
 
-  // Bucket a fraction-of-pot reading into a size band.
   function sizeBand(frac) {
-    if (frac < 0.33) return 'small';      // under 33%
-    if (frac < 0.66) return 'medium';     // 33-66%
-    if (frac <= 1.0) return 'big';        // 66-100%
-    return 'overbet';                     // overbet
+    if (frac < 0.33) return 'small';
+    if (frac < 0.66) return 'medium';
+    if (frac <= 1.0) return 'big';
+    return 'overbet';
   }
 
   var BAND_LABELS = {
@@ -143,7 +96,6 @@
     overbet: 'overbets'
   };
 
-  // Severity escalation: combine local pillar severities into a worst-wins.
   function worst(severities) {
     var rank = { r: 4, a: 3, n: 2, g: 1 };
     var best = 'g';
@@ -157,13 +109,10 @@
     return best;
   }
 
-  // ── STORY 1: BET SIZING SHAPE ──────────────────────────────────────────────
-
   function buildSizingShape(d, extras, hands) {
     if (!d || !d.n || d.n < MIN_AGG) return null;
     if (!hands || !hands.length) return null;
 
-    // Walk every hand once and collect hero bets with pot context.
     var heroBets = [];
     for (var i = 0; i < hands.length; i++) {
       var w = walkHandForSizing(hands[i]);
@@ -173,7 +122,6 @@
 
     var byStreet = groupByStreet(heroBets);
 
-    // Per-street read: dominant cluster, scatter, single-size.
     var streetReads = [];
     var overallFracs = [];
     for (var s = 1; s < STREETS.length; s++) { // skip Preflop in shape read
@@ -184,7 +132,6 @@
       for (var fi = 0; fi < fracs.length; fi++) overallFracs.push(fracs[fi]);
       var avg = mean(fracs);
       var spread = cov(fracs);
-      // Bucket counts to find a dominant cluster.
       var bandCounts = { small: 0, medium: 0, big: 0, overbet: 0 };
       for (var bi = 0; bi < fracs.length; bi++) bandCounts[sizeBand(fracs[bi])]++;
       var topBand = null, topCount = 0;
@@ -205,7 +152,6 @@
 
     if (!streetReads.length) return null;
 
-    // Aggregate read across all post-flop streets.
     var overallAvg = mean(overallFracs);
     var openingText = 'Across ' + heroBets.length + ' bets, your average sizing is ' +
       Math.round(overallAvg * 100) + '% of pot.';
@@ -217,11 +163,9 @@
 
     for (var ri = 0; ri < streetReads.length; ri++) {
       var r = streetReads[ri];
-      // Scattered: high variance and no dominant band.
       if (r.cov >= 0.6 && r.topShare < 0.5) {
         scatteredStreets.push(r);
       } else if (r.topShare >= 0.8 && r.cov < 0.25) {
-        // Single-size: one band dominates and spread is tight.
         singleSizeStreets.push(r);
       } else {
         sensibleStreets.push(r);
@@ -245,7 +189,6 @@
       branchTexts.push('Per-street sizing shows sensible variation across the post-flop streets you bet.');
     }
 
-    // Cross-street trend: do bets scale up street by street?
     var ordered = STREETS.slice(1).map(function(st) {
       for (var p = 0; p < streetReads.length; p++) if (streetReads[p].street === st) return streetReads[p];
       return null;
@@ -283,9 +226,6 @@
       soWhatText = 'Keep building data on by-position and by-texture splits as the sample grows.';
     }
 
-    // Example hands. When scattered streets exist, prefer hands that bet on
-    // those streets. Otherwise fall back to ANY hand where the player bet
-    // post-flop so the card always has something to inspect.
     var examples = [];
     if (hands && hands.length) {
       var pulled = pickHands(hands, function(h) {
@@ -300,7 +240,6 @@
         }
         return false;
       }, 12);
-      // Fallback: any hand where hero made a post-flop bet.
       if (!pulled.length) {
         pulled = pickHands(hands, function(h) {
           var w = walkHandForSizing(h);
@@ -344,15 +283,6 @@
     };
   }
 
-  // ── STORY 2: VALUE VS BLUFF SIZING (MVP) ───────────────────────────────────
-  //
-  // Without hand-strength-at-decision, classify each bet retrospectively by
-  // hand outcome. For hands that reached showdown: bets in winning hands are
-  // "value-loaded" and bets in losing hands are "bluff-loaded" or weak-loaded.
-  // Then check whether bet size correlates with outcome in a sensible way.
-  // Sensible: bigger bets correlate with winning showdowns (value sized up).
-  // Leak: bigger bets correlate with losing showdowns (overbluffing).
-
   function buildValueVsBluff(d, extras, hands) {
     if (!d || !d.n || d.n < MIN_AGG) return null;
     if (!hands || !hands.length) return null;
@@ -367,7 +297,6 @@
       if (!isShowdown(h)) continue;
       var w = walkHandForSizing(h);
       if (!w.heroBets.length) continue;
-      // Use the hand's average sizing (post-flop only) for stability.
       var post = w.heroBets.filter(function(b) { return b.street !== 'Preflop'; });
       if (!post.length) continue;
       var avg = mean(post.map(function(b) { return b.fracOfPot; }));
@@ -376,8 +305,6 @@
       else { lost.count++; lost.sumFrac += avg; lost.fracs.push(avg); }
     }
 
-    // Need enough on each side for a meaningful read. When thin, still
-    // surface the post-flop bet pool so the user can browse what is there.
     if (won.count < MIN_CELL_LOCAL || lost.count < MIN_CELL_LOCAL) {
       var thinExamples = [];
       var anyBets = pickHands(hands, function(h) {
@@ -425,7 +352,6 @@
     var soWhatText = null;
 
     if (gap <= -0.10) {
-      // Sized bigger on losing hands than winning ones - bluff-loaded sizing.
       severity = 'r';
       branchTexts.push('Your bigger bets cluster on hands that lost at showdown. The sizing tells opponents when you do not have it.');
       impactText = 'Sizing up with weak hands and down with strong ones is the worst possible shape. Observant opponents fold cheap when you go big and call light when you go small. Every bluff is overpriced and every value bet is underpriced.';
@@ -442,9 +368,8 @@
       soWhatText = 'Start scaling up on value-heavy boards and lines, and either give up or size small with a plan on weak holdings.';
     }
 
-    // Examples: showdown losses with bigger-than-average bets.
     var examples = [];
-    var threshold = avgWon; // bets sized at or above your value average
+    var threshold = avgWon;
     var bigBetLosses = pickHands(hands, function(h) {
       if (!h || !h.outcome || h.outcome.result === 'won') return false;
       if (!isShowdown(h)) return false;
@@ -485,13 +410,10 @@
     };
   }
 
-  // ── STORY 3: RESPONSE TO SIZING ────────────────────────────────────────────
-
   function buildResponseToSizing(d, extras, hands) {
     if (!d || !d.n || d.n < MIN_AGG) return null;
     if (!hands || !hands.length) return null;
 
-    // Walk all hands and collect every bet hero faced with a response.
     var faced = [];
     for (var i = 0; i < hands.length; i++) {
       var w = walkHandForSizing(hands[i]);
@@ -499,7 +421,6 @@
     }
     if (faced.length < MIN_CELL_LOCAL) return null;
 
-    // Bucket and compute fold/call/raise rates per band.
     var bands = {
       small: { fold: 0, call: 0, raise: 0, n: 0 },
       medium: { fold: 0, call: 0, raise: 0, n: 0 },
@@ -515,7 +436,6 @@
       else if (f.response === 'raise') b.raise++;
     }
 
-    // Build readable rows for the bands that hit the cell minimum.
     var rows = [];
     var BAND_ORDER = ['small', 'medium', 'big', 'overbet'];
     for (var bi = 0; bi < BAND_ORDER.length; bi++) {
@@ -542,8 +462,6 @@
     var branchTexts = [];
     var leaks = [];
 
-    // Leak: folds too often to small bets. Threshold: above 60% fold on the
-    // small band when sample is enough.
     var smallRow = null, bigRow = null, overbetRow = null, mediumRow = null;
     for (var ri = 0; ri < rows.length; ri++) {
       if (rows[ri].key === 'small') smallRow = rows[ri];
@@ -557,7 +475,6 @@
       branchTexts.push('You fold ' + Math.round(smallRow.foldPct) + '% to small bets across ' + smallRow.n + ' spots. Small bets are usually cheap probes, and you are folding too often.');
     }
 
-    // Leak: calls too often to big bets / overbets. Threshold: above 50% call.
     if (bigRow && bigRow.callPct >= 50) {
       leaks.push('calls-big');
       branchTexts.push('You call ' + Math.round(bigRow.callPct) + '% against big bets across ' + bigRow.n + ' spots. Big bets are usually value, and the call frequency is high.');
@@ -567,7 +484,6 @@
       branchTexts.push('You call ' + Math.round(overbetRow.callPct) + '% against overbets across ' + overbetRow.n + ' spots. Overbets are almost always polarised; calling that often pays off value.');
     }
 
-    // Leak: sizing-blind response. Fold-rate range across bands within 8 points.
     if (rows.length >= 3) {
       var foldRates = rows.map(function(r) { return r.foldPct; });
       var minF = Math.min.apply(null, foldRates);
@@ -576,7 +492,6 @@
         leaks.push('sizing-blind');
         branchTexts.push('Your fold rate barely moves across sizing bands (range ' + Math.round(minF) + ' to ' + Math.round(maxF) + '%). You are responding the same way to a small probe as to an overbet.');
       } else {
-        // Sensible scaling: folds rise as size rises.
         var sorted = rows.slice().sort(function(a, b) {
           return BAND_ORDER.indexOf(a.key) - BAND_ORDER.indexOf(b.key);
         });
@@ -590,7 +505,6 @@
       }
     }
 
-    // Severity gate.
     var severity;
     var leakCount = leaks.length;
     if (leakCount >= 2) severity = 'r';
@@ -616,8 +530,6 @@
       soWhatText = 'Hold the shape. Track call frequency against overbets specifically as the sample grows.';
     }
 
-    // Examples per leak, plus a generic fallback so the card always has at
-    // least one button to click into.
     var examples = [];
     var anyFaced = pickHands(hands, function(h) {
       var w = walkHandForSizing(h);
@@ -659,8 +571,6 @@
         });
       }
     }
-    // Fallback: when no leaks fired, surface a general bets-faced pool so
-    // the card always has a button to inspect the underlying hands.
     if (!examples.length && anyFaced.length) {
       examples.push({
         id: 'bets-response-faced',
@@ -689,8 +599,6 @@
       }
     };
   }
-
-  // ── REGISTER ───────────────────────────────────────────────────────────────
 
   Sections.defineSection({
     id: 'bets',

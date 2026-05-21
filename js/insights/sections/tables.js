@@ -1,21 +1,6 @@
-// ── TABLES SECTION ────────────────────────────────────────────────────────────
-//
-// Two stories.
-//
-//   Table Selection  Group hands by table and read volume vs P&L. Flag when
-//                    most volume sits at losing tables, when a winning table
-//                    is under-played, when one table dominates the picture,
-//                    or confirms an even spread.
-//
-//   Time at Table    Bucket sessions by length and compare win rate and P&L
-//                    between long and short sessions. Flag when long sessions
-//                    are clearly worse than short ones.
-
 (function() {
   var MIN_TABLE_CELL = (typeof MIN_CELL === 'number') ? MIN_CELL : 10;
   var MIN_AGG = (typeof MIN_AGGREGATE === 'number') ? MIN_AGGREGATE : 30;
-
-  // ── SHARED HELPERS ────────────────────────────────────────────────────────
 
   function safePct(num, den) {
     if (!den) return null;
@@ -30,7 +15,6 @@
     return total;
   }
 
-  // Win count over hands with an outcome (matches the rest of the codebase).
   function tableWinRate(handsList) {
     var withOutcome = 0;
     var won = 0;
@@ -50,13 +34,10 @@
     return items.slice(0, -1).join(', ') + ', and ' + items[items.length - 1];
   }
 
-  // ── STORY 1: TABLE SELECTION ──────────────────────────────────────────────
-
   function buildTableSelection(d, extras, hands) {
     if (!d || !d.n || d.n < MIN_AGG) return null;
     if (!hands || !hands.length) return null;
 
-    // Group hands by inferred table id.
     var groups = {};
     for (var i = 0; i < hands.length; i++) {
       var h = hands[i];
@@ -66,9 +47,6 @@
       groups[key].hands.push(h);
     }
 
-    // Build rows. Keep tables with at least MIN_TABLE_CELL hands for the
-    // leak gate; tables below the floor are tracked but excluded from
-    // dominance and volume comparisons.
     var allRows = [];
     var rows = [];
     for (var k in groups) {
@@ -98,7 +76,6 @@
     }
     if (!totalHands) return null;
 
-    // Sort copies for downstream reads.
     var byPnl = rows.slice().sort(function(a, b) { return b.pnl - a.pnl; });
     var byVolume = rows.slice().sort(function(a, b) { return b.n - a.n; });
     var winners = rows.filter(function(r) { return r.pnl > 0; });
@@ -107,7 +84,6 @@
     var best = byPnl[0];
     var worst = byPnl[byPnl.length - 1];
 
-    // Volume at losing vs winning tables.
     var volWin = 0;
     var volLose = 0;
     for (var v1 = 0; v1 < rows.length; v1++) {
@@ -117,7 +93,6 @@
     var loseShare = totalHands > 0 ? (volLose / totalHands) : 0;
     var winShare  = totalHands > 0 ? (volWin / totalHands) : 0;
 
-    // Dominance: one table accounts for > 60% of absolute P&L.
     var absPnlTotal = 0;
     for (var v2 = 0; v2 < rows.length; v2++) absPnlTotal += Math.abs(rows[v2].pnl);
     var dominantTable = null;
@@ -130,8 +105,6 @@
       if (dominantShare < 0.6) dominantTable = null;
     }
 
-    // Under-played winners: tables in the top quartile by win rate or P&L
-    // but in the bottom half by volume.
     var byWr = rows.filter(function(r) { return r.wr != null; })
       .slice()
       .sort(function(a, b) { return b.wr - a.wr; });
@@ -146,7 +119,6 @@
       }
     }
 
-    // Build narrative.
     var openingText;
     if (best && worst && best.key !== worst.key) {
       openingText = 'Across ' + rows.length + ' tables with at least ' + MIN_TABLE_CELL + ' hands, ' +
@@ -165,7 +137,6 @@
     var fired = false;
     var primaryPattern = null; // 'volume-losing' | 'dominant-loser' | 'dominant-winner' | 'underplayed' | 'even'
 
-    // Branch: most volume at losing tables.
     if (losers.length && loseShare >= 0.6) {
       fired = true;
       severity = 'r';
@@ -182,7 +153,6 @@
       );
     }
 
-    // Branch: one table dominates.
     if (dominantTable) {
       fired = true;
       if (dominantTable.pnl < 0) {
@@ -206,7 +176,6 @@
       }
     }
 
-    // Branch: under-played winners.
     if (underplayedWinner && (!primaryPattern || primaryPattern === 'volume-losing')) {
       fired = true;
       if (severity === 'g') severity = 'a';
@@ -218,7 +187,6 @@
       );
     }
 
-    // Branch: even spread when nothing else fired.
     if (!fired) {
       var pnlRange = Math.abs(best.pnl - worst.pnl);
       var perHandRange = totalHands > 0 ? pnlRange / totalHands : 0;
@@ -227,7 +195,6 @@
       severity = 'g';
     }
 
-    // Impact and so what.
     var impactText = null;
     var soWhatText = null;
     if (primaryPattern === 'volume-losing') {
@@ -247,8 +214,6 @@
       soWhatText = 'The leak, if there is one, is in your play, not your choice of table.';
     }
 
-    // Example hands. Worst-table examples surface LOSING hands at that table;
-    // best-table examples surface WINNING hands. The contrast is the point.
     var examples = [];
     function tableMatches(h, id) {
       var t = inferTable(h);
@@ -306,8 +271,6 @@
     };
   }
 
-  // ── STORY 2: TIME AT TABLE ────────────────────────────────────────────────
-
   function buildTimeAtTable(d, extras, hands) {
     if (!d || !d.n || d.n < MIN_AGG) return null;
     if (!hands || !hands.length) return null;
@@ -316,7 +279,6 @@
     var sessions = buildSessions(hands);
     if (!sessions || sessions.length < 4) return null;
 
-    // Augment each session with P&L and win rate.
     var rows = [];
     for (var i = 0; i < sessions.length; i++) {
       var s = sessions[i];
@@ -335,13 +297,11 @@
     }
     if (rows.length < 4) return null;
 
-    // Quartile-bucket sessions by length.
     var byLen = rows.slice().sort(function(a, b) { return a.n - b.n; });
     var q1Idx = Math.max(0, Math.floor(byLen.length * 0.25) - 1);
     var q3Idx = Math.min(byLen.length - 1, Math.ceil(byLen.length * 0.75) - 1);
     var shortCut = byLen[q1Idx].n;
     var longCut = byLen[q3Idx].n;
-    // Guard against degenerate buckets when many sessions share a length.
     if (longCut <= shortCut) longCut = shortCut + 1;
 
     var shortBucket = byLen.filter(function(s) { return s.n <= shortCut; });
@@ -393,7 +353,6 @@
     var fired = false;
     var pattern = null; // 'long-leak' | 'long-soft' | 'even'
 
-    // Win rate gap.
     if (wrGap != null) {
       if (wrGap >= 10) {
         fired = true;
@@ -416,7 +375,6 @@
       }
     }
 
-    // Per-hand P&L gap.
     if (perHandGap > 0 && longStats.perHand < 0 && shortStats.perHand >= 0) {
       fired = true;
       severity = 'r';
@@ -453,15 +411,12 @@
       soWhatText = 'Time at the table is not where to look for the next adjustment.';
     }
 
-    // Example hands: from long losing sessions.
     var examples = [];
     if (pattern === 'long-leak' || pattern === 'long-soft') {
       var longLosingHands = [];
       var longLosingSessions = longBucket.filter(function(s) { return s.pnl < 0; });
       for (var li = 0; li < longLosingSessions.length && longLosingHands.length < 12; li++) {
         var ls = longLosingSessions[li];
-        // Pull the back half of each long losing session: that is where the
-        // slip shows up in the spec.
         var midpoint = Math.floor(ls.hands.length / 2);
         for (var lh = midpoint; lh < ls.hands.length && longLosingHands.length < 12; lh++) {
           longLosingHands.push(ls.hands[lh]);
@@ -501,8 +456,6 @@
       }
     };
   }
-
-  // ── REGISTER ──────────────────────────────────────────────────────────────
 
   Sections.defineSection({
     id: 'tables',

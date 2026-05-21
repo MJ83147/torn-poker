@@ -1,35 +1,9 @@
-// ── POSITION SECTION ──────────────────────────────────────────────────────────
-//
-// One story per seat (UTG, UTG+1, MP, LJ, HJ, CO, BTN, SB, BB). Each story
-// runs three pillars against the same shared engine and produces one finding:
-//
-//   Pillar 1: play frequency at the seat
-//     VPIP at this position vs the matrix band for (position, seats). Drives
-//     the "too wide" / "too tight" reading.
-//
-//   Pillar 2: hand composition at the seat
-//     Distribution of played hands by hand-type bucket. Flags when the seat's
-//     range is dominated by weak hand types relative to a sensible mix for
-//     that seat.
-//
-//   Pillar 3: P&L at the seat
-//     Per-hand P&L at this seat compared to the player's overall per-hand
-//     P&L. Directional (no target band).
-//
-// The seat-level finding pulls the worst pillar's severity, lists each fired
-// pillar as a branch sentence, and templates impact and so what from which
-// pillars fired. Example hands surface from whichever pillar dominates.
-
 (function() {
 
-  // Weight by which hand types are "weak openers" per seat group.
-  // Early seats: anything outside premium pairs + broadway is suspect.
-  // Late seats: only offsuit trash is suspect.
   var WEAK_TYPES_EARLY = ['Ace-Rag', 'Suited Connectors', 'Suited', 'Connectors', 'Offsuit Trash'];
   var WEAK_TYPES_MIDDLE = ['Ace-Rag', 'Connectors', 'Offsuit Trash'];
   var WEAK_TYPES_LATE = ['Offsuit Trash'];
 
-  // Story titles (used as the card headline).
   var SEAT_TITLES = {
     'UTG': 'Under the Gun',
     'UTG+1': 'UTG+1',
@@ -42,8 +16,6 @@
     'BB': 'The Big Blind Problem'
   };
 
-  // Plain seat names used inside narrative copy. BB's full title is the story
-  // title, but in the opening sentence we say "Big Blind" to keep it readable.
   var SEAT_NARRATIVE = {
     'UTG': 'Under the Gun',
     'UTG+1': 'UTG+1',
@@ -56,7 +28,6 @@
     'BB': 'Big Blind'
   };
 
-  // Seat group used to pick the "weak types" threshold and tailor copy.
   function seatGroup(pos) {
     if (pos === 'UTG' || pos === 'UTG+1') return 'early';
     if (pos === 'MP' || pos === 'LJ') return 'middle';
@@ -71,12 +42,6 @@
     return WEAK_TYPES_LATE;
   }
 
-  // Pull the right per-seat sub-d. Prefer the seat-count cell (most precise),
-  // fall back to the position slice when the cell sample is below MIN_CELL.
-  // The seat-count label is only attached when that bucket represents a strong
-  // majority of the player's hands at this seat. Otherwise it would mislead
-  // anyone who plays mixed table sizes.
-  // Returns { source, label, n }.
   function cellFor(d, position, seats) {
     var posOverall = (d.byPosition && d.byPosition[position]) ? d.byPosition[position] : null;
     if (seats && d.byPosSeat) {
@@ -92,8 +57,6 @@
     }
     return null;
   }
-
-  // ── PILLAR 1: PLAY FREQUENCY ───────────────────────────────────────────────
 
   function buildFrequencyPillar(d, hands, position, seats, cell) {
     if (!cell || !cell.source.n) return null;
@@ -111,9 +74,6 @@
         ', ' + dirWord + ' the ' + Sections.fmtBand(band) + ' target' +
         (cell.label ? ' for ' + cell.label : '') + '.';
 
-      // Examples: when too wide we surface hands the player PLAYED from this
-      // seat that LOST money (the marginal combos to drop). When too tight we
-      // surface hands they folded that look like missed opens.
       if (sev.direction === 'high') {
         var losingPlays = pickHands(hands, function(h) {
           return (h.position || '?') === position && heroPlayed(h) && heroLost(h);
@@ -157,8 +117,6 @@
     };
   }
 
-  // ── PILLAR 2: HAND COMPOSITION ─────────────────────────────────────────────
-
   function buildCompositionPillar(d, hands, position, seats, cell) {
     if (!cell || !cell.source.htMap) return null;
     var ht = cell.source.htMap;
@@ -177,7 +135,6 @@
     }
     var weakPct = totalPlayed > 0 ? (weakPlayed / totalPlayed) * 100 : 0;
 
-    // Thresholds tuned by seat group.
     var group = seatGroup(position);
     var threshold = group === 'early' ? 35 : group === 'middle' ? 45 : 65;
     var severity = 'g';
@@ -188,7 +145,6 @@
       return { id: 'composition', severity: 'g', value: weakPct, totalPlayed: totalPlayed };
     }
 
-    // Sort weak buckets by share to name the loudest two.
     weakBuckets.sort(function(a, b) { return b.played - a.played; });
     var top = weakBuckets.slice(0, 2).map(function(b) {
       return b.key + ' (' + (pct(b.played, totalPlayed) || 0) + '%)';
@@ -198,8 +154,6 @@
        group === 'middle' ? 'marginal hand types' : 'offsuit trash') +
       '. The biggest contributors are ' + top + '.';
 
-    // Examples: pull recent hands at this seat with a hand type matching the
-    // weakest buckets, so the user can see the marginal opens directly.
     var weakKeys = {};
     for (var wi = 0; wi < weakBuckets.length; wi++) weakKeys[weakBuckets[wi].key] = true;
     var weakHands = pickHands(hands, function(h) {
@@ -231,8 +185,6 @@
     };
   }
 
-  // ── PILLAR 3: P&L ──────────────────────────────────────────────────────────
-
   function buildPnlPillar(d, hands, position, seats, cell) {
     if (!cell || !cell.source.n) return null;
     var s = d.posMap && d.posMap[position];
@@ -241,8 +193,6 @@
     var overallPnl = d.core ? d.core.netPnl : 0;
     var overallPerHand = d.n > 0 ? overallPnl / d.n : 0;
 
-    // Directional: no band. Fire as a leak when the seat is meaningfully worse
-    // than the player's overall per-hand rate, and the seat itself is losing.
     var gap = seatPnlPerHand - overallPerHand;
     var ratio = Math.abs(gap) / (Math.abs(overallPerHand) + 1);
 
@@ -291,8 +241,6 @@
     };
   }
 
-  // ── COMPOSE SEAT STORY ─────────────────────────────────────────────────────
-
   function buildSeatStory(d, extras, hands, position, seats) {
     var cell = cellFor(d, position, seats);
     if (!cell) return null;
@@ -307,14 +255,10 @@
     var firedLeak = pillars.filter(function(p) { return p.severity === 'r' || p.severity === 'a'; });
     var severity = Sections.combineSeverity(pillars.map(function(p) { return p.severity; }));
 
-    // Display gate: only render if at least one pillar fired a leak or the
-    // seat has a notable P&L story. Quiet seats stay silent.
     if (!firedLeak.length) return null;
 
     var seatTitle = SEAT_TITLES[position] || position;
     var seatNarrative = SEAT_NARRATIVE[position] || position;
-    // Avoid duplication when the narrative name matches the position code
-    // (e.g. UTG+1, MP) and trim "you played" copy to read naturally.
     var heading = (seatNarrative === position)
       ? 'At ' + position
       : 'At ' + seatNarrative + ' (' + position + ')';
@@ -330,7 +274,6 @@
       if (pillars[i].branchText) branchTexts.push(pillars[i].branchText);
     }
 
-    // Impact and so-what templated by which pillars fired.
     var impactText = null;
     var soWhatText = null;
     var freqFired = freq && (freq.severity === 'r' || freq.severity === 'a');
@@ -365,7 +308,6 @@
       soWhatText = 'Filter the hand log to ' + position + ' and look for the postflop pattern that is unique to this seat.';
     }
 
-    // Merge examples from whichever pillar produced them.
     var examples = [];
     for (var p = 0; p < pillars.length; p++) {
       if (pillars[p].examples) examples.push(pillars[p].examples);
@@ -393,8 +335,6 @@
       }
     };
   }
-
-  // ── REGISTER ───────────────────────────────────────────────────────────────
 
   Sections.defineSection({
     id: 'position',

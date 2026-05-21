@@ -1,12 +1,7 @@
-// ── HAND PARSING ──────────────────────────────────────────────────────────────
-
-// Parse a comma-formatted integer string. "$3,250" -> 3250, "1,000,000" -> 1e6.
-// Returns NaN on garbage so the caller can decide to skip.
 function parseAmount(str) {
   return parseInt(String(str || '').replace(/,/g, ''), 10);
 }
 
-// Parse action log lines into structured events for analysis
 function parseActions(actions) {
   if (actions && actions._parsed) return actions._parsed;
   const out = [];
@@ -53,7 +48,6 @@ function parseActions(actions) {
   return out;
 }
 
-// Check if a raise action is truly all-in.
 // Only raises without " to " indicate shoves (e.g. "raised $5,000,000" vs "raised $2,500,000 to $5,000,000").
 // Regular bets ("bet $X") are never detectable as all-in from the log format alone.
 function isAllInAction(acts, idx) {
@@ -64,7 +58,6 @@ function isAllInAction(acts, idx) {
   return true;
 }
 
-// Turn a hole card array into a condensed key like "AKs" or "TT"
 function parseHoleKey(hole) {
   if (!hole || hole.length < 2) return null;
   if (hole._keyCached) return hole._key;
@@ -87,7 +80,6 @@ function parseHoleKey(hole) {
   return key;
 }
 
-// Classify a hole key into a high-level hand type bucket
 function classifyKey(key) {
   if (!key) return 'unknown';
   if (key.length >= 2 && key[0] === key[1] && RANKS.includes(key[0])) return 'Pocket Pairs';
@@ -106,7 +98,6 @@ function classifyKey(key) {
   return 'Offsuit Trash';
 }
 
-// Count unique players in a hand from action lines
 function countHandPlayers(hand) {
   var n;
   if (hand.tableSize) {
@@ -123,7 +114,6 @@ function countHandPlayers(hand) {
   return Math.min(n, 9);
 }
 
-// Count players active at the start of each street.
 // Preflop = seat count. Flop/Turn/River = count who hadn't folded entering that street.
 // Streets the hand never reached return null (not 0).
 function countActivePerStreet(hand) {
@@ -157,8 +147,6 @@ function countActivePerStreet(hand) {
     }
   }
 
-  // tableSize fallback: if seats came from tableSize but fewer unique authors were seen,
-  // trust the action-log count for activeCount baseline.
   var uniqueAuthors = Object.keys(seenAuthors).length;
   if (!reachedFlop && uniqueAuthors && uniqueAuthors < seats) {
     // nothing to adjust - street counts remain null
@@ -167,19 +155,11 @@ function countActivePerStreet(hand) {
   return result;
 }
 
-// Estimate effective stack at start of hand, in BB.
-// Two regimes:
-//   (a) If any all-in action happened, player commitments reflect real stacks -
-//       effective stack = min of hero's commit and the largest villain commit.
-//   (b) Otherwise, commitments are only a lower bound; if they exceed a meaningful
-//       threshold (≥ 20 BB) we treat that as the likely effective stack, else null.
-// Returns null when the hand log lacks enough signal to infer depth.
 function estimateEffStackBB(hand) {
   var bb = (typeof getHandBB === 'function') ? getHandBB(hand) : null;
   if (!bb || bb <= 0) bb = hand.bigBlind || null;
   if (!bb || bb <= 0) return null;
 
-  // Prefer explicit start-stack metadata if the tracker provides it.
   if (hand.startStack && hand.startStack > 0) {
     return Math.round((hand.startStack / bb) * 10) / 10;
   }
@@ -203,7 +183,6 @@ function estimateEffStackBB(hand) {
     if (a.type === 'won') continue;
     if (isAllInAction(acts, i)) sawAllIn = true;
 
-    // For "raised X to Y", amount is Y (the new total); otherwise it's the delta.
     if (a.type === 'raise' && a.msg && a.msg.indexOf(' to ') !== -1) {
       var m = a.msg.match(/to \$?([0-9,]+)/);
       if (m) {
@@ -228,7 +207,6 @@ function estimateEffStackBB(hand) {
   if (!villainCommits.length) return null;
   var villainMax = Math.max.apply(null, villainCommits);
 
-  // Effective stack is bounded below by min(hero, biggest villain commitment).
   var effFloor = Math.min(heroCommit, villainMax);
 
   // When no all-in occurred, commitments are only a lower bound. We only report
@@ -238,7 +216,6 @@ function estimateEffStackBB(hand) {
   return Math.round((effFloor / bb) * 10) / 10;
 }
 
-// Calculate how much the player invested in a hand from the action log
 function calcInvestmentFromActions(actions) {
   let total = 0;
   for (let i = 0; i < actions.length; i++) {
@@ -254,16 +231,13 @@ function calcInvestmentFromActions(actions) {
   return total;
 }
 
-// Determine if a hand went to showdown
 function isShowdown(hand) {
   if (!hand.outcome) return false;
   if (hand._showdownDone) return hand._showdown;
   var result = false;
-  // Lost = stayed in and lost at showdown
   if (hand.outcome.result === 'lost') {
     result = true;
   } else if (hand.outcome.result === 'won') {
-    // Won with reveals = showdown win
     var actions = hand.actions || [];
     for (var i = 0; i < actions.length; i++) {
       if (actions[i].indexOf(' reveals ') !== -1) { result = true; break; }

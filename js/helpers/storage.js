@@ -1,9 +1,3 @@
-// ── STORAGE WRAPPERS ─────────────────────────────────────────────────────────
-// Thin try/catch wrappers around localStorage / sessionStorage so panels and
-// helpers never call the storage APIs directly. Read returns `fallback` on
-// any error (private mode, quota, corrupt JSON, missing key). Write logs and
-// swallows, matching the starred-hands pattern below.
-
 function getJSON(key, fallback) {
   try {
     var raw = localStorage.getItem(key);
@@ -22,9 +16,6 @@ function setJSON(key, value) {
   }
 }
 
-// String variant for keys that hold raw strings, not JSON. Useful when the
-// on-disk format predates the JSON-everywhere convention or when the value is
-// a single token like 'TAG'.
 function getString(key, fallback) {
   try {
     var raw = localStorage.getItem(key);
@@ -66,8 +57,6 @@ function removeSession(key) {
   } catch (e) { /* noop */ }
 }
 
-// ── STARRED HANDS (localStorage persistence) ─────────────────────────────────
-
 function getHandKey(h) {
   var hole = (h.hole || []).join('');
   var board = (h.board || []).join('');
@@ -91,7 +80,6 @@ function setStarredHands(map) {
   }
 }
 
-// Store only the fields needed to display/replay a hand (skip raw actions bloat)
 function compactHand(h) {
   return {
     hole: h.hole,

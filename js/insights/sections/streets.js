@@ -1,43 +1,11 @@
-// ── STREETS SECTION ───────────────────────────────────────────────────────────
-//
-// Seven stories about how the player acts on each street. Each follows the
-// 8.2 engine pattern: frequency, context, outcome, so what. Target-based
-// stories compare against a band; directional stories combine frequency
-// with the P&L of the action line.
-//
-// Target-based stories:
-//   streets-cbet              Did hero c-bet when they had the chance? Band
-//                             pulled from TargetBands by (position, seats).
-//   streets-fold-to-cbet      How often hero folds when facing a c-bet.
-//                             Literal band {40, 55}.
-//   streets-three-bet         How often hero 3-bets preflop when facing an
-//                             open. Derived by walking the action log per
-//                             hand. Literal band {6, 12}.
-//   streets-fold-to-three-bet How often hero folds to a 3-bet when they
-//                             opened. Literal band {60, 70}.
-//
-// Directional stories (no target band, P&L drives the verdict):
-//   streets-check-fold        How often hero check-folds the flop. Skipped
-//                             when the per-street counters are too thin.
-//   streets-donk              How often hero donks the flop into the
-//                             preflop raiser, plus the P&L of those lines.
-//   streets-delay-cbet        How often hero delay-c-bets the turn after
-//                             checking back the flop, plus the P&L.
-//
-// All stories sort branches by position priority and gate per-position
-// branches behind MIN_CELL. Skipped stories return null cleanly.
-
 (function() {
   var MIN_AGG = (typeof MIN_AGGREGATE === 'number') ? MIN_AGGREGATE : 30;
   var MIN_CL = (typeof MIN_CELL === 'number') ? MIN_CELL : 10;
   var MIN_OPP = 12; // floor for any opp-count gate on a pillar
 
-  // Literal target bands for the stories without a matrix-driven band.
   var FOLD_TO_CBET_BAND = { tight: 40, loose: 55 };
   var THREE_BET_BAND = { tight: 6, loose: 12 };
   var FOLD_TO_THREE_BET_BAND = { tight: 60, loose: 70 };
-
-  // ── SHARED HELPERS ────────────────────────────────────────────────────────
 
   function joinList(items) {
     if (!items || !items.length) return '';
@@ -64,9 +32,6 @@
     return { pnl: pnl, count: count };
   }
 
-  // Walk hero's actions once and answer a list of street predicates. Returns
-  // an object the caller composes. The single-walk pattern matters: this
-  // function gets called for every hand in the donk and check-fold pillars.
   function actionContext(h) {
     if (!h || !h.actions) return null;
     var acts = parseActions(h.actions);
@@ -114,8 +79,6 @@
     return ctx;
   }
 
-  // True if hero check-folded the flop: first flop action was check, and a
-  // later flop action was fold.
   function heroCheckFoldedFlop(h) {
     if (!h || !h.actions) return false;
     var acts = parseActions(h.actions);
@@ -133,14 +96,12 @@
     return false;
   }
 
-  // True if hero donked the flop (hero bet flop, hero was not the PFR).
   function heroDonkedFlop(h) {
     var c = actionContext(h);
     if (!c || !c.flopReached || c.pfrIsHero !== false) return false;
     return c.heroFirstFlop === 'bet' || c.heroFirstFlop === 'raise';
   }
 
-  // True if hero delay c-bet (hero PFR, checked flop, bet/raised turn).
   function heroDelayCbet(h) {
     var c = actionContext(h);
     if (!c || c.pfrIsHero !== true) return false;
@@ -149,14 +110,12 @@
     return c.heroFirstTurn === 'bet' || c.heroFirstTurn === 'raise';
   }
 
-  // True if hero c-bet the flop (hero PFR, bet/raised flop).
   function heroCbet(h) {
     var c = actionContext(h);
     if (!c || c.pfrIsHero !== true || !c.flopReached) return false;
     return c.heroFirstFlop === 'bet' || c.heroFirstFlop === 'raise';
   }
 
-  // True if hero faced a c-bet on the flop and called or raised (continued).
   function heroFacedCbet(h) {
     if (!h || !h.actions) return false;
     var acts = parseActions(h.actions);
@@ -181,7 +140,6 @@
     return pfrIsHero === false && firstFlopBetByPfr && heroResp !== null;
   }
 
-  // Hero faced a c-bet on the flop and folded.
   function heroFoldedToCbet(h) {
     if (!h || !h.actions) return false;
     var acts = parseActions(h.actions);
@@ -204,9 +162,6 @@
     return false;
   }
 
-  // Build per-position frequency rows for a pair of (done, opps) counters that
-  // live on each per-position sub-d. Returns [{ position, n, opps, freq, sev,
-  // pd }, ...] sorted by position priority.
   function perPositionFrequency(d, doneKey, oppsKey, band, minOpps) {
     if (!d || !d.byPosition) return [];
     var rows = [];
@@ -226,7 +181,6 @@
     return rows;
   }
 
-  // Render the standard "above"/"below" branches for per-position breakdown.
   function pushBandBranches(branchTexts, posReads, band, label) {
     var offs = posReads.filter(function(r) {
       return r.sev && (r.sev.severity === 'r' || r.sev.severity === 'a');
@@ -249,8 +203,6 @@
     }
     return { highs: highs, lows: lows };
   }
-
-  // ── STORY 1: C-BET ────────────────────────────────────────────────────────
 
   function buildCbet(d, extras, hands) {
     if (!d || !d.n || d.n < MIN_AGG) return null;
@@ -277,7 +229,6 @@
     var posReads = perPositionFrequency(d, 'cbetDone', 'cbetOpps', band, MIN_OPP);
     var grouped = pushBandBranches(branchTexts, posReads, band, 'c-bet');
 
-    // Outcome pillar: P&L on hands where hero c-bet vs hands where hero gave up.
     var pnlCbet = sumHandPnl(hands, function(h) { return heroCbet(h); });
     var pnlGiveUp = sumHandPnl(hands, function(h) {
       var c = actionContext(h);
@@ -296,7 +247,6 @@
       branchTexts.push(line);
     }
 
-    // Impact and so-what.
     var impactText = null;
     var soWhatText = null;
     if (sev.severity === 'r' || sev.severity === 'a') {
@@ -315,7 +265,6 @@
     var fired = branchTexts.length > 0 || sev.severity === 'r' || sev.severity === 'a' || impactText != null;
     if (!fired) return null;
 
-    // Examples: hands where hero c-bet, plus hands where hero gave up.
     var examples = [];
     if (hands) {
       var cbetHands = pickHands(hands, function(h) { return heroCbet(h); }, 12);
@@ -358,8 +307,6 @@
     };
   }
 
-  // ── STORY 2: FOLD TO C-BET ───────────────────────────────────────────────
-
   function buildFoldToCbet(d, extras, hands) {
     if (!d || !d.n || d.n < MIN_AGG) return null;
     var opps = d.foldToCbetOpps || 0;
@@ -381,7 +328,6 @@
     var posReads = perPositionFrequency(d, 'foldToCbetDone', 'foldToCbetOpps', band, MIN_OPP);
     pushBandBranches(branchTexts, posReads, band, 'fold to flop c-bets');
 
-    // Outcome: P&L on hands where hero continued vs hands where hero folded.
     var pnlContinue = sumHandPnl(hands, function(h) { return heroFacedCbet(h) && !heroFoldedToCbet(h); });
     var pnlFold = sumHandPnl(hands, function(h) { return heroFoldedToCbet(h); });
     if (pnlContinue.count >= MIN_CL || pnlFold.count >= MIN_CL) {
@@ -451,13 +397,6 @@
     };
   }
 
-  // ── STORY 3: 3-BET ────────────────────────────────────────────────────────
-  //
-  // Computed by walking every hand once. A 3-bet opportunity exists when an
-  // opponent opened preflop ahead of hero and hero still had a decision. A
-  // 3-bet completion happens when hero raised in that spot. Per-position
-  // counts are kept inline.
-
   function compute3BetCounts(hands) {
     var totalOpps = 0, totalDone = 0;
     var perPos = {};
@@ -478,7 +417,6 @@
           }
           continue;
         }
-        // Already saw an open. Track hero's first response.
         if (a.isMe && heroRespAfterOpen === null) {
           heroRespAfterOpen = a.type;
           if (a.type === 'raise') heroResp3bet = true;
@@ -517,7 +455,6 @@
       branchTexts.push('3-bet rate is ' + Math.round(freq) + '%, ' + dirWord + ' the ' + Sections.fmtBand(band) + ' target.');
     }
 
-    // Per-position rows from the inline perPos object.
     var posReads = [];
     for (var pi = 0; pi < POSITION_ORDER.length; pi++) {
       var p = POSITION_ORDER[pi];
@@ -531,7 +468,6 @@
     }
     pushBandBranches(branchTexts, posReads, band, '3-bet');
 
-    // Outcome: P&L on hands where hero 3-bet vs hands where hero flatted.
     var pnl3 = sumHandPnl(hands, function(h) {
       var acts = parseActions(h.actions || []);
       var sawOpen = false;
@@ -625,8 +561,6 @@
     };
   }
 
-  // ── STORY 4: FOLD TO 3-BET ───────────────────────────────────────────────
-
   function buildFoldToThreeBet(d, extras, hands) {
     if (!d || !d.n || d.n < MIN_AGG) return null;
     var opps = d.foldTo3betOpps || 0;
@@ -648,7 +582,6 @@
     var posReads = perPositionFrequency(d, 'foldTo3betDone', 'foldTo3betOpps', band, MIN_OPP);
     pushBandBranches(branchTexts, posReads, band, 'fold to 3-bets');
 
-    // Outcome split: P&L when hero folded to a 3-bet vs continued.
     var pnlFold = sumHandPnl(hands, function(h) {
       var c = actionContext(h);
       return c && c.heroFaced3bet && c.heroFolded3bet;
@@ -718,15 +651,11 @@
     };
   }
 
-  // ── STORY 5: CHECK-FOLD (FLOP) ───────────────────────────────────────────
-
   function buildCheckFold(d, extras, hands) {
     if (!d || !d.n || d.n < MIN_AGG) return null;
     if (!d.ss || !d.ss.Flop || !d.ss.Flop.seen || d.ss.Flop.seen < MIN_OPP) return null;
     if (!hands || !hands.length) return null;
 
-    // Frequency: per-flop check-fold rate. Cheap proxy: among flops where hero
-    // saw the flop, what share were check-folded?
     var seen = d.ss.Flop.seen;
     var checkFoldCount = 0;
     var checkFoldHands = [];
@@ -743,7 +672,6 @@
     var openingText = 'On flops you saw, you check-folded ' + Math.round(freq) + '% (' + checkFoldCount + ' of ' + seen + ').';
     var branchTexts = [];
 
-    // Pillar 2 (context): per-position check-fold share.
     var posRows = [];
     if (d.byPosition) {
       for (var pi = 0; pi < POSITION_ORDER.length; pi++) {
@@ -768,14 +696,11 @@
       }
     }
 
-    // Pillar 3 (outcome): P&L on check-fold flops.
     var pnlCF = sumHandPnl(hands, function(h) { return heroCheckFoldedFlop(h); });
     if (pnlCF.count >= MIN_CL) {
       branchTexts.push('Net P&L on the check-fold flops is ' + fmtPnl(pnlCF.pnl) + ' across ' + pnlCF.count + ' hands.');
     }
 
-    // Directional severity: amber if the check-fold rate is high or if the
-    // line bleeds money beyond the simple flop investment.
     var severity = 'n';
     if (freq >= 55) severity = 'a';
     if (freq >= 70) severity = 'r';
@@ -816,8 +741,6 @@
     };
   }
 
-  // ── STORY 6: DONK BET ────────────────────────────────────────────────────
-
   function buildDonk(d, extras, hands) {
     if (!d || !d.n || d.n < MIN_AGG) return null;
     var opps = d.donkOpps || 0;
@@ -828,7 +751,6 @@
     var openingText = 'You donk into the preflop raiser on ' + Math.round(freq) + '% of flops where you had the option, across ' + opps + ' spots.';
     var branchTexts = [];
 
-    // Context: per-position donk rate.
     var posReads = perPositionFrequency(d, 'donkDone', 'donkOpps', null, MIN_OPP);
     var heavy = posReads.filter(function(r) { return r.freq >= 25; })
       .sort(function(a, b) { return b.freq - a.freq; });
@@ -839,7 +761,6 @@
       branchTexts.push('Donk rate is heaviest from ' + lbl + '.');
     }
 
-    // Outcome: P&L on donk lines vs check lines into PFR.
     var pnlDonk = sumHandPnl(hands, function(h) { return heroDonkedFlop(h); });
     var pnlCheck = sumHandPnl(hands, function(h) {
       var c = actionContext(h);
@@ -855,7 +776,6 @@
       branchTexts.push(line);
     }
 
-    // Severity: directional. Frequency above 25% with negative P&L is a leak.
     var severity = 'n';
     var perDonk = pnlDonk.count > 0 ? pnlDonk.pnl / pnlDonk.count : 0;
     if (freq >= 25 && perDonk < 0) severity = 'a';
@@ -903,8 +823,6 @@
     };
   }
 
-  // ── STORY 7: DELAY C-BET ─────────────────────────────────────────────────
-
   function buildDelayCbet(d, extras, hands) {
     if (!d || !d.n || d.n < MIN_AGG) return null;
     var opps = d.delayCbetOpps || 0;
@@ -915,7 +833,6 @@
     var openingText = 'When you check back the flop as PFR, you delay c-bet the turn ' + Math.round(freq) + '% of the time, across ' + opps + ' spots.';
     var branchTexts = [];
 
-    // Context: per-position delay rate.
     var posReads = perPositionFrequency(d, 'delayCbetDone', 'delayCbetOpps', null, MIN_OPP);
     var heavy = posReads.filter(function(r) { return r.freq >= 40; })
       .sort(function(a, b) { return b.freq - a.freq; });
@@ -926,7 +843,6 @@
       branchTexts.push('Delay c-bet rate is heaviest from ' + lbl + '.');
     }
 
-    // Outcome: P&L on delay c-bet lines vs check-back-twice lines.
     var pnlDelay = sumHandPnl(hands, function(h) { return heroDelayCbet(h); });
     var pnlGiveUp = sumHandPnl(hands, function(h) {
       var c = actionContext(h);
@@ -942,7 +858,6 @@
       branchTexts.push(line);
     }
 
-    // Directional severity.
     var severity = 'n';
     var perDelay = pnlDelay.count > 0 ? pnlDelay.pnl / pnlDelay.count : 0;
     if (freq < 20 && pnlGiveUp.count >= MIN_CL && pnlGiveUp.pnl < 0) severity = 'a';
@@ -994,8 +909,6 @@
       meta: { freq: freq, opps: opps, posReads: posReads, pnlDelay: pnlDelay, pnlGiveUp: pnlGiveUp }
     };
   }
-
-  // ── REGISTER ──────────────────────────────────────────────────────────────
 
   Sections.defineSection({
     id: 'streets',

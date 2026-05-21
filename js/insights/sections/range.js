@@ -1,32 +1,11 @@
-// ── RANGE SECTION ─────────────────────────────────────────────────────────────
-//
-// Two stories.
-//
-//   Width of Range  How wide is the player's preflop range? Interrogates the
-//                   aggregate VPIP, by seat count, then by position. Target
-//                   bands are introduced at the dominant cell.
-//
-//   Winning Hands   Which specific combos make or lose money? Classifies each
-//                   played combo against the recommended range for the
-//                   dominant position x seats as play-problem, selection-
-//                   problem, monitor, or on-target.
-//
-// Hand-type interrogation (weak aces overrepresented from EP, etc.) is
-// deferred until the parser produces a per-position hand-type slice. Width of
-// Range still fires without it.
-
 (function() {
   var MIN_HAND = 10; // floor for any per-cell or per-combo reading
 
-  // ── SHARED ────────────────────────────────────────────────────────────────
-
-  // VPIP for a sub-d (an analyse() result) as a one-decimal percent.
   function vpipOf(sd) {
     if (!sd || !sd.n) return null;
     return (sd.vpip / sd.n) * 100;
   }
 
-  // Sort positions by play count desc.
   function positionsByVolume(d) {
     if (!d || !d.byPosition) return [];
     var rows = [];
@@ -39,8 +18,6 @@
     return rows;
   }
 
-  // ── STORY 1: WIDTH OF RANGE ───────────────────────────────────────────────
-
   function buildWidthOfRange(d, extras, hands) {
     if (!d || !d.n || d.n < (typeof MIN_AGGREGATE === 'number' ? MIN_AGGREGATE : 30)) return null;
 
@@ -51,14 +28,13 @@
 
     var openingText = 'You play ' + Math.round(aggregateVpip) + '% of hands preflop across ' + d.n + ' hands.';
     var branchTexts = [];
-    var notableSeats = [];     // seat buckets that diverge
-    var notablePositions = []; // positions that are off target
+    var notableSeats = [];
+    var notablePositions = [];
     var aggregateBand = null;
     var aggregateSeverity = null;
     var aggregateDirection = null;
     var maxDelta = 0;
 
-    // Interrogation: seat count.
     var seatRows = [];
     if (d.bySeatBucket) {
       for (var sb in d.bySeatBucket) {
@@ -72,7 +48,6 @@
     seatRows.sort(function(a, b) { return b.n - a.n; });
 
     if (seatRows.length >= 2) {
-      // Spread between the two largest seat-count buckets.
       var top = seatRows[0], next = seatRows[1];
       var spread = Math.abs(top.vpip - next.vpip);
       if (spread >= 5) {
@@ -86,9 +61,6 @@
       }
     }
 
-    // Interrogation: position. Prefer the per-(position x seats) cross-cut in
-    // d.byPosSeat when seats is known; fall back to the position-only slice
-    // when it is not. The cross-cut gives precise bands per cell.
     var posSeatsLabel = seats ? seats + '-handed' : null;
     if (typeof TargetBands !== 'undefined') {
       var posReads = [];
@@ -103,7 +75,6 @@
         }
         if (!pd && d.byPosition && d.byPosition[p] && !d.byPosition[p].gated) {
           pd = d.byPosition[p];
-          // Without a known seat count, use the dominant overall.
           if (!cellSeats) cellSeats = dominantSeats(d);
         }
         if (!pd) continue;
@@ -115,7 +86,6 @@
         posReads.push({ position: p, n: pd.n, vpip: pv, band: band, sev: sev });
       }
 
-      // Find the worst leak by absolute deltaUnits.
       var worst = null;
       for (var wi = 0; wi < posReads.length; wi++) {
         var r = posReads[wi];
@@ -129,14 +99,12 @@
 
       if (offPositions.length === 0 && posReads.length) {
         branchTexts.push('This holds across all positions you play.');
-        // Aggregate band reading comes from the dominant cell.
         var dom = posReads.find(function(r) { return r.position === dominantPos; }) || posReads[0];
         aggregateBand = dom.band;
         aggregateSeverity = dom.sev.severity;
         aggregateDirection = dom.sev.direction;
         maxDelta = dom.sev.deltaUnits;
       } else if (offPositions.length >= 2) {
-        // Group same-direction misses. Sort worst-first inside each group.
         var highs = offPositions.filter(function(r) { return r.sev.direction === 'high'; })
           .sort(function(a, b) { return b.sev.deltaUnits - a.sev.deltaUnits; });
         var lows  = offPositions.filter(function(r) { return r.sev.direction === 'low'; })
@@ -172,7 +140,6 @@
       }
     }
 
-    // Impact and so-what, keyed by overall direction.
     var impactText = null;
     var soWhatText = null;
     if (aggregateSeverity === 'r' || aggregateSeverity === 'a') {
@@ -185,14 +152,10 @@
       }
     }
 
-    // Severity at the story level.
     var severity = aggregateSeverity || 'g';
     var fired = branchTexts.length > 0 || severity === 'r' || severity === 'a';
     if (!fired) return null;
 
-    // Example hands. Show the worst off-target position's hands so the user
-    // can see specifically what to drop (too wide) or what was passed up
-    // (too tight).
     var examples = [];
     if (notablePositions && notablePositions.length) {
       var worstPos = notablePositions.slice().sort(function(a, b) {
@@ -256,8 +219,6 @@
     };
   }
 
-  // ── STORY 2: WINNING HANDS ────────────────────────────────────────────────
-
   function buildWinningHands(d, extras, hands) {
     if (!d || !d.rangeMap) return null;
     if (!d.n || d.n < (typeof MIN_AGGREGATE === 'number' ? MIN_AGGREGATE : 30)) return null;
@@ -268,7 +229,6 @@
       ? TargetBands.recommendedHandsFor(dominantPos, seats)
       : null;
 
-    // Best and least profitable hands at any volume (for the opening).
     var bestKey = null, bestPnl = -Infinity, bestPlayed = 0;
     var worstKey = null, worstPnl = Infinity, worstPlayed = 0;
     var classified = { 'play-problem': [], 'selection-problem': [], 'monitor': [], 'on-target': [] };
@@ -296,14 +256,12 @@
     } else if (bestKey) {
       openingText = 'Your most profitable combo so far is ' + bestKey + ' (' + fmtPnl(bestPnl) + ' across ' + bestPlayed + ' hands).';
     } else {
-      // Nothing has hit the per-combo floor.
       return null;
     }
 
     var branchTexts = [];
     var fired = false;
 
-    // Sort each bucket by absolute P&L impact so the loudest combos lead.
     function sortByImpact(arr) {
       return arr.slice().sort(function(a, b) { return Math.abs(b.pnl) - Math.abs(a.pnl); });
     }
@@ -347,8 +305,6 @@
 
     if (!fired && severity === 'n') return null;
 
-    // Example hands per problem bucket, plus a "best combo" group for the
-    // headline. Each group filters the global hand set by hole-card key.
     var examples = [];
     function comboHands(combos) {
       var keys = {};
@@ -416,16 +372,12 @@
     };
   }
 
-  // Join a list of strings as "A", "A and B", or "A, B, and C". The "and" form
-  // reads cleanly for 2; the comma list with a final "and" reads cleanly for 3+.
   function joinList(items) {
     if (!items || !items.length) return '';
     if (items.length === 1) return items[0];
     if (items.length === 2) return items[0] + ' and ' + items[1];
     return items.slice(0, -1).join(', ') + ', and ' + items[items.length - 1];
   }
-
-  // ── REGISTER ──────────────────────────────────────────────────────────────
 
   Sections.defineSection({
     id: 'range',

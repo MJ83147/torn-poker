@@ -1,26 +1,7 @@
-// ── PLAYERS SECTION ───────────────────────────────────────────────────────────
-//
-// Seven stories.
-//
-//   vs TAG       Aggregate hero stats against tight-aggressive opponents.
-//   vs LAG       Aggregate hero stats against loose-aggressive opponents.
-//   vs Nit       Aggregate hero stats against very tight opponents.
-//   vs Station   Aggregate hero stats against loose-passive opponents.
-//   vs Maniac    Aggregate hero stats against hyper-aggressive opponents.
-//   Profitable Opponents     Named opponents (30+ hands) where hero is up.
-//   Unprofitable Opponents   Named opponents (30+ hands) where hero is down.
-//
-// Playstyle stories need at least 3 opponents of the type passing a 50-hand
-// gate per opponent. Named-opponent stories use a 30-hand gate per opponent.
-// Each finding follows the section-engine shape: opening, branches, impact,
-// so-what, examples.
-
 (function() {
   var MIN_PROFILE_HANDS = 50;   // hands needed before classifying an opponent
   var MIN_NAMED_HANDS = 30;     // hands needed to enter profitable/unprofitable
   var MIN_TYPE_OPPONENTS = 3;   // opponents of one type required to fire story
-
-  // ── HELPERS ────────────────────────────────────────────────────────────────
 
   function safePct(num, den) {
     if (!den) return null;
@@ -34,9 +15,8 @@
     return items.slice(0, -1).join(', ') + ', and ' + items[items.length - 1];
   }
 
-  // Classify an opponent into the eight canonical types plus Unknown. Uses
-  // the same thresholds as js/helpers/styleDetector.js so the labels stay
-  // consistent across welcome target picker, My Game and Style Map.
+  // Thresholds must stay in sync with helpers/styleDetector.js so labels match
+  // across welcome target picker, My Game and Style Map.
   function classifyVillain(vpip, af) {
     if (vpip == null || af == null) return 'Unknown';
     if (vpip >= 45 && af >= 40) return 'Maniac';
@@ -51,12 +31,9 @@
     return 'Rock';
   }
 
-  // Build the per-opponent profile list. Each entry: name, hands, vpip, af,
-  // type, heroPnl, heroWon, heroLost, heroContested, handRefs.
   function buildProfiles(hands) {
     if (!hands || !hands.length) return [];
 
-    // First pass: discover opponent names and which hand indices they appear in.
     var nameToHandIdx = {};
     for (var i = 0; i < hands.length; i++) {
       var acts = parseActions(hands[i].actions);
@@ -75,7 +52,6 @@
       var idxs = nameToHandIdx[name];
       if (!idxs || !idxs.length) continue;
 
-      // Tendency stats via the shared helper.
       var stats = computeOpponentStats(hands, name);
       if (!stats) continue;
 
@@ -85,7 +61,6 @@
         : null;
       var type = classifyVillain(vpip, af);
 
-      // Hero stats vs this opponent. Walk the hand indices and accumulate.
       var heroPnl = 0;
       var heroWon = 0;
       var heroLost = 0;
@@ -121,7 +96,6 @@
     var out = [];
     if (!hands || !idxs) return out;
     var limit = cap || idxs.length;
-    // Most-recent first.
     for (var i = idxs.length - 1; i >= 0 && out.length < limit; i--) {
       var h = hands[idxs[i]];
       if (h) out.push(h);
@@ -146,14 +120,10 @@
     return idxs;
   }
 
-  // True if hero reached a showdown in this hand. Mirrors helper in showdown.js.
   function heroSawShowdown(h) {
     return !!isShowdown(h);
   }
 
-  // ── PLAYSTYLE STORIES ──────────────────────────────────────────────────────
-
-  // Copy hooks for each style.
   var STYLE_META = {
     Shark: {
       name: 'vs Sharks',
@@ -230,7 +200,6 @@
     var meta = STYLE_META[type];
     if (!meta) return null;
 
-    // Aggregate hero stats across opponents of this type.
     var totalHands = 0;
     var totalPnl = 0;
     var totalWon = 0;
@@ -244,7 +213,6 @@
       totalContested += matching[i].heroContested;
     }
 
-    // Showdown split per type. Walk the union of hand indices.
     var unionIdxs = combineHandIdxs(matching);
     for (var u = 0; u < unionIdxs.length; u++) {
       var h = hands[unionIdxs[u]];
@@ -257,9 +225,8 @@
 
     var winRate = safePct(totalWon, totalContested);
     var avgPerHand = totalHands > 0 ? totalPnl / totalHands : 0;
-    var perHandThreshold = 2; // hand units, used for severity
+    var perHandThreshold = 2;
 
-    // Severity by per-hand result.
     var severity;
     if (avgPerHand <= -perHandThreshold) severity = 'r';
     else if (avgPerHand < 0) severity = 'a';
@@ -273,7 +240,6 @@
 
     var branchTexts = [];
 
-    // Branch: top opponents in this group, with their hero P&L.
     var sortedByPnl = matching.slice().sort(function(a, b) { return a.heroPnl - b.heroPnl; });
     if (sortedByPnl.length >= 2) {
       var worstVs = sortedByPnl[0];
@@ -291,7 +257,6 @@
       }
     }
 
-    // Branch: showdown vs non-showdown split.
     if (totalShowdown >= 10) {
       var wsd = safePct(totalShowdownWon, totalShowdown);
       branchTexts.push('You reached showdown ' + totalShowdown + ' times against this group and won ' +
@@ -308,8 +273,6 @@
       soWhatText = meta.winningSoWhat;
     }
 
-    // Examples: most recent hands against the worst opponent in the group, plus
-    // a "group sample" set of all hands vs the group.
     var examples = [];
     if (sortedByPnl[0] && sortedByPnl[0].heroPnl < 0) {
       var ex = handsFromIdxs(hands, sortedByPnl[0].handIdxs, 12);
@@ -359,8 +322,6 @@
     };
   }
 
-  // ── NAMED-OPPONENT STORIES ─────────────────────────────────────────────────
-
   function buildNamedOpponentStory(direction, profiles, hands) {
     var qualifying = profiles.filter(function(p) { return p.hands >= MIN_NAMED_HANDS; });
     var matching = qualifying.filter(function(p) {
@@ -368,7 +329,6 @@
     });
     if (matching.length < 2) return null;
 
-    // Sort by absolute hero P&L impact.
     matching.sort(function(a, b) {
       return direction === 'profitable' ? b.heroPnl - a.heroPnl : a.heroPnl - b.heroPnl;
     });
@@ -387,8 +347,6 @@
       typeCounts[t] = (typeCounts[t] || 0) + 1;
     }
 
-    // Showdown / non-showdown split across the top opponents only (keeps the
-    // narrative grounded in the names the user sees in the examples).
     var topIdxs = combineHandIdxs(top);
     for (var x = 0; x < topIdxs.length; x++) {
       var h = hands[topIdxs[x]];
@@ -414,7 +372,6 @@
 
     var branchTexts = [];
 
-    // Branch: type distribution.
     var types = Object.keys(typeCounts).sort(function(a, b) { return typeCounts[b] - typeCounts[a]; });
     if (types.length) {
       var topType = types[0];
@@ -432,7 +389,6 @@
       }
     }
 
-    // Branch: showdown vs non-showdown source.
     if (topShowdown >= 10 || Math.abs(topShowdownPnl) + Math.abs(topNonShowdownPnl) > 0) {
       var sdLabel = fmtPnl(topShowdownPnl);
       var nsdLabel = fmtPnl(topNonShowdownPnl);
@@ -464,7 +420,6 @@
       soWhatText = 'Filter to the worst names and watch for the recurring spot: river call-downs, big-pot decisions, or barrel mistakes. That is the leak to fix first.';
     }
 
-    // Examples per top opponent.
     var examples = [];
     var topToShow = top.slice(0, 3);
     for (var t = 0; t < topToShow.length; t++) {
@@ -506,8 +461,6 @@
       }
     };
   }
-
-  // ── REGISTER ───────────────────────────────────────────────────────────────
 
   Sections.defineSection({
     id: 'players',

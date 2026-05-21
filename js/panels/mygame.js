@@ -1,5 +1,3 @@
-// ── MY GAME PANEL ────────────────────────────────────────────────────────────
-
 function renderMyGame(container, d, hands) {
   var playerName = State.meta.player || detectPlayerFromActions(hands) || 'Unknown';
   var exportDate = State.meta.exportedAt
@@ -8,7 +6,6 @@ function renderMyGame(container, d, hands) {
 
   var html = '<div class="mygame-wrap">';
 
-  // ── Section 1: Header + Player Type (single row) ──
   var vpipVal   = pct(d.vpip, d.n);
   var pfrVal    = pct(d.pfrHands, d.n);
   var limpVal   = pct(d.limpHands, d.n);
@@ -19,15 +16,12 @@ function renderMyGame(container, d, hands) {
 
   var smallSample = d.n < 30;
 
-  // Resolve table-mix context once. Classification thresholds track table size:
-  // a 50% VPIP at 6-max is loose, but at HU it's tight.
+  // Classification thresholds track table size: a 50% VPIP at 6-max is loose, at HU it's tight.
   var ctx = getGameContext(d);
   var _domSeatsMG = ctx.seats;
   var _vpipBandMG = ctx.band('vpip');
   var _afBandMG = ctx.band('af');
 
-  // Use the shared style detector so this panel's label is drawn from the
-  // same 8-label set the welcome target picker and players panel use.
   var typeLabel = '', typeDesc = '';
   if (!smallSample && typeof detectCurrentStyle === 'function') {
     var detected = detectCurrentStyle(d);
@@ -36,7 +30,6 @@ function renderMyGame(container, d, hands) {
   }
 
   html += '<div class="profile-row">';
-  // Left: identity
   html += '<div>';
   html += '<div class="dim-label mb-12">MY GAME</div>';
   html += '<div class="profile-name">' + playerName + '</div>';
@@ -45,7 +38,6 @@ function renderMyGame(container, d, hands) {
   html += d.n + ' hands';
   html += '</div>';
   html += '</div>';
-  // Right: player type
   if (typeLabel) {
     html += '<div class="profile-type-block">';
     html += '<div class="dim-label mb-12">PLAYER TYPE</div>';
@@ -55,26 +47,19 @@ function renderMyGame(container, d, hands) {
   }
   html += '</div>';
 
-  // Stat values still computed below for the leak/work-on rules. The raw
-  // stat-line mini-row was removed - the Table Dynamics block further down
-  // shows the same numbers WITH a verdict (on target / too low / too high),
-  // and the header hero strip already shows the headline numbers.
   var _ftrBandMG = ctx.band('foldToRaise');
   var _cbetBandMG = ctx.band('cbet');
   if (smallSample) {
     html += '<div class="meta-text mt-8 mb-12">Stats from ' + d.n + ' hands. These become reliable around 100+ hands.</div>';
   }
 
-  // Skip strengths/leaks/sessions for small samples
   if (!smallSample) {
 
-    // ── Helper: early/late position VPIP ──
     var earlyGroup = calcPositionGroupVpip(d.posMap, EARLY_POSITIONS);
     var lateGroup = calcPositionGroupVpip(d.posMap, LATE_POSITIONS);
     var epVpip = earlyGroup.vpip, earlyHands = earlyGroup.hands;
     var lpVpip = lateGroup.vpip, lateHands = lateGroup.hands;
 
-    // Best position by P&L
     var bestPos = null, bestPosPnl = -Infinity, bestPosWr = null;
     var posKeys = Object.keys(d.posMap);
     for (var pi = 0; pi < posKeys.length; pi++) {
@@ -90,32 +75,21 @@ function renderMyGame(container, d, hands) {
     var f3b = pct(d.foldTo3betDone, d.foldTo3betOpps);
     var fcbet = pct(d.foldToCbetDone, d.foldToCbetOpps);
 
-    // Strengths and Exploitable Leaks lived here as legacy engine cards. The
-    // analytical panels (Position, Streets, Betting, Cards) carry the same
-    // verdicts via story cards now, so this panel focuses on the headline
-    // player type, table-dynamics targets, and the single "Work On Next" pick.
-
-    // Fallback leak source for "Work On Next": the highest-severity finding
-    // from any Section. Hand-rolled threshold checks below take priority.
     var allLeaks = (typeof Sections !== 'undefined' && typeof Sections.evaluateSections === 'function')
       ? Sections.evaluateSections(d, {}, hands).filter(function(f) {
           return f.severity === 'r' || f.severity === 'a';
         })
       : [];
 
-    // ── Section 6: Work on next ──
     html += '<div class="sec-subtitle mt-20">Work On Next</div>';
     var workOn = null;
-    // Sample-aware thresholds for the work-on selector. Pull matrix bands so
-    // each leak fires only when the player is actually outside the expected
-    // range for their table mix.
     var _workAggFloor = _afBandMG ? _afBandMG.tight - 3 : 15;
     var _workLimpCeil = _domSeatsMG && _domSeatsMG <= 2 ? 70 : _domSeatsMG && _domSeatsMG <= 3 ? 45 : 22;
     var _workFtrCeil = _ftrBandMG ? _ftrBandMG.loose + 15 : 70;
     var _workCbetFloor = _cbetBandMG ? _cbetBandMG.tight - 10 : 25;
     var _workWtsdCeil = _domSeatsMG && _domSeatsMG <= 2 ? 55 : 50;
     var _workEpCeil = (function() {
-      if (!_domSeatsMG || _domSeatsMG <= 3) return null; // No EP at HU/3-handed.
+      if (!_domSeatsMG || _domSeatsMG <= 3) return null;
       var b = (typeof matrixTarget === 'function')
         ? matrixTarget('vpip', 'UTG', _domSeatsMG, getUserStyle()) : null;
       return b ? b.loose + 5 : 35;
@@ -141,30 +115,22 @@ function renderMyGame(container, d, hands) {
       html += '</div>';
     }
 
-    // Best & Worst Sessions used to live here. It now lives in Trends, which
-    // is the natural home for "session over time" content.
+  }
 
-  } // end !smallSample
-
-  // ── Table Dynamics reference ──
   html += renderTableDynamicsReference(hands, d);
 
-  // ── Style Map embedded under My Game ──
   html += '<div class="sec-subtitle mt-20">Style Map</div>';
   html += '<div id="mygame-stylemap"></div>';
 
   html += '</div>';
   container.innerHTML = html;
 
-  // renderStyleMap reads its host element and draws into a canvas, so it has
-  // to run after innerHTML has been set.
   var smHost = container.querySelector('#mygame-stylemap');
   if (smHost && typeof renderStyleMap === 'function') {
     renderStyleMap(smHost, d, hands);
   }
 }
 
-// Parse a target range like "65-75%" or "40-50%" into [lo, hi] numbers.
 function _parsePctRange(s) {
   if (!s) return null;
   var m = s.match(/(\d+)\s*-\s*(\d+)/);
@@ -172,7 +138,6 @@ function _parsePctRange(s) {
   return [parseInt(m[1], 10), parseInt(m[2], 10)];
 }
 
-// Return { cls, label } verdict for an actual pct against a target range.
 function _verdict(actual, lo, hi) {
   if (actual == null) return { cls: 'v-na', label: 'no data' };
   if (actual < lo) return { cls: 'v-low', label: 'too low' };
@@ -180,9 +145,6 @@ function _verdict(actual, lo, hi) {
   return { cls: 'v-ok', label: 'on target' };
 }
 
-// Render a "your X% vs target Y-Z% → verdict" row. The label tells the user
-// WHICH stat they are looking at (e.g. "C-bet") - without it the value is
-// just a naked percentage with no context.
 function _vsRow(label, actualPct, actualDenom, targetText) {
   var rng = _parsePctRange(targetText);
   var actualStr = (actualPct == null) ? '-' : actualPct + '%';
@@ -197,24 +159,13 @@ function _vsRow(label, actualPct, actualDenom, targetText) {
     '</div>';
 }
 
-// Format a {tight, ideal, loose} matrix band as "X-Y%". Used to render target
-// bands sourced from matrixTarget so the user's chosen style offset is applied.
 function _fmtBand(band) {
   if (!band) return '-';
   return Math.round(band.tight) + '-' + Math.round(band.loose) + '%';
 }
 
-// Table Dynamics: compares YOUR actual play (c-bet %, VPIP per position) against
-// the recommended targets for each bucket. Each card carries a clear verdict.
-//
-// Targets come from matrixTarget(metric, position, seats) so the user's chosen
-// style (TAG/LAG/Nit/etc) is applied via STYLE_OFFSETS - reading the static
-// SEAT_MATRIX / FLOP_MATRIX entries directly would skip the style offset.
-//
-// Each card has three explicit zones, in this order:
-//   1. ANALYSIS    - your numbers vs target band, with a verdict
-//   2. CONTEXT     - one-line description of the regime (general advice)
-//   3. COACHING    - what to actually do (general advice)
+// Targets must come from matrixTarget so the user's style offset (TAG/LAG/Nit/etc)
+// is applied — reading SEAT_MATRIX / FLOP_MATRIX directly would skip the offset.
 function renderTableDynamicsReference(hands, d) {
   var h = '<div class="sec-subtitle mt-20">Table Dynamics: You vs Target</div>';
   h += '<div class="desc-text mb-16">Your actual play at each table size and flop multiplicity, compared to the recommended benchmarks for your target style. <span class="v-ok">Green = on target</span>, <span class="v-low">amber = too low / too tight</span>, <span class="v-high">red = too high / too loose</span>.</div>';
@@ -222,9 +173,8 @@ function renderTableDynamicsReference(hands, d) {
   var styleKey = (typeof getUserStyle === 'function') ? getUserStyle() : 'TAG';
   var seatKeys = Object.keys(SEAT_MATRIX).map(Number).sort(function(a, b) { return a - b; });
 
-  // Standalone per-seat-count coaching. SEAT_MATRIX.notes are written as deltas
-  // from the previous seat count ("Adds UTG+1") so they read as nonsense in
-  // isolation. These replacements stand on their own.
+  // SEAT_MATRIX.notes are written as deltas from the previous seat count
+  // ("Adds UTG+1") so they read as nonsense in isolation. These stand alone.
   var seatCoaching = {
     2: 'Heads-up: defend the BB very wide and open 80%+ from the button. Postflop is about fold equity. C-bet often, double-barrel turns where you have equity.',
     3: '3-handed plays like heads-up with one extra seat. BTN opens 60-70%. SB defends wide vs BTN steals. Aggression and position dominate.',
@@ -236,7 +186,6 @@ function renderTableDynamicsReference(hands, d) {
     9: 'Full-ring 9-max. Very disciplined early position: JJ+, AKs/AKo, AQs only from UTG. Exploit weak limps and small opens from the blinds when folded to.'
   };
 
-  // ── Seat-size cards: per-position VPIP vs target ──
   h += '<div class="sec-subtitle mt-12">By Table Size</div>';
   h += '<div class="dynamics-cards">';
   for (var si = 0; si < seatKeys.length; si++) {
@@ -255,8 +204,6 @@ function renderTableDynamicsReference(hands, d) {
       continue;
     }
 
-    // ANALYSIS zone: per-position VPIP vs style-adjusted matrix target.
-    // Header explicitly says "Your VPIP" so the % has a name attached.
     h += '<div class="dynamics-zone-label dim-label">Your play: VPIP by position</div>';
     h += '<table class="tbl dynamics-pos-tbl"><thead><tr><th>Pos</th><th>Your VPIP</th><th>Target</th><th>Hands</th></tr></thead><tbody>';
     for (var pi = 0; pi < entry.positions.length; pi++) {
@@ -264,14 +211,12 @@ function renderTableDynamicsReference(hands, d) {
       if (!entry.guideByPos[p]) continue;
       var pm = subD.posMap[p];
       var actPct = (pm && pm.hands > 0) ? pct(pm.vpip, pm.hands) : null;
-      // Use matrixTarget so the user's style offset (TAG/LAG/Nit/etc) is applied
       var band = matrixTarget('vpip', p, seats, styleKey);
       var cls = band ? _verdict(actPct, Math.round(band.tight), Math.round(band.loose)).cls : 'v-na';
       h += '<tr class="' + cls + '"><td>' + p + '</td><td>' + (actPct != null ? actPct + '%' : '-') + '</td><td class="dim-label">' + _fmtBand(band) + '</td><td class="dim-label">' + (pm ? pm.hands : 0) + '</td></tr>';
     }
     h += '</tbody></table>';
 
-    // COACHING zone: standalone per-seat-count text (not the matrix delta notes)
     if (seatCoaching[seats]) {
       h += '<div class="dynamics-zone-label dim-label dynamics-coaching-head">Coaching</div>';
       h += '<div class="dynamics-coaching">' + seatCoaching[seats] + '</div>';
@@ -280,13 +225,10 @@ function renderTableDynamicsReference(hands, d) {
   }
   h += '</div>';
 
-  // ── Flop multiplicity cards: c-bet % vs target ──
   h += '<div class="sec-subtitle mt-20">By Flop Players</div>';
   h += '<div class="dynamics-cards">';
   var flopKeys = ['HU', '3-way', 'multiway'];
   var flopLabels = { HU: 'Heads-up flop', '3-way': '3-way flop', multiway: 'Multiway flop (4+)' };
-  // Flop bucket modifies the seat-based c-bet target: HU rewards more c-betting,
-  // multiway demands less. Mirrors the Betting panel's situational-stat logic.
   var flopCbetMod = { HU: 5, '3-way': 0, multiway: -10 };
   var ctx = getGameContext(d);
   var domSeats = ctx.seats;
@@ -305,7 +247,6 @@ function renderTableDynamicsReference(hands, d) {
       continue;
     }
 
-    // ANALYSIS zone: c-bet vs style-adjusted matrix target with bucket modifier
     h += '<div class="dynamics-zone-label dim-label">Your play</div>';
     var cbetActual = subF.cbetOpps > 0 ? pct(subF.cbetDone, subF.cbetOpps) : null;
     var cbetSeatBand = matrixTarget('cbet', domPos, domSeats, styleKey);
@@ -317,7 +258,6 @@ function renderTableDynamicsReference(hands, d) {
     } : null;
     h += _vsRow('C-bet', cbetActual, subF.cbetOpps, _fmtBand(cbetBand));
 
-    // CONTEXT + COACHING zone
     h += '<div class="dynamics-zone-label dim-label dynamics-coaching-head">Coaching</div>';
     h += '<div class="dynamics-coaching">' + fe.notes + '</div>';
     h += '<div class="dynamics-card-kv"><span>Bet sizing</span><span>' + fe.cbetSizing + '</span></div>';
@@ -329,22 +269,6 @@ function renderTableDynamicsReference(hands, d) {
   return h;
 }
 
-// sessionPnl, detectSessionPatterns, renderBestWorstSessions all live in
-// js/helpers/sessions.js so Trends and the insight engine can share them.
-
-// ── STYLE MAP ─────────────────────────────────────────────────────────────────
-// Sub-renderer drawn inside the My Game panel (#mygame-stylemap host). Not a
-// standalone panel, so it lives here rather than as its own file. Plots a
-// VPIP x AF scatter of:
-//   - Aggregate point for the player (large dot)
-//   - Per-position points sized by hand count
-//   - Per-table-size points sized by hand count
-//   - TAG reference point (gray)
-//   - Target style point (gold)
-//   - Vector from aggregate to target
-// Title block describes the gap between detected style and target style.
-
-// Reference (VPIP, AF) anchors per style for the scatter overlay.
 var _STYLE_ANCHORS = {
   Shark:   { vpip: 20, af: 40 },
   TAG:     { vpip: 22, af: 30 },
@@ -360,7 +284,6 @@ function _styleAnchor(name) {
   return _STYLE_ANCHORS[name] || _STYLE_ANCHORS.TAG;
 }
 
-// Read VPIP/AF for a sub-bucket (per-position or per-seat) of analyse() output.
 function _smReadBucket(bucket) {
   if (!bucket || !bucket.n) return null;
   var vpip = (typeof pct === 'function') ? pct(bucket.vpip, bucket.n) : null;
@@ -389,7 +312,6 @@ function renderStyleMap(container, d, hands) {
   var targetAnchor = _styleAnchor(targetStyleName);
   var tagAnchor = _styleAnchor('TAG');
 
-  // Title sentence pulled together from the detected style + target style.
   var titleSentence = '';
   if (detected) {
     titleSentence = 'You play like a ' + detected.name + '. Your target is ' + targetStyleName + '. ' + _smGapPhrase(detected, targetStyleName);
@@ -397,15 +319,12 @@ function renderStyleMap(container, d, hands) {
     titleSentence = 'Your target style is ' + targetStyleName + '.';
   }
 
-  // Title is provided by the host (My Game). Just the descriptive sentence
-  // plus the chart and legend below.
   var html = '';
   html += '<div class="desc-text mb-16">' + titleSentence + '</div>';
 
   html += '<div class="style-map-wrap">';
   html += '<div class="style-map-canvas-wrap"><canvas id="style-map-chart"></canvas></div>';
 
-  // Legend / key
   html += '<div class="style-map-legend">';
   html += '<div class="sm-legend-item"><span class="sm-dot sm-dot-you"></span><span>You (overall)</span></div>';
   html += '<div class="sm-legend-item"><span class="sm-dot sm-dot-pos"></span><span>By position</span></div>';
@@ -417,7 +336,6 @@ function renderStyleMap(container, d, hands) {
 
   container.innerHTML = html;
 
-  // ── chart ──────────────────────────────────────────────────────────────
   var canvas = document.getElementById('style-map-chart');
   if (!canvas || typeof Chart === 'undefined') return;
 
@@ -425,13 +343,11 @@ function renderStyleMap(container, d, hands) {
     dim: '#666', border: '#333', green: '#2ecc71', gold: '#f1c40f', red: '#e74c3c', amber: '#e67e22'
   };
 
-  // Aggregate "you" point
   var youAgg = null;
   var aggVpip = (typeof pct === 'function') ? pct(d.vpip, d.n) : null;
   var aggAf = (typeof calcAggression === 'function') ? calcAggression(d.raises, d.calls, d.checks) : null;
   if (aggVpip != null && aggAf != null) youAgg = { vpip: aggVpip, af: aggAf, n: d.n };
 
-  // Per-position
   var posPoints = [];
   if (d.byPosition) {
     for (var pos in d.byPosition) {
@@ -443,7 +359,6 @@ function renderStyleMap(container, d, hands) {
     }
   }
 
-  // Per-player-count
   var seatPoints = [];
   if (d.bySeatBucket) {
     for (var sb in d.bySeatBucket) {
@@ -456,7 +371,6 @@ function renderStyleMap(container, d, hands) {
     }
   }
 
-  // Scale dot size by hand count (sqrt scale, clamped).
   function _radiusForN(n, base, max) {
     base = base || 4;
     max = max || 14;
@@ -466,7 +380,6 @@ function renderStyleMap(container, d, hands) {
 
   var datasets = [];
 
-  // Vector arrow from aggregate to target (drawn as a line dataset).
   if (youAgg) {
     datasets.push({
       type: 'line',
@@ -486,7 +399,6 @@ function renderStyleMap(container, d, hands) {
     });
   }
 
-  // Per-position dots
   if (posPoints.length) {
     datasets.push({
       type: 'scatter',
@@ -499,7 +411,6 @@ function renderStyleMap(container, d, hands) {
     });
   }
 
-  // Per-player-count dots
   if (seatPoints.length) {
     datasets.push({
       type: 'scatter',
@@ -512,7 +423,6 @@ function renderStyleMap(container, d, hands) {
     });
   }
 
-  // TAG reference (gray)
   datasets.push({
     type: 'scatter',
     label: 'TAG',
@@ -523,7 +433,6 @@ function renderStyleMap(container, d, hands) {
     pointStyle: 'rectRot'
   });
 
-  // Target style (gold)
   datasets.push({
     type: 'scatter',
     label: 'Target: ' + targetStyleName,
@@ -534,7 +443,7 @@ function renderStyleMap(container, d, hands) {
     pointStyle: 'star'
   });
 
-  // Aggregate "you" point - drawn last so it sits on top
+  // Drawn last so it sits on top.
   if (youAgg) {
     datasets.push({
       type: 'scatter',

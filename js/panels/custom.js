@@ -1,25 +1,6 @@
-// ── CUSTOM REPORT PANEL ──────────────────────────────────────────────────────
-//
-// A user-built analytical query, expressed as a sentence of filters, with a
-// headline strip, charts, and opinionated insight cards on the resulting slice.
-// Independent of the story engine and catalogue - this is a slicing layer over
-// the existing per-hand fields.
-//
-// Module layout:
-//   1. Sample-size constants + bands
-//   2. Clause catalogue (filter definitions + value lists)
-//   3. State helpers (load/save, segment defaults)
-//   4. Filter predicates (hand-level + decision-level)
-//   5. Engine (runCustomReport)
-//   6. Insight rule library (per-segment) and compare rules
-//   7. Renderer: sentence, popover, headline, charts, insight cards
-//   8. Public entry: renderCustomReport(container, hands)
-
-// ── 1. SAMPLE-SIZE CONSTANTS ────────────────────────────────────────────────
 var CR_SAMPLE_MIN = 80;   // below this, headline metrics greyed, rules skipped
 var CR_SAMPLE_OK  = 250;  // above this, win-rate insights are allowed to fire
 
-// Stake bands by big-blind size.
 var CR_STAKE_BANDS = [
   { key: 'micro',     label: 'micro',      max: 500 },
   { key: 'low',       label: 'low',        max: 50000 },
@@ -36,9 +17,6 @@ function _crStakeKey(bb) {
   return null;
 }
 
-// Stack depth bands live in js/helpers/stack-bands.js (STACK_BANDS + stackBandKey).
-
-// Time-of-day buckets from a timestamp.
 function _crTimeBucket(ts) {
   if (!ts) return null;
   var d = new Date(ts);
@@ -55,7 +33,6 @@ function _crIsWeekend(ts) {
   return dow === 0 || dow === 6;
 }
 
-// Time window (days from now).
 function _crWithinWindow(ts, windowKey) {
   if (windowKey === 'all') return true;
   if (!ts) return false;
@@ -65,12 +42,9 @@ function _crWithinWindow(ts, windowKey) {
   return now - ts <= ms * 86400000;
 }
 
-// Hole-card classes - mapping from existing classifyKey() output plus a few
-// derived buckets the spec asks for (AK, suited connectors as their own group).
 function _crHoleClass(hole) {
   var key = parseHoleKey(hole);
   if (!key) return null;
-  // AK (both suited and offsuit) gets its own bucket.
   if (key === 'AKs' || key === 'AKo') return 'AK';
   var cls = classifyKey(key);
   if (cls === 'Pocket Pairs') return 'pairs';
@@ -83,13 +57,7 @@ function _crHoleClass(hole) {
   return null;
 }
 
-// ── 2. CLAUSE CATALOGUE ──────────────────────────────────────────────────────
-// Each clause owns: id, label, kind (hand|decision), multi flag, options getter,
-// phrase template, and (later) a predicate. Predicates live below in section 4
-// because they share helpers.
-
 function _crBuildClauseDefs(hands) {
-  // Tables the player has actually played at (cash + tournament, keyed by id).
   var tableCounts = {};
   for (var i = 0; i < hands.length; i++) {
     var tid = inferTable(hands[i]);
@@ -104,7 +72,6 @@ function _crBuildClauseDefs(hands) {
     };
   }).sort(function(a, b) { return a.label.localeCompare(b.label); });
 
-  // Seat counts present in the data.
   var seatCounts = {};
   for (var s = 0; s < hands.length; s++) {
     var n = countHandPlayers(hands[s]);
@@ -114,7 +81,6 @@ function _crBuildClauseDefs(hands) {
     return { value: String(n), label: n + ' players', meta: seatCounts[n] + ' hands' };
   });
 
-  // Stake bands actually represented in the data.
   var stakeCounts = {};
   for (var k = 0; k < hands.length; k++) {
     var key = _crStakeKey(getHandBB(hands[k]));
@@ -124,7 +90,6 @@ function _crBuildClauseDefs(hands) {
     return { value: b.key, label: b.label, meta: stakeCounts[b.key] + ' hands' };
   });
 
-  // Opponent names with >= 10 hands shared - mirrors the players panel floor.
   var oppCounts = {};
   for (var oi = 0; oi < hands.length; oi++) {
     var acts = parseActions(hands[oi].actions);
@@ -333,7 +298,6 @@ function _crBuildClauseDefs(hands) {
   ];
 }
 
-// ── 3. STATE ─────────────────────────────────────────────────────────────────
 var CR_STORAGE_KEY = 'tc_poker_custom_report';
 
 function _crDefaultSegment() {
@@ -347,9 +311,6 @@ function _crLoadState() {
 function _crSaveState(state) {
   setJSON(CR_STORAGE_KEY, state);
 }
-
-// ── 4. FILTER PREDICATES ─────────────────────────────────────────────────────
-// Each predicate takes (hand, value) and returns true/false.
 
 var CR_HAND_PREDICATES = {
   table: function(h, v) {
@@ -394,10 +355,6 @@ var CR_HAND_PREDICATES = {
   },
 };
 
-// Decision-level predicates. The proof-of-concept resolves these against the
-// hand as a whole (one DAU per hand for the moment - true DAU substrate is
-// scheduled for the later build pass). Returns true if the hand contains a
-// matching decision.
 var CR_DECISION_PREDICATES = {
   pottype: function(h, v) {
     var acts = parseActions(h.actions);
@@ -446,7 +403,6 @@ var CR_DECISION_PREDICATES = {
       return heroFirstNonBlind && heroFirstNonBlind.type === 'call';
     }
     if (v === 'limped') {
-      // Hero called, no raise before, hero is not a blind.
       if (!heroFirstNonBlind || heroFirstNonBlind.type !== 'call') return false;
       if (h.position === 'SB' || h.position === 'BB') return false;
       var heroIdx = preActs.indexOf(heroFirstNonBlind);
@@ -481,7 +437,6 @@ var CR_DECISION_PREDICATES = {
   },
 };
 
-// Filter the hand list by every clause in the segment's clauses list.
 function _crFilterHands(hands, segment, clauseDefs) {
   if (!segment.clauses || !segment.clauses.length) return hands.slice();
   return hands.filter(function(h) {
@@ -499,15 +454,10 @@ function _crFilterHands(hands, segment, clauseDefs) {
   });
 }
 
-// ── 5. ENGINE ────────────────────────────────────────────────────────────────
-// Returns { metrics, charts, sampleSize } for the slice. Insight cards are
-// evaluated separately so compare mode can mix per-segment and cross-segment
-// rules.
 function runCustomReport(hands, segment, clauseDefs) {
   var filtered = _crFilterHands(hands, segment, clauseDefs);
   var n = filtered.length;
 
-  // bb/100 calculation - cash hands only, sum BB-normalised P&L.
   var totalBB = 0;
   var cashHands = 0;
   for (var i = 0; i < filtered.length; i++) {
@@ -520,10 +470,8 @@ function runCustomReport(hands, segment, clauseDefs) {
   }
   var bb100 = cashHands > 0 ? Math.round((totalBB / cashHands) * 100 * 10) / 10 : null;
 
-  // Win rate, VPIP, PFR, action breakdown via existing analyse().
   var d = filtered.length ? analyse(filtered) : null;
 
-  // Per-position bb/100.
   var byPosition = {};
   for (var pi = 0; pi < POSITION_ORDER.length; pi++) {
     var p = POSITION_ORDER[pi];
@@ -542,7 +490,6 @@ function runCustomReport(hands, segment, clauseDefs) {
     };
   }
 
-  // Per-hole-class win rate.
   var classOrder = ['pairs', 'AK', 'broadway', 'suited', 'sc', 'connectors', 'ace-rag', 'junk'];
   var classLabels = { pairs: 'Pairs', AK: 'AK', broadway: 'Broadway', suited: 'Suited', sc: 'S. Conn', connectors: 'Conn', 'ace-rag': 'Ace-Rag', junk: 'Junk' };
   var byClass = {};
@@ -559,7 +506,6 @@ function runCustomReport(hands, segment, clauseDefs) {
     };
   }
 
-  // Per-session bb/100 trend.
   var sessions = buildSessions(filtered);
   var trend = sessions.map(function(s) {
     var sBB = 0, sCount = 0;
@@ -578,7 +524,6 @@ function runCustomReport(hands, segment, clauseDefs) {
     };
   }).filter(function(p) { return p.bb100 !== null; });
 
-  // Action breakdown.
   var actionBreakdown = null;
   if (d && (d.folds + d.checks + d.calls + d.raises) > 0) {
     var total = d.folds + d.checks + d.calls + d.raises;
@@ -590,7 +535,6 @@ function runCustomReport(hands, segment, clauseDefs) {
     };
   }
 
-  // Sessions touched.
   var sessionIds = {};
   for (var sh = 0; sh < sessions.length; sh++) sessionIds[sh] = true;
 
@@ -615,8 +559,6 @@ function runCustomReport(hands, segment, clauseDefs) {
   };
 }
 
-// ── 6. INSIGHT RULES ─────────────────────────────────────────────────────────
-// Each rule: { id, eval(metrics, baseline, sampleOk): null | { sev, title, body, chips } }
 var CR_RULES = [
   {
     id: 'strong-winner',
@@ -706,8 +648,6 @@ var CR_RULES = [
   },
 ];
 
-// Comparison rules - run on { A: metrics, B: metrics } when both segments are
-// sample-OK. Each returns null or { sev, title, body, chips }.
 var CR_COMPARE_RULES = [
   {
     id: 'profit-gap',
@@ -771,10 +711,6 @@ function _crEvaluateRules(result, baseline) {
   return fired;
 }
 
-// ── 7. RENDERER ──────────────────────────────────────────────────────────────
-// Module-scoped state: the panel keeps a reference to its hand list and state
-// so popovers and button clicks can re-render in place without round-tripping
-// through the top-level app render.
 var _crState = null;
 var _crHands = [];
 var _crClauseDefs = [];
@@ -812,7 +748,6 @@ function _crRenderSentence(segment, segLabel) {
     );
   }
 
-  // Build the sentence with commas / "and" joiners.
   var sentence = '';
   if (segLabel === 'A' && _crState.compare) sentence += '<span class="cr-seg-label">A:</span> ';
   if (segLabel === 'B') sentence += '<span class="cr-seg-label">B:</span> ';
@@ -824,7 +759,6 @@ function _crRenderSentence(segment, segLabel) {
     sentence += parts[pi];
   }
 
-  // The "add clause" button.
   var available = _crClauseDefs.filter(function(c) { return segment.clauses.indexOf(c.id) === -1; });
   var addBtn = available.length
     ? ' <button class="cr-add-btn" data-segment="' + segLabel + '">+ add clause</button>'
@@ -844,7 +778,6 @@ function _crOpenAddClausePopover(targetEl, segLabel) {
   var available = _crClauseDefs.filter(function(c) { return segment.clauses.indexOf(c.id) === -1; });
   if (!available.length) return;
 
-  // Group by kind for readability.
   var hand = available.filter(function(c) { return c.kind === 'hand'; });
   var decision = available.filter(function(c) { return c.kind === 'decision'; });
 
@@ -867,7 +800,6 @@ function _crOpenAddClausePopover(targetEl, segLabel) {
       btn.onclick = function() {
         var clauseId = this.getAttribute('data-add-clause');
         segment.clauses.push(clauseId);
-        // Initialise: pick first option for single-select, empty array for multi.
         var def = _crClauseDefs.find(function(c) { return c.id === clauseId; });
         if (def) {
           segment.values[clauseId] = def.multi
@@ -958,7 +890,6 @@ function _crShowPopover(anchor, html, wire) {
   var rect = anchor.getBoundingClientRect();
   var top = rect.bottom + window.scrollY + 6;
   var left = rect.left + window.scrollX;
-  // Right edge guard.
   var popWidth = _crPopover.offsetWidth;
   if (left + popWidth > window.innerWidth - 8) left = window.innerWidth - popWidth - 8;
   _crPopover.style.top = top + 'px';
@@ -966,7 +897,6 @@ function _crShowPopover(anchor, html, wire) {
   if (wire) wire(_crPopover);
 }
 
-// Headline strip - the three big numbers + sample-size pill.
 function _crRenderHeadline(result, compareResult) {
   var m = result.metrics;
   var dim = result.sampleSize < CR_SAMPLE_MIN;
@@ -1029,7 +959,6 @@ function _crRenderInsightCards(cards) {
   }).join('') + '</div>';
 }
 
-// Compute the player's own all-time aggregate as the baseline for rules.
 function _crComputeBaseline(hands) {
   if (!hands.length) return { vpip: null, pfr: null, bb100: null };
   var d = analyse(hands);
@@ -1065,7 +994,6 @@ function _crRenderInto(container) {
   html += panelTitle('Custom Report');
   html += panelDesc('Build your own report. Click any underlined word to change it. Add clauses to narrow further.');
 
-  // Compare toggle.
   html += '<div class="cr-toolbar">';
   html += '<label class="cr-compare-toggle">';
   html += '<input type="checkbox" id="cr-compare-toggle"' + (_crState.compare ? ' checked' : '') + '>';
@@ -1073,7 +1001,6 @@ function _crRenderInto(container) {
   html += '<button class="cr-reset-btn" id="cr-reset-btn">Reset filters</button>';
   html += '</div>';
 
-  // Sentence(s).
   html += '<div class="cr-sentence-wrap">';
   html += _crRenderSentence(_crState.A, 'A');
   if (_crState.compare) {
@@ -1082,12 +1009,10 @@ function _crRenderInto(container) {
   }
   html += '</div>';
 
-  // Headline strip.
   html += '<div class="p-row">';
   html += _crRenderHeadline(resultA, resultB);
   html += '</div>';
 
-  // Insight cards.
   var cards = [];
   if (_crState.compare) {
     if (resultA.sampleSize < CR_SAMPLE_MIN || resultB.sampleSize < CR_SAMPLE_MIN) {
@@ -1100,13 +1025,11 @@ function _crRenderInto(container) {
         chips: [{ v: n + ' / ' + CR_SAMPLE_MIN, hi: true }],
       });
     } else {
-      // Per-segment cards (label them).
       var aCards = _crEvaluateRules(resultA, _crBaseline);
       var bCards = _crEvaluateRules(resultB, _crBaseline);
       aCards.forEach(function(c) { c.title = '[A] ' + c.title; });
       bCards.forEach(function(c) { c.title = '[B] ' + c.title; });
       cards = aCards.slice(0, 2).concat(bCards.slice(0, 2));
-      // Compare rules.
       for (var ci = 0; ci < CR_COMPARE_RULES.length; ci++) {
         var card = CR_COMPARE_RULES[ci].eval(resultA.metrics, resultB.metrics);
         if (card) cards.push(card);
@@ -1117,7 +1040,6 @@ function _crRenderInto(container) {
   }
   html += '<div class="p-row">' + _crRenderInsightCards(cards) + '</div>';
 
-  // Charts.
   if (resultA.sampleSize >= CR_SAMPLE_MIN || (resultB && resultB.sampleSize >= CR_SAMPLE_MIN)) {
     html += '<div class="p-row">';
     html += '<div class="cr-charts">';
@@ -1130,7 +1052,6 @@ function _crRenderInto(container) {
 
   container.innerHTML = html;
 
-  // Bind events.
   container.querySelectorAll('.cr-token').forEach(function(tok) {
     tok.onclick = function(e) {
       e.stopPropagation();
@@ -1164,7 +1085,6 @@ function _crRenderInto(container) {
     _crRerender();
   };
 
-  // Render charts.
   _crRenderCharts(resultA, resultB);
 }
 
@@ -1173,7 +1093,6 @@ function _crRenderCharts(resultA, resultB) {
   var dataA = resultA.charts;
   var dataB = resultB ? resultB.charts : null;
 
-  // Trend (line).
   var trendCanvas = document.getElementById('cr-trend');
   if (trendCanvas && dataA.trend.length >= 2) {
     var labelsT = dataA.trend.map(function(p) { return p.label; });
@@ -1188,7 +1107,6 @@ function _crRenderCharts(resultA, resultB) {
       fill: true,
     }];
     if (dataB && dataB.trend.length >= 2) {
-      // Align by date label - simple zip on shorter list since compare slices may differ.
       var bSet = {};
       dataB.trend.forEach(function(p) { bSet[p.label] = p.bb100; });
       datasets.push({
@@ -1214,7 +1132,6 @@ function _crRenderCharts(resultA, resultB) {
     trendCanvas.parentNode.parentNode.innerHTML = '<div class="sec-subtitle mt-0">bb/100 over time</div><div class="desc-text">Need at least 2 sessions of cash hands in this report.</div>';
   }
 
-  // Position bars.
   var posCanvas = document.getElementById('cr-position');
   if (posCanvas) {
     var active = POSITION_ORDER.filter(function(p) { return dataA.byPosition[p] && dataA.byPosition[p].bb100 != null; });
@@ -1248,7 +1165,6 @@ function _crRenderCharts(resultA, resultB) {
     }
   }
 
-  // Cards bars (win rate by class).
   var cardsCanvas = document.getElementById('cr-cards');
   if (cardsCanvas) {
     var classOrder = ['pairs', 'AK', 'broadway', 'suited', 'sc', 'connectors', 'ace-rag', 'junk'];
@@ -1284,7 +1200,6 @@ function _crRenderCharts(resultA, resultB) {
     }
   }
 
-  // Action breakdown (donut).
   var actCanvas = document.getElementById('cr-actions');
   if (actCanvas) {
     if (resultA.metrics.actions) {
@@ -1318,11 +1233,9 @@ function _crRenderCharts(resultA, resultB) {
   }
 }
 
-// ── 8. PUBLIC ENTRY ──────────────────────────────────────────────────────────
-// Both _crBuildClauseDefs and _crComputeBaseline walk every hand and the latter
-// calls analyse() — together they cost ~half a second at 20k+ hands. They only
-// depend on the all-hands list, so cache by State.sessionEpoch and reuse across
-// every render of this panel until a fresh import or reset bumps the epoch.
+// _crBuildClauseDefs and _crComputeBaseline together cost ~half a second at
+// 20k+ hands. Cache by State.sessionEpoch so a fresh import or reset bumps the
+// epoch and invalidates the cache.
 var _crCachedEpoch = null;
 function renderCustomReport(container, hands) {
   if (!container) return;
@@ -1334,8 +1247,7 @@ function renderCustomReport(container, hands) {
     _crCachedEpoch = epoch;
   }
   if (!_crState) _crState = _crLoadState();
-  // Drop any saved clauses that no longer exist (defensive against schema changes
-  // or hand-list shrinkage that wipes an opponent / table option).
+  // Drop saved clauses that no longer exist (defensive against schema changes).
   ['A', 'B'].forEach(function(seg) {
     if (!_crState[seg]) _crState[seg] = _crDefaultSegment();
     _crState[seg].clauses = _crState[seg].clauses.filter(function(c) {
@@ -1346,8 +1258,6 @@ function renderCustomReport(container, hands) {
   _crRenderInto(container);
 }
 
-// Document-level click closes the popover (unless the click is inside the popover
-// or on a token / add-clause button - those are wired to (re)open it).
 document.addEventListener('click', function(e) {
   if (!_crPopover) return;
   if (_crPopover.contains(e.target)) return;
