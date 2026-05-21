@@ -1,5 +1,3 @@
-// ── STREET PANEL ──────────────────────────────────────────────────────────────
-
 var _streetChart = null;
 
 function renderStreet(container, d, hands) {
@@ -10,8 +8,6 @@ function renderStreet(container, d, hands) {
   var maxSeen = d.ss.Preflop.seen || 1;
 
   mountTemplate(container, 'street');
-
-  // Verdict + section stories render above the existing per-street tables.
   mountFindings(container, 'Street', d, hands, 'Street-by-street action looks balanced for now.');
 
   setSlot(container, 'seenBars', streets.map(function(s) {
@@ -26,7 +22,6 @@ function renderStreet(container, d, hands) {
     return barRow(s, fp2 || 0, 100, fp2 > 55 ? 'r' : 'g', (fp2 !== null ? fp2 + '%' : '-'), ss2.f + ' folds');
   }).join(''));
 
-  // Average bet size by street
   var stBetDisplay = {};
   var stMaxAvg = 1;
   streets.forEach(function(s) {
@@ -43,7 +38,6 @@ function renderStreet(container, d, hands) {
       }).join(''));
   }
 
-  // ── Render Chart.js stacked bar chart ──
   var canvas = document.getElementById('street-action-chart');
   if (!canvas) return;
 

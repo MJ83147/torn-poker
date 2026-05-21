@@ -1,5 +1,3 @@
-// ── BETTING PANEL (Actions + Bets) ───────────────────────────────────────────
-
 function renderActions(container, d, hands) {
   if (!container) return;
   var streets = STREETS;
@@ -9,7 +7,6 @@ function renderActions(container, d, hands) {
   var caPct = pct(d.calls, actTotal);
   var raPct = pct(d.raises, actTotal);
 
-  // ── Game-context lookups ─────────────────────────────────────────────────
   var ctx = getGameContext(d);
   var _domSeats = ctx.seats;
   var _domFb = ctx.flopBucket;
@@ -17,13 +14,8 @@ function renderActions(container, d, hands) {
   var _ftrBand = ctx.band('foldToRaise');
 
   mountTemplate(container, 'actions');
-
-  // Verdict + section stories (Bet Sizing Shape, Value vs Bluff Sizing,
-  // Response to Sizing) render above the widgets.
   mountFindings(container, 'Betting', d, hands, 'Betting profile looks balanced at this sample size.');
 
-  // Aggression mini-box dropped - the header hero strip already shows your
-  // headline aggression number always.
   setSlot(container, 'miniRow', renderMiniRow([
     { l: 'Total Actions', v: actTotal, c: 'o' },
     { l: 'Folds', v: d.folds, c: 'r' },
@@ -87,7 +79,6 @@ function renderActions(container, d, hands) {
   }
   setSlot(container, 'sitStats', sitStatHtml);
 
-  // ── Bet Sizing Section (merged from Bets panel) ──
   var avgBets = {};
   var avgBetsBB = {};
   streets.forEach(function(s) {

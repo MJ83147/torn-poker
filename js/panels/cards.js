@@ -1,13 +1,8 @@
-// ── CARDS PANEL ───────────────────────────────────────────────────────────────
-
 var CARD_HT_ORDER = ['Pocket Pairs', 'Broadway', 'Ace-Rag', 'Suited Connectors', 'Suited', 'Connectors', 'Offsuit Trash'];
 
 function renderCards(container, d, hands) {
   if (!container) return;
   mountTemplate(container, 'cards');
-
-  // Verdict + section stories. Story cards classify by postflop hand strength;
-  // the stacked bars below describe preflop hole-card type.
   mountFindings(container, 'Cards', d, hands, 'Not enough hands yet to call out a hand-strength leak.');
 
   var htData = CARD_HT_ORDER.filter(function(ht) { return d.htMap[ht]; });

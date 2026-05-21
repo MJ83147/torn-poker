@@ -1,10 +1,5 @@
-// ── SHARED HAND PREDICATES ───────────────────────────────────────────────────
-// Predicates and small selectors that used to be re-defined inside every
-// insight section IIFE. Each section now closes over the global versions.
-// Pure: no DOM, no state. Loads after analysis.js (getInvested) and
-// hand-parsing.js (parseActions).
+// Loads after analysis.js (getInvested) and hand-parsing.js (parseActions).
 
-// Hero called, bet, or raised at any point in the hand.
 function heroPlayed(h) {
   if (!h || !h.actions) return false;
   var acts = parseActions(h.actions);
@@ -16,7 +11,6 @@ function heroPlayed(h) {
   return false;
 }
 
-// Hero's first preflop action was fold.
 function heroFoldedPreflop(h) {
   if (!h || !h.actions) return false;
   var acts = parseActions(h.actions);
@@ -29,20 +23,18 @@ function heroFoldedPreflop(h) {
   return false;
 }
 
-// Hand where hero invested chips and did not win.
 function heroLost(h) {
   if (!h || !h.outcome) return false;
   if (h.outcome.result === 'won') return false;
   return getInvested(h) > 0;
 }
 
-// Hand where hero won net of investment.
 function heroWon(h) {
   if (!h || !h.outcome || h.outcome.result !== 'won') return false;
   return (h.outcome.amount || 0) - getInvested(h) > 0;
 }
 
-// Capped example-hand pool with most-recent first. predicate(hand) -> bool.
+// Capped example-hand pool, most-recent first.
 function pickHands(hands, predicate, cap) {
   var out = [];
   if (!hands) return out;
