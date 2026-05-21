@@ -1,24 +1,19 @@
+// ── CARDS PANEL ───────────────────────────────────────────────────────────────
+
+var CARD_HT_ORDER = ['Pocket Pairs', 'Broadway', 'Ace-Rag', 'Suited Connectors', 'Suited', 'Connectors', 'Offsuit Trash'];
+
 function renderCards(container, d, hands) {
-  var htOrder = ['Pocket Pairs', 'Broadway', 'Ace-Rag', 'Suited Connectors', 'Suited', 'Connectors', 'Offsuit Trash'];
-  var htData = htOrder.filter(function(ht) { return d.htMap[ht]; });
+  if (!container) return;
+  mountTemplate(container, 'cards');
+
+  // Verdict + section stories. Story cards classify by postflop hand strength;
+  // the stacked bars below describe preflop hole-card type.
+  mountFindings(container, 'Cards', d, hands, 'Not enough hands yet to call out a hand-strength leak.');
+
+  var htData = CARD_HT_ORDER.filter(function(ht) { return d.htMap[ht]; });
   var maxDealt = htData.length ? Math.max.apply(null, htData.map(function(ht) { return d.htMap[ht].dealt; })) : 1;
-  var cardsHtml = '<div class="panel-title">Cards</div>';
-  cardsHtml += '<div class="panel-desc">Win rates by hand type: pairs, broadway, suited connectors, and more.</div>';
 
-  var cardsFindings = [];
-  if (typeof Sections !== 'undefined' && typeof Sections.evaluateSections === 'function') {
-    cardsFindings = Sections.findingsForPanel(Sections.evaluateSections(d, {}, hands), 'Cards');
-    cardsHtml += Sections.renderVerdict(cardsFindings, 'Not enough hands yet to call out a hand-strength leak.');
-    if (cardsFindings.length) cardsHtml += '<div class="p-row">' + Sections.renderFindings(cardsFindings) + '</div>';
-  }
-
-  cardsHtml += '<div class="p-row">';
-  cardsHtml += '<div class="ht-stack-legend">' +
-    '<div class="ht-leg-item"><div class="ht-leg-sw leg-sw-won"></div>Won</div>' +
-    '<div class="ht-leg-item"><div class="ht-leg-sw leg-sw-played"></div>Played, not won</div>' +
-    '<div class="ht-leg-item"><div class="ht-leg-sw leg-sw-unplayed"></div>Dealt, not played</div>' +
-    '</div>';
-  cardsHtml += htData.map(function(ht) {
+  fillRows(container, 'bars', htData, function(row, ht) {
     var s = d.htMap[ht];
     var outerPct = pct(s.dealt, maxDealt) || 0;
     var wonPct = pct(s.won, s.dealt) || 0;
@@ -26,23 +21,13 @@ function renderCards(container, d, hands) {
     var unplayedPct = 100 - wonPct - playedNotWonPct;
     var wrPct = s.played > 0 ? pct(s.won, s.played) : null;
     var wrCol = wrPct === null ? 'var(--dim)' : wrPct >= 55 ? 'var(--green)' : wrPct <= 38 ? 'var(--red)' : 'var(--amber)';
-    return '<div class="ht-stack-item">' +
-      '<div class="ht-stack-header">' +
-      '<span class="ht-stack-name">' + tipWrap(ht) + '</span>' +
-      '<span class="ht-stack-meta">' + s.dealt + ' dealt · ' + s.played + ' played · ' +
-      '<span style="color:' + wrCol + ';">' + (wrPct !== null ? wrPct + '% win' : '-') + '</span>' +
-      '</span>' +
-      '</div>' +
-      '<div class="ht-stack-track" style="width:' + outerPct + '%;">' +
-      '<div class="ht-stack-inner w-100">' +
-      '<div class="ht-seg-won" style="width:' + wonPct + '%;"></div>' +
-      '<div class="ht-seg-played" style="width:' + playedNotWonPct + '%;"></div>' +
-      '<div class="ht-seg-unplayed" style="width:' + unplayedPct + '%;"></div>' +
-      '</div>' +
-      '</div>' +
-      '</div>';
-  }).join('');
-  cardsHtml += '</div>';
 
-  container.innerHTML = cardsHtml;
+    row.querySelector('.ht-stack-name').innerHTML = tipWrap(ht);
+    row.querySelector('.ht-stack-meta').innerHTML = s.dealt + ' dealt · ' + s.played + ' played · ' +
+      '<span style="color:' + wrCol + ';">' + (wrPct !== null ? wrPct + '% win' : '-') + '</span>';
+    row.querySelector('.ht-stack-track').style.width = outerPct + '%';
+    row.querySelector('.ht-seg-won').style.width = wonPct + '%';
+    row.querySelector('.ht-seg-played').style.width = playedNotWonPct + '%';
+    row.querySelector('.ht-seg-unplayed').style.width = unplayedPct + '%';
+  });
 }

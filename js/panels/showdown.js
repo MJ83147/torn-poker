@@ -1,12 +1,16 @@
+// ── SHOWDOWN PANEL (Blue Line / Red Line) ────────────────────────────────────
+
 var _showdownChart = null;
 var _potSizeChart = null;
 
 function renderShowdown(container, hands, meta, overallData) {
+  // Destroy previous chart instance to prevent canvas reuse errors
   if (_showdownChart) { _showdownChart.destroy(); _showdownChart = null; }
   if (_potSizeChart) { _potSizeChart.destroy(); _potSizeChart = null; }
 
   var sorted = hands.slice().sort(function(a, b) { return (a.timestamp || 0) - (b.timestamp || 0); });
 
+  // Filter to cash hands with outcomes
   var cash = [];
   for (var i = 0; i < sorted.length; i++) {
     if (isCashHand(sorted[i]) && sorted[i].outcome) cash.push(sorted[i]);
@@ -19,15 +23,16 @@ function renderShowdown(container, hands, meta, overallData) {
     return;
   }
 
-  // Push one chart point every Nth hand instead of every hand — Chart.js
-  // bogs down past ~1000 points and a 20k-point line is visually identical to a
-  // 500-point one.
+  // Build per-hand P&L split by showdown / non-showdown. Push one chart point
+  // every Nth hand instead of every hand — Chart.js bogs down past ~1000 points
+  // and a 20k-point line is visually indistinguishable from a 500-point one.
   var cumSd = 0, cumNsd = 0;
   var sdWon = 0, sdTotal = 0, nsdWon = 0, nsdTotal = 0;
   var dataSd = [], dataNsd = [], dataTotal = [], labels = [];
   var CHART_TARGET_POINTS = 500;
   var stride = Math.max(1, Math.floor(cash.length / CHART_TARGET_POINTS));
 
+  // Pot size tracking per category
   var potSdWin = [], potSdLoss = [], potNsdWin = [], potNsdLoss = [];
 
   for (var i = 0; i < cash.length; i++) {
@@ -57,11 +62,13 @@ function renderShowdown(container, hands, meta, overallData) {
     }
   }
 
+  // Pot size averages
   var avgPotSdWin = Math.round(avg(potSdWin));
   var avgPotSdLoss = Math.round(avg(potSdLoss));
   var avgPotNsdWin = Math.round(avg(potNsdWin));
   var avgPotNsdLoss = Math.round(avg(potNsdLoss));
 
+  // Summary stats
   var sdWinRate = pct(sdWon, sdTotal);
   var nsdWinRate = pct(nsdWon, nsdTotal);
 
@@ -83,60 +90,55 @@ function renderShowdown(container, hands, meta, overallData) {
 
   statsHtml += '</div>';
 
-  var potHtml = '<div class="sec-subtitle mt-0">Average Pot Size by Outcome</div>';
-
+  // ── Pot Size Analysis ──
+  // Pot size stat cards
   var avgWinPot = (potSdWin.length + potNsdWin.length) > 0 ? avg(potSdWin.concat(potNsdWin)) : 0;
   var avgLossPot = (potSdLoss.length + potNsdLoss.length) > 0 ? avg(potSdLoss.concat(potNsdLoss)) : 0;
   var winLossRatio = avgLossPot > 0 ? (avgWinPot / avgLossPot).toFixed(2) : null;
 
-  potHtml += '<div class="two-col"><div><div class="chart-wrap"><canvas id="pot-size-chart"></canvas></div></div><div>';
-  potHtml += '<div class="mini-row mini-row-3col">';
+  var potStatsHtml = '<div class="mini-row mini-row-3col">';
+  potStatsHtml += '<div class="mini">';
+  potStatsHtml += '<div class="mini-l dim-label">Avg Pot Won</div>';
+  potStatsHtml += '<div class="serif-value" style="color:var(--green);">' + fmt(avgWinPot) + '</div>';
+  potStatsHtml += '<div class="mini-meta">' + (potSdWin.length + potNsdWin.length) + ' hands</div>';
+  potStatsHtml += '</div>';
 
-  potHtml += '<div class="mini">';
-  potHtml += '<div class="mini-l dim-label">Avg Pot Won</div>';
-  potHtml += '<div class="serif-value" style="color:var(--green);">' + fmt(avgWinPot) + '</div>';
-  potHtml += '<div class="mini-meta">' + (potSdWin.length + potNsdWin.length) + ' hands</div>';
-  potHtml += '</div>';
+  potStatsHtml += '<div class="mini">';
+  potStatsHtml += '<div class="mini-l dim-label">Avg Pot Lost</div>';
+  potStatsHtml += '<div class="serif-value" style="color:var(--red);">' + fmt(avgLossPot) + '</div>';
+  potStatsHtml += '<div class="mini-meta">' + (potSdLoss.length + potNsdLoss.length) + ' hands</div>';
+  potStatsHtml += '</div>';
 
-  potHtml += '<div class="mini">';
-  potHtml += '<div class="mini-l dim-label">Avg Pot Lost</div>';
-  potHtml += '<div class="serif-value" style="color:var(--red);">' + fmt(avgLossPot) + '</div>';
-  potHtml += '<div class="mini-meta">' + (potSdLoss.length + potNsdLoss.length) + ' hands</div>';
-  potHtml += '</div>';
+  potStatsHtml += '<div class="mini">';
+  potStatsHtml += '<div class="mini-l dim-label">Win/Loss Pot Ratio</div>';
+  potStatsHtml += '<div class="serif-value" style="color:' + (winLossRatio !== null ? pnlColor(winLossRatio - 1) : 'var(--red)') + ';">' + (winLossRatio !== null ? winLossRatio + 'x' : '-') + '</div>';
+  potStatsHtml += '<div class="mini-meta">Target: above 1.0x</div>';
+  potStatsHtml += '</div>';
+  potStatsHtml += '</div>';
 
-  potHtml += '<div class="mini">';
-  potHtml += '<div class="mini-l dim-label">Win/Loss Pot Ratio</div>';
-  potHtml += '<div class="serif-value" style="color:' + (winLossRatio !== null ? pnlColor(winLossRatio - 1) : 'var(--red)') + ';">' + (winLossRatio !== null ? winLossRatio + 'x' : '-') + '</div>';
-  potHtml += '<div class="mini-meta">Target: above 1.0x</div>';
-  potHtml += '</div>';
+  // Assemble via template.
+  mountTemplate(container, 'showdown');
 
-  potHtml += '</div></div></div>';
-
-  var html = '<div class="panel-title">Showdown</div>';
-  html += '<div class="panel-desc">Showdown vs non-showdown P&L breakdown.</div>';
-
+  // Verdict + section stories render above the per-line breakdown and charts.
+  // The Showdown section needs a `d` object; compute it locally.
   if (typeof Sections !== 'undefined' && typeof Sections.evaluateSections === 'function' && typeof analyse === 'function') {
     // Prefer the filter-scoped d from the upstream cache. Falling back to a
     // local analyse() here would cost a full extra pass over the dataset.
     var d = overallData || analyse(hands);
     if (!overallData && typeof bucketizeAnalysis === 'function') bucketizeAnalysis(d, hands);
-    var sdFindings = Sections.findingsForPanel(Sections.evaluateSections(d, {}, hands), 'Showdown');
-    html += Sections.renderVerdict(sdFindings, 'Showdown picture still building.');
-    if (sdFindings.length) html += '<div class="p-row">' + Sections.renderFindings(sdFindings) + '</div>';
+    mountFindings(container, 'Showdown', d, hands, 'Showdown picture still building.');
   }
 
-  html += '<div class="p-row"><div class="sec-subtitle mt-0">Showdown vs Non-Showdown P&L</div>';
-  html += '<div class="chart-wrap-full"><canvas id="showdown-chart"></canvas></div>';
-  html += statsHtml + '</div>';
-  html += '<div class="p-row">' + potHtml + '</div>';
+  setSlot(container, 'stats', statsHtml);
+  setSlot(container, 'potStats', potStatsHtml);
 
-  container.innerHTML = html;
-
+  // Render Chart.js chart
   var canvas = document.getElementById('showdown-chart');
   if (!canvas) return;
 
   var colors = getChartColors();
 
+  // ── Pot Size Bar Chart ──
   var potCanvas = document.getElementById('pot-size-chart');
   if (potCanvas) {
     _potSizeChart = createChart(potCanvas, 'bar', {

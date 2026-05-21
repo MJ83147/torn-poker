@@ -83,6 +83,43 @@ function bindHtml(root, data) {
   }
 }
 
+// Set the inner HTML of a `[data-slot="name"]` element. Returns the slot
+// element (or null). Used to drop helper-generated HTML (e.g. Sections
+// verdict markup) into a template without the panel rebuilding the wrapper.
+function setSlot(root, name, html) {
+  if (!root) return null;
+  var el = root.querySelector('[data-slot="' + name + '"]');
+  if (!el) return null;
+  el.innerHTML = html || '';
+  return el;
+}
+
+// The verdict + findings block that every analysis panel renders the same
+// way: evaluate the registered sections for this panel, drop the verdict into
+// the `verdict` slot, and the findings list into the `findings` slot (shown
+// only when there are findings). Returns the findings array so the caller can
+// reuse it (e.g. for charts). Templates must provide both slots:
+//   <div data-slot="verdict"></div>
+//   <div class="p-row" data-slot="findings" hidden></div>
+function mountFindings(root, panelName, d, hands, fallback) {
+  if (typeof Sections === 'undefined' || typeof Sections.evaluateSections !== 'function') {
+    return [];
+  }
+  var findings = Sections.findingsForPanel(Sections.evaluateSections(d, {}, hands), panelName);
+  setSlot(root, 'verdict', Sections.renderVerdict(findings, fallback));
+  var slot = root.querySelector('[data-slot="findings"]');
+  if (slot) {
+    if (findings.length) {
+      slot.innerHTML = Sections.renderFindings(findings);
+      slot.removeAttribute('hidden');
+    } else {
+      slot.innerHTML = '';
+      slot.setAttribute('hidden', '');
+    }
+  }
+  return findings;
+}
+
 // Repeat-fill helper. Locates `[data-fill="key"]` inside root, finds the
 // `<template data-row>` inside it, clones the row once per item in items,
 // runs bind(clone, item) on each clone, and appends to the fill container.

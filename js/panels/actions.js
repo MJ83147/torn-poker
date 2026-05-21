@@ -1,53 +1,45 @@
+// ── BETTING PANEL (Actions + Bets) ───────────────────────────────────────────
+
 function renderActions(container, d, hands) {
-  var streets = ['Preflop', 'Flop', 'Turn', 'River'];
-  var aggPct = calcAggression(d.raises, d.calls, d.checks);
+  if (!container) return;
+  var streets = STREETS;
   var actTotal = d.folds + d.checks + d.calls + d.raises;
   var fPct = pct(d.folds, actTotal);
   var chPct = pct(d.checks, actTotal);
   var caPct = pct(d.calls, actTotal);
   var raPct = pct(d.raises, actTotal);
 
+  // ── Game-context lookups ─────────────────────────────────────────────────
   var ctx = getGameContext(d);
   var _domSeats = ctx.seats;
   var _domFb = ctx.flopBucket;
-  function _scaleN(base) { return ctx.scaleN(base); }
-  var _aggBand = ctx.band('af');
   var _cbetBand = ctx.band('cbet');
   var _ftrBand = ctx.band('foldToRaise');
 
-  var actHtml = '<div class="panel-title">Betting</div>';
-  actHtml += '<div class="panel-desc">How you size your bets and choose your actions.</div>';
+  mountTemplate(container, 'actions');
 
-  var bettingFindings = [];
-  if (typeof Sections !== 'undefined' && typeof Sections.evaluateSections === 'function') {
-    bettingFindings = Sections.findingsForPanel(Sections.evaluateSections(d, {}, hands), 'Betting');
-    actHtml += Sections.renderVerdict(bettingFindings, 'Betting profile looks balanced at this sample size.');
-    if (bettingFindings.length) actHtml += '<div class="p-row">' + Sections.renderFindings(bettingFindings) + '</div>';
-  }
+  // Verdict + section stories (Bet Sizing Shape, Value vs Bluff Sizing,
+  // Response to Sizing) render above the widgets.
+  mountFindings(container, 'Betting', d, hands, 'Betting profile looks balanced at this sample size.');
 
-  actHtml += '<div class="p-row">' + renderMiniRow([
+  // Aggression mini-box dropped - the header hero strip already shows your
+  // headline aggression number always.
+  setSlot(container, 'miniRow', renderMiniRow([
     { l: 'Total Actions', v: actTotal, c: 'o' },
     { l: 'Folds', v: d.folds, c: 'r' },
     { l: 'Checks', v: d.checks, c: 'w' },
     { l: 'Calls', v: d.calls, c: 'a' },
     { l: 'Raises', v: d.raises, c: 'g' },
-  ]) + '</div>';
+  ]));
 
-  actHtml += '<div class="p-row">';
   var segs = [
     { p: fPct || 0, c: 'var(--red)', l: 'Fold ' + fPct + '%' },
     { p: chPct || 0, c: '#2a3a2c', l: 'Check ' + chPct + '%' },
     { p: caPct || 0, c: 'var(--amber)', l: 'Call ' + caPct + '%' },
     { p: raPct || 0, c: 'var(--green)', l: 'Raise ' + raPct + '%' },
   ];
-  actHtml += '<div class="sec-subtitle">Action split</div>';
-  actHtml += '<div class="stack-bar">' + segs.map(function (s) { return '<div class="stack-seg" style="width:' + s.p + '%;background:' + s.c + ';"></div>'; }).join('') + '</div>';
-  actHtml += '<div class="stack-labels">' + segs.map(function (s) { return '<div class="stack-li"><div class="stack-dot" style="background:' + s.c + ';"></div>' + s.l + '</div>'; }).join('') + '</div>';
-
-  actHtml += '</div>';
-
-  actHtml += '<div class="p-row"><div class="sec-subtitle mt-0">Situational stats</div>';
-  actHtml += '<div class="bar-group">';
+  setSlot(container, 'actionSplitBar', segs.map(function (s) { return '<div class="stack-seg" style="width:' + s.p + '%;background:' + s.c + ';"></div>'; }).join(''));
+  setSlot(container, 'actionSplitLabels', segs.map(function (s) { return '<div class="stack-li"><div class="stack-dot" style="background:' + s.c + ';"></div>' + s.l + '</div>'; }).join(''));
 
   function sitStatColour(label, p) {
     if (p === null) return 'o';
@@ -84,17 +76,18 @@ function renderActions(container, d, hands) {
     { label: 'Fold to 4-Bet', done: d.foldTo4betDone, opps: d.foldTo4betOpps },
   ];
 
+  var sitStatHtml = '';
   for (var si = 0; si < sitStats.length; si++) {
     var s = sitStats[si];
     if (s.opps === 0) continue;
     var p = pct(s.done, s.opps);
     var cls = sitStatColour(s.label, p);
     var labelHtml = tipWrap(s.label);
-    actHtml += barRow(labelHtml, p || 0, 100, cls, (p !== null ? p + '%' : '-'), s.done + '/' + s.opps + ' spots');
+    sitStatHtml += barRow(labelHtml, p || 0, 100, cls, (p !== null ? p + '%' : '-'), s.done + '/' + s.opps + ' spots');
   }
+  setSlot(container, 'sitStats', sitStatHtml);
 
-  actHtml += '</div></div>';
-
+  // ── Bet Sizing Section (merged from Bets panel) ──
   var avgBets = {};
   var avgBetsBB = {};
   streets.forEach(function(s) {
@@ -111,20 +104,16 @@ function renderActions(container, d, hands) {
   });
   var maxAvg = Math.max(betDisplay.Preflop, betDisplay.Flop, betDisplay.Turn, betDisplay.River, 1);
 
-  actHtml += '<div class="p-row"><div class="sec-subtitle mt-0">Bet Sizing</div><div class="two-col">';
-  actHtml += '<div><div class="sec-subtitle">Average bet size by street</div><div class="bar-group">' +
+  setSlot(container, 'avgBetBars',
     streets.filter(function(s) { return betDisplay[s] > 0; }).map(function(s) {
       return barRow(s, betDisplay[s], maxAvg, 'o', fmtAvgAmount(d.betAmts[s], d.betAmtsBB ? d.betAmtsBB[s] : []), d.betAmts[s] ? d.betAmts[s].length + ' bets' : '');
-    }).join('') + '</div></div>';
-  actHtml += '<div><div class="sec-subtitle">Bet frequency (when you had the option)</div><div class="bar-group">' +
+    }).join(''));
+  setSlot(container, 'betFreqBars',
     streets.map(function(s) {
       var bo = d.betOpps[s];
       if (!bo || !bo.t) return null;
       var fp2 = pct(bo.b, bo.t);
       var cls2 = fp2 < 25 ? 'r' : fp2 > 65 ? 'a' : 'g';
       return barRow(s, fp2 || 0, 100, cls2, (fp2 !== null ? fp2 + '%' : '-'), bo.b + '/' + bo.t + ' opps');
-    }).filter(Boolean).join('') + '</div></div>';
-  actHtml += '</div></div>';
-
-  container.innerHTML = actHtml;
+    }).filter(Boolean).join(''));
 }
