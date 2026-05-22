@@ -409,14 +409,8 @@ function renderRange(container, d, hands) {
 
   function persist() { saveRangeState(state); }
 
-  container.innerHTML =
-    '<div class="panel-title">Range</div>' +
-    '<div class="panel-desc">GTO chart on the left, what you actually did on the right.</div>' +
-    '<div class="range-subtabs" id="range-subtabs">' +
-      subTabBtn('overall', 'Overall', state) +
-      subTabBtn('spot', 'By Spot', state) +
-    '</div>' +
-    '<div id="range-subtab-body" class="p-row"></div>';
+  mountTemplate(container, 'range');
+  setSlot(container, 'subtabs', subTabBtn('overall', 'Overall', state) + subTabBtn('spot', 'By Spot', state));
 
   var subtabs = document.getElementById('range-subtabs');
   subtabs.addEventListener('click', function(e) {

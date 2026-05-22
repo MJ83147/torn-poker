@@ -990,28 +990,19 @@ function _crRenderInto(container) {
   var resultA = runCustomReport(_crHands, _crState.A, _crClauseDefs);
   var resultB = _crState.compare ? runCustomReport(_crHands, _crState.B, _crClauseDefs) : null;
 
-  var html = '';
-  html += panelTitle('Custom Report');
-  html += panelDesc('Build your own report. Click any underlined word to change it. Add clauses to narrow further.');
+  mountTemplate(container, 'custom');
 
-  html += '<div class="cr-toolbar">';
-  html += '<label class="cr-compare-toggle">';
-  html += '<input type="checkbox" id="cr-compare-toggle"' + (_crState.compare ? ' checked' : '') + '>';
-  html += '<span>Compare two reports</span></label>';
-  html += '<button class="cr-reset-btn" id="cr-reset-btn">Reset filters</button>';
-  html += '</div>';
+  var compareToggle = container.querySelector('#cr-compare-toggle');
+  if (compareToggle) compareToggle.checked = !!_crState.compare;
 
-  html += '<div class="cr-sentence-wrap">';
-  html += _crRenderSentence(_crState.A, 'A');
+  var sentenceHtml = _crRenderSentence(_crState.A, 'A');
   if (_crState.compare) {
-    html += '<div class="cr-vs">vs</div>';
-    html += _crRenderSentence(_crState.B, 'B');
+    sentenceHtml += '<div class="cr-vs">vs</div>';
+    sentenceHtml += _crRenderSentence(_crState.B, 'B');
   }
-  html += '</div>';
+  setSlot(container, 'sentence', sentenceHtml);
 
-  html += '<div class="p-row">';
-  html += _crRenderHeadline(resultA, resultB);
-  html += '</div>';
+  setSlot(container, 'headline', _crRenderHeadline(resultA, resultB));
 
   var cards = [];
   if (_crState.compare) {
@@ -1038,19 +1029,13 @@ function _crRenderInto(container) {
   } else {
     cards = _crEvaluateRules(resultA, _crBaseline);
   }
-  html += '<div class="p-row">' + _crRenderInsightCards(cards) + '</div>';
+  setSlot(container, 'cards', _crRenderInsightCards(cards));
 
-  if (resultA.sampleSize >= CR_SAMPLE_MIN || (resultB && resultB.sampleSize >= CR_SAMPLE_MIN)) {
-    html += '<div class="p-row">';
-    html += '<div class="cr-charts">';
-    html += '<div class="cr-chart-card"><div class="sec-subtitle mt-0">bb/100 over time</div><div class="chart-wrap-full"><canvas id="cr-trend"></canvas></div></div>';
-    html += '<div class="cr-chart-card"><div class="sec-subtitle mt-0">bb/100 by position</div><div class="chart-wrap-full"><canvas id="cr-position"></canvas></div></div>';
-    html += '<div class="cr-chart-card"><div class="sec-subtitle mt-0">Win rate by hand class</div><div class="chart-wrap-full"><canvas id="cr-cards"></canvas></div></div>';
-    html += '<div class="cr-chart-card"><div class="sec-subtitle mt-0">Action breakdown</div><div class="chart-wrap-full"><canvas id="cr-actions"></canvas></div></div>';
-    html += '</div></div>';
+  var showCharts = resultA.sampleSize >= CR_SAMPLE_MIN || (resultB && resultB.sampleSize >= CR_SAMPLE_MIN);
+  if (showCharts) {
+    var chartSection = container.querySelector('[data-slot="chartSection"]');
+    if (chartSection) chartSection.removeAttribute('hidden');
   }
-
-  container.innerHTML = html;
 
   container.querySelectorAll('.cr-token').forEach(function(tok) {
     tok.onclick = function(e) {
@@ -1085,7 +1070,7 @@ function _crRenderInto(container) {
     _crRerender();
   };
 
-  _crRenderCharts(resultA, resultB);
+  if (showCharts) _crRenderCharts(resultA, resultB);
 }
 
 function _crRenderCharts(resultA, resultB) {

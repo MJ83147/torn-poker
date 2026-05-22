@@ -28,24 +28,17 @@ function renderLog(container, hands) {
     var end = Math.min(start + PAGE_SIZE, sortedHands.length);
     var pageHands = sortedHands.slice(start, end);
 
-    var savedHtml = renderSavedSection();
-
-    var logHtml = '<div class="panel-title">Hand Log</div>';
-    logHtml += '<div class="panel-desc">Every hand played. Click any row to replay.</div>';
-    logHtml += savedHtml;
-    logHtml += '<div class="flex-between mb-12">' +
-      '<div class="meta-text">' + sortedHands.length + ' hands total · showing ' + (start + 1) + '-' + end + '</div>' +
-      '<div class="flex-gap-6">' +
-      renderPagination(_logPage, sortedHands.length, PAGE_SIZE, 'log-prev', 'log-next') +
-      '</div></div>';
-    logHtml += '<div class="overflow-x"><table class="tbl hlog-tbl"><thead><tr><th></th><th class="sortable" data-log-sort="pos">Pos' + logSortArrow('pos') + '</th><th>Cards</th><th>Context</th><th>Board</th><th>Pot</th><th>Actions</th><th class="sortable" data-log-sort="result">Result' + logSortArrow('result') + '</th></tr></thead><tbody>';
-    logHtml += pageHands.map(function(h, pi) {
+    mountTemplate(container, 'log');
+    setSlot(container, 'saved', renderSavedSection());
+    setSlot(container, 'meta', sortedHands.length + ' hands total · showing ' + (start + 1) + '-' + end);
+    setSlot(container, 'pagination', renderPagination(_logPage, sortedHands.length, PAGE_SIZE, 'log-prev', 'log-next'));
+    setSlot(container, 'head', '<tr><th></th><th class="sortable" data-log-sort="pos">Pos' + logSortArrow('pos') + '</th><th>Cards</th><th>Context</th><th>Board</th><th>Pot</th><th>Actions</th><th class="sortable" data-log-sort="result">Result' + logSortArrow('result') + '</th></tr>');
+    setSlot(container, 'rows', pageHands.map(function(h, pi) {
       var globalIdx = start + pi;
       var starred = isHandStarred(h);
       var starHtml = '<span class="hrow-star' + (starred ? ' starred' : '') + '" data-star-idx="' + globalIdx + '" title="' + (starred ? 'Unsave' : 'Save') + ' hand">' + (starred ? '&#9733;' : '&#9734;') + '</span>';
       return renderHandRow(h, globalIdx, { starHtml: starHtml });
-    }).join('') + '</tbody></table></div>';
-    container.innerHTML = logHtml;
+    }).join(''));
 
     wireSavedSection(container);
 
@@ -181,7 +174,9 @@ function wireSavedSection(container) {
 }
 
 function refreshSavedSection(container) {
-  var oldSection = container.querySelector('.saved-section');
+  var slot = container.querySelector('[data-slot="saved"]');
+  var host = slot || container;
+  var oldSection = host.querySelector('.saved-section');
   var newHtml = renderSavedSection();
   if (oldSection) {
     if (newHtml) {
@@ -190,7 +185,8 @@ function refreshSavedSection(container) {
       oldSection.remove();
     }
   } else if (newHtml) {
-    container.insertAdjacentHTML('afterbegin', newHtml);
+    if (slot) slot.innerHTML = newHtml;
+    else container.insertAdjacentHTML('afterbegin', newHtml);
   }
   wireSavedSection(container);
 }
