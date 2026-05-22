@@ -8,13 +8,6 @@
     return Math.round((num / den) * 1000) / 10;
   }
 
-  function joinList(items) {
-    if (!items || !items.length) return '';
-    if (items.length === 1) return items[0];
-    if (items.length === 2) return items[0] + ' and ' + items[1];
-    return items.slice(0, -1).join(', ') + ', and ' + items[items.length - 1];
-  }
-
   // Thresholds must stay in sync with helpers/styleDetector.js so labels match
   // across welcome target picker, My Game and Style Map.
   function classifyVillain(vpip, af) {

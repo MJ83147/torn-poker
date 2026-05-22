@@ -4,13 +4,6 @@
   var MIN_AGG = (typeof MIN_AGGREGATE === 'number') ? MIN_AGGREGATE : 30;
   var MIN_AX = (typeof MIN_AXIS === 'number') ? MIN_AXIS : 20;
 
-  function joinList(items) {
-    if (!items || !items.length) return '';
-    if (items.length === 1) return items[0];
-    if (items.length === 2) return items[0] + ' and ' + items[1];
-    return items.slice(0, -1).join(', ') + ', and ' + items[items.length - 1];
-  }
-
   function handIsShowdown(h) {
     return !!isShowdown(h);
   }
