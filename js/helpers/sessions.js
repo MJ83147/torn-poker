@@ -130,7 +130,7 @@ function renderBestWorstSessions(hands, overallData) {
     var sessEnd = (lastHand && lastHand.timestamp) ? new Date(lastHand.timestamp).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
     var dateLabel = sessStart ? (sessStart === sessEnd ? sessStart : sessStart + ' - ' + sessEnd) : '';
 
-    html += '<div class="best-worst-card">';
+    html += '<div class="card best-worst-card">';
     html += '<div class="dim-label mb-12">' + sess.label + '</div>';
     if (dateLabel) html += '<div class="best-worst-meta">' + dateLabel + '</div>';
     html += '<div class="best-worst-meta">' + tableName + ' &middot; ' + s.hands.length + ' hands &middot; <span class="serif-value best-worst-pnl" style="color:' + pnlCol + ';">' + pnlDisplay + '</span></div>';

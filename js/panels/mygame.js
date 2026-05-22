@@ -193,7 +193,7 @@ function renderTableDynamicsReference(hands, d) {
     var subD = d && d.bySeatBucket ? d.bySeatBucket[seatBucket] : null;
     var nHands = subD ? subD.n : 0;
 
-    h += '<div class="dynamics-card">';
+    h += '<div class="card dynamics-card">';
     h += '<div class="dynamics-card-head">' + seats + '-handed <span class="dim-label">(' + nHands + ' hands)</span></div>';
     if (!nHands) {
       h += '<div class="dynamics-card-note dim-label">No hands at this table size yet.</div>';
@@ -236,7 +236,7 @@ function renderTableDynamicsReference(hands, d) {
     var subF = d && d.byFlopBucket ? d.byFlopBucket[bk] : null;
     var nF = subF ? subF.n : 0;
 
-    h += '<div class="dynamics-card">';
+    h += '<div class="card dynamics-card">';
     h += '<div class="dynamics-card-head">' + flopLabels[bk] + ' <span class="dim-label">(' + nF + ' hands)</span></div>';
     if (!nF) {
       h += '<div class="dynamics-card-note dim-label">No flops with this many players yet.</div>';
