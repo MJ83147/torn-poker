@@ -1,4 +1,5 @@
 (function() {
+  var F = Sections.section('allin', 'All-In EV');
   var FOLD_HIGH = 70; // folding to more than 70% of all-ins is escapism
   var FOLD_LOW  = 30; // folding under 30% is calling too light
   var WIN_FLOOR = 35; // sub 35% win rate when calling means weak calling range
@@ -100,13 +101,11 @@
       });
     }
 
-    return {
+    return F({
       id: 'allin-pressure',
       name: 'All-in Pressure',
-      panel: 'All-In EV',
-      sectionId: 'allin',
       severity: severity,
-      score: Sections.score(severity, deltaUnits),
+      magnitude: deltaUnits,
       openingText: openingText,
       branchTexts: branchTexts,
       impactText: impactText,
@@ -116,7 +115,7 @@
         facedAllin: faced, foldAllin: folds, callAllin: calls, wonAllin: won,
         foldPct: foldPct, winPct: winPct
       }
-    };
+    });
   }
 
   Sections.defineSection({

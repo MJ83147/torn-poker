@@ -1,4 +1,5 @@
 (function() {
+  var F = Sections.section('position', 'Position');
 
   var WEAK_TYPES_EARLY = ['Ace-Rag', 'Suited Connectors', 'Suited', 'Connectors', 'Offsuit Trash'];
   var WEAK_TYPES_MIDDLE = ['Ace-Rag', 'Connectors', 'Offsuit Trash'];
@@ -315,11 +316,9 @@
 
     var score = Sections.score(severity, freq ? freq.deltaUnits : 0);
 
-    return {
+    return F({
       id: 'position-' + position.toLowerCase().replace(/\W+/g, '-'),
       name: seatTitle,
-      panel: 'Position',
-      sectionId: 'position',
       severity: severity,
       score: score,
       openingText: openingText,
@@ -333,7 +332,7 @@
         cellLabel: cell.label,
         pillars: pillars
       }
-    };
+    });
   }
 
   Sections.defineSection({

@@ -1,4 +1,5 @@
 (function() {
+  var F = Sections.section('bets', 'Betting');
   var MIN_AGG = (typeof MIN_AGGREGATE === 'number') ? MIN_AGGREGATE : 30;
   var MIN_CELL_LOCAL = (typeof MIN_CELL === 'number') ? MIN_CELL : 10;
 
@@ -261,13 +262,11 @@
       }
     }
 
-    return {
+    return F({
       id: 'bets-sizing-shape',
       name: 'Bet Sizing Shape',
-      panel: 'Betting',
-      sectionId: 'bets',
       severity: severity,
-      score: Sections.score(severity, scatteredStreets.length),
+      magnitude: scatteredStreets.length,
       openingText: openingText,
       branchTexts: branchTexts,
       impactText: impactText,
@@ -280,7 +279,7 @@
         scatteredStreets: scatteredStreets.map(function(r) { return r.street; }),
         singleSizeStreets: singleSizeStreets.map(function(r) { return r.street; })
       }
-    };
+    });
   }
 
   function buildValueVsBluff(d, extras, hands) {
@@ -322,20 +321,18 @@
           coachingNote: 'Browse these hands and ask whether the bet size matched what you held. As the showdown sample grows, this reading will sharpen into a real verdict.'
         });
       }
-      return {
+      return F({
         id: 'bets-value-vs-bluff',
         name: 'Value vs Bluff Sizing',
-        panel: 'Betting',
-        sectionId: 'bets',
         severity: 'n',
-        score: Sections.score('n', 0),
+        magnitude: 0,
         openingText: 'Not enough showdown bets to read whether your sizing tracks hand strength.',
         branchTexts: ['Won showdowns with bets: ' + won.count + '. Lost showdowns with bets: ' + lost.count + '. Need at least ' + MIN_CELL_LOCAL + ' on each side.'],
         impactText: null,
         soWhatText: 'Keep logging hands. This reading sharpens as the showdown sample grows.',
         examples: thinExamples,
         meta: { won: won.count, lost: lost.count }
-      };
+      });
     }
 
     var avgWon = won.sumFrac / won.count;
@@ -388,13 +385,11 @@
       });
     }
 
-    return {
+    return F({
       id: 'bets-value-vs-bluff',
       name: 'Value vs Bluff Sizing',
-      panel: 'Betting',
-      sectionId: 'bets',
       severity: severity,
-      score: Sections.score(severity, Math.abs(gap)),
+      magnitude: Math.abs(gap),
       openingText: openingText,
       branchTexts: branchTexts,
       impactText: impactText,
@@ -407,7 +402,7 @@
         wonCount: won.count,
         lostCount: lost.count
       }
-    };
+    });
   }
 
   function buildResponseToSizing(d, extras, hands) {
@@ -580,13 +575,11 @@
       });
     }
 
-    return {
+    return F({
       id: 'bets-response',
       name: 'Response to Sizing',
-      panel: 'Betting',
-      sectionId: 'bets',
       severity: severity,
-      score: Sections.score(severity, leakCount),
+      magnitude: leakCount,
       openingText: openingText,
       branchTexts: branchTexts,
       impactText: impactText,
@@ -597,7 +590,7 @@
         leaks: leaks,
         totalFaced: faced.length
       }
-    };
+    });
   }
 
   Sections.defineSection({

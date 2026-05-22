@@ -1,4 +1,5 @@
 (function() {
+  var F = Sections.section('players', 'Players');
   var MIN_PROFILE_HANDS = 50;   // hands needed before classifying an opponent
   var MIN_NAMED_HANDS = 30;     // hands needed to enter profitable/unprofitable
   var MIN_TYPE_OPPONENTS = 3;   // opponents of one type required to fire story
@@ -291,13 +292,11 @@
     }
 
     var deltaUnits = Math.min(2, Math.abs(avgPerHand) / Math.max(1, perHandThreshold));
-    return {
+    return F({
       id: 'players-vs-' + type.toLowerCase(),
       name: meta.name,
-      panel: 'Players',
-      sectionId: 'players',
       severity: severity,
-      score: Sections.score(severity, deltaUnits),
+      magnitude: deltaUnits,
       openingText: openingText,
       branchTexts: branchTexts,
       impactText: impactText,
@@ -312,7 +311,7 @@
         totalShowdown: totalShowdown,
         totalShowdownWon: totalShowdownWon
       }
-    };
+    });
   }
 
   function buildNamedOpponentStory(direction, profiles, hands) {
@@ -430,13 +429,11 @@
     }
 
     var deltaUnits = Math.min(2, Math.abs(totalPnl) / 100);
-    return {
+    return F({
       id: 'players-' + label,
       name: isProfitable ? 'Profitable Opponents' : 'Unprofitable Opponents',
-      panel: 'Players',
-      sectionId: 'players',
       severity: severity,
-      score: Sections.score(severity, deltaUnits),
+      magnitude: deltaUnits,
       openingText: openingText,
       branchTexts: branchTexts,
       impactText: impactText,
@@ -452,7 +449,7 @@
         topNonShowdownPnl: topNonShowdownPnl,
         top: top
       }
-    };
+    });
   }
 
   Sections.defineSection({

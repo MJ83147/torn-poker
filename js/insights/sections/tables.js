@@ -1,4 +1,5 @@
 (function() {
+  var F = Sections.section('tables', 'Tables');
   var MIN_TABLE_CELL = (typeof MIN_CELL === 'number') ? MIN_CELL : 10;
   var MIN_AGG = (typeof MIN_AGGREGATE === 'number') ? MIN_AGGREGATE : 30;
 
@@ -239,13 +240,11 @@
       }
     }
 
-    return {
+    return F({
       id: 'tables-selection',
       name: 'Table Selection',
-      panel: 'Tables',
-      sectionId: 'tables',
       severity: severity,
-      score: Sections.score(severity, deltaUnits),
+      magnitude: deltaUnits,
       openingText: openingText,
       branchTexts: branchTexts,
       impactText: impactText,
@@ -261,7 +260,7 @@
         winShare: winShare,
         primaryPattern: primaryPattern
       }
-    };
+    });
   }
 
   function buildTimeAtTable(d, extras, hands) {
@@ -426,13 +425,11 @@
       }
     }
 
-    return {
+    return F({
       id: 'tables-time',
       name: 'Time at Table',
-      panel: 'Tables',
-      sectionId: 'tables',
       severity: severity,
-      score: Sections.score(severity, deltaUnits),
+      magnitude: deltaUnits,
       openingText: openingText,
       branchTexts: branchTexts,
       impactText: impactText,
@@ -447,7 +444,7 @@
         perHandGap: perHandGap,
         pattern: pattern
       }
-    };
+    });
   }
 
   Sections.defineSection({

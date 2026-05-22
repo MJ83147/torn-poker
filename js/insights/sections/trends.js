@@ -1,4 +1,5 @@
 (function() {
+  var F = Sections.section('trends', 'Tables and Trends');
   var MIN_PARTITION = 30;  // floor for any partitioned sub-d
   var MIN_SESSION_HALF = 20; // floor for the session-half split
 
@@ -171,13 +172,11 @@
 
     var deltaUnits = Math.max(wrMove.abs / 10, movers.length ? movers[0].move.abs / 20 : 0);
 
-    return {
+    return F({
       id: 'trends-direction',
       name: 'Direction of Travel',
-      panel: 'Tables and Trends',
-      sectionId: 'trends',
       severity: severity,
-      score: Sections.score(severity, deltaUnits),
+      magnitude: deltaUnits,
       openingText: openingText,
       branchTexts: branchTexts,
       impactText: impactText,
@@ -190,7 +189,7 @@
         driftDir: driftDir,
         wrDir: wrMove.dir
       }
-    };
+    });
   }
 
   function buildSessionSwings(d, extras, hands) {
@@ -434,13 +433,11 @@
       if (pillars[pj].deltaUnits > topDelta) topDelta = pillars[pj].deltaUnits;
     }
 
-    return {
+    return F({
       id: 'trends-sessions',
       name: 'Session Swings',
-      panel: 'Tables and Trends',
-      sectionId: 'trends',
       severity: severity,
-      score: Sections.score(severity, topDelta),
+      magnitude: topDelta,
       openingText: openingText,
       branchTexts: branchTexts,
       impactText: impactText,
@@ -452,7 +449,7 @@
         worstPnl: worstSession ? worstSession.pnl : null,
         pillars: pillars
       }
-    };
+    });
   }
 
   Sections.defineSection({

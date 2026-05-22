@@ -1,4 +1,5 @@
 (function() {
+  var F = Sections.section('streets', 'Street');
   var MIN_AGG = (typeof MIN_AGGREGATE === 'number') ? MIN_AGGREGATE : 30;
   var MIN_CL = (typeof MIN_CELL === 'number') ? MIN_CELL : 10;
   var MIN_OPP = 12; // floor for any opp-count gate on a pillar
@@ -284,20 +285,18 @@
     }
 
     var severity = sev.severity || 'n';
-    return {
+    return F({
       id: 'streets-cbet',
       name: 'C-Bet',
-      panel: 'Street',
-      sectionId: 'streets',
       severity: severity,
-      score: Sections.score(severity, sev.deltaUnits || 0),
+      magnitude: sev.deltaUnits || 0,
       openingText: openingText,
       branchTexts: branchTexts,
       impactText: impactText,
       soWhatText: soWhatText,
       examples: examples,
       meta: { freq: freq, opps: opps, band: band, seats: seats, position: domPos, posReads: posReads, grouped: grouped, pnlCbet: pnlCbet, pnlGiveUp: pnlGiveUp }
-    };
+    });
   }
 
   function buildFoldToCbet(d, extras, hands) {
@@ -374,20 +373,18 @@
     }
 
     var severity = sev.severity || 'n';
-    return {
+    return F({
       id: 'streets-fold-to-cbet',
       name: 'Fold to C-Bet',
-      panel: 'Street',
-      sectionId: 'streets',
       severity: severity,
-      score: Sections.score(severity, sev.deltaUnits || 0),
+      magnitude: sev.deltaUnits || 0,
       openingText: openingText,
       branchTexts: branchTexts,
       impactText: impactText,
       soWhatText: soWhatText,
       examples: examples,
       meta: { freq: freq, opps: opps, band: band, posReads: posReads, pnlFold: pnlFold, pnlContinue: pnlContinue }
-    };
+    });
   }
 
   function compute3BetCounts(hands) {
@@ -538,20 +535,18 @@
     }
 
     var severity = sev.severity || 'n';
-    return {
+    return F({
       id: 'streets-three-bet',
       name: '3-Bet',
-      panel: 'Street',
-      sectionId: 'streets',
       severity: severity,
-      score: Sections.score(severity, sev.deltaUnits || 0),
+      magnitude: sev.deltaUnits || 0,
       openingText: openingText,
       branchTexts: branchTexts,
       impactText: impactText,
       soWhatText: soWhatText,
       examples: examples,
       meta: { freq: freq, opps: counts.opps, done: counts.done, band: band, posReads: posReads, pnl3: pnl3, pnlFlat: pnlFlat }
-    };
+    });
   }
 
   function buildFoldToThreeBet(d, extras, hands) {
@@ -628,20 +623,18 @@
     }
 
     var severity = sev.severity || 'n';
-    return {
+    return F({
       id: 'streets-fold-to-three-bet',
       name: 'Fold to 3-Bet',
-      panel: 'Street',
-      sectionId: 'streets',
       severity: severity,
-      score: Sections.score(severity, sev.deltaUnits || 0),
+      magnitude: sev.deltaUnits || 0,
       openingText: openingText,
       branchTexts: branchTexts,
       impactText: impactText,
       soWhatText: soWhatText,
       examples: examples,
       meta: { freq: freq, opps: opps, band: band, posReads: posReads, pnlFold: pnlFold, pnlCont: pnlCont }
-    };
+    });
   }
 
   function buildCheckFold(d, extras, hands) {
@@ -718,20 +711,18 @@
       });
     }
 
-    return {
+    return F({
       id: 'streets-check-fold',
       name: 'Check-Fold',
-      panel: 'Street',
-      sectionId: 'streets',
       severity: severity,
-      score: Sections.score(severity, 0),
+      magnitude: 0,
       openingText: openingText,
       branchTexts: branchTexts,
       impactText: impactText,
       soWhatText: soWhatText,
       examples: examples,
       meta: { freq: freq, count: checkFoldCount, seen: seen, posRows: posRows, pnlCF: pnlCF }
-    };
+    });
   }
 
   function buildDonk(d, extras, hands) {
@@ -800,20 +791,18 @@
       }
     }
 
-    return {
+    return F({
       id: 'streets-donk',
       name: 'Donk Bet',
-      panel: 'Street',
-      sectionId: 'streets',
       severity: severity,
-      score: Sections.score(severity, 0),
+      magnitude: 0,
       openingText: openingText,
       branchTexts: branchTexts,
       impactText: impactText,
       soWhatText: soWhatText,
       examples: examples,
       meta: { freq: freq, opps: opps, posReads: posReads, pnlDonk: pnlDonk, pnlCheck: pnlCheck }
-    };
+    });
   }
 
   function buildDelayCbet(d, extras, hands) {
@@ -887,20 +876,18 @@
       }
     }
 
-    return {
+    return F({
       id: 'streets-delay-cbet',
       name: 'Delay C-Bet',
-      panel: 'Street',
-      sectionId: 'streets',
       severity: severity,
-      score: Sections.score(severity, 0),
+      magnitude: 0,
       openingText: openingText,
       branchTexts: branchTexts,
       impactText: impactText,
       soWhatText: soWhatText,
       examples: examples,
       meta: { freq: freq, opps: opps, posReads: posReads, pnlDelay: pnlDelay, pnlGiveUp: pnlGiveUp }
-    };
+    });
   }
 
   Sections.defineSection({

@@ -1,4 +1,5 @@
 (function() {
+  var F = Sections.section('showdown', 'Showdown');
   var SHOWDOWN_BAND = { tight: 24, loose: 30 };    // WTSD target.
   var WSD_BAND = { tight: 50, loose: 60 };          // Won-at-showdown target.
   var MIN_AGG = (typeof MIN_AGGREGATE === 'number') ? MIN_AGGREGATE : 30;
@@ -129,13 +130,11 @@
     var fired = branchTexts.length > 0 || severity === 'r' || severity === 'a' || impactText != null;
     if (!fired) return null;
 
-    return {
+    return F({
       id: 'showdown-going',
       name: 'Going to Showdown',
-      panel: 'Showdown',
-      sectionId: 'showdown',
       severity: severity,
-      score: Sections.score(severity, sev.deltaUnits),
+      magnitude: sev.deltaUnits,
       openingText: openingText,
       branchTexts: branchTexts,
       impactText: impactText,
@@ -148,7 +147,7 @@
         nsdPnl: nsdPnl, nsdCount: nsdCount,
         posReads: posReads
       }
-    };
+    });
   }
 
   function buildWinningAtShowdown(d, extras, hands) {
@@ -244,13 +243,11 @@
     var fired = branchTexts.length > 0 || severity === 'r' || severity === 'a' || impactText != null;
     if (!fired) return null;
 
-    return {
+    return F({
       id: 'showdown-winning',
       name: 'Winning at Showdown',
-      panel: 'Showdown',
-      sectionId: 'showdown',
       severity: severity,
-      score: Sections.score(severity, sev.deltaUnits),
+      magnitude: sev.deltaUnits,
       openingText: openingText,
       branchTexts: branchTexts,
       impactText: impactText,
@@ -260,7 +257,7 @@
         wsd: wsd, sdCount: sdCount, sdWon: sdWon, sdPnl: sdPnl,
         band: WSD_BAND, posRows: posRows
       }
-    };
+    });
   }
 
   function buildShowdownSplit(d, extras, hands) {
@@ -348,13 +345,11 @@
     var fired = severity === 'r' || severity === 'g' || branchTexts.length > 0;
     if (!fired) return null;
 
-    return {
+    return F({
       id: 'showdown-split',
       name: 'Showdown vs Non-Showdown Winnings',
-      panel: 'Showdown',
-      sectionId: 'showdown',
       severity: severity,
-      score: Sections.score(severity, 0),
+      magnitude: 0,
       openingText: openingText,
       branchTexts: branchTexts,
       impactText: impactText,
@@ -365,7 +360,7 @@
         nsdPnl: nsdPnl, nsdCount: nsdCount,
         totalPnl: totalPnl
       }
-    };
+    });
   }
 
   Sections.defineSection({

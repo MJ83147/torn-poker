@@ -1,4 +1,5 @@
 (function() {
+  var F = Sections.section('cards', 'Cards');
   var MIN_AGG  = (typeof MIN_AGGREGATE === 'number') ? MIN_AGGREGATE : 30;
   var MIN_AX   = (typeof MIN_AXIS === 'number') ? MIN_AXIS : 20;
   var MIN_CL   = (typeof MIN_CELL === 'number') ? MIN_CELL : 10;
@@ -415,13 +416,11 @@
       }
     }
 
-    return {
+    return F({
       id: 'cards-premium',
       name: 'Premium Made Hands',
-      panel: 'Cards',
-      sectionId: 'cards',
       severity: severity,
-      score: Sections.score(severity, aggSev ? aggSev.deltaUnits : 0),
+      magnitude: aggSev ? aggSev.deltaUnits : 0,
       openingText: openingText,
       branchTexts: branchTexts,
       impactText: impactText,
@@ -432,7 +431,7 @@
         aggressive: bucket.aggressive, passive: bucket.passive,
         perHand: perHand, overallPerHand: overallPerHand
       }
-    };
+    });
   }
 
   function buildStrong(d, bucket, overallPerHand) {
@@ -536,13 +535,11 @@
       }
     }
 
-    return {
+    return F({
       id: 'cards-strong',
       name: 'Strong Made Hands',
-      panel: 'Cards',
-      sectionId: 'cards',
       severity: severity,
-      score: Sections.score(severity, goingSev ? goingSev.deltaUnits : (aggSev ? aggSev.deltaUnits : 0)),
+      magnitude: goingSev ? goingSev.deltaUnits : (aggSev ? aggSev.deltaUnits : 0),
       openingText: openingText,
       branchTexts: branchTexts,
       impactText: impactText,
@@ -554,7 +551,7 @@
         riverCallLost: bucket.riverCallLost, riverCallPnl: bucket.riverCallPnl,
         perHand: perHand, overallPerHand: overallPerHand
       }
-    };
+    });
   }
 
   function buildMarginal(d, bucket, overallPerHand) {
@@ -667,13 +664,11 @@
       }
     }
 
-    return {
+    return F({
       id: 'cards-marginal',
       name: 'Marginal Made Hands',
-      panel: 'Cards',
-      sectionId: 'cards',
       severity: severity,
-      score: Sections.score(severity, goingSev ? goingSev.deltaUnits : 0),
+      magnitude: goingSev ? goingSev.deltaUnits : 0,
       openingText: openingText,
       branchTexts: branchTexts,
       impactText: impactText,
@@ -686,7 +681,7 @@
         aggressive: bucket.aggressive,
         perHand: perHand, overallPerHand: overallPerHand
       }
-    };
+    });
   }
 
   function buildAir(d, bucket, overallPerHand) {
@@ -757,13 +752,11 @@
       });
     }
 
-    return {
+    return F({
       id: 'cards-air',
       name: 'Air or Overcards',
-      panel: 'Cards',
-      sectionId: 'cards',
       severity: severity,
-      score: Sections.score(severity, airSev ? airSev.deltaUnits : 0),
+      magnitude: airSev ? airSev.deltaUnits : 0,
       openingText: openingText,
       branchTexts: branchTexts,
       impactText: impactText,
@@ -775,7 +768,7 @@
         calledPnl: bucket.calledPnl,
         perHand: perHand, overallPerHand: overallPerHand
       }
-    };
+    });
   }
 
   function buildStrongDraws(d, bucket, overallPerHand) {
@@ -860,13 +853,11 @@
       });
     }
 
-    return {
+    return F({
       id: 'cards-strong-draws',
       name: 'Strong Draws',
-      panel: 'Cards',
-      sectionId: 'cards',
       severity: severity,
-      score: Sections.score(severity, semibluffSev ? semibluffSev.deltaUnits : 0),
+      magnitude: semibluffSev ? semibluffSev.deltaUnits : 0,
       openingText: openingText,
       branchTexts: branchTexts,
       impactText: impactText,
@@ -879,7 +870,7 @@
         semibluffed: bucket.semibluffed, semibluffPnl: bucket.semibluffPnl,
         perHand: perHand, overallPerHand: overallPerHand
       }
-    };
+    });
   }
 
   function buildWeakDraws(d, bucket, overallPerHand) {
@@ -956,13 +947,11 @@
       });
     }
 
-    return {
+    return F({
       id: 'cards-weak-draws',
       name: 'Weak Draws',
-      panel: 'Cards',
-      sectionId: 'cards',
       severity: severity,
-      score: Sections.score(severity, pricingSev ? pricingSev.deltaUnits : 0),
+      magnitude: pricingSev ? pricingSev.deltaUnits : 0,
       openingText: openingText,
       branchTexts: branchTexts,
       impactText: impactText,
@@ -973,7 +962,7 @@
         called: bucket.called, calledLost: bucket.calledLost, calledPnl: bucket.calledPnl,
         perHand: perHand, overallPerHand: overallPerHand
       }
-    };
+    });
   }
 
   Sections.defineSection({

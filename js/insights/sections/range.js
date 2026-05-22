@@ -1,4 +1,5 @@
 (function() {
+  var F = Sections.section('range', 'Range');
   var MIN_HAND = 10; // floor for any per-cell or per-combo reading
 
   function vpipOf(sd) {
@@ -195,13 +196,11 @@
       }
     }
 
-    return {
+    return F({
       id: 'width-of-range',
       name: 'Width of Range',
-      panel: 'Range',
-      sectionId: 'range',
       severity: severity,
-      score: Sections.score(severity, maxDelta),
+      magnitude: maxDelta,
       openingText: openingText,
       branchTexts: branchTexts,
       impactText: impactText,
@@ -216,7 +215,7 @@
         notableSeats: notableSeats,
         notablePositions: notablePositions
       }
-    };
+    });
   }
 
   function buildWinningHands(d, extras, hands) {
@@ -350,13 +349,11 @@
       }
     }
 
-    return {
+    return F({
       id: 'winning-hands',
       name: 'Winning Hands',
-      panel: 'Range',
-      sectionId: 'range',
       severity: severity,
-      score: Sections.score(severity, 0),
+      magnitude: 0,
       openingText: openingText,
       branchTexts: branchTexts,
       impactText: impactText,
@@ -369,7 +366,7 @@
         seats: seats,
         dominantPos: dominantPos
       }
-    };
+    });
   }
 
   Sections.defineSection({
