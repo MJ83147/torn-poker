@@ -1484,11 +1484,11 @@ textarea#jin:focus {
   min-width: 0;
 }
 
-/* "Your range" grid: same color palette as GTO but driven by hero's action */
-.rc[data-hero="red"]   { background: var(--gto-red); }
-.rc[data-hero="green"] { background: var(--gto-green); }
-.rc[data-hero="white"] { background: var(--gto-white); }
-.rc[data-hero="white"] span { color: #1a1f1a; }
+/* "Your range" grid: green = you matched GTO, red = you deviated */
+.rc[data-hero="ontarget"] { background: var(--gto-green); }
+.rc[data-hero="wrong"]    { background: var(--gto-red); }
+.rc[data-hero="unjudged"] { background: var(--gto-white); }
+.rc[data-hero="unjudged"] span { color: #1a1f1a; }
 .rc[data-hero="none"]  {
   background: #0e1310;
   border: var(--sp-1) solid #1a2a1c;

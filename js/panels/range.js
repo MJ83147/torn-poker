@@ -299,35 +299,85 @@ function buildOverallGridHtml(tallies) {
   return html;
 }
 
-function buildHeroGridHtml(filtered, scenarioType, tallies) {
+// Maps a GTO chart colour to the action it recommends. Anything not in the
+// raise/call ranges (white, grey, or absent) is a fold.
+function gtoTargetAction(color) {
+  if (color === 'red' || color === 'blue') return 'raise';
+  if (color === 'green') return 'call';
+  return 'fold';
+}
+
+function heroComboBreakdown(filtered, scenarioType) {
   var byKey = {};
   for (var i = 0; i < filtered.length; i++) {
     var h = filtered[i];
     var k = parseHoleKey(h.hole);
     if (!k) continue;
     var bucket = heroActionBucket(h, scenarioType);
-    if (!byKey[k]) byKey[k] = { raise: 0, call: 0, fold: 0, dealt: 0 };
-    byKey[k][bucket]++;
-    byKey[k].dealt++;
+    if (!byKey[k]) byKey[k] = {
+      raise: { n: 0, pnl: 0 },
+      call:  { n: 0, pnl: 0 },
+      fold:  { n: 0, pnl: 0 },
+      dealt: 0, pnl: 0, pnlKnown: false
+    };
+    var rec = byKey[k];
+    rec[bucket].n++;
+    rec.dealt++;
+    if (h.outcome && typeof isCashHand === 'function' && isCashHand(h)) {
+      var inv = getInvested(h);
+      var p = h.outcome.result === 'won' ? (h.outcome.amount || 0) - inv : -inv;
+      rec[bucket].pnl += p;
+      rec.pnl += p;
+      rec.pnlKnown = true;
+    }
   }
+  return byKey;
+}
+
+// Right grid: green = you took the GTO-recommended action most of the time,
+// red = you mostly deviated. Judging needs a GTO chart for the spot; without
+// one, every dealt combo is shown neutral.
+function buildHeroGridHtml(byKey, colors, hasChart) {
   var html = '<div class="range-grid-sm">';
   for (var r = 0; r < 13; r++) {
     for (var c = 0; c < 13; c++) {
       var key = rangeBuildKey(r, c);
-      var t = byKey[key];
-      var color = 'none';
-      if (t && t.dealt > 0) {
-        var best = 'fold', bestN = t.fold;
-        if (t.raise > bestN) { best = 'raise'; bestN = t.raise; }
-        if (t.call > bestN) { best = 'call'; bestN = t.call; }
-        color = best === 'raise' ? 'red' : best === 'call' ? 'green' : 'white';
+      var rec = byKey[key];
+      var target = hasChart ? gtoTargetAction(colors[key]) : null;
+      var state = 'none';
+      if (rec && rec.dealt > 0) {
+        if (!target) state = 'unjudged';
+        else {
+          var on = rec[target].n;
+          state = on >= (rec.dealt - on) ? 'ontarget' : 'wrong';
+        }
       }
-      var tip = tipForCombo(key, tallies);
-      html += '<div class="rc rc-hero" data-hero="' + color + '" data-key="' + key + '" data-tip="' + tip + '"><span>' + key + '</span></div>';
+      var tip = heroTipForCombo(key, rec, target);
+      html += '<div class="rc rc-hero" data-hero="' + state + '" data-key="' + key + '" data-tip="' + tip + '"><span>' + key + '</span></div>';
     }
   }
   html += '</div>';
   return html;
+}
+
+// Lines: combo, total P/L, then one line per action you took with its share,
+// whether it matched GTO, and the P/L booked while taking it.
+function heroTipForCombo(key, rec, target) {
+  if (!rec || rec.dealt === 0) return key + '\nNot dealt';
+  var lines = [key];
+  if (rec.pnlKnown) lines.push('P/L: ' + fmtPnl(rec.pnl));
+  var order = ['raise', 'call', 'fold'];
+  for (var i = 0; i < order.length; i++) {
+    var b = order[i];
+    var n = rec[b].n;
+    if (!n) continue;
+    var share = Math.round((n / rec.dealt) * 100);
+    var line = share + '% ' + b;
+    if (target) line += b === target ? ' (on target)' : ' (off target)';
+    if (rec.pnlKnown) line += '  ' + fmtPnl(rec[b].pnl);
+    lines.push(line);
+  }
+  return lines.join('\n');
 }
 
 function heroActionBucket(h, scenarioType) {
@@ -358,6 +408,9 @@ function heroActionBucket(h, scenarioType) {
 }
 
 function twoGridHtml(chart, filtered, scenarioType, tallies) {
+  var colors = chartToColorMap(chart);
+  var byKey = heroComboBreakdown(filtered, scenarioType);
+  var hasChart = !!(chart && chart.length);
   return '<div class="range-compare">' +
     '<div class="range-compare-col">' +
       '<div class="sec-subtitle mt-0">GTO chart</div>' +
@@ -365,7 +418,7 @@ function twoGridHtml(chart, filtered, scenarioType, tallies) {
     '</div>' +
     '<div class="range-compare-col">' +
       '<div class="sec-subtitle mt-0">Your range</div>' +
-      buildHeroGridHtml(filtered, scenarioType, tallies) +
+      buildHeroGridHtml(byKey, colors, hasChart) +
     '</div>' +
   '</div>';
 }
@@ -382,9 +435,8 @@ function gtoLegendHtml() {
 
 function heroLegendHtml() {
   return '<div class="range-legend">' +
-    '<div class="leg"><div class="leg-sw leg-sw-gto-red"></div>You raised</div>' +
-    '<div class="leg"><div class="leg-sw leg-sw-gto-green"></div>You called</div>' +
-    '<div class="leg"><div class="leg-sw leg-sw-gto-white"></div>You folded</div>' +
+    '<div class="leg"><div class="leg-sw leg-sw-gto-green"></div>On target</div>' +
+    '<div class="leg"><div class="leg-sw leg-sw-gto-red"></div>Playing wrong</div>' +
     '<div class="leg"><div class="rc-unseen leg-sw"></div>Not dealt</div>' +
     '</div>';
 }
