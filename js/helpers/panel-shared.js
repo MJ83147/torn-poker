@@ -76,6 +76,28 @@ function setSlot(root, name, html) {
   return el;
 }
 
+// Build a <tr> of <th> from column specs. Each spec is one of:
+//   '' / null            -> empty <th></th>
+//   'Plain'              -> <th>Plain</th> (raw HTML allowed)
+//   { tip: 'Win Rate' }  -> <th> with tipWrap(label)
+//   { html: '...' }      -> <th> with custom inner HTML
+//   { label/tip, sort: 'key' } -> sortable <th data-sort-col="key"> with arrow
+// sortState is { col, dir } and drives the active-column arrow.
+function renderTableHead(cols, sortState) {
+  function arrow(key) {
+    if (!sortState || sortState.col !== key) return '';
+    return sortState.dir === 'asc' ? ' &#9650;' : ' &#9660;';
+  }
+  var ths = cols.map(function(c) {
+    if (c == null || c === '') return '<th></th>';
+    if (typeof c === 'string') return '<th>' + c + '</th>';
+    var label = c.tip ? tipWrap(c.tip) : (c.html != null ? c.html : c.label);
+    if (c.sort) return '<th class="sortable" data-sort-col="' + c.sort + '">' + label + arrow(c.sort) + '</th>';
+    return '<th>' + label + '</th>';
+  });
+  return '<tr>' + ths.join('') + '</tr>';
+}
+
 // Templates must provide a `verdict` slot and a `findings` slot.
 function mountFindings(root, panelName, d, hands, fallback) {
   if (typeof Sections === 'undefined' || typeof Sections.evaluateSections !== 'function') {

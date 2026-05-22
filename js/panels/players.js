@@ -55,10 +55,6 @@ function renderPlayers(container, d, hands) {
     });
   }
 
-  function sortArrow(col) {
-    if (_playerSort.col !== col) return '';
-    return _playerSort.dir === 'asc' ? ' &#9650;' : ' &#9660;';
-  }
 
   function renderPlayerList() {
     if (!filtered.length) {
@@ -82,7 +78,7 @@ function renderPlayers(container, d, hands) {
     if (watchedOpps.length) {
       var watchedSection = container.querySelector('[data-slot="watchedSection"]');
       if (watchedSection) watchedSection.removeAttribute('hidden');
-      setSlot(container, 'watchedHead', '<tr><th></th><th>Player</th><th>Hands</th><th></th><th>' + tipWrap('Win Rate') + '</th><th>Net P&L</th></tr>');
+      setSlot(container, 'watchedHead', renderTableHead(['', 'Player', 'Hands', '', { tip: 'Win Rate' }, 'Net P&L']));
       var watchedRowsHtml = '';
       for (var w = 0; w < watchedOpps.length; w++) {
         var o = watchedOpps[w];
@@ -103,7 +99,7 @@ function renderPlayers(container, d, hands) {
     setSlot(container, 'allMeta', searchFiltered.length + ' opponents' + (_playerSearch ? ' matching "' + _playerSearch.replace(/</g, '&lt;') + '"' : ' with 2+ shared hands') + ' · click star to watch · click row to view hands');
 
     var sortedOpps = sortOpponents(searchFiltered, _playerSort.col, _playerSort.dir);
-    setSlot(container, 'allHead', '<tr><th></th><th class="sortable" data-sort-col="name">Player' + sortArrow('name') + '</th><th class="sortable" data-sort-col="hands">Hands' + sortArrow('hands') + '</th><th></th><th class="sortable" data-sort-col="wr">' + tipWrap('Win Rate') + sortArrow('wr') + '</th><th class="sortable" data-sort-col="pnl">Net P&L' + sortArrow('pnl') + '</th></tr>');
+    setSlot(container, 'allHead', renderTableHead(['', { label: 'Player', sort: 'name' }, { label: 'Hands', sort: 'hands' }, '', { tip: 'Win Rate', sort: 'wr' }, { label: 'Net P&L', sort: 'pnl' }], _playerSort));
     var allRowsHtml = '';
     for (var k = 0; k < sortedOpps.length; k++) {
       var o2 = sortedOpps[k];

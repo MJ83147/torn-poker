@@ -129,7 +129,7 @@ function renderTrends(container, hands, meta, overallData) {
     }
   }
 
-  setSlot(container, 'head', '<tr><th>Date</th><th>Hands</th><th>Session ' + tipWrap('Win Rate') + '</th><th>Cumulative ' + tipWrap('Win Rate') + '</th></tr>');
+  setSlot(container, 'head', renderTableHead(['Date', 'Hands', { html: 'Session ' + tipWrap('Win Rate') }, { html: 'Cumulative ' + tipWrap('Win Rate') }]));
   var rowsHtml = '';
   for (var pi = points.length - 1; pi >= 0; pi--) {
     var pt = points[pi];

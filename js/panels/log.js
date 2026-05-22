@@ -12,11 +12,6 @@ function sortHands(list, col, dir) {
   });
 }
 
-function logSortArrow(col) {
-  if (_logSort.col !== col) return '';
-  return _logSort.dir === 'asc' ? ' &#9650;' : ' &#9660;';
-}
-
 function renderLog(container, hands) {
   var PAGE_SIZE = 50;
   _logPage = 0;
@@ -32,7 +27,7 @@ function renderLog(container, hands) {
     setSlot(container, 'saved', renderSavedSection());
     setSlot(container, 'meta', sortedHands.length + ' hands total · showing ' + (start + 1) + '-' + end);
     setSlot(container, 'pagination', renderPagination(_logPage, sortedHands.length, PAGE_SIZE, 'log-prev', 'log-next'));
-    setSlot(container, 'head', '<tr><th></th><th class="sortable" data-log-sort="pos">Pos' + logSortArrow('pos') + '</th><th>Cards</th><th>Context</th><th>Board</th><th>Pot</th><th>Actions</th><th class="sortable" data-log-sort="result">Result' + logSortArrow('result') + '</th></tr>');
+    setSlot(container, 'head', renderTableHead(['', { label: 'Pos', sort: 'pos' }, 'Cards', 'Context', 'Board', 'Pot', 'Actions', { label: 'Result', sort: 'result' }], _logSort));
     setSlot(container, 'rows', pageHands.map(function(h, pi) {
       var globalIdx = start + pi;
       var starred = isHandStarred(h);
@@ -61,9 +56,9 @@ function renderLog(container, hands) {
         refreshSavedSection(container);
       };
     });
-    container.querySelectorAll('.sortable[data-log-sort]').forEach(function(th) {
+    container.querySelectorAll('.sortable[data-sort-col]').forEach(function(th) {
       th.onclick = function() {
-        var col = this.getAttribute('data-log-sort');
+        var col = this.getAttribute('data-sort-col');
         if (_logSort.col === col) {
           _logSort.dir = _logSort.dir === 'asc' ? 'desc' : 'asc';
         } else {

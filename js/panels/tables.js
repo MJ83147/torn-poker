@@ -61,7 +61,7 @@ function renderTables(container, hands, allHands, excludedTables, onRerender) {
   var dTables = (typeof analyse === 'function') ? analyse(sectionInput) : null;
   if (dTables) mountFindings(container, 'Tables', dTables, sectionInput, 'Cross-table picture still building.');
 
-  setSlot(container, 'head', '<tr><th>Table</th><th>Blinds</th><th>Hands</th><th></th><th>' + tipWrap('Win Rate') + '</th><th>' + tipWrap('Net P&L') + '</th><th>' + tipWrap('VPIP') + '</th><th>' + tipWrap('Aggression') + '</th><th>' + tipWrap('Avg Pot') + '</th><th></th></tr>');
+  setSlot(container, 'head', renderTableHead(['Table', 'Blinds', 'Hands', '', { tip: 'Win Rate' }, { tip: 'Net P&L' }, { tip: 'VPIP' }, { tip: 'Aggression' }, { tip: 'Avg Pot' }, '']));
 
   var rowsHtml = '';
   for (var ri = 0; ri < tableRows.length; ri++) {

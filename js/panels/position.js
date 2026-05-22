@@ -10,7 +10,7 @@ function renderPosition(container, d, hands) {
   mountTemplate(container, 'position');
   mountFindings(container, 'Position', d, hands, 'No standout positional patterns yet.');
 
-  setSlot(container, 'head', '<tr><th>Position</th><th>Hands</th><th>' + tipWrap('Fold Pre') + '</th><th>VPIP &Delta; vs target</th><th>' + tipWrap('Net P&L') + '</th><th>' + tipWrap('Avg Pot') + '</th></tr>');
+  setSlot(container, 'head', renderTableHead(['Position', 'Hands', { tip: 'Fold Pre' }, 'VPIP &Delta; vs target', { tip: 'Net P&L' }, { tip: 'Avg Pot' }]));
 
   setSlot(container, 'rows', activePosOrder.map(function(p) {
     var s = d.posMap[p];
