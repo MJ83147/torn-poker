@@ -76,6 +76,21 @@ function setSlot(root, name, html) {
   return el;
 }
 
+// Classify a value against a [lo, hi] band. Returns { cls, label } using the
+// shared v-* color classes. null value -> no-data.
+function bandVerdict(value, lo, hi) {
+  if (value == null) return { cls: 'v-na', label: 'no data' };
+  if (value < lo) return { cls: 'v-low', label: 'too low' };
+  if (value > hi) return { cls: 'v-high', label: 'too high' };
+  return { cls: 'v-ok', label: 'on target' };
+}
+
+// Format a {tight, loose} band as "X-Y%". '-' when absent.
+function fmtBandRange(band) {
+  if (!band) return '-';
+  return Math.round(band.tight) + '-' + Math.round(band.loose) + '%';
+}
+
 // Build a <tr> of <th> from column specs. Each spec is one of:
 //   '' / null            -> empty <th></th>
 //   'Plain'              -> <th>Plain</th> (raw HTML allowed)

@@ -135,18 +135,11 @@ function _parsePctRange(s) {
   return [parseInt(m[1], 10), parseInt(m[2], 10)];
 }
 
-function _verdict(actual, lo, hi) {
-  if (actual == null) return { cls: 'v-na', label: 'no data' };
-  if (actual < lo) return { cls: 'v-low', label: 'too low' };
-  if (actual > hi) return { cls: 'v-high', label: 'too high' };
-  return { cls: 'v-ok', label: 'on target' };
-}
-
 function _vsRow(label, actualPct, actualDenom, targetText) {
   var rng = _parsePctRange(targetText);
   var actualStr = (actualPct == null) ? '-' : actualPct + '%';
   var sampleStr = actualDenom != null ? ' <span class="dim-label">(' + actualDenom + ' spots)</span>' : '';
-  var v = rng ? _verdict(actualPct, rng[0], rng[1]) : { cls: 'v-na', label: '' };
+  var v = rng ? bandVerdict(actualPct, rng[0], rng[1]) : { cls: 'v-na', label: '' };
   var labelHtml = label ? '<div class="dynamics-vs-stat dim-label">' + label + '</div>' : '';
   return '<div class="dynamics-vs ' + v.cls + '">' +
     labelHtml +
@@ -154,11 +147,6 @@ function _vsRow(label, actualPct, actualDenom, targetText) {
     '<span class="dim-label">Target: ' + targetText + '</span></div>' +
     (v.label ? '<div class="dynamics-vs-verdict">' + v.label + '</div>' : '') +
     '</div>';
-}
-
-function _fmtBand(band) {
-  if (!band) return '-';
-  return Math.round(band.tight) + '-' + Math.round(band.loose) + '%';
 }
 
 // Targets must come from matrixTarget so the user's style offset (TAG/LAG/Nit/etc)
@@ -209,8 +197,8 @@ function renderTableDynamicsReference(hands, d) {
       var pm = subD.posMap[p];
       var actPct = (pm && pm.hands > 0) ? pct(pm.vpip, pm.hands) : null;
       var band = matrixTarget('vpip', p, seats, styleKey);
-      var cls = band ? _verdict(actPct, Math.round(band.tight), Math.round(band.loose)).cls : 'v-na';
-      h += '<tr class="' + cls + '"><td>' + p + '</td><td>' + (actPct != null ? actPct + '%' : '-') + '</td><td class="dim-label">' + _fmtBand(band) + '</td><td class="dim-label">' + (pm ? pm.hands : 0) + '</td></tr>';
+      var cls = band ? bandVerdict(actPct, Math.round(band.tight), Math.round(band.loose)).cls : 'v-na';
+      h += '<tr class="' + cls + '"><td>' + p + '</td><td>' + (actPct != null ? actPct + '%' : '-') + '</td><td class="dim-label">' + fmtBandRange(band) + '</td><td class="dim-label">' + (pm ? pm.hands : 0) + '</td></tr>';
     }
     h += '</tbody></table>';
 
@@ -253,7 +241,7 @@ function renderTableDynamicsReference(hands, d) {
       ideal: Math.max(0, cbetSeatBand.ideal + cbetMod),
       loose: Math.max(0, cbetSeatBand.loose + cbetMod)
     } : null;
-    h += _vsRow('C-bet', cbetActual, subF.cbetOpps, _fmtBand(cbetBand));
+    h += _vsRow('C-bet', cbetActual, subF.cbetOpps, fmtBandRange(cbetBand));
 
     h += '<div class="dynamics-zone-label dim-label dynamics-coaching-head">Coaching</div>';
     h += '<div class="dynamics-coaching">' + fe.notes + '</div>';
