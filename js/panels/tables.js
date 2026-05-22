@@ -27,69 +27,60 @@ function renderTables(container, hands, allHands, excludedTables, onRerender) {
   filterEl.classList.toggle('hidden', Object.keys(allTableGroups).length <= 1);
   filterEl.value = prevVal;
 
-  var tablesHtml = '';
   if (Object.keys(allTableGroups).length <= 1) {
-    tablesHtml = '<div class="panel-title">Tables</div>' +
+    container.innerHTML = '<div class="panel-title">Tables</div>' +
       '<div class="panel-desc">Compare stats across different stakes.</div>' +
       '<div class="panel-verdict">All hands are from a single table. Play across multiple tables to see comparisons.</div>';
-  } else {
-    var tableRows = [];
-    var allTableIds = sortedTables.slice();
-    if (allTableGroups['unknown']) allTableIds.push('unknown');
-    for (var ai = 0; ai < allTableIds.length; ai++) {
-      var tid3 = allTableIds[ai];
-      var tHands = allTableGroups[tid3];
-      var tD = analyse(tHands);
-      var tWr = pct(tD.handsWon, tD.handsWithOutcome);
-      var tNet = tD.totalWonAmount - tD.totalInvested;
-      var tVpip = pct(tD.vpip, tD.n);
-      var tAgg = calcAggression(tD.raises, tD.calls, tD.checks);
-      var tLabel = tid3 === 'unknown' ? 'Unknown' : getTableLabel(tid3);
-      var blinds = tid3 !== 'unknown' && TABLE_META[tid3] ? fmt(TABLE_META[tid3].sb) + '/' + fmt(TABLE_META[tid3].bb) : '';
-      tableRows.push({
-        tid: tid3, label: tLabel, blinds: blinds, n: tD.n, wr: tWr, net: tNet,
-        vpipP: tVpip, aggP: tAgg,
-        avgPot: tD.handsWithOutcome > 0 ? Math.round((tD.totalWonAmount + tD.totalInvested) / tD.handsWithOutcome) : 0,
-      });
-    }
-    var maxHands = Math.max.apply(null, tableRows.map(function(r) { return r.n; }).concat([1]));
-    tablesHtml += '<div class="panel-title">Tables</div>';
-    tablesHtml += '<div class="panel-desc">Compare stats across different stakes.</div>';
-
-    var tblFindings = [];
-    if (typeof Sections !== 'undefined' && typeof Sections.evaluateSections === 'function') {
-      var sectionInput = (allHands && allHands.length) ? allHands : hands;
-      var dTables = (typeof analyse === 'function') ? analyse(sectionInput) : null;
-      if (dTables) {
-        tblFindings = Sections.findingsForPanel(Sections.evaluateSections(dTables, {}, sectionInput), 'Tables');
-      }
-      tablesHtml += Sections.renderVerdict(tblFindings, 'Cross-table picture still building.');
-      if (tblFindings.length) tablesHtml += '<div class="p-row">' + Sections.renderFindings(tblFindings) + '</div>';
-    }
-
-    tablesHtml += '<div class="p-row"><div class="sec-subtitle mt-0">Performance by Table</div>';
-    tablesHtml += '<div class="overflow-x"><table class="tbl"><thead><tr>';
-    tablesHtml += '<th>Table</th><th>Blinds</th><th>Hands</th><th></th><th>' + tipWrap('Win Rate') + '</th><th>' + tipWrap('Net P&L') + '</th><th>' + tipWrap('VPIP') + '</th><th>' + tipWrap('Aggression') + '</th><th>' + tipWrap('Avg Pot') + '</th><th></th>';
-    tablesHtml += '</tr></thead><tbody>';
-    for (var ri = 0; ri < tableRows.length; ri++) {
-      var r = tableRows[ri];
-      var barW = Math.round(r.n / maxHands * 100);
-      var isExcluded = excludedTables.has(String(r.tid));
-      tablesHtml += '<tr' + (isExcluded ? ' class="excluded-row"' : '') + '><td>' + r.label + '</td><td class="text-dim blinds-cell">' + r.blinds + '</td><td>' + r.n + '</td>';
-      tablesHtml += '<td style="width:80px;"><span class="tbl-spark" style="width:' + barW + '%;background:var(--gold2);"></span></td>';
-      tablesHtml += '<td class="' + wrCls(r.wr) + '">' + (r.wr !== null ? r.wr + '%' : '-') + '</td>';
-      tablesHtml += '<td class="' + pnlCls(r.net) + '">' + fmtPnl(r.net) + '</td>';
-      tablesHtml += '<td>' + (r.vpipP !== null ? r.vpipP + '%' : '-') + '</td>';
-      tablesHtml += '<td>' + (r.aggP !== null ? r.aggP + '%' : '-') + '</td>';
-      var tblAvgPotDisp = r.tid !== 'unknown' && TABLE_META[r.tid]
-        ? fmtBB(r.avgPot, TABLE_META[r.tid].bb)
-        : fmt(r.avgPot);
-      tablesHtml += '<td class="text-dim">' + (r.avgPot > 0 ? tblAvgPotDisp : '-') + '</td>';
-      tablesHtml += '<td><button class="log-nav-btn exclude-btn exclude-table-btn" data-tid="' + r.tid + '">' + (isExcluded ? 'Include' : 'Exclude') + '</button></td></tr>';
-    }
-    tablesHtml += '</tbody></table></div></div>';
+    return;
   }
-  container.innerHTML = tablesHtml;
+
+  var tableRows = [];
+  var allTableIds = sortedTables.slice();
+  if (allTableGroups['unknown']) allTableIds.push('unknown');
+  for (var ai = 0; ai < allTableIds.length; ai++) {
+    var tid3 = allTableIds[ai];
+    var tHands = allTableGroups[tid3];
+    var tD = analyse(tHands);
+    var tWr = pct(tD.handsWon, tD.handsWithOutcome);
+    var tNet = tD.totalWonAmount - tD.totalInvested;
+    var tVpip = pct(tD.vpip, tD.n);
+    var tAgg = calcAggression(tD.raises, tD.calls, tD.checks);
+    var tLabel = tid3 === 'unknown' ? 'Unknown' : getTableLabel(tid3);
+    var blinds = tid3 !== 'unknown' && TABLE_META[tid3] ? fmt(TABLE_META[tid3].sb) + '/' + fmt(TABLE_META[tid3].bb) : '';
+    tableRows.push({
+      tid: tid3, label: tLabel, blinds: blinds, n: tD.n, wr: tWr, net: tNet,
+      vpipP: tVpip, aggP: tAgg,
+      avgPot: tD.handsWithOutcome > 0 ? Math.round((tD.totalWonAmount + tD.totalInvested) / tD.handsWithOutcome) : 0,
+    });
+  }
+  var maxHands = Math.max.apply(null, tableRows.map(function(r) { return r.n; }).concat([1]));
+
+  mountTemplate(container, 'tables');
+
+  var sectionInput = (allHands && allHands.length) ? allHands : hands;
+  var dTables = (typeof analyse === 'function') ? analyse(sectionInput) : null;
+  if (dTables) mountFindings(container, 'Tables', dTables, sectionInput, 'Cross-table picture still building.');
+
+  setSlot(container, 'head', '<tr><th>Table</th><th>Blinds</th><th>Hands</th><th></th><th>' + tipWrap('Win Rate') + '</th><th>' + tipWrap('Net P&L') + '</th><th>' + tipWrap('VPIP') + '</th><th>' + tipWrap('Aggression') + '</th><th>' + tipWrap('Avg Pot') + '</th><th></th></tr>');
+
+  var rowsHtml = '';
+  for (var ri = 0; ri < tableRows.length; ri++) {
+    var r = tableRows[ri];
+    var barW = Math.round(r.n / maxHands * 100);
+    var isExcluded = excludedTables.has(String(r.tid));
+    rowsHtml += '<tr' + (isExcluded ? ' class="excluded-row"' : '') + '><td>' + r.label + '</td><td class="text-dim blinds-cell">' + r.blinds + '</td><td>' + r.n + '</td>';
+    rowsHtml += '<td style="width:80px;"><span class="tbl-spark" style="width:' + barW + '%;background:var(--gold2);"></span></td>';
+    rowsHtml += '<td class="' + wrCls(r.wr) + '">' + (r.wr !== null ? r.wr + '%' : '-') + '</td>';
+    rowsHtml += '<td class="' + pnlCls(r.net) + '">' + fmtPnl(r.net) + '</td>';
+    rowsHtml += '<td>' + (r.vpipP !== null ? r.vpipP + '%' : '-') + '</td>';
+    rowsHtml += '<td>' + (r.aggP !== null ? r.aggP + '%' : '-') + '</td>';
+    var tblAvgPotDisp = r.tid !== 'unknown' && TABLE_META[r.tid]
+      ? fmtBB(r.avgPot, TABLE_META[r.tid].bb)
+      : fmt(r.avgPot);
+    rowsHtml += '<td class="text-dim">' + (r.avgPot > 0 ? tblAvgPotDisp : '-') + '</td>';
+    rowsHtml += '<td><button class="log-nav-btn exclude-btn exclude-table-btn" data-tid="' + r.tid + '">' + (isExcluded ? 'Include' : 'Exclude') + '</button></td></tr>';
+  }
+  setSlot(container, 'rows', rowsHtml);
 
   container.querySelectorAll('.exclude-table-btn').forEach(function(btn) {
     btn.onclick = function(e) {

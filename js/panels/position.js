@@ -2,23 +2,17 @@ var _positionChart = null;
 
 function renderPosition(container, d, hands) {
   if (_positionChart) { _positionChart.destroy(); _positionChart = null; }
+  if (!container) return;
 
   var activePosOrder = POSITION_ORDER.filter(function(p) { return d.posMap[p] && d.posMap[p].hands > 0; });
-
   var ctx = getGameContext(d);
 
-  var posHtml = '<div class="panel-title">Position</div>';
-  posHtml += '<div class="panel-desc">Which seats make and lose you money.</div>';
+  mountTemplate(container, 'position');
+  mountFindings(container, 'Position', d, hands, 'No standout positional patterns yet.');
 
-  var posFindings = [];
-  if (typeof Sections !== 'undefined' && typeof Sections.evaluateSections === 'function') {
-    posFindings = Sections.findingsForPanel(Sections.evaluateSections(d, {}, hands), 'Position');
-    posHtml += Sections.renderVerdict(posFindings, 'No standout positional patterns yet.');
-    if (posFindings.length) posHtml += '<div class="p-row">' + Sections.renderFindings(posFindings) + '</div>';
-  }
+  setSlot(container, 'head', '<tr><th>Position</th><th>Hands</th><th>' + tipWrap('Fold Pre') + '</th><th>VPIP &Delta; vs target</th><th>' + tipWrap('Net P&L') + '</th><th>' + tipWrap('Avg Pot') + '</th></tr>');
 
-  posHtml += '<div class="p-row"><div class="overflow-x"><table class="tbl"><thead><tr><th>Position</th><th>Hands</th><th>' + tipWrap('Fold Pre') + '</th><th>VPIP &Delta; vs target</th><th>' + tipWrap('Net P&L') + '</th><th>' + tipWrap('Avg Pot') + '</th></tr></thead><tbody>';
-  posHtml += activePosOrder.map(function(p) {
+  setSlot(container, 'rows', activePosOrder.map(function(p) {
     var s = d.posMap[p];
     var fp2 = pct(s.foldPre, s.hands);
     var vp2 = pct(s.vpip, s.hands);
@@ -40,18 +34,15 @@ function renderPosition(container, d, hands) {
       deltaCell = deltaStr + ' <span class="dim-label">(' + lo + '-' + hi + '%)</span>';
     }
     return '<tr><td>' + tipWrap(p) + '</td><td>' + s.hands + '</td><td>' + (fp2 !== null ? fp2 + '%' : '-') + '</td><td>' + deltaCell + '</td><td style="color:' + pnlColor(s.pnl) + '">' + fmtPnl(s.pnl) + '</td><td>' + avgPotDisplay + '</td></tr>';
-  }).join('');
-  posHtml += '</tbody></table></div></div>';
+  }).join(''));
 
-  if (activePosOrder.length >= 2) {
-    posHtml += '<div class="p-row"><div class="sec-subtitle mt-0">Net P&L by Position</div>';
-    posHtml += '<div class="chart-wrap-full"><canvas id="position-chart"></canvas></div></div>';
-  }
+  if (activePosOrder.length < 2) return;
 
-  container.innerHTML = posHtml;
+  var chartSection = container.querySelector('[data-slot="chartSection"]');
+  if (chartSection) chartSection.removeAttribute('hidden');
 
   var canvas = document.getElementById('position-chart');
-  if (!canvas || activePosOrder.length < 2) return;
+  if (!canvas) return;
 
   var colors = getChartColors();
 

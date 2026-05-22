@@ -75,59 +75,49 @@ function renderPlayers(container, d, hands) {
     }
     var maxH = Math.max.apply(null, filtered.map(function(o) { return o.hands; }));
     var watchedOpps = filtered.filter(function(o) { return watched.indexOf(o.name) >= 0; });
-    var html = '<div class="panel-title">Players</div>';
-    html += '<div class="panel-desc">Opponent records, head-to-head stats, and watch list.</div>';
 
-    var playersFindings = [];
-    if (typeof Sections !== 'undefined' && typeof Sections.evaluateSections === 'function') {
-      playersFindings = Sections.findingsForPanel(Sections.evaluateSections(d, {}, hands), 'Players');
-      html += Sections.renderVerdict(playersFindings, 'Opponent pool is still forming.');
-      if (playersFindings.length) html += '<div class="p-row">' + Sections.renderFindings(playersFindings) + '</div>';
-    }
-
-    html += '<div class="mb-16"><button class="example-hand-btn" id="open-compare-btn">Compare Players</button></div>';
+    mountTemplate(container, 'players');
+    mountFindings(container, 'Players', d, hands, 'Opponent pool is still forming.');
 
     if (watchedOpps.length) {
-      html += '<div class="p-row"><div class="sec-subtitle mt-0">Watched Players</div>';
-      html += '<div class="meta-text-mb">Click star to unwatch · click row to view hands</div>';
-      html += '<div class="overflow-x"><table class="tbl"><thead><tr>';
-      html += '<th></th><th>Player</th><th>Hands</th><th></th><th>' + tipWrap('Win Rate') + '</th><th>Net P&L</th>';
-      html += '</tr></thead><tbody>';
+      var watchedSection = container.querySelector('[data-slot="watchedSection"]');
+      if (watchedSection) watchedSection.removeAttribute('hidden');
+      setSlot(container, 'watchedHead', '<tr><th></th><th>Player</th><th>Hands</th><th></th><th>' + tipWrap('Win Rate') + '</th><th>Net P&L</th></tr>');
+      var watchedRowsHtml = '';
       for (var w = 0; w < watchedOpps.length; w++) {
         var o = watchedOpps[w];
         var wr = pct(o.won, o.won + o.lost);
         var barW = Math.round(o.hands / maxH * 100);
-        html += '<tr class="player-row row-hover" data-player="' + o.name + '">';
-        html += '<td class="watch-star watched" data-watch="' + o.name + '" title="Unwatch player">&#9733;</td>';
-        html += '<td>' + o.name + '</td><td>' + o.hands + '</td>';
-        html += '<td class="spark-cell"><span class="tbl-spark" style="width:' + barW + '%;background:var(--gold2);"></span></td>';
-        html += '<td class="' + wrCls(wr) + '">' + (wr !== null ? wr + '%' : '-') + '</td>';
-        html += '<td class="' + pnlCls(o.profit) + '">' + fmtPnl(o.profit) + '</td></tr>';
+        watchedRowsHtml += '<tr class="player-row row-hover" data-player="' + o.name + '">';
+        watchedRowsHtml += '<td class="watch-star watched" data-watch="' + o.name + '" title="Unwatch player">&#9733;</td>';
+        watchedRowsHtml += '<td>' + o.name + '</td><td>' + o.hands + '</td>';
+        watchedRowsHtml += '<td class="spark-cell"><span class="tbl-spark" style="width:' + barW + '%;background:var(--gold2);"></span></td>';
+        watchedRowsHtml += '<td class="' + wrCls(wr) + '">' + (wr !== null ? wr + '%' : '-') + '</td>';
+        watchedRowsHtml += '<td class="' + pnlCls(o.profit) + '">' + fmtPnl(o.profit) + '</td></tr>';
       }
-      html += '</tbody></table></div></div>';
+      setSlot(container, 'watchedRows', watchedRowsHtml);
     }
 
-    html += '<div class="p-row"><div class="flex-between"><div class="sec-subtitle mt-0">All Opponents</div>';
-    html += '<input type="text" id="player-search" class="player-search" placeholder="Search players…" value="' + (_playerSearch || '').replace(/"/g, '&quot;') + '"></div>';
-    html += '<div class="meta-text-mb">' + searchFiltered.length + ' opponents' + (_playerSearch ? ' matching "' + _playerSearch.replace(/</g, '&lt;') + '"' : ' with 2+ shared hands') + ' · click star to watch · click row to view hands</div>';
+    var searchEl = document.getElementById('player-search');
+    if (searchEl) searchEl.value = _playerSearch || '';
+    setSlot(container, 'allMeta', searchFiltered.length + ' opponents' + (_playerSearch ? ' matching "' + _playerSearch.replace(/</g, '&lt;') + '"' : ' with 2+ shared hands') + ' · click star to watch · click row to view hands');
+
     var sortedOpps = sortOpponents(searchFiltered, _playerSort.col, _playerSort.dir);
-    html += '<div class="players-table-scroll"><table class="tbl"><thead><tr>';
-    html += '<th></th><th class="sortable" data-sort-col="name">Player' + sortArrow('name') + '</th><th class="sortable" data-sort-col="hands">Hands' + sortArrow('hands') + '</th><th></th><th class="sortable" data-sort-col="wr">' + tipWrap('Win Rate') + sortArrow('wr') + '</th><th class="sortable" data-sort-col="pnl">Net P&L' + sortArrow('pnl') + '</th>';
-    html += '</tr></thead><tbody>';
+    setSlot(container, 'allHead', '<tr><th></th><th class="sortable" data-sort-col="name">Player' + sortArrow('name') + '</th><th class="sortable" data-sort-col="hands">Hands' + sortArrow('hands') + '</th><th></th><th class="sortable" data-sort-col="wr">' + tipWrap('Win Rate') + sortArrow('wr') + '</th><th class="sortable" data-sort-col="pnl">Net P&L' + sortArrow('pnl') + '</th></tr>');
+    var allRowsHtml = '';
     for (var k = 0; k < sortedOpps.length; k++) {
       var o2 = sortedOpps[k];
       var wr2 = pct(o2.won, o2.won + o2.lost);
       var barW2 = Math.round(o2.hands / maxH * 100);
       var isWatched = watched.indexOf(o2.name) >= 0;
-      html += '<tr class="player-row row-hover" data-player="' + o2.name + '">';
-      html += '<td class="watch-star' + (isWatched ? ' watched' : '') + '" data-watch="' + o2.name + '" title="' + (isWatched ? 'Unwatch' : 'Watch') + ' player">' + (isWatched ? '&#9733;' : '&#9734;') + '</td>';
-      html += '<td>' + o2.name + '</td><td>' + o2.hands + '</td>';
-      html += '<td class="spark-cell"><span class="tbl-spark" style="width:' + barW2 + '%;background:var(--gold2);"></span></td>';
-      html += '<td class="' + wrCls(wr2) + '">' + (wr2 !== null ? wr2 + '%' : '-') + '</td>';
-      html += '<td class="' + pnlCls(o2.profit) + '">' + fmtPnl(o2.profit) + '</td></tr>';
+      allRowsHtml += '<tr class="player-row row-hover" data-player="' + o2.name + '">';
+      allRowsHtml += '<td class="watch-star' + (isWatched ? ' watched' : '') + '" data-watch="' + o2.name + '" title="' + (isWatched ? 'Unwatch' : 'Watch') + ' player">' + (isWatched ? '&#9733;' : '&#9734;') + '</td>';
+      allRowsHtml += '<td>' + o2.name + '</td><td>' + o2.hands + '</td>';
+      allRowsHtml += '<td class="spark-cell"><span class="tbl-spark" style="width:' + barW2 + '%;background:var(--gold2);"></span></td>';
+      allRowsHtml += '<td class="' + wrCls(wr2) + '">' + (wr2 !== null ? wr2 + '%' : '-') + '</td>';
+      allRowsHtml += '<td class="' + pnlCls(o2.profit) + '">' + fmtPnl(o2.profit) + '</td></tr>';
     }
-    html += '</tbody></table></div></div>';
-    container.innerHTML = html;
+    setSlot(container, 'allRows', allRowsHtml);
 
     container.querySelectorAll('.watch-star').forEach(function(star) {
       star.onclick = function(e) { e.stopPropagation(); toggleWatch(this.getAttribute('data-watch')); };
