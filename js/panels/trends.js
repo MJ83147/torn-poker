@@ -133,9 +133,9 @@ function renderTrends(container, hands, meta, overallData) {
   var rowsHtml = '';
   for (var pi = points.length - 1; pi >= 0; pi--) {
     var pt = points[pi];
-    var wrCol2 = pt.sessionWr !== null ? pnlColor(pt.sessionWr - 50) : 'var(--dim)';
+    var wrCls2 = pt.sessionWr === null ? 'val-dim' : pnlCls(pt.sessionWr - 50);
     rowsHtml += '<tr><td>' + pt.label + '</td><td>' + pt.hands + '</td>' +
-      '<td style="color:' + wrCol2 + '">' + (pt.sessionWr !== null ? pt.sessionWr + '%' : '-') + '</td>' +
+      '<td class="' + wrCls2 + '">' + (pt.sessionWr !== null ? pt.sessionWr + '%' : '-') + '</td>' +
       '<td>' + (pt.wr !== null ? pt.wr + '%' : '-') + '</td></tr>';
   }
   setSlot(container, 'rows', rowsHtml);

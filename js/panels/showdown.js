@@ -68,14 +68,14 @@ function renderShowdown(container, hands, meta, overallData) {
   statsHtml += '<div class="mini">';
   statsHtml += '<div class="mini-label-dot dim-label">' +
     '<span class="line-dot line-dot-blue"></span>Showdown</div>';
-  statsHtml += '<div class="serif-value" style="color:' + pnlColor(cumSd) + ';">' + fmtPnl(cumSd) + '</div>';
+  statsHtml += '<div class="serif-value ' + pnlValCls(cumSd) + '">' + fmtPnl(cumSd) + '</div>';
   statsHtml += '<div class="mini-meta">' + sdTotal + ' hands · ' + (sdWinRate !== null ? sdWinRate + '% win rate' : 'no data') + '</div>';
   statsHtml += '</div>';
 
   statsHtml += '<div class="mini">';
   statsHtml += '<div class="mini-label-dot dim-label">' +
     '<span class="line-dot line-dot-red"></span>Non-Showdown</div>';
-  statsHtml += '<div class="serif-value" style="color:' + pnlColor(cumNsd) + ';">' + fmtPnl(cumNsd) + '</div>';
+  statsHtml += '<div class="serif-value ' + pnlValCls(cumNsd) + '">' + fmtPnl(cumNsd) + '</div>';
   statsHtml += '<div class="mini-meta">' + nsdTotal + ' hands · ' + (nsdWinRate !== null ? nsdWinRate + '% win rate' : 'no data') + '</div>';
   statsHtml += '</div>';
 
@@ -88,19 +88,19 @@ function renderShowdown(container, hands, meta, overallData) {
   var potStatsHtml = '<div class="mini-row mini-row-3col">';
   potStatsHtml += '<div class="mini">';
   potStatsHtml += '<div class="mini-l dim-label">Avg Pot Won</div>';
-  potStatsHtml += '<div class="serif-value" style="color:var(--green);">' + fmt(avgWinPot) + '</div>';
+  potStatsHtml += '<div class="serif-value val-pos">' + fmt(avgWinPot) + '</div>';
   potStatsHtml += '<div class="mini-meta">' + (potSdWin.length + potNsdWin.length) + ' hands</div>';
   potStatsHtml += '</div>';
 
   potStatsHtml += '<div class="mini">';
   potStatsHtml += '<div class="mini-l dim-label">Avg Pot Lost</div>';
-  potStatsHtml += '<div class="serif-value" style="color:var(--red);">' + fmt(avgLossPot) + '</div>';
+  potStatsHtml += '<div class="serif-value val-neg">' + fmt(avgLossPot) + '</div>';
   potStatsHtml += '<div class="mini-meta">' + (potSdLoss.length + potNsdLoss.length) + ' hands</div>';
   potStatsHtml += '</div>';
 
   potStatsHtml += '<div class="mini">';
   potStatsHtml += '<div class="mini-l dim-label">Win/Loss Pot Ratio</div>';
-  potStatsHtml += '<div class="serif-value" style="color:' + (winLossRatio !== null ? pnlColor(winLossRatio - 1) : 'var(--red)') + ';">' + (winLossRatio !== null ? winLossRatio + 'x' : '-') + '</div>';
+  potStatsHtml += '<div class="serif-value ' + (winLossRatio !== null ? pnlValCls(winLossRatio - 1) : 'val-neg') + '">' + (winLossRatio !== null ? winLossRatio + 'x' : '-') + '</div>';
   potStatsHtml += '<div class="mini-meta">Target: above 1.0x</div>';
   potStatsHtml += '</div>';
   potStatsHtml += '</div>';

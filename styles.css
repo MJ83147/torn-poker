@@ -15,13 +15,13 @@
   --menu-bg: #1e3024;
 
   /* Translucent shades (named so panels stop hardcoding rgba) */
-  --bg-translucent: var(--bg-translucent);
-  --bg-overlay: var(--bg-overlay);
-  --bg-overlay-strong: var(--bg-overlay-strong);
-  --tint-light: var(--tint-light);
-  --tint-light-2: var(--tint-light-2);
-  --gold-faint: var(--gold-faint);
-  --gold-tint: var(--gold-tint);
+  --bg-translucent: rgba(7, 9, 10, 0.95);
+  --bg-overlay: rgba(0, 0, 0, 0.5);
+  --bg-overlay-strong: rgba(0, 0, 0, 0.7);
+  --tint-light: rgba(255, 255, 255, 0.03);
+  --tint-light-2: rgba(255, 255, 255, 0.06);
+  --gold-faint: rgba(200, 169, 74, 0.35);
+  --gold-tint: rgba(200, 169, 74, 0.12);
 
   /* Spacing scale (use these instead of raw px) */
   --sp-1: 1px;
@@ -829,7 +829,7 @@ textarea#jin:focus {
 
 .story-tag {
   display: inline-block;
-  font-size: 11px;
+  font-size: var(--fs-13);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--gold);
@@ -1167,6 +1167,11 @@ textarea#jin:focus {
   font-weight: 700;
   line-height: 1;
 }
+
+/* Value color utilities (unscoped, for inline-styled values outside tables) */
+.val-pos { color: var(--green); }
+.val-neg { color: var(--red); }
+.val-dim { color: var(--dim); }
 
 /* MINI STATS */
 .mini-row {

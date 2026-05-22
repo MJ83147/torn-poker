@@ -33,7 +33,7 @@ function renderPosition(container, d, hands) {
           : '<span style="color:var(--amber)">' + delta + '%</span>');
       deltaCell = deltaStr + ' <span class="dim-label">(' + lo + '-' + hi + '%)</span>';
     }
-    return '<tr><td>' + tipWrap(p) + '</td><td>' + s.hands + '</td><td>' + (fp2 !== null ? fp2 + '%' : '-') + '</td><td>' + deltaCell + '</td><td style="color:' + pnlColor(s.pnl) + '">' + fmtPnl(s.pnl) + '</td><td>' + avgPotDisplay + '</td></tr>';
+    return '<tr><td>' + tipWrap(p) + '</td><td>' + s.hands + '</td><td>' + (fp2 !== null ? fp2 + '%' : '-') + '</td><td>' + deltaCell + '</td><td class="' + pnlCls(s.pnl) + '">' + fmtPnl(s.pnl) + '</td><td>' + avgPotDisplay + '</td></tr>';
   }).join(''));
 
   if (activePosOrder.length < 2) return;
