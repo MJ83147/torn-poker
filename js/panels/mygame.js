@@ -4,7 +4,7 @@ function renderMyGame(container, d, hands) {
     ? new Date(State.meta.exportedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
     : '';
 
-  var html = '<div class="mygame-wrap">';
+  var html = '';
 
   var vpipVal   = pct(d.vpip, d.n);
   var pfrVal    = pct(d.pfrHands, d.n);
@@ -119,11 +119,8 @@ function renderMyGame(container, d, hands) {
 
   html += renderTableDynamicsReference(hands, d);
 
-  html += '<div class="sec-subtitle mt-20">Style Map</div>';
-  html += '<div id="mygame-stylemap"></div>';
-
-  html += '</div>';
-  container.innerHTML = html;
+  mountTemplate(container, 'mygame');
+  setSlot(container, 'body', html);
 
   var smHost = container.querySelector('#mygame-stylemap');
   if (smHost && typeof renderStyleMap === 'function') {

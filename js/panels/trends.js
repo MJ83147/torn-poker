@@ -103,46 +103,42 @@ function renderTrends(container, hands, meta, overallData) {
     { id: 'trend-pnl', title: 'Cumulative Net P&L (Cash Only)', key: 'netPnl', color: greenColor, suffix: '', baseline: 0 },
   ];
 
-  var tHtml = '<div class="panel-title">Trends</div>';
-  tHtml += '<div class="panel-desc">Session-over-session charts for win rate, VPIP, and P&L.</div>';
+  mountTemplate(container, 'trends');
 
-  var trendsFindings = [];
   if (typeof Sections !== 'undefined' && typeof Sections.evaluateSections === 'function') {
-    // overallData is the filter-scoped analyse() result, cached upstream —
-    // reusing it avoids a second full-pass analyse on every Trends visit.
+    // overallData is cached upstream; reuse it to avoid a second full-pass analyse.
     var sectionD = overallData || (typeof State !== 'undefined' && State.overallAnalysis) || analyse(hands);
-    trendsFindings = Sections.findingsForPanel(Sections.evaluateSections(sectionD, {}, hands), 'Tables and Trends');
-    tHtml += Sections.renderVerdict(trendsFindings, 'Direction of travel is steady across sessions.');
-    if (trendsFindings.length) tHtml += '<div class="p-row">' + Sections.renderFindings(trendsFindings) + '</div>';
+    mountFindings(container, 'Tables and Trends', sectionD, hands, 'Direction of travel is steady across sessions.');
   }
 
-  tHtml += '<div class="p-row"><div class="trends-grid">';
+  var chartsHtml = '';
   for (var ci = 0; ci < chartConfigs.length; ci++) {
     var cfg = chartConfigs[ci];
     var vals = points.map(function(p) { return p[cfg.key]; }).filter(function(v) { return v !== null; });
     if (vals.length < 2) continue;
-    tHtml += '<div><div class="sec-subtitle mt-0">' + cfg.title + '</div>' +
+    chartsHtml += '<div><div class="sec-subtitle mt-0">' + cfg.title + '</div>' +
       '<div class="chart-wrap-full"><canvas id="' + cfg.id + '"></canvas></div></div>';
   }
-  tHtml += '</div></div>';
+  setSlot(container, 'charts', chartsHtml);
 
   if (overallData) {
     var bwHtml = renderBestWorstSessions(hands, overallData);
-    if (bwHtml) tHtml += '<div class="p-row">' + bwHtml + '</div>';
+    if (bwHtml) {
+      var bwSlot = container.querySelector('[data-slot="bestWorst"]');
+      if (bwSlot) { bwSlot.innerHTML = bwHtml; bwSlot.removeAttribute('hidden'); }
+    }
   }
 
-  tHtml += '<div class="p-row"><div class="sec-subtitle mt-0">Session Breakdown</div>';
-  tHtml += '<div class="overflow-x"><table class="tbl"><thead><tr><th>Date</th><th>Hands</th><th>Session ' + tipWrap('Win Rate') + '</th><th>Cumulative ' + tipWrap('Win Rate') + '</th></tr></thead><tbody>';
+  setSlot(container, 'head', '<tr><th>Date</th><th>Hands</th><th>Session ' + tipWrap('Win Rate') + '</th><th>Cumulative ' + tipWrap('Win Rate') + '</th></tr>');
+  var rowsHtml = '';
   for (var pi = points.length - 1; pi >= 0; pi--) {
     var pt = points[pi];
     var wrCol2 = pt.sessionWr !== null ? pnlColor(pt.sessionWr - 50) : 'var(--dim)';
-    tHtml += '<tr><td>' + pt.label + '</td><td>' + pt.hands + '</td>' +
+    rowsHtml += '<tr><td>' + pt.label + '</td><td>' + pt.hands + '</td>' +
       '<td style="color:' + wrCol2 + '">' + (pt.sessionWr !== null ? pt.sessionWr + '%' : '-') + '</td>' +
       '<td>' + (pt.wr !== null ? pt.wr + '%' : '-') + '</td></tr>';
   }
-  tHtml += '</tbody></table></div></div>';
-
-  container.innerHTML = tHtml;
+  setSlot(container, 'rows', rowsHtml);
 
   var labels = points.map(function(p) { return p.label; });
 
