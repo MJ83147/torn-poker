@@ -48,7 +48,7 @@ function renderWelcome(container, d, hands, meta) {
     '<div class="welcome-intro">' +
     '<div class="welcome-intro-text">' +
     '<div class="welcome-intro-heading">Welcome back, ' + meta.player + '</div>' +
-    '<div class="desc-text">' + d.n + ' hands loaded. Here\'s what each tab shows.</div>' +
+    '<div class="text-body">' + d.n + ' hands loaded. Here\'s what each tab shows.</div>' +
     '</div>' +
     '<button class="take-tour-btn" onclick="startWelcomeTour()">Take a Tour</button>' +
     '</div>' +
@@ -56,14 +56,14 @@ function renderWelcome(container, d, hands, meta) {
     '<div class="welcome-toc">' +
     tabDescs.map(function(t) {
       return '<div class="welcome-toc-row" data-goto="' + t.tab + '">' +
-        '<div class="gold-label">' + t.name + '</div>' +
-        '<div class="desc-text">' + t.desc + '</div>' +
+        '<div class="gold-heading">' + t.name + '</div>' +
+        '<div class="text-body">' + t.desc + '</div>' +
         '</div>';
     }).join('') +
     '</div>' +
     '<div class="welcome-right">' +
     '<div class="welcome-tips">' +
-    '<div class="dim-label mb-12">Tips</div>' +
+    '<div class="label mb-12">Tips</div>' +
     '<div class="tips-carousel">' +
     '<button class="tips-arrow tips-arrow-left" id="tip-prev">&#8249;</button>' +
     '<div class="tips-track">' +

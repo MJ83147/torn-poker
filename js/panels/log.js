@@ -92,7 +92,7 @@ function renderSavedSection() {
   var html = '<div class="saved-section saved-section-divider mb-20">' +
     '<div class="saved-toggle">' +
       '<span class="saved-toggle-arrow" style="transform:rotate(' + (expanded ? '90' : '0') + 'deg);">&#9654;</span>' +
-      '<span class="dim-label">&#9733; Saved Hands</span>' +
+      '<span class="label">&#9733; Saved Hands</span>' +
       '<span class="saved-toggle-count">(' + keys.length + ')</span>' +
     '</div>' +
     '<div class="saved-section-body"' + (expanded ? '' : ' style="display:none;"') + '>';

@@ -14,9 +14,9 @@ function showExampleHandModal(hand, coachingNote) {
   if (typeof annotateHandDynamics === 'function') annotateHandDynamics(hand);
 
   var closeBtn = '<button class="modal-close" id="modal-close-btn">&times;</button>';
-  var title = '<div class="modal-title serif-value">' + (hand.hole ? hand.hole.join(' ') : '??') + '</div>';
+  var title = '<div class="modal-title value">' + (hand.hole ? hand.hole.join(' ') : '??') + '</div>';
   var tagStrip = handTagsHtml(hand);
-  var subtitle = '<div class="dim-label mb-16">Example hand · ' + (hand.position || '?') + ' position' + (tagStrip ? ' · ' + tagStrip : '') + '</div>';
+  var subtitle = '<div class="label mb-16">Example hand · ' + (hand.position || '?') + ' position' + (tagStrip ? ' · ' + tagStrip : '') + '</div>';
 
   var metaHtml = '<div class="modal-hand-meta">' +
     '<span>Board: <strong>' + (hand.board && hand.board.length ? hand.board.join(' ') : 'none') + '</strong></span>' +
@@ -60,7 +60,7 @@ function showExampleHandModal(hand, coachingNote) {
   }
 
   var coaching = coachingNote
-    ? '<div class="modal-coaching"><div class="modal-coaching-label dim-label">What to improve</div>' + coachingNote + '</div>'
+    ? '<div class="modal-coaching"><div class="modal-coaching-head label">What to improve</div>' + coachingNote + '</div>'
     : '';
 
   var starred = isHandStarred(hand);
@@ -69,7 +69,7 @@ function showExampleHandModal(hand, coachingNote) {
   var noteVal = getHandNote(hand).replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   var notesSection = '<div class="modal-notes' + (starred ? ' show' : '') + '" id="modal-notes">' +
     '<div class="modal-notes-header">' +
-      '<div class="modal-notes-label dim-label mb-0">Your Notes</div>' +
+      '<div class="label mb-0">Your Notes</div>' +
       '<div class="modal-notes-status" id="modal-notes-status">Saves automatically</div>' +
     '</div>' +
     '<textarea class="modal-notes-input" id="modal-notes-input" placeholder="Add notes about this hand...">' + noteVal + '</textarea>' +
@@ -167,7 +167,7 @@ function showExampleHandListModal(title, handsList, coachingNote) {
     '<div class="mb-16">' + handsList.length + ' example hand' + (handsList.length !== 1 ? 's' : '') + '</div>';
 
   if (coachingNote) {
-    header += '<div class="modal-coaching"><div class="modal-coaching-label dim-label">What to look for</div>' + coachingNote + '</div>';
+    header += '<div class="modal-coaching"><div class="modal-coaching-head label">What to look for</div>' + coachingNote + '</div>';
   }
 
   box.innerHTML = '<button class="modal-close" id="modal-close-btn">&times;</button>' +

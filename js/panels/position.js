@@ -31,7 +31,7 @@ function renderPosition(container, d, hands) {
         : (delta > 0
           ? '<span style="color:var(--amber)">+' + delta + '%</span>'
           : '<span style="color:var(--amber)">' + delta + '%</span>');
-      deltaCell = deltaStr + ' <span class="dim-label">(' + lo + '-' + hi + '%)</span>';
+      deltaCell = deltaStr + ' <span class="label">(' + lo + '-' + hi + '%)</span>';
     }
     return '<tr><td>' + tipWrap(p) + '</td><td>' + s.hands + '</td><td>' + (fp2 !== null ? fp2 + '%' : '-') + '</td><td>' + deltaCell + '</td><td class="' + pnlCls(s.pnl) + '">' + fmtPnl(s.pnl) + '</td><td>' + avgPotDisplay + '</td></tr>';
   }).join(''));

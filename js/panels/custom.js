@@ -749,8 +749,8 @@ function _crRenderSentence(segment, segLabel) {
   }
 
   var sentence = '';
-  if (segLabel === 'A' && _crState.compare) sentence += '<span class="cr-seg-label">A:</span> ';
-  if (segLabel === 'B') sentence += '<span class="cr-seg-label">B:</span> ';
+  if (segLabel === 'A' && _crState.compare) sentence += '<span class="cr-seg-tag">A:</span> ';
+  if (segLabel === 'B') sentence += '<span class="cr-seg-tag">B:</span> ';
   sentence += '<span class="cr-stem">Show me how I play</span> ';
   for (var pi = 0; pi < parts.length; pi++) {
     if (pi > 0) {
@@ -783,13 +783,13 @@ function _crOpenAddClausePopover(targetEl, segLabel) {
 
   var html = '<div class="cr-pop-title">Add a clause</div>';
   if (hand.length) {
-    html += '<div class="cr-pop-section dim-label">Hand-level</div>';
+    html += '<div class="cr-pop-section label">Hand-level</div>';
     html += hand.map(function(c) {
       return '<button class="cr-pop-opt" data-add-clause="' + c.id + '">' + c.label + '</button>';
     }).join('');
   }
   if (decision.length) {
-    html += '<div class="cr-pop-section dim-label">Decision-level</div>';
+    html += '<div class="cr-pop-section label">Decision-level</div>';
     html += decision.map(function(c) {
       return '<button class="cr-pop-opt" data-add-clause="' + c.id + '">' + c.label + '</button>';
     }).join('');
@@ -823,7 +823,7 @@ function _crOpenClausePopover(targetEl, segLabel, clauseId) {
 
   var html = '<div class="cr-pop-title">' + def.label + '</div>';
   if (!def.options.length) {
-    html += '<div class="desc-text">No options available. None of your hands match this clause yet.</div>';
+    html += '<div class="text-body">No options available. None of your hands match this clause yet.</div>';
   } else if (def.multi) {
     html += '<div class="cr-pop-list">';
     current = Array.isArray(current) ? current : [];
@@ -903,18 +903,18 @@ function _crRenderHeadline(result, compareResult) {
 
   function tile(label, val, color) {
     return '<div class="cr-tile' + (dim ? ' cr-tile-dim' : '') + '">' +
-      '<div class="cr-tile-label dim-label">' + label + '</div>' +
-      '<div class="cr-tile-value serif-value" style="color:' + color + '">' + val + '</div>' +
+      '<div class="mb-6 label">' + label + '</div>' +
+      '<div class="cr-tile-value value" style="color:' + color + '">' + val + '</div>' +
       '</div>';
   }
 
   function tileCompare(label, valA, valB, colorA, colorB, delta, deltaColor) {
     return '<div class="cr-tile cr-tile-compare">' +
-      '<div class="cr-tile-label dim-label">' + label + '</div>' +
+      '<div class="mb-6 label">' + label + '</div>' +
       '<div class="cr-tile-trio">' +
-      '<div><div class="cr-tile-mini-label">A</div><div class="serif-value" style="color:' + colorA + '">' + valA + '</div></div>' +
-      '<div><div class="cr-tile-mini-label">Δ</div><div class="serif-value" style="color:' + deltaColor + '">' + delta + '</div></div>' +
-      '<div><div class="cr-tile-mini-label">B</div><div class="serif-value" style="color:' + colorB + '">' + valB + '</div></div>' +
+      '<div><div class="cr-tile-mini-label">A</div><div class="value" style="color:' + colorA + '">' + valA + '</div></div>' +
+      '<div><div class="cr-tile-mini-label">Δ</div><div class="value" style="color:' + deltaColor + '">' + delta + '</div></div>' +
+      '<div><div class="cr-tile-mini-label">B</div><div class="value" style="color:' + colorB + '">' + valB + '</div></div>' +
       '</div></div>';
   }
 
@@ -1114,7 +1114,7 @@ function _crRenderCharts(resultA, resultB) {
       },
     }));
   } else if (trendCanvas) {
-    trendCanvas.parentNode.parentNode.innerHTML = '<div class="sec-subtitle mt-0">bb/100 over time</div><div class="desc-text">Need at least 2 sessions of cash hands in this report.</div>';
+    trendCanvas.parentNode.parentNode.innerHTML = '<div class="sec-subtitle mt-0">bb/100 over time</div><div class="text-body">Need at least 2 sessions of cash hands in this report.</div>';
   }
 
   var posCanvas = document.getElementById('cr-position');
@@ -1146,7 +1146,7 @@ function _crRenderCharts(resultA, resultB) {
         scales: { x: chartXScale(colors), y: chartYScaleZeroLine(colors, { tickCallback: function(v) { return v + ''; } }) },
       }));
     } else {
-      posCanvas.parentNode.parentNode.innerHTML = '<div class="sec-subtitle mt-0">bb/100 by position</div><div class="desc-text">Need at least two positions with cash data in this report.</div>';
+      posCanvas.parentNode.parentNode.innerHTML = '<div class="sec-subtitle mt-0">bb/100 by position</div><div class="text-body">Need at least two positions with cash data in this report.</div>';
     }
   }
 
@@ -1181,7 +1181,7 @@ function _crRenderCharts(resultA, resultB) {
         scales: { x: chartXScale(colors), y: chartYScale(colors, { max: 100, tickCallback: function(v) { return v + '%'; } }) },
       }));
     } else {
-      cardsCanvas.parentNode.parentNode.innerHTML = '<div class="sec-subtitle mt-0">Win rate by hand class</div><div class="desc-text">Need at least two hand classes in this report.</div>';
+      cardsCanvas.parentNode.parentNode.innerHTML = '<div class="sec-subtitle mt-0">Win rate by hand class</div><div class="text-body">Need at least two hand classes in this report.</div>';
     }
   }
 
@@ -1213,7 +1213,7 @@ function _crRenderCharts(resultA, resultB) {
         },
       }));
     } else {
-      actCanvas.parentNode.parentNode.innerHTML = '<div class="sec-subtitle mt-0">Action breakdown</div><div class="desc-text">No action data in this report.</div>';
+      actCanvas.parentNode.parentNode.innerHTML = '<div class="sec-subtitle mt-0">Action breakdown</div><div class="text-body">No action data in this report.</div>';
     }
   }
 }

@@ -82,7 +82,7 @@ function pnlCls(val) {
   return val >= 0 ? 'pnl-pos' : 'pnl-neg';
 }
 
-// Unscoped P&L color class for values outside .tbl (e.g. serif-value blocks).
+// Unscoped P&L color class for values outside .tbl (e.g. value blocks).
 function pnlValCls(val) {
   return val >= 0 ? 'val-pos' : 'val-neg';
 }

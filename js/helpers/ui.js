@@ -119,7 +119,7 @@ function renderMiniRow(items, opts) {
   return '<div class="mini-row"' + rowAttrs + '>' + items.map(function(m) {
     var color = m.c === 'g' ? 'green' : m.c === 'r' ? 'red' : m.c === 'a' ? 'amber' : m.c || 'text';
     var dot = m.dot ? '<span class="line-dot ' + m.dot + '"></span> ' : '';
-    return '<div class="mini"><div class="mini-l dim-label">' + dot + m.l + '</div><div class="serif-value" style="color:var(--' + color + ')">' + m.v + '</div></div>';
+    return '<div class="mini"><div class="mini-l label">' + dot + m.l + '</div><div class="value" style="color:var(--' + color + ')">' + m.v + '</div></div>';
   }).join('') + '</div>';
 }
 
@@ -156,9 +156,9 @@ function ins(sev, label, text, chips, coaching) {
     }).join('') + '</div>'
     : '';
   const coachingHtml = coaching
-    ? '<div class="ins-coaching"><div class="ins-coaching-head dim-label">Coaching</div><div class="ins-coaching-text">' + coaching + '</div></div>'
+    ? '<div class="ins-coaching"><div class="ins-coaching-head label">Coaching</div><div class="ins-coaching-text">' + coaching + '</div></div>'
     : '';
-  return '<div class="ins"><div class="ins-badge ' + sev + '"><div class="ins-dot"></div><div class="ins-word">' + words[sev] + '</div></div><div class="ins-label">' + label + '</div><div class="ins-text">' + text + '</div>' + chipHtml + coachingHtml + '</div>';
+  return '<div class="ins"><div class="ins-badge ' + sev + '"><div class="ins-dot"></div><div class="ins-word">' + words[sev] + '</div></div><div class="ins-title">' + label + '</div><div class="ins-text">' + text + '</div>' + chipHtml + coachingHtml + '</div>';
 }
 
 function insWithExample(sev, label, text, chips, exampleHands, coachingNote, coaching) {
@@ -221,14 +221,14 @@ function renderPagination(page, totalItems, pageSize, prevId, nextId) {
   var totalPages = Math.ceil(totalItems / pageSize);
   if (totalPages <= 1) return '';
   return '<button class="log-nav-btn" id="' + prevId + '" ' + (page === 0 ? 'disabled' : '') + '>&laquo; Prev</button>' +
-    '<span class="meta-text">Page ' + (page + 1) + '/' + totalPages + '</span>' +
+    '<span class="text-meta">Page ' + (page + 1) + '/' + totalPages + '</span>' +
     '<button class="log-nav-btn" id="' + nextId + '" ' + (page >= totalPages - 1 ? 'disabled' : '') + '>Next &raquo;</button>';
 }
 
 function barRow(label, val, max, cls, valStr, val2Str) {
   const w = max > 0 ? clamp(Math.round(val / max * 100), 0, 100) : 0;
   return '<div class="bar-row ' + (val2Str ? 'bw3' : 'bw2') + '">' +
-    '<div class="bar-label">' + label + '</div>' +
+    '<div class="bar-name">' + label + '</div>' +
     '<div class="bar-track"><div class="bar-fill ' + cls + '" style="width:' + w + '%"></div></div>' +
     '<div class="bar-val">' + valStr + '</div>' +
     (val2Str ? '<div class="bar-val2">' + val2Str + '</div>' : '') +

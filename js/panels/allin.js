@@ -250,7 +250,7 @@ function showAllInResults(container) {
 
   if (cashAllIns.length >= 2) {
     html += '<div class="p-row"><div class="p-section">';
-    html += '<div class="dim-label mb-8">Cumulative All-In Results vs Expected Value (Cash Hands)</div>';
+    html += '<div class="label mb-8">Cumulative All-In Results vs Expected Value (Cash Hands)</div>';
     html += '<canvas id="allin-ev-chart"></canvas>';
     html += '</div></div>';
   }
@@ -269,7 +269,7 @@ function showAllInResults(container) {
   }
 
   html += '<div class="p-row"><div class="p-section">';
-  html += '<div class="dim-label mb-8">All-In Hand Details</div>';
+  html += '<div class="label mb-8">All-In Hand Details</div>';
   if (cashAllIns.length < allInHands.length) {
     html += '<div class="allin-caveat">Side pots are approximated using total pot. Tournament hands are included in the table but excluded from the cumulative graph.</div>';
   }

@@ -25,9 +25,24 @@ function _filterKey() {
     excl.join(',');
 }
 
+function _isIdentityFilter() {
+  var tableFilter = document.getElementById('table-filter');
+  var playersFilter = document.getElementById('players-filter');
+  var tf = tableFilter ? tableFilter.value : 'all';
+  var pf = playersFilter ? playersFilter.value : 'all';
+  return tf === 'all' && pf === 'all' && State.excludedTables.size === 0;
+}
+
 function getFilteredAnalysis() {
   var key = _filterKey();
   if (_analysisCache && _analysisCache.key === key) return _analysisCache;
+  // No filter active: the filtered analysis is identical to the overall one
+  // computed at import. Reuse it so we skip a full re-analyse and share its
+  // warmed insight (evaluateSections) memo.
+  if (_isIdentityFilter() && State.overallAnalysis) {
+    _analysisCache = { key: key, fd: State.overallAnalysis, filtered: State.allHands };
+    return _analysisCache;
+  }
   var filtered = State.getFilteredHands();
   var fd = analyse(filtered);
   bucketizeAnalysis(fd, filtered);
@@ -45,6 +60,168 @@ function ensureOpponentProfiles(filtered) {
 function invalidateAnalysisCache() {
   _analysisCache = null;
   _opponentCacheKey = null;
+}
+
+// Single import entry point. Shows the loader, then does ALL the heavy work
+// (ingest, analysis, per-hand made-hand caches, insight memo, opponent
+// profiles) DURING the loader with a real progress bar, so by the time it
+// fades every panel is already computed and opens instantly. The loader is
+// real work, not decoration. Minimum on-screen time keeps the deal flourish
+// readable on tiny sessions.
+function bootSession(hands, meta) {
+  var loader = document.getElementById('loader');
+  var num = document.getElementById('lnum');
+  var prog = document.getElementById('lprog');
+  var app = document.getElementById('app');
+  var cs = document.querySelectorAll('.lc');
+  var clabel = document.querySelector('.l-clabel');
+
+  // No loader DOM (defensive): do the work synchronously and render.
+  if (!loader || !num || !prog || !app) {
+    State.setSession(hands, meta);
+    var d0 = analyse(State.allHands);
+    bucketizeAnalysis(d0, State.allHands);
+    State.overallAnalysis = d0;
+    invalidateAnalysisCache();
+    invalidateRenderedPanels();
+    ensureChartJs(function () { render(d0, State.allHands, meta); });
+    return;
+  }
+
+  num.textContent = '0';
+  prog.style.width = '0%';
+  cs.forEach(function (c) { c.classList.remove(CSS.SHOW); });
+  loader.style.display = 'flex';
+  loader.classList.remove(CSS.OUT);
+  app.classList.remove(CSS.ON);
+
+  var startedAt = performance.now();
+  var MIN_MS = 1000;
+  var CHUNK = 400;
+  var displayN = hands.length;
+  ensureChartJs(function () {});
+
+  // Single honest progress driver: the bar fills only as real work completes,
+  // and the count tracks it monotonically (no flash, no reset). Heavy per-hand
+  // passes are chunked so the bar moves in real time - slowly when there is a
+  // lot to do - and only reaches 100% when everything is genuinely done.
+  function setProgress(p) {
+    var c = Math.max(0, Math.min(1, p));
+    prog.style.width = Math.round(c * 100) + '%';
+    num.textContent = Math.round(displayN * c);
+  }
+  function setLabel(t) { if (clabel) clabel.textContent = t; }
+  // Yield long enough for the browser to paint the bar before a blocking step,
+  // so unavoidable synchronous work shows its label instead of a frozen bar.
+  // setTimeout (not rAF) because rAF is paused in a backgrounded tab, which
+  // would leave the loader stuck forever.
+  function paintThen(fn) { setTimeout(fn, 16); }
+
+  var ah = [], AN = 0;
+
+  // Phase 1: backfill (normalise, fill outcome/board, annotate) - chunked.
+  var bi = 0;
+  function backfillChunk() {
+    setLabel('Reading hands');
+    var end = Math.min(displayN, bi + CHUNK);
+    backfillHandData(hands.slice(bi, end));
+    bi = end;
+    setProgress(0.45 * (displayN ? bi / displayN : 1));
+    if (bi < displayN) { setTimeout(backfillChunk, 0); return; }
+    paintThen(stageStore);
+  }
+
+  // Phase 2: dedup + persist + set allHands - fast.
+  function stageStore() {
+    setLabel('Saving session');
+    State.storeHands(hands, meta);
+    ah = State.allHands;
+    AN = ah.length;
+    setProgress(0.48);
+    paintThen(warmChunk);
+  }
+
+  // Phase 3: parse + made-hand caches per hand - chunked (the heaviest part).
+  var wi = 0;
+  function warmChunk() {
+    setLabel('Evaluating hands');
+    var warm = (typeof Sections === 'object' && Sections.warmCardCaches) ? Sections.warmCardCaches : null;
+    var end = Math.min(AN, wi + CHUNK);
+    preparseHands(ah.slice(wi, end));
+    for (var k = wi; k < end; k++) { if (warm) warm(ah[k]); }
+    wi = end;
+    setProgress(0.48 + 0.34 * (AN ? wi / AN : 1));
+    if (wi < AN) { setTimeout(warmChunk, 0); return; }
+    paintThen(stageAnalyse);
+  }
+
+  // Phase 4: overall analysis - one block (labelled so the bar isn't stale).
+  function stageAnalyse() {
+    setLabel('Crunching stats');
+    setProgress(0.84);
+    paintThen(function () {
+      var d = analyse(ah);
+      bucketizeAnalysis(d, ah);
+      State.overallAnalysis = d;
+      invalidateAnalysisCache();
+      invalidateRenderedPanels();
+      setProgress(0.86);
+      paintThen(stageInsights);
+    });
+  }
+
+  // Phase 5: insight pass - chunked one section per turn so the bar keeps moving.
+  function stageInsights() {
+    setLabel('Finding leaks');
+    if (typeof Sections === 'object' && Sections.evaluateSectionsChunked) {
+      Sections.evaluateSectionsChunked(
+        State.overallAnalysis, {}, ah,
+        function (frac) { setProgress(0.86 + 0.12 * frac); },
+        function () { paintThen(stageOpponents); }
+      );
+    } else {
+      try { Sections.evaluateSections(State.overallAnalysis, {}, ah); } catch (_) {}
+      setProgress(0.98);
+      paintThen(stageOpponents);
+    }
+  }
+
+  // Phase 6: opponent profiles - fast block.
+  function stageOpponents() {
+    setLabel('Profiling opponents');
+    setProgress(0.99);
+    paintThen(function () {
+      try {
+        if (typeof cacheOpponentProfiles === 'function') {
+          cacheOpponentProfiles(ah);
+          _opponentCacheKey = _filterKey();
+        }
+      } catch (_) {}
+      setProgress(1);
+      finish();
+    });
+  }
+
+  function finish() {
+    setLabel('Hands analysed');
+    ensureChartJs(function () {
+      var wait = Math.max(0, MIN_MS - (performance.now() - startedAt));
+      setTimeout(function () {
+        loader.classList.add(CSS.OUT);
+        setTimeout(function () {
+          loader.style.display = 'none';
+          app.classList.add(CSS.ON);
+          render(State.overallAnalysis, State.allHands, meta);
+        }, 600);
+      }, wait);
+    });
+  }
+
+  var di = 0;
+  (function deal() {
+    if (di < cs.length) { cs[di].classList.add(CSS.SHOW); di++; setTimeout(deal, 90); }
+    else setTimeout(backfillChunk, 60);
+  })();
 }
 
 function invalidateRenderedPanels() {
@@ -79,18 +256,8 @@ function checkSavedSession() {
           player: playerName,
           exportedAt: new Date().toISOString(),
         };
-        State.setSession(hands, meta);
         try { fetch('https://script.google.com/macros/s/AKfycbyTtG1UMCpYXP15dgKQttFyG4Pe-BG8FoAftoW3oYtMBISS37Ws5lYhPPDJ0zl1GYxyQA/exec', { method: 'POST', body: JSON.stringify({ player: playerName, hands: hands.length }), mode: 'no-cors' }); } catch (_) { }
-        ensureChartJs(function () {
-          showImportLoader(hands.length, function () {
-            var rd = analyse(hands);
-            bucketizeAnalysis(rd, hands);
-            State.overallAnalysis = rd;
-            invalidateAnalysisCache();
-            invalidateRenderedPanels();
-            render(rd, hands, meta);
-          });
-        });
+        bootSession(hands, meta);
       };
     } catch (_) { }
   });
@@ -266,7 +433,7 @@ function _renderHeaderStrip() {
     { l: 'VPIP', v: c.vpipPct !== null ? c.vpipPct + '%' : '-', c: c.vpipPct > 55 ? 'a' : 'w' },
     { l: 'Aggression', v: c.agg !== null ? c.agg + '%' : '-', c: c.agg > 25 ? 'g' : 'a' },
     { l: 'vs All-in', v: c.allinFold !== null ? c.allinFold + '% fold' : '-', c: 'w' },
-  ].map(function (h) { return '<div class="hs"><div class="hs-l dim-label">' + tipWrap(h.l) + '</div><div class="hs-v serif-value ' + h.c + '">' + h.v + '</div></div>'; }).join('');
+  ].map(function (h) { return '<div class="hs"><div class="hs-l label">' + tipWrap(h.l) + '</div><div class="hs-v value ' + h.c + '">' + h.v + '</div></div>'; }).join('');
   var noteEl = document.getElementById('sample-note');
   if (noteEl) noteEl.innerHTML = sampleNote;
 }
@@ -362,17 +529,8 @@ function process(raw) {
     player: playerName,
     exportedAt: json.exportedAt || new Date().toISOString(),
   };
-  State.setSession(hands, meta);
-  hands = State.allHands;
   try { fetch('https://script.google.com/macros/s/AKfycbyTtG1UMCpYXP15dgKQttFyG4Pe-BG8FoAftoW3oYtMBISS37Ws5lYhPPDJ0zl1GYxyQA/exec', { method: 'POST', body: JSON.stringify({ player: playerName, hands: hands.length }), mode: 'no-cors' }); } catch (_) { }
-  var d = analyse(hands);
-  bucketizeAnalysis(d, hands);
-  State.overallAnalysis = d;
-  invalidateAnalysisCache();
-  invalidateRenderedPanels();
-  ensureChartJs(function () {
-    showImportLoader(hands.length, function () { render(d, hands, meta); });
-  });
+  bootSession(hands, meta);
 }
 
 document.getElementById('go-btn').onclick = function () {
@@ -527,11 +685,11 @@ function finishUpload(results) {
   for (var i = 0; i < results.length; i++) {
     var r = results[i];
     if (r.error) {
-      html += '<div class="desc-text upload-row upload-row-error">' + r.name + ' - error: ' + r.error + '</div>';
+      html += '<div class="text-body upload-row upload-row-error">' + r.name + ' - error: ' + r.error + '</div>';
     } else if (r.count === 0) {
-      html += '<div class="desc-text upload-row upload-row-empty">' + r.name + ' - no valid hands found</div>';
+      html += '<div class="text-body upload-row upload-row-empty">' + r.name + ' - no valid hands found</div>';
     } else {
-      html += '<div class="desc-text upload-row"><strong class="text-gold">' + r.count + '</strong> hands from ' + r.name + '</div>';
+      html += '<div class="text-body upload-row"><strong class="text-gold">' + r.count + '</strong> hands from ' + r.name + '</div>';
       _uploadedHands = _uploadedHands.concat(r.hands);
     }
   }
@@ -539,7 +697,7 @@ function finishUpload(results) {
   listEl.innerHTML = html;
 
   if (_uploadedHands.length > 0) {
-    var total = '<div class="desc-text mt-12"><strong class="text-strong">' + _uploadedHands.length + '</strong> total hands across ' + results.filter(function (r) { return r.count > 0; }).length + ' file(s)</div>';
+    var total = '<div class="text-body mt-12"><strong class="text-strong">' + _uploadedHands.length + '</strong> total hands across ' + results.filter(function (r) { return r.count > 0; }).length + ' file(s)</div>';
     listEl.innerHTML += total;
     analyseBtn.classList.remove('hidden');
   } else {

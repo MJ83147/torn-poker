@@ -184,7 +184,7 @@ function renderPlayers(container, d, hands) {
       var ph = '<div class="flex-between mb-16">';
       ph += '<div><button class="log-nav-btn mr-12" id="players-back">&laquo; All Players</button>';
       ph += '<span class="player-detail-name">' + playerName + '</span></div>';
-      ph += '<div class="meta-text">' + opp.hands + ' hands · ' + (wr !== null ? wr + '% win' : '-') + ' · ' + fmtPnl(opp.profit) + '</div></div>';
+      ph += '<div class="text-meta">' + opp.hands + ' hands · ' + (wr !== null ? wr + '% win' : '-') + ' · ' + fmtPnl(opp.profit) + '</div></div>';
 
       var vpip = pct(oppStats.vpipHands, oppStats.hands);
       var pfr = pct(oppStats.pfrHands, oppStats.hands);
@@ -267,7 +267,7 @@ function renderCompare(container, d, hands) {
     container.innerHTML =
       '<div class="panel-title">Head to Head</div>' +
       '<div class="panel-desc">Compare two players side by side.</div>' +
-      '<div class="p-row"><div class="desc-text">Need at least two players in the data to compare.</div></div>';
+      '<div class="p-row"><div class="text-body">Need at least two players in the data to compare.</div></div>';
     return;
   }
 
@@ -360,7 +360,7 @@ function renderCompare(container, d, hands) {
     if (!body) return;
 
     if (p1Name === p2Name) {
-      body.innerHTML = '<div class="p-row"><div class="desc-text">Select two different players to compare.</div></div>';
+      body.innerHTML = '<div class="p-row"><div class="text-body">Select two different players to compare.</div></div>';
       return;
     }
 
@@ -392,7 +392,7 @@ function renderCompare(container, d, hands) {
                     (sr.key === 'limp' && v1 !== null && v2 !== null && v1 < v2);
       var better2 = !better1 && v1 !== null && v2 !== null && v1 !== v2;
       tableHtml += '<tr>' +
-        '<td class="dim-label">' + tipWrap(sr.label) + '</td>' +
+        '<td class="label">' + tipWrap(sr.label) + '</td>' +
         '<td class="' + (better1 ? 'compare-better' : '') + '">' + fmtStat(v1, sr.suffix) + (better1 && Math.abs(v1 - v2) >= 3 ? ' &#9664;' : '') + '</td>' +
         '<td class="' + (better2 ? 'compare-better' : '') + '">' + fmtStat(v2, sr.suffix) + (better2 && Math.abs(v1 - v2) >= 3 ? ' &#9664;' : '') + '</td>' +
         '<td class="compare-edge">' + edge + '</td>' +
@@ -423,9 +423,9 @@ function renderCompare(container, d, hands) {
       }
     }
 
-    var h2hHtml = '<div class="p-row"><div class="dim-label">Head-to-Head Record</div>';
+    var h2hHtml = '<div class="p-row"><div class="label">Head-to-Head Record</div>';
     if (sharedHands.length === 0) {
-      h2hHtml += '<div class="desc-text">No shared hands found between these players.</div>';
+      h2hHtml += '<div class="text-body">No shared hands found between these players.</div>';
     } else {
       var p1WinPct = Math.round(p1Wins / sharedHands.length * 100);
       h2hHtml += '<div class="compare-h2h">' +
@@ -487,7 +487,7 @@ function renderCompare(container, d, hands) {
 
     var exploitHtml = '';
     if (exploits.length > 0) {
-      exploitHtml = '<div class="p-row"><div class="dim-label">Exploit Tips</div><div class="compare-exploits">';
+      exploitHtml = '<div class="p-row"><div class="label">Exploit Tips</div><div class="compare-exploits">';
       for (var i = 0; i < exploits.length; i++) {
         exploitHtml += '<div class="compare-exploit-item">' + exploits[i] + '</div>';
       }
@@ -498,7 +498,7 @@ function renderCompare(container, d, hands) {
     if (s1.hands < 10 || s2.hands < 10) {
       var lowName = s1.hands < 10 ? p1Name : p2Name;
       var lowCount = s1.hands < 10 ? s1.hands : s2.hands;
-      warnHtml = '<div class="p-row"><div class="ins"><div class="ins-badge a"><div class="ins-dot"></div><div class="ins-word">Warning</div></div><div class="ins-label">Small Sample</div><div class="ins-text">' + lowName + ' only has ' + lowCount + ' hands. Stats may be unreliable until 20+ hands are available.</div></div></div>';
+      warnHtml = '<div class="p-row"><div class="ins"><div class="ins-badge a"><div class="ins-dot"></div><div class="ins-word">Warning</div></div><div class="ins-title">Small Sample</div><div class="ins-text">' + lowName + ' only has ' + lowCount + ' hands. Stats may be unreliable until 20+ hands are available.</div></div></div>';
     }
 
     body.innerHTML = warnHtml + '<div class="p-row">' + tableHtml + '</div>' + h2hHtml + exploitHtml;

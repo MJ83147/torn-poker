@@ -307,6 +307,133 @@ function gtoTargetAction(color) {
   return 'fold';
 }
 
+// Verdict line plus the story cards, spaced off the grid above. Returns '' when
+// the insight engine is unavailable so the grids still render on their own.
+function storiesHtml(findings, fallback) {
+  if (typeof Sections === 'undefined' || typeof Sections.renderFindings !== 'function') return '';
+  return '<div class="mt-16">' +
+    Sections.renderVerdict(findings, fallback) +
+    Sections.renderFindings(findings) +
+    '</div>';
+}
+
+function spotHeroAction(rec) {
+  if (rec.raise.n >= rec.call.n && rec.raise.n >= rec.fold.n && rec.raise.n) return 'raise';
+  if (rec.call.n >= rec.fold.n && rec.call.n) return 'call';
+  return 'fold';
+}
+
+function fmtComboList(arr) {
+  return arr.slice().sort(function(a, b) {
+    return b.n - a.n || Math.abs(b.pnl) - Math.abs(a.pnl);
+  }).slice(0, 8).map(function(x) { return x.key; }).join(', ');
+}
+
+// Buckets each dealt combo for the current spot into on-target vs a specific
+// kind of deviation, judged against the GTO chart colour. Mirrors the right
+// grid's on/off-target call so the cards and the grid never disagree.
+function classifySpotDeviations(byKey, colors, hasChart) {
+  var r = { onTarget: [], overplay: [], underplay: [], callNotRaise: [], raiseNotCall: [],
+            graded: 0, dealt: 0, pnl: 0, pnlKnown: false };
+  for (var key in byKey) {
+    var rec = byKey[key];
+    if (!rec || !rec.dealt) continue;
+    r.dealt++;
+    if (rec.pnlKnown) { r.pnl += rec.pnl; r.pnlKnown = true; }
+    if (!hasChart) continue;
+    var target = gtoTargetAction(colors[key]);
+    var onCount = rec[target].n;
+    r.graded++;
+    var item = { key: key, n: rec.dealt, pnl: rec.pnl };
+    if (onCount >= rec.dealt - onCount) { r.onTarget.push(item); continue; }
+    var hero = spotHeroAction(rec);
+    if (target === 'fold') r.overplay.push(item);
+    else if (hero === 'fold') r.underplay.push(item);
+    else if (target === 'raise' && hero === 'call') r.callNotRaise.push(item);
+    else if (target === 'call' && hero === 'raise') r.raiseNotCall.push(item);
+    else r.overplay.push(item);
+  }
+  return r;
+}
+
+// Always returns at least one finding so the spot view never looks empty: a
+// green "playing it well" card when on target, deviation cards when not, and a
+// neutral note when there's no sample or no GTO chart to grade against.
+function buildSpotFindings(seatLabel, byKey, colors, hasChart, handCount) {
+  var dev = classifySpotDeviations(byKey, colors, hasChart);
+  var plText = dev.pnlKnown ? ' Your P/L from this spot is ' + fmtPnl(dev.pnl) + '.' : '';
+
+  if (handCount === 0 || dev.dealt === 0) {
+    return [{
+      sectionId: 'range-spot', id: 'spot-empty', severity: 'o', name: seatLabel,
+      openingText: 'No hands from this spot on record yet. Play some to see how your range here compares to GTO.',
+      branchTexts: [], examples: []
+    }];
+  }
+
+  if (!hasChart) {
+    return [{
+      sectionId: 'range-spot', id: 'spot-nochart', severity: 'o', name: seatLabel,
+      openingText: 'You have ' + handCount + ' hands from this spot.' + plText,
+      branchTexts: ['No GTO reference chart for this spot yet, so your actions cannot be graded against a target.'],
+      examples: []
+    }];
+  }
+
+  var wrong = dev.overplay.length + dev.underplay.length + dev.callNotRaise.length + dev.raiseNotCall.length;
+  var findings = [];
+
+  if (wrong === 0) {
+    findings.push({
+      sectionId: 'range-spot', id: 'spot-accuracy', severity: 'g', name: seatLabel,
+      openingText: 'You have ' + handCount + ' hands from this spot.' + plText,
+      branchTexts: ['You are playing this seat effectively, taking the GTO action on all ' + dev.graded + ' combos you have been dealt here.'],
+      examples: []
+    });
+  } else {
+    var ratio = dev.graded ? wrong / dev.graded : 0;
+    var sev = ratio > 0.4 ? 'r' : (ratio > 0.15 ? 'a' : 'g');
+    var branches = [];
+    if (dev.overplay.length) branches.push('Overplaying: ' + fmtComboList(dev.overplay) + '. GTO folds these from this seat.');
+    if (dev.underplay.length) branches.push('Underplaying: ' + fmtComboList(dev.underplay) + '. GTO opens these and you folded.');
+    if (dev.callNotRaise.length) branches.push('Calling when GTO raises: ' + fmtComboList(dev.callNotRaise) + '.');
+    if (dev.raiseNotCall.length) branches.push('Raising when GTO just calls: ' + fmtComboList(dev.raiseNotCall) + '.');
+
+    var soWhat = null;
+    if (dev.overplay.length && dev.overplay.length >= dev.underplay.length) {
+      soWhat = 'Tighten up from this seat. The hands GTO folds here bleed chips when you play them.';
+    } else if (dev.underplay.length) {
+      soWhat = 'Open these up. They are profitable opens from this seat that you are passing on.';
+    }
+    if (dev.callNotRaise.length) {
+      soWhat = (soWhat ? soWhat + ' ' : '') + 'Raise the hands GTO raises rather than flat-calling, you are leaving value and fold equity behind.';
+    }
+
+    findings.push({
+      sectionId: 'range-spot', id: 'spot-accuracy', severity: sev, name: seatLabel,
+      openingText: 'You have ' + handCount + ' hands from this spot, taking the GTO action on ' +
+        dev.onTarget.length + ' of ' + dev.graded + ' combos.' + plText,
+      branchTexts: branches,
+      soWhatText: soWhat,
+      examples: []
+    });
+  }
+
+  if (dev.pnlKnown && dev.pnl > 0 && (dev.callNotRaise.length || dev.underplay.length)) {
+    findings.push({
+      sectionId: 'range-spot', id: 'spot-value', severity: 'g', name: 'Room for more value here',
+      openingText: 'This is a profitable seat for you (' + fmtPnl(dev.pnl) + ').',
+      branchTexts: [dev.callNotRaise.length
+        ? 'You are flat-calling some hands GTO raises, so there is value you are not taking preflop.'
+        : 'You are folding some hands GTO opens, so there is more profit available from this seat.'],
+      soWhatText: 'Consider raising more of your strong hands preflop from this seat.',
+      examples: []
+    });
+  }
+
+  return findings;
+}
+
 function heroComboBreakdown(filtered, scenarioType) {
   var byKey = {};
   for (var i = 0; i < filtered.length; i++) {
@@ -500,13 +627,12 @@ function renderRange(container, d, hands) {
   function renderOverall(body) {
     var tallies = tallyByCombo(hands, 'overall');
     body.innerHTML =
-      '<div id="range-stories" class="mb-16"></div>' +
       '<div class="sec-subtitle mt-0">Your Overall Range</div>' +
-      '<div class="meta-text mb-12">Every combo you have been dealt. Bold border means you played it; faded means you folded.</div>' +
+      '<div class="text-meta mb-12">Every combo you have been dealt. Bold border means you played it; faded means you folded.</div>' +
       frequencyLegendHtml() +
-      buildOverallGridHtml(tallies);
+      buildOverallGridHtml(tallies) +
+      storiesHtml(Sections.findingsForPanel(Sections.evaluateSections(d, {}, hands), 'Range'), 'Range data is still building.');
     bindCellClicks(body, hands);
-    renderRangeStories();
   }
 
   function renderSpot(body, data) {
@@ -539,7 +665,17 @@ function renderRange(container, d, hands) {
       headerStats +
       note +
       '<div class="range-legends"><div class="range-legend-col">' + gtoLegendHtml() + '</div><div class="range-legend-col">' + heroLegendHtml() + '</div></div>' +
-      twoGridHtml(chart, filtered, scenarioType, tallies);
+      twoGridHtml(chart, filtered, scenarioType, tallies) +
+      storiesHtml(
+        buildSpotFindings(
+          state.hero + ' · ' + label,
+          heroComboBreakdown(filtered, scenarioType),
+          chartToColorMap(chart),
+          !!(chart && chart.length),
+          filtered.length
+        ),
+        'Play more hands from this spot to grade it.'
+      );
     bindSelector(body, 'range-hero', function(v) {
       state.hero = v;
       state.scenario = (HERO_CHARTS[v] && HERO_CHARTS[v][0] && HERO_CHARTS[v][0].key) || '';
@@ -559,18 +695,6 @@ function renderRange(container, d, hands) {
       return '<div class="range-stats range-stats-empty">No ' + label + ' hands on record yet.</div>';
     }
     return '<div class="range-stats">' + filtered.length + ' ' + label + ' hand' + (filtered.length === 1 ? '' : 's') + ' on record.</div>';
-  }
-
-  function renderRangeStories() {
-    var el = document.getElementById('range-stories');
-    if (!el) return;
-    if (typeof Sections === 'undefined' || typeof Sections.evaluateSections !== 'function') {
-      el.innerHTML = '';
-      return;
-    }
-    var findings = Sections.evaluateSections(d, {}, hands);
-    var rangeFindings = Sections.findingsForPanel(findings, 'Range');
-    el.innerHTML = Sections.renderVerdict(rangeFindings, 'Range data is still building.') + Sections.renderFindings(rangeFindings);
   }
 
   function bindCellClicks(scope, scopedHands) {

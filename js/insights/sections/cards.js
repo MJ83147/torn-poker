@@ -1,5 +1,13 @@
 (function() {
   var F = Sections.section('cards', 'Cards');
+
+  // Exposed so the import loader can pre-compute the heavy made-hand caches
+  // (the dominant cost of the insight pass) per hand, with progress, before
+  // the dashboard opens. classifyHandBucket/heroPostflopProfile are hoisted.
+  Sections.warmCardCaches = function(h) {
+    classifyHandBucket(h);
+    heroPostflopProfile(h);
+  };
   var MIN_AGG  = (typeof MIN_AGGREGATE === 'number') ? MIN_AGGREGATE : 30;
   var MIN_AX   = (typeof MIN_AXIS === 'number') ? MIN_AXIS : 20;
   var MIN_CL   = (typeof MIN_CELL === 'number') ? MIN_CELL : 10;
@@ -179,7 +187,18 @@
 
   // Classify by the BEST strength hero held on any postflop street reached.
   // The last street alone misclassifies hands that later become "playing the board".
+  // Memoised on the hand: hole/board/actions never change after import, so the
+  // made-hand evaluation (the heaviest part of the insight pass) runs once per
+  // hand for the whole session instead of once per panel/filter render.
   function classifyHandBucket(h) {
+    if (!h) return null;
+    if (h._cardBucket !== undefined) return h._cardBucket;
+    var res = _classifyHandBucket(h);
+    h._cardBucket = res;
+    return res;
+  }
+
+  function _classifyHandBucket(h) {
     if (!h || !h.hole || h.hole.length < 2) return null;
     if (!h.board || h.board.length < 3) return null;
     var last = lastStreetReached(h);
@@ -208,6 +227,14 @@
   }
 
   function heroPostflopProfile(h) {
+    if (!h) return null;
+    if (h._postflopProfile !== undefined) return h._postflopProfile;
+    var res = _heroPostflopProfile(h);
+    h._postflopProfile = res;
+    return res;
+  }
+
+  function _heroPostflopProfile(h) {
     if (!h || !h.actions) return null;
     var acts = parseActions(h.actions);
     var p = { bet: 0, raise: 0, check: 0, call: 0, fold: 0, riverCall: 0, riverFold: 0, riverBet: 0, postflopActions: 0 };

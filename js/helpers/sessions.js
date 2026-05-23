@@ -131,9 +131,9 @@ function renderBestWorstSessions(hands, overallData) {
     var dateLabel = sessStart ? (sessStart === sessEnd ? sessStart : sessStart + ' - ' + sessEnd) : '';
 
     html += '<div class="card best-worst-card">';
-    html += '<div class="dim-label mb-12">' + sess.label + '</div>';
+    html += '<div class="label mb-12">' + sess.label + '</div>';
     if (dateLabel) html += '<div class="best-worst-meta">' + dateLabel + '</div>';
-    html += '<div class="best-worst-meta">' + tableName + ' &middot; ' + s.hands.length + ' hands &middot; <span class="serif-value best-worst-pnl" style="color:' + pnlCol + ';">' + pnlDisplay + '</span></div>';
+    html += '<div class="best-worst-meta">' + tableName + ' &middot; ' + s.hands.length + ' hands &middot; <span class="value best-worst-pnl" style="color:' + pnlCol + ';">' + pnlDisplay + '</span></div>';
 
     var sessionData = analyse(s.hands);
     var patterns = detectSessionPatterns(sessionData, overallData);
@@ -152,7 +152,7 @@ function renderBestWorstSessions(hands, overallData) {
 
     var seeHandsBtnId = 'see-sess-' + Math.random().toString(36).slice(2, 8);
     var sessTitle = sess.label + ' Hands';
-    html += '<button class="example-hand-btn best-worst-btn" id="' + seeHandsBtnId + '">Show hands played</button>';
+    html += '<button class="example-hand-btn mt-8" id="' + seeHandsBtnId + '">Show hands played</button>';
     setTimeout((function(id, title, h2) {
       return function() {
         var el = document.getElementById(id);

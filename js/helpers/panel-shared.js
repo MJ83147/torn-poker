@@ -11,11 +11,11 @@ function panelHeader(title, desc) {
 }
 
 function dimLabel(text) {
-  return '<div class="dim-label">' + text + '</div>';
+  return '<div class="label">' + text + '</div>';
 }
 
 function descText(text) {
-  return '<div class="desc-text">' + text + '</div>';
+  return '<div class="text-body">' + text + '</div>';
 }
 
 function pRow(body, label) {

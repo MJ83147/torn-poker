@@ -58,7 +58,11 @@ function renderTables(container, hands, allHands, excludedTables, onRerender) {
   mountTemplate(container, 'tables');
 
   var sectionInput = (allHands && allHands.length) ? allHands : hands;
-  var dTables = (typeof analyse === 'function') ? analyse(sectionInput) : null;
+  // Reuse the session-stable overall analysis so the insight pass hits the
+  // evaluateSections memo. Computing a fresh analysis here forced a full
+  // cold findings recompute (~450ms) on every Tables open.
+  var dTables = State.overallAnalysis
+    || ((typeof analyse === 'function') ? analyse(sectionInput) : null);
   if (dTables) mountFindings(container, 'Tables', dTables, sectionInput, 'Cross-table picture still building.');
 
   setSlot(container, 'head', renderTableHead(['Table', 'Blinds', 'Hands', '', { tip: 'Win Rate' }, { tip: 'Net P&L' }, { tip: 'VPIP' }, { tip: 'Aggression' }, { tip: 'Avg Pot' }, '']));

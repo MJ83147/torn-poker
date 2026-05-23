@@ -119,6 +119,16 @@ var State = {
 
   setSession: function(hands, meta) {
     backfillHandData(hands);
+    this.storeHands(hands, meta);
+    // Warm per-hand caches once so the first analyse()/tab render doesn't
+    // pay the full parse cost across all hands on the click thread.
+    preparseHands(this.allHands);
+  },
+
+  // Dedup, persist, and set allHands. Expects hands already passed through
+  // backfillHandData. Split out of setSession so the import loader can run the
+  // heavy per-hand passes (backfill, preparse, card warm) in chunks around it.
+  storeHands: function(hands, meta) {
     var seen = {};
     var clean = [];
     for (var i = 0; i < hands.length; i++) {
@@ -132,9 +142,6 @@ var State = {
     }
     this.save({ hands: clean, player: meta.player, exportedAt: meta.exportedAt });
     this.allHands = clean.filter(function(h) { return inferTable(h) !== null; });
-    // Warm per-hand caches once so the first analyse()/tab render doesn't
-    // pay the full parse cost across all hands on the click thread.
-    preparseHands(this.allHands);
     this.meta = meta;
     this.sessionEpoch++;
     this.overallAnalysis = null;

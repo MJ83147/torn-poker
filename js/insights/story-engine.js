@@ -37,6 +37,39 @@
     return findings;
   }
 
+  // Same as evaluateSections but runs one section per event-loop turn, so the
+  // import loader can paint progress between sections instead of freezing on
+  // the whole pass. Result is memoised identically, so later synchronous
+  // evaluateSections(d) calls are free.
+  function evaluateSectionsChunked(d, extras, hands, onProgress, onDone) {
+    if (_findingsByD && d && typeof d === 'object' && _findingsByD.has(d)) {
+      if (onDone) onDone(_findingsByD.get(d));
+      return;
+    }
+    var findings = [];
+    extras = extras || {};
+    var i = 0;
+    function step() {
+      if (i >= SECTIONS.length) {
+        findings.sort(function(a, b) { return (b.score || 0) - (a.score || 0); });
+        if (_findingsByD && d && typeof d === 'object') _findingsByD.set(d, findings);
+        if (onDone) onDone(findings);
+        return;
+      }
+      var s = SECTIONS[i++];
+      var out = null;
+      try { out = s.run(d, extras, hands); } catch (e) {
+        if (typeof console !== 'undefined' && console.warn) {
+          console.warn('Sections.evaluateSectionsChunked: section ' + s.id + ' threw', e);
+        }
+      }
+      if (out) for (var j = 0; j < out.length; j++) if (out[j]) findings.push(out[j]);
+      if (onProgress) onProgress(i / SECTIONS.length);
+      setTimeout(step, 0);
+    }
+    step();
+  }
+
   function findingsForPanel(findings, panelName) {
     var out = [];
     for (var i = 0; i < findings.length; i++) {
@@ -248,7 +281,7 @@
     var html = '<div class="' + classes + '" data-story-id="' + escapeHtml(storyId) + '">';
     html += '<div class="story-card-head">';
     html += '<div class="ins-badge ' + sev + '"><div class="ins-dot"></div><div class="ins-word">' + sevWord + '</div></div>';
-    html += '<div class="ins-label">' + name + '</div>';
+    html += '<div class="ins-title">' + name + '</div>';
     if (teaser) html += '<div class="story-teaser">' + escapeHtml(teaser) + '</div>';
     html += '<div class="story-card-chev">&#9662;</div>';
     html += '</div>';
@@ -295,6 +328,7 @@
   window.Sections = {
     defineSection: defineSection,
     evaluateSections: evaluateSections,
+    evaluateSectionsChunked: evaluateSectionsChunked,
     findingsForPanel: findingsForPanel,
     classify: classify,
     combineSeverity: combineSeverity,
