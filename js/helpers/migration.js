@@ -19,6 +19,10 @@ function backfillHandData(hands) {
 
   for (var i = 0; i < hands.length; i++) {
     var h = hands[i];
+    // Already processed (e.g. restored from storage). Normalisation, dedup and
+    // board/pot/outcome fill are idempotent, so re-running them is pure waste.
+    if (h._bf) continue;
+    h._bf = true;
 
     if (h.hole && h.hole.length) {
       for (var n = 0; n < h.hole.length; n++) h.hole[n] = normCard(h.hole[n]);
