@@ -27,17 +27,17 @@ function getActsSummary(h) {
 }
 
 function getHandPnl(h) {
-  if (!h.outcome) return { cls: 'u', text: '?' };
+  if (!h.outcome) return { cls: 'val-muted', text: '?' };
   var invested = getInvested(h);
   if (h.outcome.result === 'won') {
     var profit = (h.outcome.amount || 0) - invested;
-    if (profit >= 0) return { cls: 'w', text: '+' + fmt(profit) };
-    return { cls: 'l', text: '-' + fmt(Math.abs(profit)) };
+    if (profit >= 0) return { cls: 'val-pos', text: '+' + fmt(profit) };
+    return { cls: 'val-neg', text: '-' + fmt(Math.abs(profit)) };
   }
   if (h.outcome.result === 'folded') {
-    return { cls: 'l', text: invested > 0 ? '-' + fmt(invested) : 'folded' };
+    return { cls: 'val-neg', text: invested > 0 ? '-' + fmt(invested) : 'folded' };
   }
-  return { cls: 'l', text: '-' + fmt(invested) };
+  return { cls: 'val-neg', text: '-' + fmt(invested) };
 }
 
 function getHandPnlValue(h) {

@@ -79,7 +79,7 @@ function fmtPct(v) {
 }
 
 function pnlCls(val) {
-  return val >= 0 ? 'pnl-pos' : 'pnl-neg';
+  return val >= 0 ? 'val-pos' : 'val-neg';
 }
 
 // Unscoped P&L color class for values outside .tbl (e.g. value blocks).
@@ -93,7 +93,7 @@ function pnlColor(val) {
 
 function wrCls(wr) {
   if (wr === null) return '';
-  return wr >= 50 ? 'wr-good' : 'wr-bad';
+  return wr >= 50 ? 'val-pos' : 'val-neg';
 }
 
 function fmtAvgAmount(chipArr, bbArr) {

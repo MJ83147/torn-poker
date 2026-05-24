@@ -126,7 +126,7 @@ function renderEquityResults(container, simResult) {
     var res = results[r];
     var eqPct = fmtPct(res.equity * 100);
     var barWidth = Math.round(res.equity * 100);
-    var qualClass = res.guidance.quality === 'good' ? 'eq-good' : res.guidance.quality === 'bad' ? 'eq-bad' : 'eq-neutral';
+    var qualClass = res.guidance.quality === 'good' ? 'val-pos' : res.guidance.quality === 'bad' ? 'val-neg' : 'text-gold';
 
     curvePoints.push({ street: res.street, equity: res.equity });
 
@@ -196,7 +196,7 @@ function renderEquityResults(container, simResult) {
   }
 
   if (summary && summary.text) {
-    var sumClass = summary.quality === 'good' ? 'eq-good' : summary.quality === 'bad' ? 'eq-bad' : 'eq-neutral';
+    var sumClass = summary.quality === 'good' ? 'val-pos' : summary.quality === 'bad' ? 'val-neg' : 'text-gold';
     html += '<div class="eq-summary">';
     html += '<div class="eq-summary-label">Hand Summary</div>';
     html += '<div class="eq-summary-text ' + sumClass + '">' + summary.text + '</div>';

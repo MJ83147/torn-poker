@@ -96,110 +96,82 @@ function bootSession(hands, meta) {
   app.classList.remove(CSS.ON);
 
   var startedAt = performance.now();
-  var MIN_MS = 1000;
-  var CHUNK = 400;
+  var MIN_MS = 700;
   var displayN = hands.length;
   ensureChartJs(function () {});
 
-  // Single honest progress driver: the bar fills only as real work completes,
-  // and the count tracks it monotonically (no flash, no reset). Heavy per-hand
-  // passes are chunked so the bar moves in real time - slowly when there is a
-  // lot to do - and only reaches 100% when everything is genuinely done.
+  // Progress driver: bar fills as real work completes, count tracks it
+  // monotonically (no flash). The loader only does what's needed to SHOW the
+  // dashboard (ingest + analysis); the heavier per-panel work (made-hand
+  // caches, insights, opponents) is warmed in the background afterwards so the
+  // loading screen isn't gated on it.
   function setProgress(p) {
     var c = Math.max(0, Math.min(1, p));
     prog.style.width = Math.round(c * 100) + '%';
     num.textContent = Math.round(displayN * c);
   }
   function setLabel(t) { if (clabel) clabel.textContent = t; }
-  // Yield long enough for the browser to paint the bar before a blocking step,
-  // so unavoidable synchronous work shows its label instead of a frozen bar.
-  // setTimeout (not rAF) because rAF is paused in a backgrounded tab, which
-  // would leave the loader stuck forever.
   function paintThen(fn) { setTimeout(fn, 16); }
+
+  // Run doBatch(a,b) over [0,total) in time-sliced bursts (~35ms) so the bar
+  // can paint without paying a timer round-trip per small chunk.
+  function batchLoop(total, batch, doBatch, onProgress, done) {
+    var i = 0;
+    function run() {
+      var start = performance.now();
+      do {
+        var end = Math.min(total, i + batch);
+        doBatch(i, end);
+        i = end;
+      } while (i < total && (performance.now() - start) < 35);
+      onProgress(total ? i / total : 1);
+      if (i < total) { setTimeout(run, 0); return; }
+      done();
+    }
+    run();
+  }
 
   var ah = [], AN = 0;
 
   // Phase 1: backfill (normalise, fill outcome/board, annotate) - chunked.
-  var bi = 0;
-  function backfillChunk() {
+  function phaseBackfill() {
     setLabel('Reading hands');
-    var end = Math.min(displayN, bi + CHUNK);
-    backfillHandData(hands.slice(bi, end));
-    bi = end;
-    setProgress(0.45 * (displayN ? bi / displayN : 1));
-    if (bi < displayN) { setTimeout(backfillChunk, 0); return; }
-    paintThen(stageStore);
+    batchLoop(displayN, 600,
+      function (a, b) { backfillHandData(hands.slice(a, b)); },
+      function (f) { setProgress(0.55 * f); },
+      function () { paintThen(phaseStore); });
   }
 
   // Phase 2: dedup + persist + set allHands - fast.
-  function stageStore() {
+  function phaseStore() {
     setLabel('Saving session');
     State.storeHands(hands, meta);
     ah = State.allHands;
     AN = ah.length;
-    setProgress(0.48);
-    paintThen(warmChunk);
+    setProgress(0.60);
+    paintThen(phaseAnalyse);
   }
 
-  // Phase 3: parse + made-hand caches per hand - chunked (the heaviest part).
-  var wi = 0;
-  function warmChunk() {
-    setLabel('Evaluating hands');
-    var warm = (typeof Sections === 'object' && Sections.warmCardCaches) ? Sections.warmCardCaches : null;
-    var end = Math.min(AN, wi + CHUNK);
-    preparseHands(ah.slice(wi, end));
-    for (var k = wi; k < end; k++) { if (warm) warm(ah[k]); }
-    wi = end;
-    setProgress(0.48 + 0.34 * (AN ? wi / AN : 1));
-    if (wi < AN) { setTimeout(warmChunk, 0); return; }
-    paintThen(stageAnalyse);
+  // Phase 3: overall analysis - needed for the header strip. One block, but we
+  // also chunk the per-hand parse warm first so the bar keeps moving.
+  function phaseParse() {
+    batchLoop(AN, 600,
+      function (a, b) { preparseHands(ah.slice(a, b)); },
+      function (f) { setProgress(0.60 + 0.25 * f); },
+      function () { paintThen(phaseAnalyse2); });
   }
-
-  // Phase 4: overall analysis - one block (labelled so the bar isn't stale).
-  function stageAnalyse() {
+  function phaseAnalyse() {
     setLabel('Crunching stats');
-    setProgress(0.84);
-    paintThen(function () {
-      var d = analyse(ah);
-      bucketizeAnalysis(d, ah);
-      State.overallAnalysis = d;
-      invalidateAnalysisCache();
-      invalidateRenderedPanels();
-      setProgress(0.86);
-      paintThen(stageInsights);
-    });
+    paintThen(phaseParse);
   }
-
-  // Phase 5: insight pass - chunked one section per turn so the bar keeps moving.
-  function stageInsights() {
-    setLabel('Finding leaks');
-    if (typeof Sections === 'object' && Sections.evaluateSectionsChunked) {
-      Sections.evaluateSectionsChunked(
-        State.overallAnalysis, {}, ah,
-        function (frac) { setProgress(0.86 + 0.12 * frac); },
-        function () { paintThen(stageOpponents); }
-      );
-    } else {
-      try { Sections.evaluateSections(State.overallAnalysis, {}, ah); } catch (_) {}
-      setProgress(0.98);
-      paintThen(stageOpponents);
-    }
-  }
-
-  // Phase 6: opponent profiles - fast block.
-  function stageOpponents() {
-    setLabel('Profiling opponents');
-    setProgress(0.99);
-    paintThen(function () {
-      try {
-        if (typeof cacheOpponentProfiles === 'function') {
-          cacheOpponentProfiles(ah);
-          _opponentCacheKey = _filterKey();
-        }
-      } catch (_) {}
-      setProgress(1);
-      finish();
-    });
+  function phaseAnalyse2() {
+    var d = analyse(ah);
+    bucketizeAnalysis(d, ah);
+    State.overallAnalysis = d;
+    invalidateAnalysisCache();
+    invalidateRenderedPanels();
+    setProgress(1);
+    finish();
   }
 
   function finish() {
@@ -212,16 +184,57 @@ function bootSession(hands, meta) {
           loader.style.display = 'none';
           app.classList.add(CSS.ON);
           render(State.overallAnalysis, State.allHands, meta);
+          warmInBackground(ah);
         }, 600);
       }, wait);
     });
   }
 
+  // Deal the cards (cosmetic) and start real work immediately, in parallel.
   var di = 0;
   (function deal() {
-    if (di < cs.length) { cs[di].classList.add(CSS.SHOW); di++; setTimeout(deal, 90); }
-    else setTimeout(backfillChunk, 60);
+    if (di < cs.length) { cs[di].classList.add(CSS.SHOW); di++; setTimeout(deal, 80); }
   })();
+  phaseBackfill();
+}
+
+// After the dashboard is shown, warm the per-panel caches (made-hand
+// classification, insight findings, opponent profiles) in time-sliced bursts
+// so the heavy work doesn't block the loading screen or the UI. If the user
+// opens a panel before this finishes, that panel computes what it needs on
+// demand (and this then hits the memo) - correct either way, never blocking.
+function warmInBackground(ah) {
+  if (!ah || !ah.length) return;
+  var warm = (typeof Sections === 'object' && Sections.warmCardCaches) ? Sections.warmCardCaches : null;
+  var AN = ah.length, i = 0;
+
+  function cards() {
+    var start = performance.now();
+    while (i < AN && (performance.now() - start) < 20) {
+      if (warm) warm(ah[i]);
+      i++;
+    }
+    if (i < AN) { setTimeout(cards, 0); return; }
+    insights();
+  }
+  function insights() {
+    if (typeof Sections === 'object' && Sections.evaluateSectionsChunked) {
+      Sections.evaluateSectionsChunked(State.overallAnalysis, {}, ah, null, opponents);
+    } else {
+      try { Sections.evaluateSections(State.overallAnalysis, {}, ah); } catch (_) {}
+      opponents();
+    }
+  }
+  function opponents() {
+    try {
+      if (typeof cacheOpponentProfiles === 'function') {
+        cacheOpponentProfiles(ah);
+        _opponentCacheKey = _filterKey();
+      }
+    } catch (_) {}
+  }
+
+  setTimeout(cards, 50);
 }
 
 function invalidateRenderedPanels() {

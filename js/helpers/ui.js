@@ -220,9 +220,9 @@ function renderHandRow(h, idx, opts) {
 function renderPagination(page, totalItems, pageSize, prevId, nextId) {
   var totalPages = Math.ceil(totalItems / pageSize);
   if (totalPages <= 1) return '';
-  return '<button class="log-nav-btn" id="' + prevId + '" ' + (page === 0 ? 'disabled' : '') + '>&laquo; Prev</button>' +
+  return '<button class="btn btn-ghost" id="' + prevId + '" ' + (page === 0 ? 'disabled' : '') + '>&laquo; Prev</button>' +
     '<span class="text-meta">Page ' + (page + 1) + '/' + totalPages + '</span>' +
-    '<button class="log-nav-btn" id="' + nextId + '" ' + (page >= totalPages - 1 ? 'disabled' : '') + '>Next &raquo;</button>';
+    '<button class="btn btn-ghost" id="' + nextId + '" ' + (page >= totalPages - 1 ? 'disabled' : '') + '>Next &raquo;</button>';
 }
 
 function barRow(label, val, max, cls, valStr, val2Str) {

@@ -71,17 +71,17 @@
         <div class="paste-suit">♠</div>
         <div class="paste-title">Analyse your session</div>
         <div class="text-body mb-24">Click below to paste your tracked session data from the TC Poker Tracker</div>
-        <button class="go-btn go-btn-primary" id="paste-btn">Paste from Clipboard</button>
-        <button class="go-btn go-btn-secondary mt-8" id="upload-nav-btn">Upload .json files instead</button>
+        <button class="btn btn-primary" id="paste-btn">Paste from Clipboard</button>
+        <button class="btn btn-secondary mt-8" id="upload-nav-btn">Upload .json files instead</button>
         <div id="paste-error" class="paste-error"></div>
         <div class="paste-manual">
           <div class="label mb-12">Or paste manually:</div>
           <textarea id="jin" placeholder="Paste JSON here..."></textarea>
-          <button class="go-btn go-btn-secondary" id="go-btn">Analyse Session</button>
+          <button class="btn btn-secondary" id="go-btn">Analyse Session</button>
         </div>
         <div id="restore-block" class="restore-block">
           <div class="text-body mb-12" id="restore-label"></div>
-          <button class="go-btn go-btn-secondary restore-btn" id="restore-btn">Restore Previous Session</button>
+          <button class="btn btn-secondary restore-btn" id="restore-btn">Restore Previous Session</button>
         </div>
       </div>
     </div>
@@ -92,10 +92,10 @@
         <div class="paste-title">Upload hand files</div>
         <div class="text-body mb-24">Use the Download Hands button in the TC Poker Tracker to save your hand data as a .json file, then upload it here. You can upload multiple files to merge sessions from different devices.</div>
         <input type="file" id="upload-input" accept=".json" multiple class="hidden">
-        <button class="go-btn go-btn-primary" id="upload-pick-btn">Choose .json files</button>
+        <button class="btn btn-primary" id="upload-pick-btn">Choose .json files</button>
         <div id="upload-file-list" class="mt-16"></div>
         <div id="upload-error" class="paste-error"></div>
-        <button class="go-btn go-btn-secondary hidden mt-12" id="upload-analyse-btn">Analyse merged hands</button>
+        <button class="btn btn-secondary hidden mt-12" id="upload-analyse-btn">Analyse merged hands</button>
         <div class="mt-20">
           <span id="upload-back-btn" class="paste-nav-link cursor-pointer">&larr; Back to paste</span>
         </div>
@@ -116,7 +116,7 @@
             </select>
             <div id="style-display" class="style-display" title="Your detected style and your target style"></div>
             <div class="header-meta page-meta-link" id="page-meta"></div>
-            <button class="tour-btn" id="tour-btn" title="Guided tour of this page">?</button>
+            <button class="btn btn-icon" id="tour-btn" title="Guided tour of this page">?</button>
           </div>
         </div>
         <div class="hero-strip" id="hero-strip"></div>

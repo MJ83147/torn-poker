@@ -182,7 +182,7 @@ function renderPlayers(container, d, hands) {
       var totalPages = Math.ceil(playerHands.length / PH_SIZE);
       var wr = pct(opp.won, opp.won + opp.lost);
       var ph = '<div class="flex-between mb-16">';
-      ph += '<div><button class="log-nav-btn mr-12" id="players-back">&laquo; All Players</button>';
+      ph += '<div><button class="btn btn-ghost mr-12" id="players-back">&laquo; All Players</button>';
       ph += '<span class="player-detail-name">' + playerName + '</span></div>';
       ph += '<div class="text-meta">' + opp.hands + ' hands · ' + (wr !== null ? wr + '% win' : '-') + ' · ' + fmtPnl(opp.profit) + '</div></div>';
 

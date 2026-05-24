@@ -170,7 +170,7 @@ function renderAllIn(container, d, hands) {
   var previewHtml = '';
   for (var ti = 0; ti < _allinHands.length; ti++) {
     var ah = _allinHands[ti];
-    var actCls = ah.actualResult >= 0 ? 'pnl-pos' : 'pnl-neg';
+    var actCls = ah.actualResult >= 0 ? 'val-pos' : 'val-neg';
     previewHtml += '<tr class="allin-row row-hover" data-allin-idx="' + ti + '">' +
       '<td>' + (ti + 1) + '</td>' +
       '<td class="allin-cards">' + displayCards(ah.heroHole) + '</td>' +
@@ -278,8 +278,8 @@ function showAllInResults(container) {
 
   for (var ti = 0; ti < allInHands.length; ti++) {
     var ah = allInHands[ti];
-    var evCls = ah.evDiff >= 0 ? 'pnl-pos' : 'pnl-neg';
-    var actCls = ah.actualResult >= 0 ? 'pnl-pos' : 'pnl-neg';
+    var evCls = ah.evDiff >= 0 ? 'val-pos' : 'val-neg';
+    var actCls = ah.actualResult >= 0 ? 'val-pos' : 'val-neg';
     html += '<tr class="allin-row row-hover" data-allin-idx="' + ti + '">' +
       '<td>' + (ti + 1) + '</td>' +
       '<td class="allin-cards">' + displayCards(ah.heroHole) + '</td>' +
