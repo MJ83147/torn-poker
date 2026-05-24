@@ -1,32 +1,12 @@
+// Initial page load goes straight to the paste screen. The loader/deal flourish
+// is reserved for an actual analysis run (bootSession), so it is never shown
+// twice or for an empty screen. checkSavedSession runs from initStorage's
+// callback (app.js), once the DB is ready, so it is not called here.
 (function() {
-  const cs = document.querySelectorAll('.lc');
-  let i = 0;
-
-  function deal() {
-    if (i < cs.length) {
-      cs[i].classList.add(CSS.SHOW);
-      i++;
-      setTimeout(deal, 165);
-    } else {
-      setTimeout(show, 400);
-    }
-  }
-
-  function show() {
-    const loader = document.getElementById('loader');
-    const app = document.getElementById('app');
-    if (!loader || !app) return;
-    loader.classList.add(CSS.OUT);
-    setTimeout(() => {
-      loader.style.display = 'none';
-      app.classList.add(CSS.ON);
-      if (typeof checkSavedSession === 'function') {
-        checkSavedSession();
-      }
-    }, 800);
-  }
-
-  setTimeout(deal, 220);
+  var app = document.getElementById('app');
+  var loader = document.getElementById('loader');
+  if (loader) loader.style.display = 'none';
+  if (app) app.classList.add(CSS.ON);
 })();
 
 var _chartJsPromise = null;

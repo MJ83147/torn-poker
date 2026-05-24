@@ -179,16 +179,22 @@ function bootSession(hands, meta) {
     });
   }
 
-  // Phase 5: insight pass. Run as one block (not chunked) so a backgrounded tab
-  // can't stall it across ~20 throttled timer hops. Memoised by analysis object,
+  // Phase 5: insight pass - one section per turn so the bar keeps moving and the
+  // page never freezes on a single heavy section. Memoised by analysis object,
   // so the panel renders that follow are free.
   function phaseInsights() {
     setLabel('Finding leaks');
-    paintThen(function () {
+    if (typeof Sections === 'object' && Sections.evaluateSectionsChunked) {
+      Sections.evaluateSectionsChunked(
+        State.overallAnalysis, {}, ah,
+        function (f) { setProgress(0.78 + 0.18 * f); },
+        function () { paintThen(phaseOpponents); }
+      );
+    } else {
       try { Sections.evaluateSections(State.overallAnalysis, {}, ah); } catch (_) {}
       setProgress(0.96);
       paintThen(phaseOpponents);
-    });
+    }
   }
 
   // Phase 6: opponent profiles - fast block.
