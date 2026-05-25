@@ -41,12 +41,16 @@
       }
     }
 
+    // One pass over all hands for every opponent's stats. Calling the
+    // per-opponent computeOpponentStats in this loop was O(opponents x hands),
+    // which froze the insight pass for sessions with many opponents.
+    var statsByName = computeAllOpponentStats(hands);
     var profiles = [];
     for (var name in nameToHandIdx) {
       var idxs = nameToHandIdx[name];
       if (!idxs || !idxs.length) continue;
 
-      var stats = computeOpponentStats(hands, name);
+      var stats = statsByName[name];
       if (!stats) continue;
 
       var vpip = (typeof pct === 'function') ? pct(stats.vpipHands, stats.hands) : null;
