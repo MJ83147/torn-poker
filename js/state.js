@@ -1,5 +1,18 @@
 var _db = null;
-var DB_NAME = 'tc_poker';
+
+// Non-destructive test mode: when the URL carries a `test` query param
+// (e.g. ?test or ?dev&test) the app opens a SEPARATE IndexedDB so the real
+// `tc_poker` database is never opened or written. The store shapes are
+// identical, so everything else works unchanged.
+function isTestMode() {
+  try {
+    return /(^|[?&])test(=|&|$)/.test(location.search);
+  } catch (e) {
+    return false;
+  }
+}
+
+var DB_NAME = isTestMode() ? 'tc_poker_test' : 'tc_poker';
 var DB_STORE = 'session';
 var DB_KEY = 'tc_poker_analysis';
 
@@ -129,6 +142,23 @@ var State = {
   // backfillHandData. Split out of setSession so the import loader can run the
   // heavy per-hand passes (backfill, preparse, card warm) in chunks around it.
   storeHands: function(hands, meta) {
+    // schemaVersion >= 2: structured payload is the source of truth. Wipe the
+    // store and write every hand verbatim (no append/dedup). allHands comes
+    // straight from the payload.
+    if (meta && meta.schemaVersion >= 2) {
+      this.replaceAll({
+        hands: hands,
+        player: meta.player,
+        exportedAt: meta.exportedAt,
+        schemaVersion: meta.schemaVersion
+      });
+      this.allHands = hands.filter(function(h) { return inferTable(h) !== null; });
+      this.meta = meta;
+      this.sessionEpoch++;
+      this.overallAnalysis = null;
+      return;
+    }
+
     var seen = {};
     var clean = [];
     for (var i = 0; i < hands.length; i++) {
@@ -212,6 +242,42 @@ var State = {
     });
   },
 
+  // Wipe-and-replace cutover for schemaVersion >= 2 imports. A single readwrite
+  // transaction over ['hands','meta'] clears the store, writes every hand
+  // verbatim (no dedup-index lookups - the structured payload is the source of
+  // truth), then puts session_meta. clear + writes share one transaction, so a
+  // mid-write failure rolls back and the old data survives.
+  replaceAll: function(data, cb) {
+    _openDB(function(db) {
+      if (!db) {
+        setJSON('tc_poker_analysis', data);
+        if (cb) cb();
+        return;
+      }
+      var hands = data.hands || [];
+      var tx = db.transaction(['hands', 'meta'], 'readwrite');
+      tx.onerror = function() { console.warn('IndexedDB replaceAll transaction failed', tx.error); };
+      var store = tx.objectStore('hands');
+
+      store.clear();
+      for (var i = 0; i < hands.length; i++) {
+        var hand = hands[i];
+        if (!hand.tableId) hand.tableId = '';
+        store.add(hand);
+      }
+
+      tx.objectStore('meta').put({
+        player: data.player || 'Unknown',
+        exportedAt: data.exportedAt || new Date().toISOString(),
+        schemaVersion: data.schemaVersion || 2,
+        migrated: true,
+        lastImportAt: new Date().toISOString()
+      }, 'session_meta');
+
+      tx.oncomplete = function() { if (cb) cb(); };
+    });
+  },
+
   loadSaved: function(callback) {
     _openDB(function(db) {
       if (!db) {
@@ -233,7 +299,8 @@ var State = {
           callback({
             hands: hands,
             player: meta.player,
-            exportedAt: meta.exportedAt
+            exportedAt: meta.exportedAt,
+            schemaVersion: meta.schemaVersion || 1
           });
         };
         handsGet.onerror = function() { callback(null); };

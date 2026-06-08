@@ -5,29 +5,9 @@
   var WEAK_TYPES_MIDDLE = ['Ace-Rag', 'Connectors', 'Offsuit Trash'];
   var WEAK_TYPES_LATE = ['Offsuit Trash'];
 
-  var SEAT_TITLES = {
-    'UTG': 'Under the Gun',
-    'UTG+1': 'UTG+1',
-    'MP': 'Middle Position',
-    'LJ': 'Lojack',
-    'HJ': 'Hijack',
-    'CO': 'Cutoff',
-    'BTN': 'Button',
-    'SB': 'Small Blind',
-    'BB': 'The Big Blind Problem'
-  };
-
-  var SEAT_NARRATIVE = {
-    'UTG': 'Under the Gun',
-    'UTG+1': 'UTG+1',
-    'MP': 'Middle Position',
-    'LJ': 'Lojack',
-    'HJ': 'Hijack',
-    'CO': 'Cutoff',
-    'BTN': 'Button',
-    'SB': 'Small Blind',
-    'BB': 'Big Blind'
-  };
+  // Seat display names come from the global SEAT_NAMES (constants.js). The one
+  // exception is the BB card title, which keeps its punchier original label.
+  var SEAT_TITLE_OVERRIDES = { 'BB': 'The Big Blind Problem' };
 
   function seatGroup(pos) {
     if (pos === 'UTG' || pos === 'UTG+1') return 'early';
@@ -258,8 +238,8 @@
 
     if (!firedLeak.length) return null;
 
-    var seatTitle = SEAT_TITLES[position] || position;
-    var seatNarrative = SEAT_NARRATIVE[position] || position;
+    var seatTitle = SEAT_TITLE_OVERRIDES[position] || SEAT_NAMES[position] || position;
+    var seatNarrative = SEAT_NAMES[position] || position;
     var heading = (seatNarrative === position)
       ? 'At ' + position
       : 'At ' + seatNarrative + ' (' + position + ')';

@@ -3,11 +3,6 @@
   var MIN_TABLE_CELL = (typeof MIN_CELL === 'number') ? MIN_CELL : 10;
   var MIN_AGG = (typeof MIN_AGGREGATE === 'number') ? MIN_AGGREGATE : 30;
 
-  function safePct(num, den) {
-    if (!den) return null;
-    return Math.round((num / den) * 1000) / 10;
-  }
-
   function tablePnl(handsList) {
     var total = 0;
     for (var i = 0; i < handsList.length; i++) {

@@ -4,7 +4,7 @@ function getHeroStreetActions(hand) {
   var potRunning = 0;
   var heroFoldedOn = null;
 
-  var streetOrder = ['Preflop', 'Flop', 'Turn', 'River'];
+  var streetOrder = STREETS;
   var streetActions = { Preflop: [], Flop: [], Turn: [], River: [] };
 
   for (var i = 0; i < parsed.length; i++) {
@@ -146,8 +146,8 @@ function generateGuidance(equity, streetInfo, texture, madeHand, villainProfile,
 
   var vName = villainProfile ? villainProfile.name : null;
   var vFolds = villainProfile && villainProfile.foldToRaise !== null ? villainProfile.foldToRaise : null;
-  var vLoose = villainProfile && (villainProfile.type === 'LAP' || villainProfile.type === 'LAG');
-  var vAgg = villainProfile && (villainProfile.type === 'LAG' || (villainProfile.agg !== null && villainProfile.agg >= 40));
+  var vLoose = villainProfile && (villainProfile.type === 'LAG' || villainProfile.type === 'Cannon' || villainProfile.type === 'Station' || villainProfile.type === 'Maniac');
+  var vAgg = villainProfile && (villainProfile.type === 'LAG' || villainProfile.type === 'Maniac' || (villainProfile.agg !== null && villainProfile.agg >= 40));
   var vCalls = villainProfile && villainProfile.wtsd !== null && villainProfile.wtsd >= 55;
   var vPassive = villainProfile && villainProfile.agg !== null && villainProfile.agg < 15;
   var vHands = villainProfile ? villainProfile.hands : 0;

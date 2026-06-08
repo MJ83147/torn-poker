@@ -1,13 +1,19 @@
-var STYLE_TARGET_CARDS = [
-  { key: 'Shark',   name: 'Shark',   desc: 'Tight and very aggressive. Picks spots well, hammers value.' },
-  { key: 'TAG',     name: 'TAG',     desc: 'Tight-aggressive. The default winning style. Few hands, played hard.' },
-  { key: 'LAG',     name: 'LAG',     desc: 'Loose-aggressive. Wider ranges with relentless pressure.' },
-  { key: 'Cannon',  name: 'Cannon',  desc: 'Loose mid-aggression. Lots of flops, light on follow-through.' },
-  { key: 'Rock',    name: 'Rock',    desc: 'Tight-passive. Selective preflop, rarely takes the lead postflop.' },
-  { key: 'Nit',     name: 'Nit',     desc: 'Extremely tight. Premium hands only. Hard to bluff.' },
-  { key: 'Station', name: 'Station', desc: 'Loose-passive. Plenty of hands but rarely raises.' },
-  { key: 'Maniac',  name: 'Maniac',  desc: 'Hyper-aggressive. Raises everything, high variance.' }
-];
+// Short blurbs for the target picker. Card list and order come from the
+// canonical STYLE_LIST so the welcome picker can never drift from the taxonomy.
+var STYLE_TARGET_DESCS = {
+  Shark:   'Tight and very aggressive. Picks spots well, hammers value.',
+  TAG:     'Tight-aggressive. The default winning style. Few hands, played hard.',
+  LAG:     'Loose-aggressive. Wider ranges with relentless pressure.',
+  Cannon:  'Loose mid-aggression. Lots of flops, light on follow-through.',
+  Rock:    'Tight-passive. Selective preflop, rarely takes the lead postflop.',
+  Nit:     'Extremely tight. Premium hands only. Hard to bluff.',
+  Station: 'Loose-passive. Plenty of hands but rarely raises.',
+  Maniac:  'Hyper-aggressive. Raises everything, high variance.'
+};
+
+var STYLE_TARGET_CARDS = STYLE_LIST.map(function(key) {
+  return { key: key, name: key, desc: STYLE_TARGET_DESCS[key] || '' };
+});
 
 function renderStyleWelcome(container, d, hands, meta, onPicked) {
   if (!container) return;

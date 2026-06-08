@@ -34,6 +34,11 @@ function pct(a, b) {
   return b > 0 ? Math.round(a / b * 100) : null;
 }
 
+function safePct(num, den) {
+  if (!den) return null;
+  return Math.round((num / den) * 1000) / 10;
+}
+
 // Standard poker aggression frequency: raises / (raises + calls + checks).
 // Excludes folds - folding is not an aggressive or passive action.
 function calcAggression(raises, calls, checks) {

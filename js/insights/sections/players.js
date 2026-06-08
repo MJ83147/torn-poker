@@ -4,27 +4,6 @@
   var MIN_NAMED_HANDS = 30;     // hands needed to enter profitable/unprofitable
   var MIN_TYPE_OPPONENTS = 3;   // opponents of one type required to fire story
 
-  function safePct(num, den) {
-    if (!den) return null;
-    return Math.round((num / den) * 1000) / 10;
-  }
-
-  // Thresholds must stay in sync with helpers/styleDetector.js so labels match
-  // across welcome target picker, My Game and Style Map.
-  function classifyVillain(vpip, af) {
-    if (vpip == null || af == null) return 'Unknown';
-    if (vpip >= 45 && af >= 40) return 'Maniac';
-    if (vpip >= 28) {
-      if (af >= 30) return 'LAG';
-      if (af >= 20) return 'Cannon';
-      return 'Station';
-    }
-    if (vpip < 14) return 'Nit';
-    if (af >= 35) return 'Shark';
-    if (af >= 25) return 'TAG';
-    return 'Rock';
-  }
-
   function buildProfiles(hands) {
     if (!hands || !hands.length) return [];
 
@@ -57,7 +36,7 @@
       var af = (typeof calcAggression === 'function')
         ? calcAggression(stats.totalRaises, stats.totalCalls, stats.totalChecks)
         : null;
-      var type = classifyVillain(vpip, af);
+      var type = _styleClassify(vpip, af) || 'Unknown';
 
       var heroPnl = 0;
       var heroWon = 0;
@@ -465,7 +444,7 @@
       if (!profiles.length) return [];
 
       var out = [];
-      var styles = ['Shark', 'TAG', 'Rock', 'LAG', 'Cannon', 'Nit', 'Station', 'Maniac'];
+      var styles = STYLE_LIST;
       for (var i = 0; i < styles.length; i++) {
         var s = buildPlaystyleStory(styles[i], profiles, hands);
         if (s) out.push(s);

@@ -6,10 +6,9 @@ var MIN_AXIS = 20;
 var MIN_CELL = 10;
 
 function _newAnalyseState(n, hands) {
-  var streets = ['Preflop', 'Flop', 'Turn', 'River'];
   var ss = {}, betAmts = {}, betAmtsBB = {}, betOpps = {};
-  for (var i = 0; i < streets.length; i++) {
-    var s = streets[i];
+  for (var i = 0; i < STREETS.length; i++) {
+    var s = STREETS[i];
     ss[s]        = { seen: 0, f: 0, ch: 0, ca: 0, ra: 0 };
     betAmts[s]   = [];
     betAmtsBB[s] = [];

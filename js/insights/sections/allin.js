@@ -8,9 +8,7 @@
     if (!h || !h.actions) return false;
     var acts = parseActions(h.actions);
     for (var i = 0; i < acts.length; i++) {
-      var a = acts[i];
-      if (a.type !== 'raise') continue;
-      if (a.msg && a.msg.indexOf(' to ') === -1) return true;
+      if (isAllInAction(acts, i)) return true;
     }
     return false;
   }

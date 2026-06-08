@@ -8,11 +8,6 @@
   var THREE_BET_BAND = { tight: 6, loose: 12 };
   var FOLD_TO_THREE_BET_BAND = { tight: 60, loose: 70 };
 
-  function safePct(num, den) {
-    if (!den) return null;
-    return (num / den) * 100;
-  }
-
   function sumHandPnl(hands, predicate) {
     if (!hands || !hands.length) return { pnl: 0, count: 0 };
     var pnl = 0, count = 0;

@@ -13,21 +13,13 @@ function listJs(dir) {
 
 var helperOrder = [
   'js/helpers/constants.js',
-  'js/helpers/css-classes.js',
   'js/helpers/cards.js',
-  'js/helpers/tables.js',
   'js/helpers/format.js',
-  'js/helpers/hand-parsing.js',
-  'js/helpers/stack-bands.js',
   'js/helpers/analysis.js',
-  'js/helpers/hand-predicates.js',
   'js/helpers/sessions.js',
   'js/helpers/storage.js',
   'js/helpers/ui.js',
-  'js/helpers/migration.js',
-  'js/helpers/panel-shared.js',
-  'js/helpers/opponent-stats.js',
-  'js/helpers/opponent-profile.js',
+  'js/helpers/opponents.js',
 ];
 
 var panels = listJs('js/panels');
@@ -50,13 +42,7 @@ var insightsOrder = [
 var files = []
   .concat(helperOrder)
   .concat(['js/stats.js'])
-  .concat([
-    'js/helpers/matrix.js',
-    'js/helpers/styleDetector.js',
-    'js/helpers/context.js',
-    'js/helpers/target-bands.js',
-    'js/helpers/pnl-slice.js',
-  ])
+  .concat(['js/helpers/matrix.js'])
   .concat(insightsOrder)
   .concat(['js/loader.js', 'js/state.js', 'js/modal.js', 'js/charting.js'])
   .concat(panels)
@@ -66,7 +52,6 @@ var files = []
     'js/equity-guidance.js',
     'js/equity.js',
     'js/tour.js',
-    'js/ui-bindings.js',
     'app.js',
   ]);
 

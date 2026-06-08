@@ -18,8 +18,8 @@ function runEquitySimulation(hand) {
     if (sd.boardSlice > board.length) break;
 
     if (heroInfo.foldedOn) {
-      var foldIdx = ['Preflop', 'Flop', 'Turn', 'River'].indexOf(heroInfo.foldedOn);
-      var curIdx = ['Preflop', 'Flop', 'Turn', 'River'].indexOf(sd.name);
+      var foldIdx = STREETS.indexOf(heroInfo.foldedOn);
+      var curIdx = STREETS.indexOf(sd.name);
       if (curIdx > foldIdx) break;
     }
 

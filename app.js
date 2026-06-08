@@ -263,6 +263,7 @@ function checkSavedSession() {
         var meta = {
           player: playerName,
           exportedAt: new Date().toISOString(),
+          schemaVersion: json.schemaVersion || 1,
         };
         try { fetch('https://script.google.com/macros/s/AKfycbyTtG1UMCpYXP15dgKQttFyG4Pe-BG8FoAftoW3oYtMBISS37Ws5lYhPPDJ0zl1GYxyQA/exec', { method: 'POST', body: JSON.stringify({ player: playerName, hands: hands.length }), mode: 'no-cors' }); } catch (_) { }
         bootSession(hands, meta);
@@ -536,6 +537,7 @@ function process(raw) {
   var meta = {
     player: playerName,
     exportedAt: json.exportedAt || new Date().toISOString(),
+    schemaVersion: json.schemaVersion || 1,
   };
   try { fetch('https://script.google.com/macros/s/AKfycbyTtG1UMCpYXP15dgKQttFyG4Pe-BG8FoAftoW3oYtMBISS37Ws5lYhPPDJ0zl1GYxyQA/exec', { method: 'POST', body: JSON.stringify({ player: playerName, hands: hands.length }), mode: 'no-cors' }); } catch (_) { }
   bootSession(hands, meta);
@@ -626,6 +628,10 @@ window.addEventListener('resize', function () {
 });
 
 var _uploadedHands = [];
+// Batch schemaVersion across the uploaded files. If ANY contributing file lacks
+// v2, the whole batch is treated as v1 (legacy text path) - we never mix a
+// verbatim wipe with append/dedup data in one import.
+var _uploadedSchemaVersion = 1;
 
 document.getElementById('upload-nav-btn').onclick = function () {
   document.getElementById('paste-wrap').classList.add('hidden');
@@ -666,7 +672,7 @@ document.getElementById('upload-input').onchange = function () {
           var hands = (Array.isArray(json) ? json : (json.hands || [])).filter(function (h) {
             return h.hole && h.hole.length === 2;
           });
-          fileResults.push({ name: file.name, count: hands.length, hands: hands });
+          fileResults.push({ name: file.name, count: hands.length, hands: hands, schemaVersion: json.schemaVersion || 1 });
         } catch (err) {
           fileResults.push({ name: file.name, count: 0, hands: [], error: err.message });
         }
@@ -688,6 +694,8 @@ function finishUpload(results) {
   var errEl = document.getElementById('upload-error');
   var analyseBtn = document.getElementById('upload-analyse-btn');
   _uploadedHands = [];
+  // Start at 2 and demote to 1 if any contributing file is legacy.
+  var batchVersion = 2;
   var html = '';
 
   for (var i = 0; i < results.length; i++) {
@@ -699,8 +707,10 @@ function finishUpload(results) {
     } else {
       html += '<div class="text-body upload-row"><strong class="text-gold">' + r.count + '</strong> hands from ' + r.name + '</div>';
       _uploadedHands = _uploadedHands.concat(r.hands);
+      if (!(r.schemaVersion >= 2)) batchVersion = 1;
     }
   }
+  _uploadedSchemaVersion = _uploadedHands.length ? batchVersion : 1;
 
   listEl.innerHTML = html;
 
@@ -718,6 +728,7 @@ function finishUpload(results) {
 document.getElementById('upload-analyse-btn').onclick = function () {
   if (!_uploadedHands.length) return;
   var merged = {
+    schemaVersion: _uploadedSchemaVersion,
     exportedAt: new Date().toISOString(),
     player: detectPlayerFromActions(_uploadedHands) || 'Unknown',
     totalHands: _uploadedHands.length,
