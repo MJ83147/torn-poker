@@ -115,7 +115,7 @@ function renderSavedSection() {
     html += '<div class="card saved-card" data-saved-key="' + keys[i].replace(/"/g, '&quot;') + '">' +
       '<div class="flex-between saved-card-top">' +
         '<div class="saved-card-hole">' + (h.hole ? h.hole.join(' ') : '??') + '</div>' +
-        '<div class="saved-card-meta">' +
+        '<div class="text-meta saved-card-meta">' +
           '<span class="saved-pos">' + (h.position || '?') + '</span>' +
           res +
         '</div>' +

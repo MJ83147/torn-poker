@@ -1301,8 +1301,6 @@ textarea#jin:focus {
   display: flex;
   justify-content: space-between;
   gap: var(--sp-8);
-  font-size: var(--fs-sm);
-  color: var(--dim);
   padding: 3px 0;
   border-top: var(--sp-1) solid color-mix(in srgb, var(--white) 4%, transparent);
 }
@@ -1520,15 +1518,7 @@ textarea#jin:focus {
   margin-bottom: var(--sp-6);
 }
 
-.ht-stack-name {
-  font-size: var(--fs-sm);
-  color: var(--text);
-}
 
-.ht-stack-meta {
-  font-size: var(--fs-sm);
-  color: var(--text);
-}
 
 .ht-stack-track {
   height: 12px;
@@ -1631,8 +1621,6 @@ textarea#jin:focus {
   display: flex;
   align-items: center;
   gap: 5px;
-  font-size: var(--fs-sm);
-  color: var(--dim);
 }
 
 
@@ -2009,8 +1997,6 @@ textarea#jin:focus {
 }
 
 .range-stats {
-  font-size: var(--fs-sm);
-  color: var(--text);
   margin-bottom: var(--sp-12);
 }
 
@@ -2303,7 +2289,6 @@ textarea#jin:focus {
 
 .cta-note {
   margin-top: var(--sp-12);
-  font-size: var(--fs-xs);
 }
 
 .saved-section-divider {
@@ -2391,8 +2376,6 @@ textarea#jin:focus {
 }
 
 .meta-text-mb {
-  font-size: var(--fs-xs);
-  color: var(--dim);
   margin-bottom: var(--sp-8);
 }
 
@@ -2500,8 +2483,6 @@ textarea#jin:focus {
 }
 
 .tip-q {
-  color: var(--dim);
-  font-size: var(--fs-xs);
   cursor: help;
   border-bottom: var(--sp-1) dashed var(--dim);
 }
@@ -2565,7 +2546,6 @@ textarea#jin:focus {
   display: flex;
   gap: var(--sp-16);
   margin-bottom: var(--sp-16);
-  font-size: var(--fs-sm);
 }
 
 .modal-hand-meta span {
@@ -2577,10 +2557,8 @@ textarea#jin:focus {
 }
 
 .modal-action-line {
-  font-size: var(--fs-sm);
   padding: var(--sp-4) 0;
   border-bottom: var(--sp-1) solid color-mix(in srgb, var(--border) 50%, transparent);
-  color: var(--text);
 }
 
 .modal-action-line.me {
@@ -2899,7 +2877,6 @@ tr.hrow:hover .hrow-star {
   display: flex;
   align-items: center;
   gap: var(--sp-8);
-  font-size: var(--fs-sm);
 }
 
 .saved-pos {
@@ -2996,10 +2973,7 @@ tr.hrow:hover .hrow-star {
 
 .welcome-whatsnew-label {
   font-family: var(--mono);
-  font-size: var(--fs-xs);
-  color: var(--dim);
   letter-spacing: 0.08em;
-  text-transform: uppercase;
   margin-bottom: var(--sp-4);
 }
 
@@ -3517,8 +3491,6 @@ tr.hrow:hover .hrow-star {
   flex-direction: column;
   gap: var(--sp-4);
   margin: var(--sp-8) 0 var(--sp-12);
-  font-size: var(--fs-sm);
-  color: var(--text);
 }
 
 .compare-h2h-record {
@@ -3573,9 +3545,7 @@ tr.hrow:hover .hrow-star {
 }
 
 .villain-profile-line {
-  font-size: var(--fs-xs);
   font-family: var(--mono);
-  color: var(--dim);
   margin-top: var(--sp-2);
 }
 
@@ -3683,8 +3653,6 @@ tr.hrow:hover .hrow-star {
 }
 
 .style-card-desc {
-  font-size: var(--fs-sm);
-  color: var(--dim);
   line-height: 1.55;
 }
 
@@ -3709,8 +3677,6 @@ tr.hrow:hover .hrow-star {
   flex-wrap: wrap;
   gap: var(--sp-16);
   font-family: var(--mono);
-  font-size: var(--fs-sm);
-  color: var(--text);
 }
 
 .sm-legend-item {
@@ -3814,8 +3780,6 @@ body.maintenance #maintenance {
   display: inline-flex;
   align-items: center;
   gap: var(--sp-8);
-  font-size: var(--fs-sm);
-  color: var(--dim);
   cursor: pointer;
 }
 
@@ -3844,10 +3808,7 @@ body.maintenance #maintenance {
 .cr-vs {
   text-align: center;
   font-family: var(--mono);
-  font-size: var(--fs-sm);
-  color: var(--dim);
   letter-spacing: var(--sp-4);
-  text-transform: uppercase;
   margin: var(--sp-12) 0;
 }
 
@@ -3858,8 +3819,6 @@ body.maintenance #maintenance {
 .cr-seg-tag {
   display: inline-block;
   font-family: var(--mono);
-  font-size: var(--fs-sm);
-  color: var(--gold);
   letter-spacing: var(--sp-2);
   margin-right: var(--sp-8);
   vertical-align: middle;
@@ -3919,14 +3878,11 @@ body.maintenance #maintenance {
 }
 
 .cr-pop-title {
-  font-size: var(--fs-sm);
-  color: var(--gold);
   margin-bottom: var(--sp-10);
   letter-spacing: var(--sp-1);
 }
 
 .cr-pop-section {
-  font-size: var(--fs-xs);
   margin: var(--sp-10) 0 var(--sp-4);
   letter-spacing: var(--sp-1);
 }
@@ -3943,9 +3899,7 @@ body.maintenance #maintenance {
   gap: var(--sp-8);
   background: transparent;
   border: none;
-  color: var(--text);
   font-family: var(--mono);
-  font-size: var(--fs-sm);
   text-align: left;
   padding: var(--sp-6) var(--sp-8);
   border-radius: var(--r-sm);
@@ -3968,8 +3922,6 @@ body.maintenance #maintenance {
 
 .cr-pop-meta {
   margin-left: auto;
-  font-size: var(--fs-xs);
-  color: var(--dim);
 }
 
 .cr-pop-remove {
@@ -4028,10 +3980,7 @@ body.maintenance #maintenance {
 
 .cr-tile-mini-label {
   font-family: var(--mono);
-  font-size: var(--fs-xs);
-  color: var(--dim);
   letter-spacing: var(--sp-1);
-  text-transform: uppercase;
   margin-bottom: var(--sp-2);
 }
 

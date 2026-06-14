@@ -749,8 +749,8 @@ function _crRenderSentence(segment, segLabel) {
   }
 
   var sentence = '';
-  if (segLabel === 'A' && _crState.compare) sentence += '<span class="cr-seg-tag">A:</span> ';
-  if (segLabel === 'B') sentence += '<span class="cr-seg-tag">B:</span> ';
+  if (segLabel === 'A' && _crState.compare) sentence += '<span class="gold-heading cr-seg-tag">A:</span> ';
+  if (segLabel === 'B') sentence += '<span class="gold-heading cr-seg-tag">B:</span> ';
   sentence += '<span class="cr-stem">Show me how I play</span> ';
   for (var pi = 0; pi < parts.length; pi++) {
     if (pi > 0) {
@@ -781,17 +781,17 @@ function _crOpenAddClausePopover(targetEl, segLabel) {
   var hand = available.filter(function(c) { return c.kind === 'hand'; });
   var decision = available.filter(function(c) { return c.kind === 'decision'; });
 
-  var html = '<div class="cr-pop-title">Add a clause</div>';
+  var html = '<div class="gold-heading cr-pop-title">Add a clause</div>';
   if (hand.length) {
     html += '<div class="cr-pop-section label">Hand-level</div>';
     html += hand.map(function(c) {
-      return '<button class="cr-pop-opt" data-add-clause="' + c.id + '">' + c.label + '</button>';
+      return '<button class="text-meta cr-pop-opt" data-add-clause="' + c.id + '">' + c.label + '</button>';
     }).join('');
   }
   if (decision.length) {
     html += '<div class="cr-pop-section label">Decision-level</div>';
     html += decision.map(function(c) {
-      return '<button class="cr-pop-opt" data-add-clause="' + c.id + '">' + c.label + '</button>';
+      return '<button class="text-meta cr-pop-opt" data-add-clause="' + c.id + '">' + c.label + '</button>';
     }).join('');
   }
 
@@ -821,7 +821,7 @@ function _crOpenClausePopover(targetEl, segLabel, clauseId) {
   var segment = _crState[segLabel];
   var current = segment.values[clauseId];
 
-  var html = '<div class="cr-pop-title">' + def.label + '</div>';
+  var html = '<div class="gold-heading cr-pop-title">' + def.label + '</div>';
   if (!def.options.length) {
     html += '<div class="text-body">No options available. None of your hands match this clause yet.</div>';
   } else if (def.multi) {
@@ -829,9 +829,9 @@ function _crOpenClausePopover(targetEl, segLabel, clauseId) {
     current = Array.isArray(current) ? current : [];
     html += def.options.map(function(o) {
       var checked = current.indexOf(o.value) !== -1;
-      return '<label class="cr-pop-opt cr-pop-multi' + (checked ? ' selected' : '') + '">' +
+      return '<label class="text-meta cr-pop-opt cr-pop-multi' + (checked ? ' selected' : '') + '">' +
         '<input type="checkbox" data-val="' + o.value + '"' + (checked ? ' checked' : '') + '>' +
-        '<span>' + o.label + (o.meta ? ' <span class="cr-pop-meta">' + o.meta + '</span>' : '') + '</span>' +
+        '<span>' + o.label + (o.meta ? ' <span class="text-micro cr-pop-meta">' + o.meta + '</span>' : '') + '</span>' +
         '</label>';
     }).join('');
     html += '</div>';
@@ -839,8 +839,8 @@ function _crOpenClausePopover(targetEl, segLabel, clauseId) {
     html += '<div class="cr-pop-list">';
     html += def.options.map(function(o) {
       var sel = current === o.value;
-      return '<button class="cr-pop-opt' + (sel ? ' selected' : '') + '" data-val="' + o.value + '">' +
-        o.label + (o.meta ? ' <span class="cr-pop-meta">' + o.meta + '</span>' : '') +
+      return '<button class="text-meta cr-pop-opt' + (sel ? ' selected' : '') + '" data-val="' + o.value + '">' +
+        o.label + (o.meta ? ' <span class="text-micro cr-pop-meta">' + o.meta + '</span>' : '') +
         '</button>';
     }).join('');
     html += '</div>';
@@ -912,9 +912,9 @@ function _crRenderHeadline(result, compareResult) {
     return '<div class="cr-tile cr-tile-compare">' +
       '<div class="mb-6 label">' + label + '</div>' +
       '<div class="cr-tile-trio">' +
-      '<div><div class="cr-tile-mini-label">A</div><div class="value" style="color:' + colorA + '">' + valA + '</div></div>' +
-      '<div><div class="cr-tile-mini-label">Δ</div><div class="value" style="color:' + deltaColor + '">' + delta + '</div></div>' +
-      '<div><div class="cr-tile-mini-label">B</div><div class="value" style="color:' + colorB + '">' + valB + '</div></div>' +
+      '<div><div class="label cr-tile-mini-label">A</div><div class="value" style="color:' + colorA + '">' + valA + '</div></div>' +
+      '<div><div class="label cr-tile-mini-label">Δ</div><div class="value" style="color:' + deltaColor + '">' + delta + '</div></div>' +
+      '<div><div class="label cr-tile-mini-label">B</div><div class="value" style="color:' + colorB + '">' + valB + '</div></div>' +
       '</div></div>';
   }
 
@@ -997,7 +997,7 @@ function _crRenderInto(container) {
 
   var sentenceHtml = _crRenderSentence(_crState.A, 'A');
   if (_crState.compare) {
-    sentenceHtml += '<div class="cr-vs">vs</div>';
+    sentenceHtml += '<div class="label cr-vs">vs</div>';
     sentenceHtml += _crRenderSentence(_crState.B, 'B');
   }
   setSlot(container, 'sentence', sentenceHtml);

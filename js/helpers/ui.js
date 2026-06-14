@@ -146,7 +146,7 @@ function renderStatsTable(rows, columns, opts) {
 function tipWrap(label) {
   const def = TIPS[label];
   if (!def) return label;
-  return '<span class="tooltip">' + label + ' <span class="tip-q">?</span><span class="tip-box">' + def + '</span></span>';
+  return '<span class="tooltip">' + label + ' <span class="text-micro tip-q">?</span><span class="tip-box">' + def + '</span></span>';
 }
 
 function ins(sev, label, text, chips, coaching) {

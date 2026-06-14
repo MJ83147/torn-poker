@@ -170,7 +170,7 @@ function renderEquityResults(container, simResult) {
       }
       html += '<div class="text-micro eq-detail ' + qualClass + '">' + res.actionDesc + ' ' + res.guidance.text + '</div>';
       if (res.villainProfile && res.guidance.text.indexOf(res.villainProfile.name) === -1) {
-        html += '<div class="villain-profile-line">vs ' + res.villainProfile.type + ' (' + res.villainProfile.name + ' \u00b7 VPIP ' + (res.villainProfile.vpip || '?') + '% \u00b7 Fold to raise ' + (res.villainProfile.foldToRaise || '?') + '%)</div>';
+        html += '<div class="text-micro villain-profile-line">vs ' + res.villainProfile.type + ' (' + res.villainProfile.name + ' \u00b7 VPIP ' + (res.villainProfile.vpip || '?') + '% \u00b7 Fold to raise ' + (res.villainProfile.foldToRaise || '?') + '%)</div>';
       }
       html += '</div>';
     }

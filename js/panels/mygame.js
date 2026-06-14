@@ -245,8 +245,8 @@ function renderTableDynamicsReference(hands, d) {
 
     h += '<div class="label gold dynamics-zone-head dynamics-coaching-head">Coaching</div>';
     h += '<div class="text-body dynamics-coaching">' + fe.notes + '</div>';
-    h += '<div class="dynamics-card-kv"><span>Bet sizing</span><span>' + fe.cbetSizing + '</span></div>';
-    h += '<div class="dynamics-card-kv"><span>Continue with</span><span>' + fe.continueRange + '</span></div>';
+    h += '<div class="text-meta dynamics-card-kv"><span>Bet sizing</span><span>' + fe.cbetSizing + '</span></div>';
+    h += '<div class="text-meta dynamics-card-kv"><span>Continue with</span><span>' + fe.continueRange + '</span></div>';
     h += '</div>';
   }
   h += '</div>';
@@ -310,7 +310,7 @@ function renderStyleMap(container, d, hands) {
   html += '<div class="style-map-wrap">';
   html += '<div class="style-map-canvas-wrap"><canvas id="style-map-chart"></canvas></div>';
 
-  html += '<div class="style-map-legend">';
+  html += '<div class="text-meta style-map-legend">';
   html += '<div class="sm-legend-item"><span class="dot dot-lg dot-g sm-dot-you"></span><span>You (overall)</span></div>';
   html += '<div class="sm-legend-item"><span class="dot dot-lg dot-cat-pos"></span><span>By position</span></div>';
   html += '<div class="sm-legend-item"><span class="dot dot-lg dot-cat-seat"></span><span>By table size</span></div>';

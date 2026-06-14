@@ -692,9 +692,9 @@ function renderRange(container, d, hands) {
 
   function renderHeaderStats(filtered, label) {
     if (!filtered.length) {
-      return '<div class="range-stats range-stats-empty">No ' + label + ' hands on record yet.</div>';
+      return '<div class="text-meta range-stats range-stats-empty">No ' + label + ' hands on record yet.</div>';
     }
-    return '<div class="range-stats">' + filtered.length + ' ' + label + ' hand' + (filtered.length === 1 ? '' : 's') + ' on record.</div>';
+    return '<div class="text-meta range-stats">' + filtered.length + ' ' + label + ' hand' + (filtered.length === 1 ? '' : 's') + ' on record.</div>';
   }
 
   function bindCellClicks(scope, scopedHands) {

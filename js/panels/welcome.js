@@ -86,7 +86,7 @@ function renderWelcome(container, d, hands, meta) {
     '</div>' +
     '</div>' +
     '<div class="welcome-whatsnew">' +
-      '<div class="welcome-whatsnew-label">What\'s new</div>' +
+      '<div class="label welcome-whatsnew-label">What\'s new</div>' +
       '<button type="button" class="card card-s1 whatsnew-card whatsnew-card-hero" data-goto="custom">' +
         '<div class="badge whatsnew-card-tag">New</div>' +
         '<div class="whatsnew-card-name">Custom Report</div>' +

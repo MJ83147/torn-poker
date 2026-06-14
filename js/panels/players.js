@@ -428,7 +428,7 @@ function renderCompare(container, d, hands) {
       h2hHtml += '<div class="text-body">No shared hands found between these players.</div>';
     } else {
       var p1WinPct = Math.round(p1Wins / sharedHands.length * 100);
-      h2hHtml += '<div class="compare-h2h">' +
+      h2hHtml += '<div class="text-meta compare-h2h">' +
         '<span>' + sharedHands.length + ' shared hands</span>' +
         '<span class="compare-h2h-record">' + p1Name + ' won ' + p1Wins + ' (' + p1WinPct + '%) · ' + p2Name + ' won ' + p2Wins + '</span>' +
         '</div>';

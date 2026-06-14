@@ -33,7 +33,7 @@ function showExampleHandModal(hand, coachingNote) {
   var tagStrip = handTagsHtml(hand);
   var subtitle = '<div class="label mb-16">Example hand · ' + (hand.position || '?') + ' position' + (tagStrip ? ' · ' + tagStrip : '') + '</div>';
 
-  var metaHtml = '<div class="modal-hand-meta">' +
+  var metaHtml = '<div class="text-meta modal-hand-meta">' +
     '<span>Board: <strong>' + (hand.board && hand.board.length ? hand.board.join(' ') : 'none') + '</strong></span>' +
     '<span>Pot: <strong>' + fmtBB(hand.pot || 0, getHandBB(hand)) + '</strong></span>' +
     (function() {
@@ -65,11 +65,11 @@ function showExampleHandModal(hand, coachingNote) {
       clean.indexOf('The river') === 0 ||
       clean.indexOf('The preflop') === 0
     ) {
-      actionsHtml += '<div class="modal-action-line street-label">' +
+      actionsHtml += '<div class="label modal-action-line street-label">' +
         clean.replace(/: :/, ':').replace(/: $/, '') +
         '</div>';
     } else if (clean.indexOf(': ') > 0) {
-      actionsHtml += '<div class="modal-action-line' + (isMe ? ' me' : '') + '">' +
+      actionsHtml += '<div class="text-meta modal-action-line' + (isMe ? ' me' : '') + '">' +
         (isMe ? '▸ ' : '  ') + clean + '</div>';
     }
   }
