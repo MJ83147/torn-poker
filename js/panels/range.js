@@ -758,7 +758,7 @@ function openHandModal(key, matched) {
     var myActs = getActsSummary(h);
     var res = renderResult(h, 'span', 'saved-res');
     return '<div class="range-hand-row" data-ridx="' + idx + '">' +
-      '<div class="range-hand-row-top">' +
+      '<div class="flex-between range-hand-row-top">' +
       '<div class="range-hand-row-side">' +
       '<span class="label range-hand-row-pos">' + (h.position || '?') + '</span>' +
       '<span class="range-hand-row-hole">' + (h.hole ? h.hole.join(' ') : '??') + '</span>' +

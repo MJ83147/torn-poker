@@ -83,7 +83,7 @@ function showExampleHandModal(hand, coachingNote) {
 
   var noteVal = getHandNote(hand).replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   var notesSection = '<div class="modal-notes' + (starred ? ' show' : '') + '" id="modal-notes">' +
-    '<div class="modal-notes-header">' +
+    '<div class="flex-between modal-notes-header">' +
       '<div class="label mb-0">Your Notes</div>' +
       '<div class="modal-notes-status" id="modal-notes-status">Saves automatically</div>' +
     '</div>' +
@@ -146,7 +146,7 @@ function buildHandRow(h, idx) {
   var myActs = getActsSummary(h);
   var res = renderResult(h, 'span', 'saved-res range-hand-row-result');
   return '<div class="range-hand-row" data-ridx="' + idx + '">' +
-    '<div class="range-hand-row-top">' +
+    '<div class="flex-between range-hand-row-top">' +
       '<div class="range-hand-row-side">' +
         '<span class="label range-hand-row-pos">' + (h.position || '?') + '</span>' +
         '<span class="range-hand-row-hole">' + (h.hole ? h.hole.join(' ') : '??') + '</span>' +

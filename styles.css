@@ -632,9 +632,6 @@ textarea#jin:focus {
 }
 
 .header-inner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
   padding: var(--sp-14) 0 0;
 }
 
@@ -1268,8 +1265,6 @@ textarea#jin:focus {
 }
 
 .dynamics-vs-top {
-  display: flex;
-  justify-content: space-between;
   gap: var(--sp-8);
   font-size: var(--fs-sm);
   color: var(--text);
@@ -1379,6 +1374,8 @@ textarea#jin:focus {
 .header-title,
 .panel-title,
 .profile-name,
+.profile-type-name,
+.style-card-name,
 .welcome-intro-heading,
 .saved-card-hole {
   font-family: var(--serif);
@@ -1472,8 +1469,6 @@ textarea#jin:focus {
 }
 
 .ht-stack-header {
-  display: flex;
-  justify-content: space-between;
   align-items: baseline;
   margin-bottom: var(--sp-6);
 }
@@ -2320,9 +2315,6 @@ textarea#jin:focus {
 }
 
 .modal-notes-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   margin-bottom: var(--sp-6);
 }
 
@@ -2352,9 +2344,7 @@ textarea#jin:focus {
 }
 
 .profile-type-name {
-  font-family: var(--serif);
   font-size: var(--fs-3xl);
-  font-weight: var(--fw-bold);
   color: var(--gold);
   line-height: var(--lh-none);
 }
@@ -2493,12 +2483,6 @@ textarea#jin:focus {
 
 .range-hand-row:hover {
   background: var(--s2);
-}
-
-.range-hand-row-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
 }
 
 .range-hand-row-pos {
@@ -2664,8 +2648,6 @@ textarea#jin:focus {
 }
 
 .eq-sim-header {
-  display: flex;
-  justify-content: space-between;
   align-items: baseline;
   margin-bottom: var(--sp-10);
   padding-bottom: var(--sp-8);
@@ -2939,9 +2921,6 @@ tr.hrow:hover .hrow-star {
 }
 
 .saved-card-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
   margin-bottom: var(--sp-6);
 }
 
@@ -3029,9 +3008,6 @@ tr.hrow:hover .hrow-star {
 }
 
 .welcome-intro {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   gap: var(--sp-20);
   margin-bottom: var(--sp-28);
 }
@@ -3735,9 +3711,7 @@ tr.hrow:hover .hrow-star {
 }
 
 .style-card-name {
-  font-family: var(--serif);
   font-size: var(--fs-2xl);
-  font-weight: var(--fw-bold);
   color: var(--gold);
   margin-bottom: var(--sp-8);
 }

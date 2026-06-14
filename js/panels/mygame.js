@@ -143,7 +143,7 @@ function _vsRow(label, actualPct, actualDenom, targetText) {
   var labelHtml = label ? '<div class="dynamics-vs-stat label">' + label + '</div>' : '';
   return '<div class="dynamics-vs ' + v.cls + '">' +
     labelHtml +
-    '<div class="dynamics-vs-top"><span>You: <strong>' + actualStr + '</strong>' + sampleStr + '</span>' +
+    '<div class="flex-between dynamics-vs-top"><span>You: <strong>' + actualStr + '</strong>' + sampleStr + '</span>' +
     '<span class="label">Target: ' + targetText + '</span></div>' +
     (v.label ? '<div class="dynamics-vs-verdict">' + v.label + '</div>' : '') +
     '</div>';

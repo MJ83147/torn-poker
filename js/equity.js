@@ -118,7 +118,7 @@ function renderEquityResults(container, simResult) {
   }
 
   var html = '<div class="card card-s1 eq-sim">';
-  html += '<div class="eq-sim-header"><span class="eq-sim-title">Equity Simulation</span><span class="text-meta eq-sim-note">' + headerNote + '</span></div>';
+  html += '<div class="flex-between eq-sim-header"><span class="eq-sim-title">Equity Simulation</span><span class="text-meta eq-sim-note">' + headerNote + '</span></div>';
 
   var curvePoints = [];
 

@@ -51,7 +51,7 @@ function renderWelcome(container, d, hands, meta) {
     'Use the <strong>table filter</strong> in the header to isolate stats to one table.',
   ];
   var welcomeHtml = '<div class="welcome-wrap">' +
-    '<div class="welcome-intro">' +
+    '<div class="flex-between welcome-intro">' +
     '<div class="welcome-intro-text">' +
     '<div class="welcome-intro-heading">Welcome back, ' + meta.player + '</div>' +
     '<div class="text-body">' + d.n + ' hands loaded. Here\'s what each tab shows.</div>' +
