@@ -884,7 +884,7 @@ function _crOpenClausePopover(targetEl, segLabel, clauseId) {
 
 function _crShowPopover(anchor, html, wire) {
   _crPopover = document.createElement('div');
-  _crPopover.className = 'cr-pop';
+  _crPopover.className = 'card card-s1 cr-pop';
   _crPopover.innerHTML = html;
   document.body.appendChild(_crPopover);
   var rect = anchor.getBoundingClientRect();

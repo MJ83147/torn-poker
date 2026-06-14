@@ -8,7 +8,7 @@ function createExampleModal() {
   overlay.onclick = function(e) { if (e.target === overlay) closeModal(); };
 
   var box = document.createElement('div');
-  box.className = 'modal-box';
+  box.className = 'card card-s1 modal-box';
   box.style.position = 'relative';
 
   return { overlay: overlay, box: box };
@@ -75,7 +75,7 @@ function showExampleHandModal(hand, coachingNote) {
   }
 
   var coaching = coachingNote
-    ? '<div class="modal-coaching"><div class="modal-coaching-head label">What to improve</div>' + coachingNote + '</div>'
+    ? '<div class="card card-sm card-s2 modal-coaching"><div class="modal-coaching-head label">What to improve</div>' + coachingNote + '</div>'
     : '';
 
   var starred = isHandStarred(hand);
@@ -172,7 +172,7 @@ function showExampleHandListModal(title, handsList, coachingNote) {
     '<div class="mb-16">' + handsList.length + ' example hand' + (handsList.length !== 1 ? 's' : '') + '</div>';
 
   if (coachingNote) {
-    header += '<div class="modal-coaching"><div class="modal-coaching-head label">What to look for</div>' + coachingNote + '</div>';
+    header += '<div class="card card-sm card-s2 modal-coaching"><div class="modal-coaching-head label">What to look for</div>' + coachingNote + '</div>';
   }
 
   box.innerHTML = '<button class="modal-close" id="modal-close-btn">&times;</button>' +

@@ -2571,9 +2571,6 @@ textarea#jin:focus {
 }
 
 .modal-box {
-  background: var(--s1);
-  border: var(--sp-1) solid var(--border);
-  border-radius: var(--r-lg);
   max-width: 600px;
   width: 90vw;
   max-height: 80vh;
@@ -2640,9 +2637,6 @@ textarea#jin:focus {
 .modal-coaching {
   margin-top: var(--sp-16);
   padding: var(--sp-12);
-  background: var(--s2);
-  border: var(--sp-1) solid var(--border);
-  border-radius: var(--r-sm);
   font-size: var(--fs-sm);
   color: var(--text);
   line-height: var(--lh-loose);
@@ -3648,12 +3642,9 @@ tr.hrow:hover .hrow-star {
   align-items: center;
   gap: var(--sp-6);
   padding: var(--sp-4) var(--sp-10);
-  border: var(--sp-1) solid var(--border);
-  border-radius: var(--r-sm);
   font-family: var(--mono);
   font-size: var(--fs-sm);
   color: var(--text);
-  background: var(--s2);
 }
 
 .style-display .sd-you-label,
@@ -3979,9 +3970,6 @@ body.maintenance #maintenance {
 .cr-pop {
   position: absolute;
   z-index: 200;
-  background: var(--s1);
-  border: var(--sp-1) solid var(--border);
-  border-radius: var(--r-lg);
   padding: var(--sp-12);
   min-width: 220px;
   max-width: 320px;

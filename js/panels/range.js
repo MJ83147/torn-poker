@@ -748,7 +748,7 @@ function openHandModal(key, matched) {
   overlay.className = 'modal-overlay';
   overlay.onclick = function(ev) { if (ev.target === overlay) closeModal(); };
   var box = document.createElement('div');
-  box.className = 'modal-box';
+  box.className = 'card card-s1 modal-box';
   box.style.position = 'relative';
   box.style.maxHeight = '80vh';
   box.style.overflowY = 'auto';
