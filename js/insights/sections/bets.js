@@ -1,7 +1,7 @@
 (function() {
   var F = Sections.section('bets', 'Betting');
-  var MIN_AGG = (typeof MIN_AGGREGATE === 'number') ? MIN_AGGREGATE : 30;
-  var MIN_CELL_LOCAL = (typeof MIN_CELL === 'number') ? MIN_CELL : 10;
+  var MIN_AGG = MIN_AGGREGATE;
+  var MIN_CELL_LOCAL = MIN_CELL;
 
   function mean(arr) {
     if (!arr || !arr.length) return 0;
@@ -96,19 +96,6 @@
     big: 'big bets',
     overbet: 'overbets'
   };
-
-  function worst(severities) {
-    var rank = { r: 4, a: 3, n: 2, g: 1 };
-    var best = 'g';
-    var bestRank = 1;
-    for (var i = 0; i < severities.length; i++) {
-      var s = severities[i];
-      if (!s) continue;
-      var r = rank[s] || 0;
-      if (r > bestRank) { bestRank = r; best = s; }
-    }
-    return best;
-  }
 
   function buildSizingShape(d, extras, hands) {
     if (!d || !d.n || d.n < MIN_AGG) return null;

@@ -59,7 +59,7 @@ function renderPlayers(container, d, hands) {
   function renderPlayerList() {
     if (!filtered.length) {
       container.innerHTML = '<div class="panel-title">Players</div>' +
-        '<div class="panel-desc">Opponent records, head-to-head stats, and watch list.</div>' +
+        '<div class="text-body panel-desc">Opponent records, head-to-head stats, and watch list.</div>' +
         '<div class="panel-verdict">Not enough shared hands to show opponent stats. Keep playing to build data.</div>';
       return;
     }
@@ -183,7 +183,7 @@ function renderPlayers(container, d, hands) {
       var wr = pct(opp.won, opp.won + opp.lost);
       var ph = '<div class="flex-between mb-16">';
       ph += '<div><button class="btn btn-ghost mr-12" id="players-back">&laquo; All Players</button>';
-      ph += '<span class="player-detail-name">' + playerName + '</span></div>';
+      ph += '<span class="gold-heading">' + playerName + '</span></div>';
       ph += '<div class="text-meta">' + opp.hands + ' hands · ' + (wr !== null ? wr + '% win' : '-') + ' · ' + fmtPnl(opp.profit) + '</div></div>';
 
       var vpip = pct(oppStats.vpipHands, oppStats.hands);
@@ -266,7 +266,7 @@ function renderCompare(container, d, hands) {
   if (playerNames.length < 2) {
     container.innerHTML =
       '<div class="panel-title">Head to Head</div>' +
-      '<div class="panel-desc">Compare two players side by side.</div>' +
+      '<div class="text-body panel-desc">Compare two players side by side.</div>' +
       '<div class="p-row"><div class="text-body">Need at least two players in the data to compare.</div></div>';
     return;
   }
@@ -283,7 +283,7 @@ function renderCompare(container, d, hands) {
 
   container.innerHTML =
     '<div class="panel-title">Head to Head</div>' +
-    '<div class="panel-desc">Compare two players side by side.</div>' +
+    '<div class="text-body panel-desc">Compare two players side by side.</div>' +
     '<div class="p-row">' +
     '<div class="compare-selectors">' +
     '<select id="compare-p1" class="table-filter">' + buildOptions(p1Default) + '</select>' +
@@ -395,7 +395,7 @@ function renderCompare(container, d, hands) {
         '<td class="label">' + tipWrap(sr.label) + '</td>' +
         '<td class="' + (better1 ? 'compare-better' : '') + '">' + fmtStat(v1, sr.suffix) + (better1 && Math.abs(v1 - v2) >= 3 ? ' &#9664;' : '') + '</td>' +
         '<td class="' + (better2 ? 'compare-better' : '') + '">' + fmtStat(v2, sr.suffix) + (better2 && Math.abs(v1 - v2) >= 3 ? ' &#9664;' : '') + '</td>' +
-        '<td class="compare-edge">' + edge + '</td>' +
+        '<td class="text-meta">' + edge + '</td>' +
         '</tr>';
     }
     tableHtml += '</tbody></table>';
@@ -498,7 +498,7 @@ function renderCompare(container, d, hands) {
     if (s1.hands < 10 || s2.hands < 10) {
       var lowName = s1.hands < 10 ? p1Name : p2Name;
       var lowCount = s1.hands < 10 ? s1.hands : s2.hands;
-      warnHtml = '<div class="p-row"><div class="ins"><div class="ins-badge a"><div class="ins-dot"></div><div class="ins-word">Warning</div></div><div class="ins-title">Small Sample</div><div class="ins-text">' + lowName + ' only has ' + lowCount + ' hands. Stats may be unreliable until 20+ hands are available.</div></div></div>';
+      warnHtml = '<div class="p-row"><div class="ins"><div class="ins-badge a"><div class="ins-dot"></div><div class="ins-word">Warning</div></div><div class="ins-title">Small Sample</div><div class="text-body ins-text">' + lowName + ' only has ' + lowCount + ' hands. Stats may be unreliable until 20+ hands are available.</div></div></div>';
     }
 
     body.innerHTML = warnHtml + '<div class="p-row">' + tableHtml + '</div>' + h2hHtml + exploitHtml;

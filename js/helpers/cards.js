@@ -83,6 +83,11 @@ function classifyBoardTexture(boardCards) {
 
   var highCard = RANKS[sorted[sorted.length - 1]];
 
+  var boardRankCounts = {};
+  for (var rc = 0; rc < ranks.length; rc++) {
+    boardRankCounts[ranks[rc]] = (boardRankCounts[ranks[rc]] || 0) + 1;
+  }
+
   var score = 0;
   if (monotone) score += 3;
   else if (twoTone) score += 2;
@@ -115,6 +120,7 @@ function classifyBoardTexture(boardCards) {
     wetness: wetness, monotone: monotone, twoTone: twoTone, rainbow: rainbow,
     paired: paired, flushDraw: flushDraw, straightDraw: straightDraw,
     connected: connected, highCard: highCard, score: score,
+    boardRankCounts: boardRankCounts,
     tags: tags, label: tags.join(' ')
   };
 }

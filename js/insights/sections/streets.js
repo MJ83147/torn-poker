@@ -1,7 +1,7 @@
 (function() {
   var F = Sections.section('streets', 'Street');
-  var MIN_AGG = (typeof MIN_AGGREGATE === 'number') ? MIN_AGGREGATE : 30;
-  var MIN_CL = (typeof MIN_CELL === 'number') ? MIN_CELL : 10;
+  var MIN_AGG = MIN_AGGREGATE;
+  var MIN_CL = MIN_CELL;
   var MIN_OPP = 12; // floor for any opp-count gate on a pillar
 
   var FOLD_TO_CBET_BAND = { tight: 40, loose: 55 };

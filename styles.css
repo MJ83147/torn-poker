@@ -1,24 +1,108 @@
+/* ==========================================================================
+   torn-poker · styles.css
+   --------------------------------------------------------------------------
+   1. VARIABLES   colours · type · spacing · radius · motion
+   2. BASE        reset · html · body
+   3. COMPONENTS  panels/boxes · cards · buttons · tables · labels · text roles
+   4. FEATURES    loader · header · insights · range · modal · profile · saved
+   5. RESPONSIVE  media queries
+   --------------------------------------------------------------------------
+   Rules: every colour, font-size, spacing and repeated value uses a token
+   from section 1. No bespoke per-element text styling — reuse the text roles
+   in section 3. A single panel needs a custom style only for a real reason.
+   ========================================================================== */
+
+
+/* ==========================================================================
+   1. VARIABLES
+   ========================================================================== */
 :root {
+  /* --- Colours: core surfaces --- */
   --bg: #07090a;
   --s1: #0e1410;
   --s2: #121a14;
   --border: #1a2a1c;
+  --menu-bg: #1e3024;
+
+  /* --- Colours: brand --- */
   --gold: #c8a94a;
   --gold2: #8a7030;
+
+  /* --- Colours: status --- */
   --green: #3fad64;
   --red: #c94040;
   --amber: #d4842a;
+
+  /* --- Colours: text --- */
   --text: #d0d8d0;
   --dim: #7a9a7a;
   --muted: #5a7a5c;
-  --menu-bg: #1e3024;
+  --white: #fff;
+
+  /* --- Colours: tints & overlays --- */
   --bg-translucent: rgba(7, 9, 10, 0.95);
   --bg-overlay: rgba(0, 0, 0, 0.5);
-  --bg-overlay-strong: rgba(0, 0, 0, 0.7);
   --tint-light: rgba(255, 255, 255, 0.03);
   --tint-light-2: rgba(255, 255, 255, 0.06);
   --gold-faint: rgba(200, 169, 74, 0.35);
-  --gold-tint: rgba(200, 169, 74, 0.12);
+
+  /* --- Colours: GTO / range viz --- */
+  --gto-red: #b8403a;
+  --gto-blue: #4a90d9;
+  --gto-grey: #6a7068;
+  --gto-white: #d0d4cf;
+  --range-folded-opacity: 0.25;
+  /* play-frequency heat ramp */
+  --freq-faint: #1a2e1e;
+  --freq-low: #24422a;
+  --freq-med: #2e5835;
+  --freq-high: #3a7a42;
+  /* matrix empty / unplayed states */
+  --gto-unplayed: #2e3e2e;
+  --gto-empty-bg: #0e1310;
+  --gto-empty-fg: #2a3e2c;
+  --gto-dark-fg: #1a1f1a;
+  /* compare-view dots */
+  --dot-pos: rgba(160, 200, 240, 0.7);
+  --dot-seat: rgba(200, 160, 220, 0.7);
+  --dot-tag: rgba(200, 200, 200, 0.7);
+
+  /* --- Type: families --- */
+  --mono: 'IBM Plex Mono', monospace;
+  --serif: 'Cormorant Garamond', serif;
+
+  /* --- Type: sizes --- */
+  --fs-10: 10px;
+  --fs-11: 11px;
+  --fs-12: 12px;
+  --fs-13: 13px;
+  --fs-14: 14px;
+  --fs-16: 16px;
+  --fs-19: 19px;
+  --fs-22: 22px;
+  --fs-32: 32px;
+
+  /* --- Type: headings (h1-h4 scale) --- */
+  --h1: 32px;
+  --h2: 26px;
+  --h3: 20px;
+  --h4: 16px;
+
+  /* --- Type: weights --- */
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+
+  /* --- Type: line-heights --- */
+  --lh-none: 1;
+  --lh-tight: 1.15;
+  --lh-snug: 1.4;
+  --lh-normal: 1.5;
+  --lh-body: 1.6;
+  --lh-loose: 1.7;
+
+  /* --- Spacing --- */
   --sp-1: 1px;
   --sp-2: 2px;
   --sp-4: 4px;
@@ -32,22 +116,20 @@
   --sp-24: 24px;
   --sp-28: 28px;
   --sp-32: 32px;
-  --fs-10: 10px;
-  --fs-11: 11px;
-  --fs-12: 12px;
-  --fs-13: 13px;
-  --fs-14: 14px;
-  --fs-16: 16px;
-  --fs-19: 19px;
-  --fs-22: 22px;
-  --fs-32: 32px;
-  --gto-red: #b8403a;
-  --gto-blue: #4a90d9;
-  --gto-grey: #6a7068;
-  --gto-white: #d0d4cf;
-  --range-folded-opacity: 0.25;
+
+  /* --- Radius --- */
+  --r-sm: 2px;
+  --r-md: 4px;
+  --r-lg: 6px;
+  --r-xl: 8px;
+  --r-pill: 50%;
+  --radius: var(--r-lg);
 }
 
+
+/* ==========================================================================
+   2. BASE
+   ========================================================================== */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -61,10 +143,177 @@ html {
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--mono);
   font-size: var(--fs-14);
   min-height: 100vh;
 }
+
+
+/* ==========================================================================
+   3. COMPONENTS
+   ========================================================================== */
+
+/* --- Text roles ---
+   Every text element uses one of these. A bespoke text style needs a real
+   reason. Layout (margins) lives on the element's own class, not here. */
+.text-title {
+  font-family: var(--serif);
+  font-weight: var(--fw-bold);
+  font-size: var(--fs-22);
+  line-height: var(--lh-tight);
+  color: var(--text);
+}
+
+.gold-heading {
+  font-size: var(--fs-13);
+  color: var(--gold);
+  font-weight: var(--fw-semibold);
+}
+
+.text-body {
+  font-size: var(--fs-14);
+  color: var(--dim);
+  line-height: var(--lh-body);
+}
+
+.text-meta {
+  font-size: var(--fs-12);
+  color: var(--dim);
+}
+
+.text-micro {
+  font-size: var(--fs-10);
+  color: var(--muted);
+}
+
+.label {
+  font-size: var(--fs-11);
+  letter-spacing: var(--sp-2);
+  color: var(--dim);
+  text-transform: uppercase;
+}
+
+.label.gold {
+  color: var(--gold);
+}
+
+.value {
+  font-family: var(--serif);
+  font-size: var(--fs-22);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-none);
+}
+
+/* --- Text colour modifiers --- */
+.val-pos {
+  color: var(--green);
+}
+
+.val-neg {
+  color: var(--red);
+}
+
+.val-dim {
+  color: var(--dim);
+}
+
+.val-muted {
+  color: var(--muted);
+}
+
+/* --- Buttons --- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-6);
+  cursor: pointer;
+  border: var(--sp-1) solid transparent;
+  border-radius: var(--r-md);
+  background: transparent;
+  font-family: var(--mono);
+  transition: background .2s, color .2s, border-color .2s;
+}
+
+.btn-primary {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: var(--bg);
+  font-family: var(--serif);
+  font-size: 17px;
+  letter-spacing: .05em;
+  padding: var(--sp-10);
+}
+
+.btn-primary:hover {
+  background: var(--gold2);
+  border-color: var(--gold2);
+}
+
+.btn-secondary {
+  border-color: var(--gold2);
+  color: var(--gold2);
+  font-family: var(--serif);
+  font-size: 17px;
+  letter-spacing: .05em;
+  padding: var(--sp-10);
+}
+
+.btn-secondary:hover {
+  background: var(--gold2);
+  color: var(--bg);
+}
+
+.btn-ghost {
+  border-color: var(--border);
+  color: var(--dim);
+  padding: var(--sp-4) var(--sp-10);
+  font-size: var(--fs-11);
+}
+
+.btn-ghost:hover:not([disabled]) {
+  border-color: var(--gold2);
+  color: var(--gold);
+}
+
+.btn-ghost[disabled] {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.btn-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--r-pill);
+  border-color: var(--border);
+  color: var(--dim);
+  font-family: var(--serif);
+  font-size: 15px;
+  font-weight: var(--fw-bold);
+  padding: 0;
+}
+
+.btn-icon:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+  background: color-mix(in srgb, var(--gold) 8%, transparent);
+}
+
+
+/* ==========================================================================
+   4. FEATURES
+   ========================================================================== */
+
+
+/* ==========================================================================
+   5. RESPONSIVE
+   ========================================================================== */
+
+
+/* ==========================================================================
+   UNSORTED — migrate each rule below into section 3, 4 or 5, then delete
+   this banner. Nothing should remain under here when the sweep is done.
+   ========================================================================== */
 
 #loader {
   position: fixed;
@@ -114,15 +363,15 @@ body {
 .lc {
   width: 48px;
   height: 66px;
-  border-radius: var(--sp-6);
+  border-radius: var(--r-lg);
   background: var(--s2);
   border: var(--sp-1) solid var(--border);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: 'Cormorant Garamond', serif;
+  font-family: var(--serif);
   font-size: var(--fs-19);
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
   opacity: 0;
   transform: translateY(18px) scale(.92);
   transition: opacity .38s ease, transform .38s ease;
@@ -208,14 +457,14 @@ body {
 
 .paste-box {
   border: var(--sp-1) solid var(--border);
-  border-radius: var(--sp-10);
+  border-radius: var(--r-xl);
   padding: 44px var(--sp-28);
   text-align: center;
   background: var(--s1);
 }
 
 .paste-suit {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: var(--serif);
   font-size: var(--fs-32);
   color: var(--gold2);
   margin-bottom: var(--sp-16);
@@ -223,8 +472,8 @@ body {
 }
 
 .paste-title {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 20px;
+  font-family: var(--serif);
+  font-size: var(--h3);
   color: var(--text);
   margin-bottom: var(--sp-10);
 }
@@ -233,9 +482,9 @@ textarea#jin {
   width: 100%;
   background: var(--s2);
   border: var(--sp-1) solid var(--border);
-  border-radius: 5px;
+  border-radius: var(--r-md);
   color: var(--dim);
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--mono);
   font-size: var(--fs-11);
   padding: var(--sp-10);
   resize: vertical;
@@ -279,7 +528,7 @@ textarea#jin:focus {
 }
 
 .paste-nav-link {
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--mono);
   font-size: var(--fs-11);
   color: var(--dim);
   cursor: pointer;
@@ -327,7 +576,7 @@ textarea#jin:focus {
 }
 
 .header-title {
-  font-size: 20px;
+  font-size: var(--h3);
   color: var(--gold);
 }
 
@@ -407,7 +656,7 @@ textarea#jin:focus {
 .tab-menu-btn {
   width: 100%;
   padding: var(--sp-12) var(--sp-20);
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--mono);
   font-size: var(--fs-11);
   letter-spacing: 1.5px;
   text-transform: uppercase;
@@ -445,11 +694,11 @@ textarea#jin:focus {
   left: 0;
   min-width: 100%;
   background: var(--menu-bg);
-  border: var(--sp-1) solid rgba(255, 255, 255, 0.1);
+  border: var(--sp-1) solid color-mix(in srgb, var(--white) 10%, transparent);
   border-top: none;
   z-index: 1001;
   box-shadow: 0 8px 32px var(--bg-overlay);
-  border-radius: 0 0 var(--sp-6) var(--sp-6);
+  border-radius: 0 0 var(--r-lg) var(--r-lg);
 }
 
 .panels-wrap.blurred {
@@ -465,7 +714,7 @@ textarea#jin:focus {
   display: block;
   width: 100%;
   padding: var(--sp-10) var(--sp-20);
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--mono);
   font-size: var(--fs-11);
   letter-spacing: var(--sp-1);
   text-transform: uppercase;
@@ -478,8 +727,8 @@ textarea#jin:focus {
 }
 
 .tab-item:hover {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.08);
+  color: var(--white);
+  background: color-mix(in srgb, var(--white) 8%, transparent);
 }
 
 .tab-item.active {
@@ -499,14 +748,12 @@ textarea#jin:focus {
 }
 
 .panel-title {
-  font-size: clamp(20px, 3vw, 26px);
+  font-size: var(--h2);
   color: var(--gold);
   margin-bottom: var(--sp-4);
 }
 
 .panel-desc {
-  font-size: var(--fs-13);
-  color: var(--dim);
   margin-bottom: var(--sp-28);
 }
 
@@ -527,7 +774,7 @@ textarea#jin:focus {
 .ins {
   background: var(--s2);
   border: none;
-  border-radius: var(--sp-8);
+  border-radius: var(--r-xl);
   padding: 18px var(--sp-20);
   position: relative;
 }
@@ -547,7 +794,7 @@ textarea#jin:focus {
 .ins-dot {
   width: 6px;
   height: 6px;
-  border-radius: 50%;
+  border-radius: var(--r-pill);
 }
 
 .ins-badge.g .ins-dot {
@@ -593,16 +840,13 @@ textarea#jin:focus {
 .ins-title {
   margin-bottom: 5px;
   padding-right: 80px;
-  font-size: 15px;
-  font-weight: 600;
+  font-size: var(--h4);
+  font-weight: var(--fw-semibold);
   color: var(--fg);
   letter-spacing: 0.3px;
 }
 
 .ins-text {
-  font-size: var(--fs-14);
-  color: var(--dim);
-  line-height: 1.7;
   padding-right: 80px;
 }
 
@@ -628,22 +872,16 @@ textarea#jin:focus {
   margin-bottom: var(--sp-4);
 }
 
-.ins-coaching-text {
-  font-size: var(--fs-14);
-  color: var(--dim);
-  line-height: 1.6;
-}
-
 .work-on-block {
   background: var(--s2);
-  border-radius: var(--sp-8);
+  border-radius: var(--r-xl);
   padding: var(--sp-16) var(--sp-20);
   margin: var(--sp-12) 0;
 }
 
 .work-on-title {
-  font-size: var(--fs-16);
-  font-weight: 600;
+  font-size: var(--h4);
+  font-weight: var(--fw-semibold);
   margin-bottom: var(--sp-8);
 }
 
@@ -660,24 +898,21 @@ textarea#jin:focus {
 }
 
 .work-on-desc {
-  font-size: var(--fs-14);
-  color: var(--dim);
-  line-height: 1.6;
   margin-bottom: var(--sp-8);
 }
 
 .work-on-action {
   font-size: var(--fs-14);
   color: var(--text);
-  line-height: 1.6;
+  line-height: var(--lh-body);
 }
 
 .panel-verdict {
-  font-size: var(--fs-16);
-  line-height: 1.5;
+  font-size: var(--h4);
+  line-height: var(--lh-normal);
   color: var(--text);
   background: var(--s2);
-  border-radius: var(--sp-8);
+  border-radius: var(--r-xl);
   padding: var(--sp-16) var(--sp-20);
   margin-bottom: var(--sp-24);
 }
@@ -703,7 +938,7 @@ textarea#jin:focus {
 .story-card-head {
   position: relative;
   padding: var(--sp-16) var(--sp-20);
-  border-radius: var(--sp-8);
+  border-radius: var(--r-xl);
 }
 
 .story-card-chev {
@@ -729,23 +964,17 @@ textarea#jin:focus {
 
 .story-card .ins-title {
   padding-right: 90px;
-  font-size: var(--fs-16);
+  font-size: var(--h4);
   margin-bottom: var(--sp-8);
 }
 
 .story-card .ins-text {
   padding-right: 0;
   margin-bottom: 0;
-  font-size: var(--fs-14);
-  line-height: 1.5;
-  color: var(--dim);
 }
 
 .story-teaser {
   margin-top: var(--sp-8);
-  font-size: var(--fs-13);
-  color: var(--dim);
-  line-height: 1.5;
   padding-right: var(--sp-24);
 }
 
@@ -756,9 +985,6 @@ textarea#jin:focus {
 .story-branches {
   margin: var(--sp-10) 0 var(--sp-14);
   padding-left: var(--sp-20);
-  font-size: var(--fs-14);
-  color: var(--dim);
-  line-height: 1.6;
 }
 
 .story-branches li {
@@ -772,7 +998,7 @@ textarea#jin:focus {
 .story-impact,
 .story-sowhat {
   font-size: var(--fs-14);
-  line-height: 1.6;
+  line-height: var(--lh-body);
   padding: var(--sp-12) 0 0;
   margin-top: var(--sp-12);
   border-top: var(--sp-1) solid var(--border);
@@ -790,7 +1016,7 @@ textarea#jin:focus {
   text-transform: uppercase;
   color: var(--gold);
   margin-right: var(--sp-8);
-  font-weight: 700;
+  font-weight: var(--fw-bold);
 }
 
 .story-impact .story-tag {
@@ -810,7 +1036,7 @@ textarea#jin:focus {
   border-radius: 0;
   padding: 0;
   font-size: var(--fs-13);
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
   color: var(--dim);
 }
 
@@ -839,9 +1065,9 @@ textarea#jin:focus {
 
 .ht-tag {
   font-size: var(--fs-11);
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
   padding: var(--sp-2) var(--sp-6);
-  border-radius: 3px;
+  border-radius: var(--r-sm);
   border: var(--sp-1) solid var(--border);
   background: var(--tint-light);
   color: var(--dim);
@@ -851,7 +1077,7 @@ textarea#jin:focus {
 .ht-tag.ht-seat {
   color: var(--gold);
   border-color: var(--gold-faint);
-  background: rgba(200, 169, 74, 0.06);
+  background: color-mix(in srgb, var(--gold) 6%, transparent);
 }
 
 .ht-tag.ht-flop {
@@ -859,8 +1085,8 @@ textarea#jin:focus {
 }
 
 .ht-tag.ht-flop-HU {
-  color: #c08a4c;
-  border-color: rgba(192, 138, 76, 0.35);
+  color: var(--gold);
+  border-color: color-mix(in srgb, var(--gold) 35%, transparent);
 }
 
 .ht-tag.ht-flop-3_way {
@@ -868,19 +1094,19 @@ textarea#jin:focus {
 }
 
 .ht-tag.ht-flop-multiway {
-  color: #b0b5c8;
+  color: var(--gto-white);
 }
 
 .ht-tag.ht-stack-short {
   color: var(--red);
-  border-color: rgba(190, 45, 45, 0.35);
-  background: rgba(190, 45, 45, 0.08);
+  border-color: color-mix(in srgb, var(--red) 35%, transparent);
+  background: color-mix(in srgb, var(--red) 8%, transparent);
 }
 
 .ht-tag.ht-stack-medium {
   color: var(--amber);
-  border-color: rgba(212, 132, 42, 0.35);
-  background: rgba(212, 132, 42, 0.06);
+  border-color: color-mix(in srgb, var(--amber) 35%, transparent);
+  background: color-mix(in srgb, var(--amber) 6%, transparent);
 }
 
 .ht-tag.ht-stack-standard {
@@ -888,9 +1114,9 @@ textarea#jin:focus {
 }
 
 .ht-tag.ht-stack-deep {
-  color: #6fa0d9;
-  border-color: rgba(111, 160, 217, 0.35);
-  background: rgba(111, 160, 217, 0.06);
+  color: var(--gto-blue);
+  border-color: color-mix(in srgb, var(--gto-blue) 35%, transparent);
+  background: color-mix(in srgb, var(--gto-blue) 6%, transparent);
 }
 
 .ht-tag.ht-stack-unknown {
@@ -907,18 +1133,16 @@ textarea#jin:focus {
 
 .card {
   border: var(--sp-1) solid var(--border);
-  border-radius: var(--sp-6);
+  border-radius: var(--r-lg);
   padding: var(--sp-14) var(--sp-16);
 }
 
 .dynamics-card {
-  background: rgba(255, 255, 255, 0.02);
+  background: color-mix(in srgb, var(--white) 2%, transparent);
 }
 
 .dynamics-card-head {
-  font-weight: 700;
-  font-size: var(--fs-14);
-  color: var(--gold);
+  font-weight: var(--fw-bold);
   margin-bottom: var(--sp-6);
 }
 
@@ -932,7 +1156,7 @@ textarea#jin:focus {
 .dynamics-card-sub {
   font-size: var(--fs-12);
   color: var(--text);
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
   margin-bottom: var(--sp-8);
 }
 
@@ -943,7 +1167,7 @@ textarea#jin:focus {
   font-size: var(--fs-12);
   color: var(--dim);
   padding: 3px 0;
-  border-top: var(--sp-1) solid rgba(255, 255, 255, 0.04);
+  border-top: var(--sp-1) solid color-mix(in srgb, var(--white) 4%, transparent);
 }
 
 .dynamics-card-kv span:first-child {
@@ -961,9 +1185,9 @@ textarea#jin:focus {
 .dynamics-vs {
   margin-top: var(--sp-10);
   padding: var(--sp-8) var(--sp-10);
-  border-radius: var(--sp-4);
+  border-radius: var(--r-md);
   border: var(--sp-1) solid var(--border);
-  background: rgba(255, 255, 255, 0.02);
+  background: color-mix(in srgb, var(--white) 2%, transparent);
 }
 
 .dynamics-vs-stat {
@@ -986,9 +1210,6 @@ textarea#jin:focus {
 }
 
 .dynamics-coaching {
-  font-size: var(--fs-13);
-  color: var(--dim);
-  line-height: 1.5;
   margin-bottom: var(--sp-8);
 }
 
@@ -1003,7 +1224,7 @@ textarea#jin:focus {
 .dynamics-vs-verdict {
   margin-top: var(--sp-4);
   font-size: var(--fs-11);
-  font-weight: 700;
+  font-weight: var(--fw-bold);
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
@@ -1025,18 +1246,18 @@ textarea#jin:focus {
 }
 
 .dynamics-vs.v-ok {
-  border-color: rgba(50, 170, 65, 0.35);
-  background: rgba(50, 170, 65, 0.06);
+  border-color: color-mix(in srgb, var(--green) 35%, transparent);
+  background: color-mix(in srgb, var(--green) 6%, transparent);
 }
 
 .dynamics-vs.v-low {
-  border-color: rgba(212, 132, 42, 0.35);
-  background: rgba(212, 132, 42, 0.06);
+  border-color: color-mix(in srgb, var(--amber) 35%, transparent);
+  background: color-mix(in srgb, var(--amber) 6%, transparent);
 }
 
 .dynamics-vs.v-high {
-  border-color: rgba(190, 45, 45, 0.35);
-  background: rgba(190, 45, 45, 0.08);
+  border-color: color-mix(in srgb, var(--red) 35%, transparent);
+  background: color-mix(in srgb, var(--red) 8%, transparent);
 }
 
 .dynamics-vs.v-ok .dynamics-vs-verdict {
@@ -1053,17 +1274,17 @@ textarea#jin:focus {
 
 .dynamics-pos-tbl tr.v-ok td:nth-child(2) {
   color: var(--green);
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
 }
 
 .dynamics-pos-tbl tr.v-low td:nth-child(2) {
   color: var(--amber);
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
 }
 
 .dynamics-pos-tbl tr.v-high td:nth-child(2) {
   color: var(--red);
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
 }
 
 .best-worst-grid {
@@ -1073,8 +1294,6 @@ textarea#jin:focus {
 }
 
 .best-worst-meta {
-  font-size: var(--fs-13);
-  color: var(--dim);
   margin-bottom: var(--sp-4);
 }
 
@@ -1083,8 +1302,6 @@ textarea#jin:focus {
 }
 
 .best-worst-patterns-head {
-  font-size: var(--fs-13);
-  color: var(--dim);
   margin-top: var(--sp-8);
   font-style: italic;
 }
@@ -1095,8 +1312,6 @@ textarea#jin:focus {
 }
 
 .best-worst-patterns li {
-  font-size: var(--fs-13);
-  color: var(--dim);
   margin-bottom: var(--sp-4);
 }
 
@@ -1113,149 +1328,8 @@ textarea#jin:focus {
 .profile-name,
 .welcome-intro-heading,
 .saved-card-hole {
-  font-family: 'Cormorant Garamond', serif;
-  font-weight: 700;
-}
-
-.gold-heading {
-  font-size: var(--fs-13);
-  color: var(--gold);
-  font-weight: 600;
-}
-
-.val-pos {
-  color: var(--green);
-}
-
-.val-neg {
-  color: var(--red);
-}
-
-.val-dim {
-  color: var(--dim);
-}
-
-.val-warn {
-  color: var(--amber);
-}
-
-.val-muted {
-  color: var(--muted);
-}
-
-.text-title {
-  font-family: 'Cormorant Garamond', serif;
-  font-weight: 700;
-  font-size: var(--fs-22);
-  line-height: 1.15;
-  color: var(--text);
-}
-
-.text-body {
-  font-size: var(--fs-13);
-  color: var(--dim);
-  line-height: 1.6;
-}
-
-.text-meta {
-  font-size: var(--fs-11);
-  color: var(--dim);
-}
-
-.label {
-  font-size: var(--fs-11);
-  letter-spacing: var(--sp-2);
-  color: var(--dim);
-  text-transform: uppercase;
-}
-
-.label.gold {
-  color: var(--gold);
-}
-
-.value {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: var(--fs-22);
-  font-weight: 700;
-  line-height: 1;
-}
-
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--sp-6);
-  cursor: pointer;
-  border: var(--sp-1) solid transparent;
-  border-radius: var(--sp-4);
-  background: transparent;
-  font-family: 'IBM Plex Mono', monospace;
-  transition: background .2s, color .2s, border-color .2s;
-}
-
-.btn-primary {
-  background: var(--gold);
-  border-color: var(--gold);
-  color: var(--bg);
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 17px;
-  letter-spacing: .05em;
-  padding: var(--sp-10);
-}
-
-.btn-primary:hover {
-  background: var(--gold2);
-  border-color: var(--gold2);
-}
-
-.btn-secondary {
-  border-color: var(--gold2);
-  color: var(--gold2);
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 17px;
-  letter-spacing: .05em;
-  padding: var(--sp-10);
-}
-
-.btn-secondary:hover {
-  background: var(--gold2);
-  color: var(--bg);
-}
-
-.btn-ghost {
-  border-color: var(--border);
-  color: var(--dim);
-  padding: var(--sp-4) var(--sp-10);
-  font-size: var(--fs-11);
-}
-
-.btn-ghost:hover:not([disabled]) {
-  border-color: var(--gold2);
-  color: var(--gold);
-}
-
-.btn-ghost[disabled] {
-  opacity: 0.3;
-  cursor: default;
-}
-
-.btn-icon {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  border-color: var(--border);
-  color: var(--dim);
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 15px;
-  font-weight: 700;
-  padding: 0;
-}
-
-.btn-icon:hover {
-  border-color: var(--gold);
-  color: var(--gold);
-  background: rgba(200, 169, 74, 0.08);
+  font-family: var(--serif);
+  font-weight: var(--fw-bold);
 }
 
 .mini-row {
@@ -1268,7 +1342,7 @@ textarea#jin:focus {
 .mini {
   background: transparent;
   border: var(--sp-1) solid var(--border);
-  border-radius: var(--sp-6);
+  border-radius: var(--r-lg);
   padding: var(--sp-12) var(--sp-14);
 }
 
@@ -1304,14 +1378,14 @@ textarea#jin:focus {
 
 .bar-track {
   background: var(--muted);
-  border-radius: var(--sp-2);
+  border-radius: var(--r-sm);
   height: 5px;
   overflow: hidden;
 }
 
 .bar-fill {
   height: 100%;
-  border-radius: var(--sp-2);
+  border-radius: var(--r-sm);
   transition: width .9s cubic-bezier(.4, 0, .2, 1);
 }
 
@@ -1367,14 +1441,14 @@ textarea#jin:focus {
 .ht-stack-track {
   height: 12px;
   background: transparent;
-  border-radius: var(--sp-2);
+  border-radius: var(--r-sm);
   overflow: hidden;
 }
 
 .ht-stack-inner {
   height: 100%;
   display: flex;
-  border-radius: var(--sp-2);
+  border-radius: var(--r-sm);
   overflow: hidden;
   transition: width .9s cubic-bezier(.4, 0, .2, 1);
 }
@@ -1391,7 +1465,7 @@ textarea#jin:focus {
 }
 
 .ht-seg-unplayed {
-  background: #2e3e2e;
+  background: var(--gto-unplayed);
   height: 100%;
 }
 
@@ -1413,7 +1487,7 @@ textarea#jin:focus {
 .ht-leg-sw {
   width: 9px;
   height: 9px;
-  border-radius: var(--sp-1);
+  border-radius: var(--r-sm);
 }
 
 .leg-sw-won {
@@ -1426,19 +1500,19 @@ textarea#jin:focus {
 }
 
 .leg-sw-unplayed {
-  background: #2e3e2e;
+  background: var(--gto-unplayed);
 }
 
 .leg-sw-low {
-  background: #1a2e1e;
+  background: var(--freq-faint);
 }
 
 .leg-sw-med {
-  background: #2e5835;
+  background: var(--freq-med);
 }
 
 .leg-sw-high {
-  background: rgb(50, 170, 65);
+  background: var(--green);
 }
 
 .tbl {
@@ -1479,7 +1553,7 @@ textarea#jin:focus {
 
 .stack-bar {
   height: 18px;
-  border-radius: var(--sp-4);
+  border-radius: var(--r-md);
   overflow: hidden;
   display: flex;
   margin: var(--sp-10) 0;
@@ -1508,7 +1582,7 @@ textarea#jin:focus {
 .stack-dot {
   width: 7px;
   height: 7px;
-  border-radius: 50%;
+  border-radius: var(--r-pill);
 }
 
 .range-grid {
@@ -1563,16 +1637,16 @@ textarea#jin:focus {
 }
 
 .rc[data-hero="unjudged"] span {
-  color: #1a1f1a;
+  color: var(--gto-dark-fg);
 }
 
 .rc[data-hero="none"] {
-  background: #0e1310;
-  border: var(--sp-1) solid #1a2a1c;
+  background: var(--gto-empty-bg);
+  border: var(--sp-1) solid var(--border);
 }
 
 .rc[data-hero="none"] span {
-  color: #2a3e2c;
+  color: var(--gto-empty-fg);
 }
 
 .range-grid-sm .rc span {
@@ -1580,7 +1654,7 @@ textarea#jin:focus {
 }
 
 .rc {
-  border-radius: var(--sp-2);
+  border-radius: var(--r-sm);
   aspect-ratio: 1;
   display: flex;
   align-items: center;
@@ -1591,10 +1665,10 @@ textarea#jin:focus {
 
 .rc span {
   font-size: var(--fs-10);
-  line-height: 1;
+  line-height: var(--lh-none);
   text-align: center;
-  color: #fff;
-  font-weight: 600;
+  color: var(--white);
+  font-weight: var(--fw-semibold);
   pointer-events: none;
 }
 
@@ -1622,7 +1696,7 @@ textarea#jin:focus {
 .leg-sw {
   width: 9px;
   height: 9px;
-  border-radius: var(--sp-2);
+  border-radius: var(--r-sm);
 }
 
 .tooltip {
@@ -1637,12 +1711,12 @@ textarea#jin:focus {
   position: fixed;
   top: 0;
   left: 0;
-  background: #0d150f;
+  background: var(--s1);
   border: var(--sp-1) solid var(--border);
   color: var(--text);
   font-size: var(--fs-12);
   padding: var(--sp-6) var(--sp-10);
-  border-radius: var(--sp-4);
+  border-radius: var(--r-md);
   pointer-events: none;
   z-index: 200;
   transition: opacity .15s;
@@ -1650,7 +1724,7 @@ textarea#jin:focus {
   min-width: 160px;
   white-space: normal;
   text-align: left;
-  line-height: 1.5;
+  line-height: var(--lh-normal);
 }
 
 .tooltip:hover .tip-box,
@@ -1672,7 +1746,7 @@ textarea#jin:focus {
 
 .hlog-tbl .hrow-pos {
   color: var(--gold);
-  font-weight: 500;
+  font-weight: var(--fw-medium);
 }
 
 .hlog-tbl .hrow-board {
@@ -1694,7 +1768,7 @@ textarea#jin:focus {
 
 .hlog-tbl .hrow-res {
   text-align: right;
-  font-weight: 500;
+  font-weight: var(--fw-medium);
 }
 
 
@@ -1713,17 +1787,17 @@ textarea#jin:focus {
   bottom: 120%;
   left: 50%;
   transform: translateX(-50%);
-  background: #0d150f;
+  background: var(--s1);
   border: var(--sp-1) solid var(--border);
   color: var(--text);
   font-size: var(--fs-12);
   padding: var(--sp-6) var(--sp-8);
-  border-radius: 3px;
+  border-radius: var(--r-sm);
   white-space: pre-line;
   text-align: left;
   width: max-content;
   max-width: 200px;
-  line-height: 1.4;
+  line-height: var(--lh-snug);
   z-index: 300;
   pointer-events: none;
 }
@@ -1749,13 +1823,13 @@ textarea#jin:focus {
 }
 
 .rc-unseen {
-  background: #0e1310;
-  border: var(--sp-1) solid #1a2a1c;
+  background: var(--gto-empty-bg);
+  border: var(--sp-1) solid var(--border);
 }
 
 .rc-unseen span {
-  color: #2a3e2c !important;
-  font-weight: 400;
+  color: var(--gto-empty-fg) !important;
+  font-weight: var(--fw-regular);
 }
 
 .rc[data-gto="red"] {
@@ -1779,21 +1853,21 @@ textarea#jin:focus {
 }
 
 .rc[data-gto="white"] span {
-  color: #1a1f1a;
+  color: var(--gto-dark-fg);
 }
 
 .rc[data-gto="grey"] span,
 .rc[data-gto="blue"] span {
-  color: #fff;
+  color: var(--white);
 }
 
 .rc[data-gto="none"] {
-  background: #0e1310;
-  border: var(--sp-1) solid #1a2a1c;
+  background: var(--gto-empty-bg);
+  border: var(--sp-1) solid var(--border);
 }
 
 .rc[data-gto="none"] span {
-  color: #2a3e2c;
+  color: var(--gto-empty-fg);
 }
 
 .rc.rc-played {
@@ -1811,19 +1885,19 @@ textarea#jin:focus {
 }
 
 .rc-undealt[data-gto="none"] {
-  background: #0e1310;
+  background: var(--gto-empty-bg);
 }
 
 .rc.rc-played[data-freq="low"] {
-  background: #24422a;
+  background: var(--freq-low);
 }
 
 .rc.rc-played[data-freq="med"] {
-  background: #2e5835;
+  background: var(--freq-med);
 }
 
 .rc.rc-played[data-freq="med-high"] {
-  background: #3a7a42;
+  background: var(--freq-high);
 }
 
 .rc.rc-played[data-freq="high"] {
@@ -1871,7 +1945,7 @@ textarea#jin:focus {
 }
 
 .range-subtab {
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--mono);
   font-size: var(--fs-12);
   letter-spacing: var(--sp-1);
   text-transform: uppercase;
@@ -1901,13 +1975,6 @@ textarea#jin:focus {
   margin-bottom: var(--sp-16);
 }
 
-.range-control-label {
-  font-size: var(--fs-12);
-  color: var(--dim);
-  text-transform: uppercase;
-  letter-spacing: var(--sp-1);
-}
-
 .range-stats {
   font-size: var(--fs-13);
   color: var(--text);
@@ -1918,8 +1985,6 @@ textarea#jin:focus {
 .range-empty,
 .range-loading,
 .range-error {
-  font-size: var(--fs-13);
-  color: var(--dim);
   margin-bottom: var(--sp-12);
 }
 
@@ -1931,9 +1996,9 @@ textarea#jin:focus {
   background: transparent;
   border: var(--sp-1) solid var(--border);
   color: var(--dim);
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--mono);
   cursor: pointer;
-  border-radius: var(--sp-4);
+  border-radius: var(--r-md);
 }
 
 .example-hand-btn:hover {
@@ -1962,12 +2027,12 @@ textarea#jin:focus {
 .bb-toggle {
   display: inline-flex;
   border: var(--sp-1) solid var(--border);
-  border-radius: var(--sp-4);
+  border-radius: var(--r-md);
   overflow: hidden;
   cursor: pointer;
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--mono);
   font-size: var(--fs-12);
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
 }
 
 .bb-opt {
@@ -1989,10 +2054,10 @@ textarea#jin:focus {
   background: var(--s2);
   border: var(--sp-1) solid var(--border);
   color: var(--text);
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--mono);
   font-size: var(--fs-12);
   padding: var(--sp-6) var(--sp-10);
-  border-radius: var(--sp-4);
+  border-radius: var(--r-md);
   outline: none;
 }
 
@@ -2021,16 +2086,16 @@ textarea#jin:focus {
   font-size: var(--fs-11);
   letter-spacing: var(--sp-1);
   color: var(--gold);
-  background: rgba(200, 169, 74, 0.06);
-  border: var(--sp-1) solid rgba(200, 169, 74, 0.15);
-  border-radius: var(--sp-4);
+  background: color-mix(in srgb, var(--gold) 6%, transparent);
+  border: var(--sp-1) solid color-mix(in srgb, var(--gold) 15%, transparent);
+  border-radius: var(--r-md);
   margin-bottom: var(--sp-16);
 }
 
 .tbl-spark {
   display: inline-block;
   height: 10px;
-  border-radius: var(--sp-2);
+  border-radius: var(--r-sm);
   min-width: 2px;
   vertical-align: middle;
   opacity: 0.5;
@@ -2049,7 +2114,7 @@ textarea#jin:focus {
   overflow-y: auto;
   overflow-x: auto;
   border: var(--sp-1) solid var(--border);
-  border-radius: var(--sp-6);
+  border-radius: var(--r-lg);
 }
 
 .players-table-scroll thead th {
@@ -2141,7 +2206,7 @@ textarea#jin:focus {
 }
 
 .fw-600 {
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
 }
 
 .link-gold {
@@ -2156,7 +2221,7 @@ textarea#jin:focus {
 .page-meta-link {
   cursor: pointer;
   padding: var(--sp-4) var(--sp-8);
-  border-radius: var(--sp-4);
+  border-radius: var(--r-md);
   border: 1px solid transparent;
   transition: border-color .2s, color .2s;
 }
@@ -2182,7 +2247,7 @@ textarea#jin:focus {
   padding: var(--sp-12) var(--sp-32);
   font-size: var(--fs-12);
   color: var(--amber);
-  background: rgba(212, 132, 42, 0.08);
+  background: color-mix(in srgb, var(--amber) 8%, transparent);
   border-bottom: 1px solid var(--border);
 }
 
@@ -2193,7 +2258,7 @@ textarea#jin:focus {
 
 .cta-count {
   font-size: var(--fs-32);
-  font-family: 'Cormorant Garamond', serif;
+  font-family: var(--serif);
   color: var(--text);
   margin-bottom: var(--sp-8);
 }
@@ -2246,16 +2311,14 @@ textarea#jin:focus {
 }
 
 .profile-type-name {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 28px;
-  font-weight: 700;
+  font-family: var(--serif);
+  font-size: var(--h1);
+  font-weight: var(--fw-bold);
   color: var(--gold);
-  line-height: 1;
+  line-height: var(--lh-none);
 }
 
 .profile-type-desc {
-  font-size: var(--fs-13);
-  color: var(--dim);
   margin-top: var(--sp-6);
 }
 
@@ -2344,8 +2407,6 @@ textarea#jin:focus {
 }
 
 .mini-meta {
-  font-size: var(--fs-11);
-  color: var(--dim);
   margin-top: var(--sp-4);
 }
 
@@ -2353,15 +2414,15 @@ textarea#jin:focus {
   display: inline-block;
   width: 10px;
   height: 3px;
-  border-radius: var(--sp-1);
+  border-radius: var(--r-sm);
 }
 
 .line-dot-blue {
-  background: #4a9eff;
+  background: var(--gto-blue);
 }
 
 .line-dot-red {
-  background: #e74c3c;
+  background: var(--red);
 }
 
 .row-hover {
@@ -2374,7 +2435,7 @@ textarea#jin:focus {
 }
 
 .profile-name {
-  font-size: clamp(28px, 4vw, 44px);
+  font-size: var(--h1);
   color: var(--gold);
   margin-bottom: var(--sp-4);
 }
@@ -2400,30 +2461,25 @@ textarea#jin:focus {
 }
 
 .range-hand-row-pos {
-  font-size: var(--fs-11);
-  color: var(--dim);
   min-width: 28px;
-  text-transform: uppercase;
 }
 
 .range-hand-row-hole {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: var(--serif);
   font-size: 18px;
-  font-weight: 700;
-  line-height: 1;
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-none);
   color: var(--text);
   min-width: 52px;
 }
 
 .range-hand-row-board {
-  font-size: var(--fs-12);
-  color: var(--dim);
   letter-spacing: 0.5px;
 }
 
 .range-hand-row-result {
   font-size: var(--fs-14);
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
   text-align: right;
   white-space: nowrap;
 }
@@ -2435,16 +2491,8 @@ textarea#jin:focus {
 }
 
 .range-hand-row-actions {
-  font-size: var(--fs-12);
-  color: var(--dim);
-  line-height: 1.4;
+  line-height: var(--lh-snug);
   padding-left: 40px;
-}
-
-.player-detail-name {
-  font-size: var(--fs-14);
-  font-weight: 600;
-  color: var(--gold);
 }
 
 .tip-q {
@@ -2464,7 +2512,7 @@ textarea#jin:focus {
 .trends-grid>div {
   background: var(--s1);
   border: var(--sp-1) solid var(--border);
-  border-radius: var(--sp-6);
+  border-radius: var(--r-lg);
   padding: var(--sp-16);
 }
 
@@ -2487,7 +2535,7 @@ textarea#jin:focus {
 .modal-box {
   background: var(--s1);
   border: var(--sp-1) solid var(--border);
-  border-radius: var(--sp-8);
+  border-radius: var(--r-xl);
   max-width: 600px;
   width: 90vw;
   max-height: 80vh;
@@ -2533,7 +2581,7 @@ textarea#jin:focus {
 .modal-action-line {
   font-size: var(--fs-12);
   padding: var(--sp-4) 0;
-  border-bottom: var(--sp-1) solid rgba(26, 42, 28, 0.5);
+  border-bottom: var(--sp-1) solid color-mix(in srgb, var(--border) 50%, transparent);
   color: var(--text);
 }
 
@@ -2548,7 +2596,7 @@ textarea#jin:focus {
   text-transform: uppercase;
   padding: var(--sp-10) 0 var(--sp-4);
   border-bottom: none;
-  font-weight: 500;
+  font-weight: var(--fw-medium);
 }
 
 .modal-coaching {
@@ -2556,10 +2604,10 @@ textarea#jin:focus {
   padding: var(--sp-12);
   background: var(--s2);
   border: var(--sp-1) solid var(--border);
-  border-radius: 5px;
+  border-radius: var(--r-md);
   font-size: var(--fs-13);
   color: var(--text);
-  line-height: 1.7;
+  line-height: var(--lh-loose);
 }
 
 .modal-coaching-head {
@@ -2581,7 +2629,7 @@ textarea#jin:focus {
 .eq-sim {
   margin-top: var(--sp-16);
   border: var(--sp-1) solid var(--border);
-  border-radius: var(--sp-6);
+  border-radius: var(--r-lg);
   padding: var(--sp-12) var(--sp-14);
   background: var(--s1);
 }
@@ -2597,17 +2645,15 @@ textarea#jin:focus {
 
 .eq-sim-title {
   color: var(--gold);
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--mono);
   font-size: var(--fs-11);
-  font-weight: 500;
+  font-weight: var(--fw-medium);
   text-transform: uppercase;
   letter-spacing: var(--sp-1);
 }
 
 .eq-sim-note {
-  color: var(--dim);
-  font-size: var(--fs-11);
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--mono);
 }
 
 .eq-row {
@@ -2626,8 +2672,6 @@ textarea#jin:focus {
 }
 
 .eq-meta-line {
-  font-size: var(--fs-11);
-  color: var(--dim);
   margin-top: var(--sp-4);
   padding-left: var(--sp-2);
   font-family: var(--mono);
@@ -2640,17 +2684,17 @@ textarea#jin:focus {
 
 .eq-street {
   color: var(--gold);
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--mono);
   font-size: var(--fs-12);
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
   min-width: 58px;
 }
 
 .eq-pct {
   color: var(--text);
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--mono);
   font-size: var(--fs-13);
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
   text-align: right;
   min-width: 48px;
 }
@@ -2659,7 +2703,7 @@ textarea#jin:focus {
   flex: 1;
   height: 8px;
   background: var(--border);
-  border-radius: var(--sp-4);
+  border-radius: var(--r-md);
   overflow: hidden;
   min-width: 60px;
 }
@@ -2667,14 +2711,14 @@ textarea#jin:focus {
 .eq-bar-fill {
   height: 100%;
   background: var(--green);
-  border-radius: var(--sp-4);
+  border-radius: var(--r-md);
   transition: width .3s;
 }
 
 .eq-detail {
   font-size: var(--fs-11);
-  font-family: 'IBM Plex Mono', monospace;
-  line-height: 1.5;
+  font-family: var(--mono);
+  line-height: var(--lh-normal);
   margin-top: var(--sp-4);
 }
 
@@ -2696,7 +2740,7 @@ textarea#jin:focus {
 
 .eq-summary-label {
   font-size: var(--fs-11);
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
   color: var(--gold);
   font-family: var(--mono);
   text-transform: uppercase;
@@ -2707,7 +2751,7 @@ textarea#jin:focus {
 .eq-summary-text {
   font-size: var(--fs-12);
   font-family: var(--mono);
-  line-height: 1.6;
+  line-height: var(--lh-body);
 }
 
 .eq-caveats {
@@ -2716,8 +2760,8 @@ textarea#jin:focus {
   border-top: var(--sp-1) solid var(--border);
   font-size: var(--fs-10);
   color: var(--dim);
-  font-family: 'IBM Plex Mono', monospace;
-  line-height: 1.5;
+  font-family: var(--mono);
+  line-height: var(--lh-normal);
 }
 
 .eq-spinner {
@@ -2741,14 +2785,12 @@ textarea#jin:focus {
   height: 18px;
   border: var(--sp-2) solid var(--border);
   border-top-color: var(--gold);
-  border-radius: 50%;
+  border-radius: var(--r-pill);
   animation: eq-spin .8s linear infinite;
 }
 
 .eq-spinner-text {
-  color: var(--dim);
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: var(--fs-11);
+  font-family: var(--mono);
 }
 
 @keyframes eq-spin {
@@ -2762,7 +2804,7 @@ textarea#jin:focus {
   color: var(--dim);
   cursor: pointer;
   transition: color .15s, transform .15s;
-  line-height: 1;
+  line-height: var(--lh-none);
   opacity: 0.5;
   padding: var(--sp-6) var(--sp-8);
 }
@@ -2793,7 +2835,7 @@ tr.hrow:hover .hrow-star {
   cursor: pointer;
   transition: color .15s, transform .15s;
   padding: var(--sp-6) var(--sp-8);
-  line-height: 1;
+  line-height: var(--lh-none);
 }
 
 .modal-star-btn:hover {
@@ -2845,11 +2887,6 @@ tr.hrow:hover .hrow-star {
   transition: transform .2s;
 }
 
-.saved-toggle-count {
-  font-size: var(--fs-11);
-  color: var(--dim);
-}
-
 .saved-section-body {
   max-height: 300px;
   overflow-y: auto;
@@ -2894,11 +2931,11 @@ tr.hrow:hover .hrow-star {
 
 .saved-pos {
   color: var(--gold2);
-  font-weight: 500;
+  font-weight: var(--fw-medium);
 }
 
 .saved-res {
-  font-weight: 500;
+  font-weight: var(--fw-medium);
 }
 
 
@@ -2910,7 +2947,7 @@ tr.hrow:hover .hrow-star {
   cursor: pointer;
   padding: 0 0 0 var(--sp-8);
   transition: color .15s, transform .15s;
-  line-height: 1;
+  line-height: var(--lh-none);
 }
 
 .saved-unsave:hover {
@@ -2919,14 +2956,10 @@ tr.hrow:hover .hrow-star {
 }
 
 .saved-card-board {
-  font-size: var(--fs-11);
-  color: var(--dim);
   margin-bottom: var(--sp-4);
 }
 
 .saved-card-acts {
-  font-size: var(--fs-11);
-  color: var(--dim);
   margin-bottom: var(--sp-8);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -2936,7 +2969,7 @@ tr.hrow:hover .hrow-star {
 .saved-card-note-wrap {
   background: var(--s2);
   border: var(--sp-1) solid var(--border);
-  border-radius: var(--sp-4);
+  border-radius: var(--r-md);
   padding: var(--sp-6) var(--sp-8);
   margin-bottom: var(--sp-6);
 }
@@ -2944,7 +2977,7 @@ tr.hrow:hover .hrow-star {
 .saved-note-preview {
   font-size: var(--fs-11);
   color: var(--text);
-  line-height: 1.5;
+  line-height: var(--lh-normal);
   display: -webkit-box;
   -webkit-line-clamp: 3;
   line-clamp: 3;
@@ -2953,15 +2986,11 @@ tr.hrow:hover .hrow-star {
 }
 
 .saved-card-note-empty {
-  font-size: var(--fs-10);
-  color: var(--muted);
   font-style: italic;
   margin-bottom: var(--sp-6);
 }
 
 .saved-card-date {
-  font-size: var(--fs-10);
-  color: var(--muted);
   text-align: right;
 }
 
@@ -3001,7 +3030,7 @@ tr.hrow:hover .hrow-star {
 }
 
 .welcome-whatsnew-label {
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--mono);
   font-size: var(--fs-11);
   color: var(--dim);
   letter-spacing: 0.08em;
@@ -3015,7 +3044,7 @@ tr.hrow:hover .hrow-star {
   text-align: left;
   background: var(--s1);
   border: var(--sp-1) solid var(--border);
-  border-radius: var(--sp-6);
+  border-radius: var(--r-lg);
   padding: var(--sp-16) var(--sp-20);
   cursor: pointer;
   transition: background .15s, border-color .15s, transform .15s;
@@ -3051,12 +3080,12 @@ tr.hrow:hover .hrow-star {
 
 .whatsnew-card-tag {
   display: inline-block;
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--mono);
   font-size: var(--fs-11);
   color: var(--gold);
   background: var(--bg);
   border: var(--sp-1) solid var(--gold2);
-  border-radius: var(--sp-4);
+  border-radius: var(--r-md);
   padding: var(--sp-2) var(--sp-8);
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -3064,31 +3093,23 @@ tr.hrow:hover .hrow-star {
 }
 
 .whatsnew-card-name {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: var(--fs-19);
+  font-family: var(--serif);
+  font-size: var(--h3);
   color: var(--gold);
   margin-bottom: var(--sp-6);
 }
 
 .whatsnew-card-hero .whatsnew-card-name {
-  font-size: var(--fs-22);
-}
-
-.whatsnew-card-desc {
-  font-size: var(--fs-13);
-  color: var(--dim);
-  line-height: 1.55;
+  font-size: var(--h2);
 }
 
 .whatsnew-card-cta {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: var(--fs-13);
-  color: var(--gold);
+  font-family: var(--mono);
   margin-top: var(--sp-12);
 }
 
 .welcome-intro-heading {
-  font-size: clamp(24px, 4vw, 32px);
+  font-size: var(--h1);
   color: var(--gold);
   margin-bottom: var(--sp-6);
 }
@@ -3106,7 +3127,7 @@ tr.hrow:hover .hrow-star {
   gap: var(--sp-16);
   padding: var(--sp-12) var(--sp-14);
   border: var(--sp-1) solid var(--border);
-  border-radius: var(--sp-4);
+  border-radius: var(--r-md);
   margin-bottom: var(--sp-4);
   background: var(--s1);
   cursor: pointer;
@@ -3123,9 +3144,6 @@ tr.hrow:hover .hrow-star {
 }
 
 .welcome-tip {
-  font-size: var(--fs-13);
-  color: var(--dim);
-  line-height: 1.6;
   padding: var(--sp-8) 0;
   border-bottom: var(--sp-1) solid var(--border);
 }
@@ -3162,10 +3180,10 @@ tr.hrow:hover .hrow-star {
   border: var(--sp-1) solid var(--border);
   color: var(--dim);
   font-size: 20px;
-  line-height: 1;
+  line-height: var(--lh-none);
   width: 28px;
   height: 28px;
-  border-radius: 50%;
+  border-radius: var(--r-pill);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -3189,7 +3207,7 @@ tr.hrow:hover .hrow-star {
 .tips-dot {
   width: 6px;
   height: 6px;
-  border-radius: 50%;
+  border-radius: var(--r-pill);
   background: var(--border);
   cursor: pointer;
   transition: background .2s;
@@ -3230,12 +3248,12 @@ tr.hrow:hover .hrow-star {
   grid-row: 1 / 3;
   width: 28px;
   height: 28px;
-  border-radius: 50%;
+  border-radius: var(--r-pill);
   border: var(--sp-1) solid var(--gold2);
   color: var(--gold);
-  font-family: 'Cormorant Garamond', serif;
+  font-family: var(--serif);
   font-size: 15px;
-  font-weight: 700;
+  font-weight: var(--fw-bold);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3270,19 +3288,19 @@ tr.hrow:hover .hrow-star {
   flex-shrink: 0;
   padding: var(--sp-10) var(--sp-28);
   background: var(--gold);
-  color: #07090a;
+  color: var(--bg);
   border: none;
-  border-radius: var(--sp-6);
-  font-family: 'IBM Plex Mono', monospace;
+  border-radius: var(--r-lg);
+  font-family: var(--mono);
   font-size: var(--fs-14);
-  font-weight: 500;
+  font-weight: var(--fw-medium);
   cursor: pointer;
   transition: background .2s, transform .15s;
   letter-spacing: 0.02em;
 }
 
 .take-tour-btn:hover {
-  background: #d4b854;
+  background: var(--gold);
   transform: translateY(-1px);
 }
 
@@ -3297,19 +3315,19 @@ tr.hrow:hover .hrow-star {
 .introjs-helperLayer {
   background: transparent !important;
   border: var(--sp-1) solid var(--gold) !important;
-  border-radius: var(--sp-6) !important;
+  border-radius: var(--r-lg) !important;
   box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6) !important;
 }
 
 .introjs-tooltip,
 .tc-tour-tooltip {
-  background: #0d1210 !important;
+  background: var(--s1) !important;
   border: var(--sp-1) solid var(--border) !important;
-  border-radius: var(--sp-8) !important;
+  border-radius: var(--r-xl) !important;
   color: var(--text) !important;
-  font-family: 'IBM Plex Mono', monospace !important;
+  font-family: var(--mono) !important;
   font-size: var(--fs-13) !important;
-  line-height: 1.6 !important;
+  line-height: var(--lh-body) !important;
   box-shadow: 0 8px 32px var(--bg-overlay) !important;
   max-width: 360px !important;
   padding: 18px var(--sp-20) !important;
@@ -3321,8 +3339,8 @@ tr.hrow:hover .hrow-star {
 
 .introjs-tooltip-title {
   color: var(--gold) !important;
-  font-family: 'Cormorant Garamond', serif !important;
-  font-weight: 600 !important;
+  font-family: var(--serif) !important;
+  font-weight: var(--fw-semibold) !important;
   font-size: var(--fs-16) !important;
 }
 
@@ -3333,7 +3351,7 @@ tr.hrow:hover .hrow-star {
 
 .introjs-tooltiptext strong {
   color: var(--gold);
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
 }
 
 .introjs-arrow {
@@ -3341,19 +3359,19 @@ tr.hrow:hover .hrow-star {
 }
 
 .introjs-arrow.top {
-  border-bottom-color: #0d1210 !important;
+  border-bottom-color: var(--s1) !important;
 }
 
 .introjs-arrow.bottom {
-  border-top-color: #0d1210 !important;
+  border-top-color: var(--s1) !important;
 }
 
 .introjs-arrow.left {
-  border-right-color: #0d1210 !important;
+  border-right-color: var(--s1) !important;
 }
 
 .introjs-arrow.right {
-  border-left-color: #0d1210 !important;
+  border-left-color: var(--s1) !important;
 }
 
 .introjs-tooltipbuttons {
@@ -3365,9 +3383,9 @@ tr.hrow:hover .hrow-star {
 .introjs-button {
   background: transparent !important;
   border: var(--sp-1) solid var(--border) !important;
-  border-radius: var(--sp-4) !important;
+  border-radius: var(--r-md) !important;
   color: var(--text) !important;
-  font-family: 'IBM Plex Mono', monospace !important;
+  font-family: var(--mono) !important;
   font-size: var(--fs-12) !important;
   padding: 5px var(--sp-14) !important;
   text-shadow: none !important;
@@ -3377,7 +3395,7 @@ tr.hrow:hover .hrow-star {
 .introjs-button:hover {
   border-color: var(--gold) !important;
   color: var(--gold) !important;
-  background: rgba(200, 169, 74, 0.08) !important;
+  background: color-mix(in srgb, var(--gold) 8%, transparent) !important;
 }
 
 .introjs-button:focus {
@@ -3392,14 +3410,14 @@ tr.hrow:hover .hrow-star {
 .introjs-donebutton {
   background: var(--gold) !important;
   border-color: var(--gold) !important;
-  color: #07090a !important;
-  font-weight: 500 !important;
+  color: var(--bg) !important;
+  font-weight: var(--fw-medium) !important;
 }
 
 .introjs-donebutton:hover {
-  background: #d4b854 !important;
-  border-color: #d4b854 !important;
-  color: #07090a !important;
+  background: var(--gold) !important;
+  border-color: var(--gold) !important;
+  color: var(--bg) !important;
 }
 
 .introjs-progressbar {
@@ -3448,14 +3466,14 @@ tr.hrow:hover .hrow-star {
   width: 100%;
   border-collapse: collapse;
   font-size: var(--fs-12);
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--mono);
 }
 
 .allin-table th {
   text-align: left;
   padding: var(--sp-8) var(--sp-10);
   color: var(--dim);
-  font-weight: 400;
+  font-weight: var(--fw-regular);
   font-size: var(--fs-10);
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -3484,7 +3502,7 @@ tr.hrow:hover .hrow-star {
 }
 
 .allin-card.r {
-  color: #e74c3c;
+  color: var(--red);
 }
 
 .allin-card.b {
@@ -3496,8 +3514,8 @@ tr.hrow:hover .hrow-star {
   color: var(--dim);
   margin-bottom: var(--sp-12);
   padding: var(--sp-8) var(--sp-12);
-  background: rgba(255, 255, 255, 0.02);
-  border-radius: var(--sp-6);
+  background: color-mix(in srgb, var(--white) 2%, transparent);
+  border-radius: var(--r-lg);
   border: var(--sp-1) solid var(--border);
 }
 
@@ -3511,7 +3529,7 @@ tr.hrow:hover .hrow-star {
 .compare-vs {
   font-size: var(--fs-14);
   color: var(--dim);
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
 }
 
 .compare-table {
@@ -3537,17 +3555,12 @@ tr.hrow:hover .hrow-star {
 }
 
 .compare-table tr:hover {
-  background: rgba(255, 255, 255, 0.02);
+  background: color-mix(in srgb, var(--white) 2%, transparent);
 }
 
 .compare-better {
   color: var(--green);
-  font-weight: 500;
-}
-
-.compare-edge {
-  font-size: var(--fs-12);
-  color: var(--dim);
+  font-weight: var(--fw-medium);
 }
 
 .compare-h2h {
@@ -3574,46 +3587,46 @@ tr.hrow:hover .hrow-star {
   padding: var(--sp-8) var(--sp-12);
   background: var(--s2);
   border: var(--sp-1) solid var(--border);
-  border-radius: var(--sp-6);
+  border-radius: var(--r-lg);
   font-size: var(--fs-13);
   color: var(--text);
-  line-height: 1.4;
+  line-height: var(--lh-snug);
 }
 
 .board-texture-badge {
   display: inline-block;
   padding: var(--sp-2) var(--sp-8);
-  border-radius: var(--sp-4);
+  border-radius: var(--r-md);
   font-size: var(--fs-10);
-  font-family: 'IBM Plex Mono', monospace;
-  font-weight: 500;
+  font-family: var(--mono);
+  font-weight: var(--fw-medium);
   letter-spacing: 0.02em;
   margin-right: var(--sp-6);
   vertical-align: middle;
 }
 
 .tex-dry {
-  background: rgba(82, 183, 136, 0.15);
+  background: color-mix(in srgb, var(--green) 15%, transparent);
   color: var(--green);
 }
 
 .tex-med {
-  background: rgba(212, 132, 42, 0.15);
+  background: color-mix(in srgb, var(--amber) 15%, transparent);
   color: var(--amber);
 }
 
 .tex-wet {
-  background: rgba(196, 69, 69, 0.15);
+  background: color-mix(in srgb, var(--red) 15%, transparent);
   color: var(--red);
 }
 
 .draw-outs {
   display: inline-block;
   padding: var(--sp-1) var(--sp-6);
-  border-radius: 3px;
+  border-radius: var(--r-sm);
   font-size: var(--fs-10);
-  font-family: 'IBM Plex Mono', monospace;
-  background: rgba(212, 132, 42, 0.12);
+  font-family: var(--mono);
+  background: color-mix(in srgb, var(--amber) 12%, transparent);
   color: var(--amber);
   margin-left: var(--sp-4);
 }
@@ -3628,17 +3641,17 @@ tr.hrow:hover .hrow-star {
 .eq-made-hand {
   display: inline-block;
   padding: var(--sp-2) var(--sp-8);
-  border-radius: var(--sp-4);
+  border-radius: var(--r-md);
   font-size: var(--fs-11);
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--mono);
   color: var(--text);
-  font-weight: 500;
-  background: rgba(255, 255, 255, 0.06);
+  font-weight: var(--fw-medium);
+  background: var(--tint-light-2);
 }
 
 .villain-profile-line {
   font-size: var(--fs-10);
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--mono);
   color: var(--dim);
   margin-top: var(--sp-2);
 }
@@ -3649,8 +3662,8 @@ tr.hrow:hover .hrow-star {
   gap: var(--sp-6);
   padding: var(--sp-4) var(--sp-10);
   border: var(--sp-1) solid var(--border);
-  border-radius: var(--sp-4);
-  font-family: 'IBM Plex Mono', monospace;
+  border-radius: var(--r-md);
+  font-family: var(--mono);
   font-size: var(--fs-12);
   color: var(--text);
   background: var(--s2);
@@ -3664,7 +3677,7 @@ tr.hrow:hover .hrow-star {
 
 .style-display .sd-you-val {
   color: var(--text);
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
 }
 
 .style-display .sd-arrow {
@@ -3676,11 +3689,11 @@ tr.hrow:hover .hrow-star {
   background: transparent;
   color: var(--gold);
   border: var(--sp-1) solid var(--border);
-  border-radius: 3px;
+  border-radius: var(--r-sm);
   padding: var(--sp-2) var(--sp-6);
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--mono);
   font-size: var(--fs-12);
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
   cursor: pointer;
 }
 
@@ -3711,7 +3724,7 @@ tr.hrow:hover .hrow-star {
 }
 
 .style-welcome-eyebrow {
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--mono);
   font-size: var(--fs-12);
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -3720,11 +3733,11 @@ tr.hrow:hover .hrow-star {
 }
 
 .style-welcome-headline {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 44px;
-  font-weight: 700;
+  font-family: var(--serif);
+  font-size: var(--h1);
+  font-weight: var(--fw-bold);
   color: var(--text);
-  line-height: 1.15;
+  line-height: var(--lh-tight);
   margin-bottom: var(--sp-14);
 }
 
@@ -3737,12 +3750,12 @@ tr.hrow:hover .hrow-star {
 .style-card {
   background: var(--s1);
   border: var(--sp-1) solid var(--border);
-  border-radius: var(--sp-8);
+  border-radius: var(--r-xl);
   padding: 22px 18px;
   text-align: left;
   cursor: pointer;
   transition: border-color .2s, transform .15s, background .2s;
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--mono);
   color: var(--text);
 }
 
@@ -3753,9 +3766,9 @@ tr.hrow:hover .hrow-star {
 }
 
 .style-card-name {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 26px;
-  font-weight: 700;
+  font-family: var(--serif);
+  font-size: var(--h2);
+  font-weight: var(--fw-bold);
   color: var(--gold);
   margin-bottom: var(--sp-8);
 }
@@ -3778,7 +3791,7 @@ tr.hrow:hover .hrow-star {
   height: 420px;
   background: var(--s1);
   border: var(--sp-1) solid var(--border);
-  border-radius: var(--sp-6);
+  border-radius: var(--r-lg);
   padding: var(--sp-12);
 }
 
@@ -3786,7 +3799,7 @@ tr.hrow:hover .hrow-star {
   display: flex;
   flex-wrap: wrap;
   gap: var(--sp-16);
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--mono);
   font-size: var(--fs-12);
   color: var(--text);
 }
@@ -3800,26 +3813,26 @@ tr.hrow:hover .hrow-star {
 .sm-dot {
   width: 11px;
   height: 11px;
-  border-radius: 50%;
+  border-radius: var(--r-pill);
   display: inline-block;
 }
 
 .sm-dot-you {
   background: var(--green);
-  border: var(--sp-2) solid #fff;
+  border: var(--sp-2) solid var(--white);
 }
 
 .sm-dot-pos {
-  background: rgba(160, 200, 240, 0.7);
+  background: var(--dot-pos);
 }
 
 .sm-dot-seat {
-  background: rgba(200, 160, 220, 0.7);
+  background: var(--dot-seat);
 }
 
 .sm-dot-tag {
-  background: rgba(200, 200, 200, 0.7);
-  border-radius: var(--sp-2);
+  background: var(--dot-tag);
+  border-radius: var(--r-sm);
   transform: rotate(45deg);
 }
 
@@ -3836,8 +3849,8 @@ body.maintenance #app {
   display: none;
   position: fixed;
   inset: 0;
-  background: var(--bg, #0e1411);
-  color: var(--text, #e8e6dd);
+  background: var(--bg);
+  color: var(--text);
   text-align: center;
   z-index: 99999;
   padding: 48px var(--sp-24);
@@ -3851,29 +3864,29 @@ body.maintenance #maintenance {
 }
 
 .m-eyebrow {
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--mono);
   font-size: var(--fs-13);
   letter-spacing: 0.18em;
-  color: var(--dim, #8a8c83);
+  color: var(--dim);
   text-transform: uppercase;
   margin-bottom: 18px;
 }
 
 .m-title {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: var(--serif);
   font-size: 88px;
-  font-weight: 700;
-  line-height: 1;
-  color: var(--gold, #c79a4d);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-none);
+  color: var(--gold);
   margin-bottom: 18px;
 }
 
 .m-sub {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: var(--fs-16);
-  color: var(--text, #e8e6dd);
+  font-family: var(--mono);
+  font-size: var(--h4);
+  color: var(--text);
   max-width: 520px;
-  line-height: 1.5;
+  line-height: var(--lh-normal);
   margin-bottom: 36px;
 }
 
@@ -3883,24 +3896,24 @@ body.maintenance #maintenance {
 }
 
 .mc {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: var(--serif);
   font-size: 28px;
   width: 44px;
   height: 60px;
-  border: var(--sp-1) solid var(--border, #2a3530);
-  border-radius: var(--sp-6);
+  border: var(--sp-1) solid var(--border);
+  border-radius: var(--r-lg);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.02);
+  background: color-mix(in srgb, var(--white) 2%, transparent);
 }
 
 .mc.b {
-  color: var(--text, #e8e6dd);
+  color: var(--text);
 }
 
 .mc.r {
-  color: #c75a5a;
+  color: var(--red);
 }
 
 .cr-toolbar {
@@ -3929,22 +3942,22 @@ body.maintenance #maintenance {
 
 .cr-sentence-wrap {
   background: var(--s2);
-  border-radius: var(--sp-8);
+  border-radius: var(--r-xl);
   padding: var(--sp-20) var(--sp-24);
   margin-bottom: var(--sp-28);
 }
 
 .cr-sentence {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: var(--serif);
   font-size: var(--fs-22);
-  line-height: 1.7;
+  line-height: var(--lh-loose);
   color: var(--text);
 }
 
 .cr-sentence+.cr-vs,
 .cr-vs {
   text-align: center;
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--mono);
   font-size: var(--fs-12);
   color: var(--dim);
   letter-spacing: var(--sp-4);
@@ -3958,7 +3971,7 @@ body.maintenance #maintenance {
 
 .cr-seg-tag {
   display: inline-block;
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--mono);
   font-size: var(--fs-12);
   color: var(--gold);
   letter-spacing: var(--sp-2);
@@ -3994,10 +4007,10 @@ body.maintenance #maintenance {
   background: transparent;
   border: var(--sp-1) dashed var(--border);
   color: var(--dim);
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--mono);
   font-size: var(--fs-12);
   padding: var(--sp-4) var(--sp-10);
-  border-radius: var(--sp-4);
+  border-radius: var(--r-md);
   margin-left: var(--sp-12);
   cursor: pointer;
   vertical-align: middle;
@@ -4013,7 +4026,7 @@ body.maintenance #maintenance {
   z-index: 200;
   background: var(--s1);
   border: var(--sp-1) solid var(--border);
-  border-radius: var(--sp-8);
+  border-radius: var(--r-xl);
   padding: var(--sp-12);
   min-width: 220px;
   max-width: 320px;
@@ -4048,11 +4061,11 @@ body.maintenance #maintenance {
   background: transparent;
   border: none;
   color: var(--text);
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--mono);
   font-size: var(--fs-13);
   text-align: left;
   padding: var(--sp-6) var(--sp-8);
-  border-radius: var(--sp-4);
+  border-radius: var(--r-md);
   cursor: pointer;
   width: 100%;
 }
@@ -4084,9 +4097,9 @@ body.maintenance #maintenance {
   background: transparent;
   border: var(--sp-1) solid var(--border);
   color: var(--red);
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--mono);
   font-size: var(--fs-12);
-  border-radius: var(--sp-4);
+  border-radius: var(--r-md);
   cursor: pointer;
 }
 
@@ -4107,7 +4120,7 @@ body.maintenance #maintenance {
 .cr-tile,
 .cr-chart-card {
   background: var(--s2);
-  border-radius: var(--sp-8);
+  border-radius: var(--r-xl);
   padding: var(--sp-16) var(--sp-20);
 }
 
@@ -4132,7 +4145,7 @@ body.maintenance #maintenance {
 }
 
 .cr-tile-mini-label {
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--mono);
   font-size: var(--fs-10);
   color: var(--dim);
   letter-spacing: var(--sp-1);

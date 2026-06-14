@@ -2,8 +2,8 @@
   var F = Sections.section('showdown', 'Showdown');
   var SHOWDOWN_BAND = { tight: 24, loose: 30 };    // WTSD target.
   var WSD_BAND = { tight: 50, loose: 60 };          // Won-at-showdown target.
-  var MIN_AGG = (typeof MIN_AGGREGATE === 'number') ? MIN_AGGREGATE : 30;
-  var MIN_AX = (typeof MIN_AXIS === 'number') ? MIN_AXIS : 20;
+  var MIN_AGG = MIN_AGGREGATE;
+  var MIN_AX = MIN_AXIS;
 
   function handIsShowdown(h) {
     return !!isShowdown(h);

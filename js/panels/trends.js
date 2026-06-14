@@ -43,7 +43,7 @@ function renderTrends(container, hands, meta, overallData) {
   var sorted = hands.slice().sort(function(a, b) { return (a.timestamp || 0) - (b.timestamp || 0); });
   if (sorted.length < 5) {
     container.innerHTML = '<div class="panel-title">Trends</div>' +
-      '<div class="panel-desc">Session-over-session charts for win rate, VPIP, and P&L.</div>' +
+      '<div class="text-body panel-desc">Session-over-session charts for win rate, VPIP, and P&L.</div>' +
       '<div class="panel-verdict">Need at least 5 hands to show trends. Keep playing and tracking.</div>';
     return;
   }

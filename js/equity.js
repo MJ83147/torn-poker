@@ -118,7 +118,7 @@ function renderEquityResults(container, simResult) {
   }
 
   var html = '<div class="eq-sim">';
-  html += '<div class="eq-sim-header"><span class="eq-sim-title">Equity Simulation</span><span class="eq-sim-note">' + headerNote + '</span></div>';
+  html += '<div class="eq-sim-header"><span class="eq-sim-title">Equity Simulation</span><span class="text-meta eq-sim-note">' + headerNote + '</span></div>';
 
   var curvePoints = [];
 
@@ -152,7 +152,7 @@ function renderEquityResults(container, simResult) {
       metaParts.push(res.playersActive + '-way');
     }
     if (metaParts.length > 0) {
-      html += '<div class="eq-meta-line">' + metaParts.join(' · ') + '</div>';
+      html += '<div class="text-meta eq-meta-line">' + metaParts.join(' · ') + '</div>';
     }
 
     var hasBottom = res.madeHand || res.guidance.text || res.villainProfile;
@@ -252,7 +252,7 @@ function injectEquityButton(box, hand) {
   slot.appendChild(btn);
 
   btn.onclick = function () {
-    slot.innerHTML = '<div class="eq-spinner"><div class="eq-spinner-ring"></div><span class="eq-spinner-text">Simulating...</span></div>';
+    slot.innerHTML = '<div class="eq-spinner"><div class="eq-spinner-ring"></div><span class="text-meta eq-spinner-text">Simulating...</span></div>';
 
     setTimeout(function () {
       var results = runEquitySimulation(hand);

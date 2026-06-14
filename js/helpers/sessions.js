@@ -132,22 +132,22 @@ function renderBestWorstSessions(hands, overallData) {
 
     html += '<div class="card best-worst-card">';
     html += '<div class="label mb-12">' + sess.label + '</div>';
-    if (dateLabel) html += '<div class="best-worst-meta">' + dateLabel + '</div>';
-    html += '<div class="best-worst-meta">' + tableName + ' &middot; ' + s.hands.length + ' hands &middot; <span class="value best-worst-pnl" style="color:' + pnlCol + ';">' + pnlDisplay + '</span></div>';
+    if (dateLabel) html += '<div class="text-body best-worst-meta">' + dateLabel + '</div>';
+    html += '<div class="text-body best-worst-meta">' + tableName + ' &middot; ' + s.hands.length + ' hands &middot; <span class="value best-worst-pnl" style="color:' + pnlCol + ';">' + pnlDisplay + '</span></div>';
 
     var sessionData = analyse(s.hands);
     var patterns = detectSessionPatterns(sessionData, overallData);
 
     if (patterns.length) {
       var frameWord = sess.frame === 'right' ? 'what went right' : 'what went wrong';
-      html += '<div class="best-worst-patterns-head">Patterns: ' + frameWord + ':</div>';
-      html += '<ul class="best-worst-patterns">';
+      html += '<div class="text-body best-worst-patterns-head">Patterns: ' + frameWord + ':</div>';
+      html += '<ul class="text-body best-worst-patterns">';
       for (var pi2 = 0; pi2 < patterns.length; pi2++) {
         html += '<li>' + patterns[pi2].text + '</li>';
       }
       html += '</ul>';
     } else if (sess.frame === 'wrong') {
-      html += '<div class="best-worst-meta">No clear pattern detected. Review the hands below for specific spots.</div>';
+      html += '<div class="text-body best-worst-meta">No clear pattern detected. Review the hands below for specific spots.</div>';
     }
 
     var seeHandsBtnId = 'see-sess-' + Math.random().toString(36).slice(2, 8);

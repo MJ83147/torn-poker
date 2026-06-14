@@ -68,13 +68,13 @@ function renderWelcome(container, d, hands, meta) {
     }).join('') +
     '</div>' +
     '<div class="welcome-right">' +
-    '<div class="welcome-tips">' +
+    '<div class="text-body welcome-tips">' +
     '<div class="label mb-12">Tips</div>' +
     '<div class="tips-carousel">' +
     '<button class="tips-arrow tips-arrow-left" id="tip-prev">&#8249;</button>' +
     '<div class="tips-track">' +
     tips.map(function(t, i) {
-      return '<div class="welcome-tip' + (i === 0 ? ' active' : '') + '">' + t + '</div>';
+      return '<div class="text-body welcome-tip' + (i === 0 ? ' active' : '') + '">' + t + '</div>';
     }).join('') +
     '</div>' +
     '<button class="tips-arrow tips-arrow-right" id="tip-next">&#8250;</button>' +
@@ -90,13 +90,13 @@ function renderWelcome(container, d, hands, meta) {
       '<button type="button" class="whatsnew-card whatsnew-card-hero" data-goto="custom">' +
         '<div class="whatsnew-card-tag">New</div>' +
         '<div class="whatsnew-card-name">Custom Report</div>' +
-        '<div class="whatsnew-card-desc">Build your own report by clicking together clauses like a sentence. Twelve filters across table, position, opponent, stake, time window, pot type and more, with a trend chart, breakdowns and a side-by-side compare mode.</div>' +
-        '<div class="whatsnew-card-cta">Open the Custom Report &rarr;</div>' +
+        '<div class="text-body">Build your own report by clicking together clauses like a sentence. Twelve filters across table, position, opponent, stake, time window, pot type and more, with a trend chart, breakdowns and a side-by-side compare mode.</div>' +
+        '<div class="gold-heading whatsnew-card-cta">Open the Custom Report &rarr;</div>' +
       '</button>' +
       '<div class="whatsnew-card whatsnew-card-static">' +
         '<div class="whatsnew-card-tag">Improved</div>' +
         '<div class="whatsnew-card-name">Detailed insights</div>' +
-        '<div class="whatsnew-card-desc">Every analysis tab now ships story cards that flag strengths, leaks and patterns in your data, each with a real example hand from your session.</div>' +
+        '<div class="text-body">Every analysis tab now ships story cards that flag strengths, leaks and patterns in your data, each with a real example hand from your session.</div>' +
       '</div>' +
     '</div>' +
     '</div>' +

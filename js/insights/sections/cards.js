@@ -8,9 +8,9 @@
     classifyHandBucket(h);
     heroPostflopProfile(h);
   };
-  var MIN_AGG  = (typeof MIN_AGGREGATE === 'number') ? MIN_AGGREGATE : 30;
-  var MIN_AX   = (typeof MIN_AXIS === 'number') ? MIN_AXIS : 20;
-  var MIN_CL   = (typeof MIN_CELL === 'number') ? MIN_CELL : 10;
+  var MIN_AGG  = MIN_AGGREGATE;
+  var MIN_AX   = MIN_AXIS;
+  var MIN_CL   = MIN_CELL;
 
   function wonPot(h) {
     return !!(h && h.outcome && h.outcome.result === 'won');

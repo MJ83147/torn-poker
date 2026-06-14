@@ -14,7 +14,7 @@ function renderShowdown(container, hands, meta, overallData) {
 
   if (cash.length < 5) {
     container.innerHTML = '<div class="panel-title">Showdown</div>' +
-      '<div class="panel-desc">Showdown vs non-showdown P&L breakdown.</div>' +
+      '<div class="text-body panel-desc">Showdown vs non-showdown P&L breakdown.</div>' +
       '<div class="panel-verdict">Need at least 5 cash hands with outcomes to show the showdown graph. Keep playing and tracking.</div>';
     return;
   }
@@ -69,14 +69,14 @@ function renderShowdown(container, hands, meta, overallData) {
   statsHtml += '<div class="mini-label-dot label">' +
     '<span class="line-dot line-dot-blue"></span>Showdown</div>';
   statsHtml += '<div class="value ' + pnlValCls(cumSd) + '">' + fmtPnl(cumSd) + '</div>';
-  statsHtml += '<div class="mini-meta">' + sdTotal + ' hands · ' + (sdWinRate !== null ? sdWinRate + '% win rate' : 'no data') + '</div>';
+  statsHtml += '<div class="text-meta mini-meta">' + sdTotal + ' hands · ' + (sdWinRate !== null ? sdWinRate + '% win rate' : 'no data') + '</div>';
   statsHtml += '</div>';
 
   statsHtml += '<div class="mini">';
   statsHtml += '<div class="mini-label-dot label">' +
     '<span class="line-dot line-dot-red"></span>Non-Showdown</div>';
   statsHtml += '<div class="value ' + pnlValCls(cumNsd) + '">' + fmtPnl(cumNsd) + '</div>';
-  statsHtml += '<div class="mini-meta">' + nsdTotal + ' hands · ' + (nsdWinRate !== null ? nsdWinRate + '% win rate' : 'no data') + '</div>';
+  statsHtml += '<div class="text-meta mini-meta">' + nsdTotal + ' hands · ' + (nsdWinRate !== null ? nsdWinRate + '% win rate' : 'no data') + '</div>';
   statsHtml += '</div>';
 
   statsHtml += '</div>';
@@ -89,19 +89,19 @@ function renderShowdown(container, hands, meta, overallData) {
   potStatsHtml += '<div class="mini">';
   potStatsHtml += '<div class="mini-l label">Avg Pot Won</div>';
   potStatsHtml += '<div class="value val-pos">' + fmt(avgWinPot) + '</div>';
-  potStatsHtml += '<div class="mini-meta">' + (potSdWin.length + potNsdWin.length) + ' hands</div>';
+  potStatsHtml += '<div class="text-meta mini-meta">' + (potSdWin.length + potNsdWin.length) + ' hands</div>';
   potStatsHtml += '</div>';
 
   potStatsHtml += '<div class="mini">';
   potStatsHtml += '<div class="mini-l label">Avg Pot Lost</div>';
   potStatsHtml += '<div class="value val-neg">' + fmt(avgLossPot) + '</div>';
-  potStatsHtml += '<div class="mini-meta">' + (potSdLoss.length + potNsdLoss.length) + ' hands</div>';
+  potStatsHtml += '<div class="text-meta mini-meta">' + (potSdLoss.length + potNsdLoss.length) + ' hands</div>';
   potStatsHtml += '</div>';
 
   potStatsHtml += '<div class="mini">';
   potStatsHtml += '<div class="mini-l label">Win/Loss Pot Ratio</div>';
   potStatsHtml += '<div class="value ' + (winLossRatio !== null ? pnlValCls(winLossRatio - 1) : 'val-neg') + '">' + (winLossRatio !== null ? winLossRatio + 'x' : '-') + '</div>';
-  potStatsHtml += '<div class="mini-meta">Target: above 1.0x</div>';
+  potStatsHtml += '<div class="text-meta mini-meta">Target: above 1.0x</div>';
   potStatsHtml += '</div>';
   potStatsHtml += '</div>';
 

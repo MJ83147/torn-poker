@@ -155,7 +155,7 @@ function renderAllIn(container, d, hands) {
 
   if (!_allinHands.length) {
     container.innerHTML = '<div class="panel-title">All-In EV</div>' +
-      '<div class="panel-desc">Tracks every all-in showdown to measure luck vs skill.</div>' +
+      '<div class="text-body panel-desc">Tracks every all-in showdown to measure luck vs skill.</div>' +
       '<div class="panel-verdict">No all-in showdown hands found yet. When you go all-in and both players show cards, those hands appear here with equity calculations.</div>';
     return;
   }
@@ -239,7 +239,7 @@ function showAllInResults(container) {
   var actualWinRate = pct(actualWins, allInHands.length);
 
   var html = '<div class="panel-title">All-In EV</div>';
-  html += '<div class="panel-desc">Compares actual results vs expected value at all-in showdowns to measure variance.</div>';
+  html += '<div class="text-body panel-desc">Compares actual results vs expected value at all-in showdowns to measure variance.</div>';
 
   html += renderMiniRow([
     { l: 'All-In Hands', v: allInHands.length, c: 'text' },

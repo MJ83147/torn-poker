@@ -1,3 +1,5 @@
+var HAND_RANK_BASE = 1e10;
+
 function buildDeck() {
   var deck = [];
   for (var r = 0; r < RANKS.length; r++) {
@@ -51,7 +53,7 @@ function evaluate5(cards) {
   }
   groups.sort(function (a, b) { return b.count - a.count || b.rank - a.rank; });
 
-  var M = 1e10;
+  var M = HAND_RANK_BASE;
 
   if (isFlush && isStraight) {
     return 8 * M + straightHigh;
@@ -120,7 +122,7 @@ function classifyMadeHand(holeCards, boardCards) {
   var board = boardCards.map(normCard);
   var all = hero.concat(board);
   var score = bestHand(all);
-  var M = 1e10;
+  var M = HAND_RANK_BASE;
   var tier = Math.floor(score / M);
 
   var labels = ['High Card', 'Pair', 'Two Pair', 'Three of a Kind', 'Straight',

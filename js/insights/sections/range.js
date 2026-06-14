@@ -20,7 +20,7 @@
   }
 
   function buildWidthOfRange(d, extras, hands) {
-    if (!d || !d.n || d.n < (typeof MIN_AGGREGATE === 'number' ? MIN_AGGREGATE : 30)) return null;
+    if (!d || !d.n || d.n < MIN_AGGREGATE) return null;
 
     var seats = dominantSeats(d);
     var dominantPos = (typeof dominantPosition === 'function') ? dominantPosition(d) : null;
@@ -220,7 +220,7 @@
 
   function buildWinningHands(d, extras, hands) {
     if (!d || !d.rangeMap) return null;
-    if (!d.n || d.n < (typeof MIN_AGGREGATE === 'number' ? MIN_AGGREGATE : 30)) return null;
+    if (!d.n || d.n < MIN_AGGREGATE) return null;
 
     var seats = dominantSeats(d);
     var dominantPos = (typeof dominantPosition === 'function') ? dominantPosition(d) : null;

@@ -1,7 +1,7 @@
 (function() {
   var F = Sections.section('tables', 'Tables');
-  var MIN_TABLE_CELL = (typeof MIN_CELL === 'number') ? MIN_CELL : 10;
-  var MIN_AGG = (typeof MIN_AGGREGATE === 'number') ? MIN_AGGREGATE : 30;
+  var MIN_TABLE_CELL = MIN_CELL;
+  var MIN_AGG = MIN_AGGREGATE;
 
   function tablePnl(handsList) {
     var total = 0;

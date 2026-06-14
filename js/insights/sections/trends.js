@@ -30,7 +30,7 @@
   }
 
   function buildDirectionOfTravel(d, extras, hands) {
-    if (!d || !d.n || d.n < (typeof MIN_AGGREGATE === 'number' ? MIN_AGGREGATE : 30)) return null;
+    if (!d || !d.n || d.n < MIN_AGGREGATE) return null;
     if (!hands || !hands.length) return null;
 
     var sorted = chronological(hands);
@@ -193,7 +193,7 @@
   }
 
   function buildSessionSwings(d, extras, hands) {
-    if (!d || !d.n || d.n < (typeof MIN_AGGREGATE === 'number' ? MIN_AGGREGATE : 30)) return null;
+    if (!d || !d.n || d.n < MIN_AGGREGATE) return null;
     if (!hands || !hands.length) return null;
     if (typeof buildSessions !== 'function' || typeof splitSessionHalves !== 'function') return null;
 

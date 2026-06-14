@@ -506,7 +506,6 @@ function generateHandSummary(results, hand, villainProfile) {
 
   if (villainRevealed && villainHandDesc && vName) {
     parts.push(vName + ' showed ' + villainRevealed + ' (' + villainHandDesc + ').');
-    var boardIsDoublePaired = false;
     if (postflopResults.length > 0) {
       var lastTex = postflopResults[postflopResults.length - 1].texture;
       if (lastTex && lastTex.label && lastTex.label.indexOf('Paired') !== -1) {

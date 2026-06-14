@@ -29,7 +29,7 @@ function renderTables(container, hands, allHands, excludedTables, onRerender) {
 
   if (Object.keys(allTableGroups).length <= 1) {
     container.innerHTML = '<div class="panel-title">Tables</div>' +
-      '<div class="panel-desc">Compare stats across different stakes.</div>' +
+      '<div class="text-body panel-desc">Compare stats across different stakes.</div>' +
       '<div class="panel-verdict">All hands are from a single table. Play across multiple tables to see comparisons.</div>';
     return;
   }

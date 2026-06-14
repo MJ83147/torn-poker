@@ -42,7 +42,7 @@ function renderMyGame(container, d, hands) {
     html += '<div class="profile-type-block">';
     html += '<div class="label mb-12">PLAYER TYPE</div>';
     html += '<div class="profile-type-name">' + typeLabel + '</div>';
-    html += '<div class="profile-type-desc">' + typeDesc + '</div>';
+    html += '<div class="text-body profile-type-desc">' + typeDesc + '</div>';
     html += '</div>';
   }
   html += '</div>';
@@ -105,13 +105,13 @@ function renderMyGame(container, d, hands) {
     if (workOn) {
       html += '<div class="work-on-block work-on-' + workOn.sev + '">';
       html += '<div class="work-on-title">' + workOn.label + '</div>';
-      if (workOn.desc) html += '<div class="work-on-desc">' + workOn.desc + '</div>';
+      if (workOn.desc) html += '<div class="text-body work-on-desc">' + workOn.desc + '</div>';
       html += '<div class="work-on-action">' + workOn.action + '</div>';
       html += '</div>';
     } else {
       html += '<div class="work-on-block work-on-g">';
       html += '<div class="work-on-title">Solid game</div>';
-      html += '<div class="work-on-desc">No major leaks detected from ' + d.n + ' hands. Keep playing to refine the picture.</div>';
+      html += '<div class="text-body work-on-desc">No major leaks detected from ' + d.n + ' hands. Keep playing to refine the picture.</div>';
       html += '</div>';
     }
 
@@ -182,7 +182,7 @@ function renderTableDynamicsReference(hands, d) {
     var nHands = subD ? subD.n : 0;
 
     h += '<div class="card dynamics-card">';
-    h += '<div class="dynamics-card-head">' + seats + '-handed <span class="label">(' + nHands + ' hands)</span></div>';
+    h += '<div class="gold-heading dynamics-card-head">' + seats + '-handed <span class="label">(' + nHands + ' hands)</span></div>';
     if (!nHands) {
       h += '<div class="dynamics-card-note label">No hands at this table size yet.</div>';
       h += '</div>';
@@ -204,7 +204,7 @@ function renderTableDynamicsReference(hands, d) {
 
     if (seatCoaching[seats]) {
       h += '<div class="dynamics-zone-head label dynamics-coaching-head">Coaching</div>';
-      h += '<div class="dynamics-coaching">' + seatCoaching[seats] + '</div>';
+      h += '<div class="text-body dynamics-coaching">' + seatCoaching[seats] + '</div>';
     }
     h += '</div>';
   }
@@ -225,7 +225,7 @@ function renderTableDynamicsReference(hands, d) {
     var nF = subF ? subF.n : 0;
 
     h += '<div class="card dynamics-card">';
-    h += '<div class="dynamics-card-head">' + flopLabels[bk] + ' <span class="label">(' + nF + ' hands)</span></div>';
+    h += '<div class="gold-heading dynamics-card-head">' + flopLabels[bk] + ' <span class="label">(' + nF + ' hands)</span></div>';
     if (!nF) {
       h += '<div class="dynamics-card-note label">No flops with this many players yet.</div>';
       h += '</div>';
@@ -244,7 +244,7 @@ function renderTableDynamicsReference(hands, d) {
     h += _vsRow('C-bet', cbetActual, subF.cbetOpps, fmtBandRange(cbetBand));
 
     h += '<div class="dynamics-zone-head label dynamics-coaching-head">Coaching</div>';
-    h += '<div class="dynamics-coaching">' + fe.notes + '</div>';
+    h += '<div class="text-body dynamics-coaching">' + fe.notes + '</div>';
     h += '<div class="dynamics-card-kv"><span>Bet sizing</span><span>' + fe.cbetSizing + '</span></div>';
     h += '<div class="dynamics-card-kv"><span>Continue with</span><span>' + fe.continueRange + '</span></div>';
     h += '</div>';

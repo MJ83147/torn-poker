@@ -282,16 +282,16 @@
     html += '<div class="story-card-head">';
     html += '<div class="ins-badge ' + sev + '"><div class="ins-dot"></div><div class="ins-word">' + sevWord + '</div></div>';
     html += '<div class="ins-title">' + name + '</div>';
-    if (teaser) html += '<div class="story-teaser">' + escapeHtml(teaser) + '</div>';
+    if (teaser) html += '<div class="text-body story-teaser">' + escapeHtml(teaser) + '</div>';
     html += '<div class="story-card-chev">&#9662;</div>';
     html += '</div>';
 
     html += '<div class="story-body">';
     if (finding.openingText) {
-      html += '<div class="ins-text">' + escapeHtml(finding.openingText) + '</div>';
+      html += '<div class="text-body ins-text">' + escapeHtml(finding.openingText) + '</div>';
     }
     if (finding.branchTexts && finding.branchTexts.length) {
-      html += '<ul class="story-branches">';
+      html += '<ul class="text-body story-branches">';
       for (var i = 0; i < finding.branchTexts.length; i++) {
         html += '<li>' + escapeHtml(finding.branchTexts[i]) + '</li>';
       }
@@ -334,7 +334,6 @@
     combineSeverity: combineSeverity,
     classifyPnlGate: classifyPnlGate,
     dominantSeatsCount: dominantSeatsCount,
-    fmtPct: fmtPct,
     fmtBand: fmtBand,
     score: score,
     renderStoryCard: renderStoryCard,

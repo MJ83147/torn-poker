@@ -30,6 +30,9 @@ function fmtBBRaw(bbs) {
   return bbs.toFixed(2) + ' BB';
 }
 
+// pct: whole-number percentage (e.g. 42). Use for headline stats and display.
+// safePct: one-decimal percentage (e.g. 42.3). Use where the extra precision matters.
+// Both return null when the denominator is zero/falsy.
 function pct(a, b) {
   return b > 0 ? Math.round(a / b * 100) : null;
 }

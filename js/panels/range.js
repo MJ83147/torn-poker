@@ -620,7 +620,7 @@ function renderRange(container, d, hands) {
     getRangeData().then(function(data) {
       renderSpot(body, data);
     }).catch(function() {
-      body.innerHTML = '<div class="range-error">Failed to load GTO chart data. Reload the page to try again.</div>';
+      body.innerHTML = '<div class="text-body range-error">Failed to load GTO chart data. Reload the page to try again.</div>';
     });
   }
 
@@ -659,8 +659,8 @@ function renderRange(container, d, hands) {
     var note = chart ? '' : '<div class="range-empty">No GTO reference for ' + state.hero + ' ' + label + '.</div>';
     body.innerHTML =
       '<div class="range-controls">' +
-      '<label class="range-control-label">Position</label>' + heroSelectorHtml +
-      '<label class="range-control-label">Scenario</label>' + scenarioSelectorHtml +
+      '<label class="label">Position</label>' + heroSelectorHtml +
+      '<label class="label">Scenario</label>' + scenarioSelectorHtml +
       '</div>' +
       headerStats +
       note +
@@ -760,12 +760,12 @@ function openHandModal(key, matched) {
     return '<div class="range-hand-row" data-ridx="' + idx + '">' +
       '<div class="range-hand-row-top">' +
       '<div class="range-hand-row-side">' +
-      '<span class="range-hand-row-pos">' + (h.position || '?') + '</span>' +
+      '<span class="label range-hand-row-pos">' + (h.position || '?') + '</span>' +
       '<span class="range-hand-row-hole">' + (h.hole ? h.hole.join(' ') : '??') + '</span>' +
-      '<span class="range-hand-row-board">' + (h.board && h.board.length ? h.board.join(' ') : '-') + '</span>' +
+      '<span class="text-meta range-hand-row-board">' + (h.board && h.board.length ? h.board.join(' ') : '-') + '</span>' +
       '</div>' +
       '<div class="range-hand-row-side">' +
-      '<span class="range-hand-row-actions">' + myActs + '</span>' +
+      '<span class="text-meta range-hand-row-actions">' + myActs + '</span>' +
       res + '</div></div></div>';
   }).join('');
   box.innerHTML = '<button class="modal-close" id="modal-close-btn">&times;</button>' +

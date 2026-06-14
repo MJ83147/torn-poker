@@ -1,4 +1,4 @@
-function showExampleHandModal(hand, coachingNote) {
+function createExampleModal() {
   var existing = document.getElementById('example-hand-modal');
   if (existing) existing.remove();
 
@@ -10,6 +10,21 @@ function showExampleHandModal(hand, coachingNote) {
   var box = document.createElement('div');
   box.className = 'modal-box';
   box.style.position = 'relative';
+
+  return { overlay: overlay, box: box };
+}
+
+function mountExampleModal(overlay, box) {
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+  requestAnimationFrame(function() { overlay.classList.add(CSS.SHOW); });
+  document.getElementById('modal-close-btn').onclick = closeModal;
+}
+
+function showExampleHandModal(hand, coachingNote) {
+  var modal = createExampleModal();
+  var overlay = modal.overlay;
+  var box = modal.box;
 
   if (typeof annotateHandDynamics === 'function') annotateHandDynamics(hand);
 
@@ -77,14 +92,11 @@ function showExampleHandModal(hand, coachingNote) {
 
   var equitySlot = '<div id="equity-slot"></div>';
   box.innerHTML = closeBtn + starBtn + title + subtitle + metaHtml + equitySlot + actionsHtml + coaching + notesSection;
-  overlay.appendChild(box);
-  document.body.appendChild(overlay);
-  requestAnimationFrame(function() { overlay.classList.add(CSS.SHOW); });
+  mountExampleModal(overlay, box);
 
   if (typeof injectEquityButton === 'function') {
     injectEquityButton(box, hand);
   }
-  document.getElementById('modal-close-btn').onclick = closeModal;
 
   document.getElementById('modal-star-btn').onclick = function() {
     var nowStarred = toggleStarHand(hand);
@@ -136,30 +148,23 @@ function buildHandRow(h, idx) {
   return '<div class="range-hand-row" data-ridx="' + idx + '">' +
     '<div class="range-hand-row-top">' +
       '<div class="range-hand-row-side">' +
-        '<span class="range-hand-row-pos">' + (h.position || '?') + '</span>' +
+        '<span class="label range-hand-row-pos">' + (h.position || '?') + '</span>' +
         '<span class="range-hand-row-hole">' + (h.hole ? h.hole.join(' ') : '??') + '</span>' +
-        '<span class="range-hand-row-board">' + (h.board && h.board.length ? h.board.join(' ') : '-') + '</span>' +
+        '<span class="text-meta range-hand-row-board">' + (h.board && h.board.length ? h.board.join(' ') : '-') + '</span>' +
       '</div>' +
       '<div class="range-hand-row-side">' + res + '</div>' +
     '</div>' +
-    '<div class="range-hand-row-actions">' + myActs + '</div>' +
+    '<div class="text-meta range-hand-row-actions">' + myActs + '</div>' +
     '</div>';
 }
 
 function showExampleHandListModal(title, handsList, coachingNote) {
-  var existing = document.getElementById('example-hand-modal');
-  if (existing) existing.remove();
   var BATCH = 10;
   var shown = 0;
 
-  var overlay = document.createElement('div');
-  overlay.id = 'example-hand-modal';
-  overlay.className = 'modal-overlay';
-  overlay.onclick = function(e) { if (e.target === overlay) closeModal(); };
-
-  var box = document.createElement('div');
-  box.className = 'modal-box';
-  box.style.position = 'relative';
+  var modal = createExampleModal();
+  var overlay = modal.overlay;
+  var box = modal.box;
   box.style.maxHeight = '80vh';
   box.style.overflowY = 'auto';
 
@@ -210,10 +215,7 @@ function showExampleHandListModal(title, handsList, coachingNote) {
     }
   }
 
-  overlay.appendChild(box);
-  document.body.appendChild(overlay);
-  requestAnimationFrame(function() { overlay.classList.add(CSS.SHOW); });
-  document.getElementById('modal-close-btn').onclick = closeModal;
+  mountExampleModal(overlay, box);
 
   loadBatch();
 }
