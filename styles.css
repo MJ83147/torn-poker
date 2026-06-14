@@ -126,6 +126,12 @@
   padding: 0;
 }
 
+*,
+*::before,
+*::after {
+  min-width: 0;
+}
+
 html {
   scroll-behavior: smooth;
 }
@@ -4076,12 +4082,6 @@ body.maintenance #maintenance {
 .cr-charts {
   --grid-min: 340px;
   gap: var(--sp-24);
-}
-
-*,
-*::before,
-*::after {
-  min-width: 0;
 }
 
 @media (max-width: 768px) {
