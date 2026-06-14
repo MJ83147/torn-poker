@@ -382,6 +382,10 @@ body {
   border-radius: var(--r-sm);
 }
 
+.card-flat {
+  border: none;
+}
+
 /* --- Layout: grids --- */
 .grid-2 {
   display: grid;
@@ -641,11 +645,8 @@ body {
 }
 
 .paste-box {
-  border: var(--sp-1) solid var(--border);
-  border-radius: var(--r-lg);
   padding: 44px var(--sp-28);
   text-align: center;
-  background: var(--s1);
 }
 
 .paste-suit {
@@ -952,9 +953,6 @@ textarea#jin:focus {
 }
 
 .ins {
-  background: var(--s2);
-  border: none;
-  border-radius: var(--r-lg);
   padding: 18px var(--sp-20);
   position: relative;
 }
@@ -1046,8 +1044,6 @@ textarea#jin:focus {
 }
 
 .work-on-block {
-  background: var(--s2);
-  border-radius: var(--r-lg);
   padding: var(--sp-16) var(--sp-20);
   margin: var(--sp-12) 0;
 }
@@ -1082,8 +1078,6 @@ textarea#jin:focus {
   font-size: var(--fs-lg);
   line-height: var(--lh-normal);
   color: var(--text);
-  background: var(--s2);
-  border-radius: var(--r-lg);
   padding: var(--sp-16) var(--sp-20);
   margin-bottom: var(--sp-24);
 }
@@ -1313,8 +1307,6 @@ textarea#jin:focus {
 .dynamics-vs {
   margin-top: var(--sp-10);
   padding: var(--sp-8) var(--sp-10);
-  border-radius: var(--r-sm);
-  border: var(--sp-1) solid var(--border);
   background: color-mix(in srgb, var(--white) 2%, transparent);
 }
 
@@ -2679,8 +2671,6 @@ textarea#jin:focus {
 .eq-summary {
   margin-top: var(--sp-12);
   padding: var(--sp-10) var(--sp-12);
-  background: var(--s2);
-  border-radius: var(--radius);
   border-left: 3px solid var(--gold);
 }
 
@@ -3764,8 +3754,6 @@ body.maintenance #maintenance {
 }
 
 .cr-sentence-wrap {
-  background: var(--s2);
-  border-radius: var(--r-lg);
   padding: var(--sp-20) var(--sp-24);
   margin-bottom: var(--sp-28);
 }

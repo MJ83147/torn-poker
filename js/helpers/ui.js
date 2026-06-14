@@ -161,7 +161,7 @@ function ins(sev, label, text, chips, coaching) {
   const coachingHtml = coaching
     ? '<div class="ins-coaching"><div class="label gold ins-coaching-head">Coaching</div><div class="text-body">' + coaching + '</div></div>'
     : '';
-  return '<div class="ins"><div class="ins-badge ' + sev + '"><div class="dot"></div><div class="ins-word">' + words[sev] + '</div></div><div class="ins-title">' + label + '</div><div class="text-body ins-text">' + text + '</div>' + chipHtml + coachingHtml + '</div>';
+  return '<div class="card card-s2 card-flat ins"><div class="ins-badge ' + sev + '"><div class="dot"></div><div class="ins-word">' + words[sev] + '</div></div><div class="ins-title">' + label + '</div><div class="text-body ins-text">' + text + '</div>' + chipHtml + coachingHtml + '</div>';
 }
 
 function insWithExample(sev, label, text, chips, exampleHands, coachingNote, coaching) {

@@ -60,7 +60,7 @@ function renderPlayers(container, d, hands) {
     if (!filtered.length) {
       container.innerHTML = '<div class="panel-title">Players</div>' +
         '<div class="text-body panel-desc">Opponent records, head-to-head stats, and watch list.</div>' +
-        '<div class="panel-verdict">Not enough shared hands to show opponent stats. Keep playing to build data.</div>';
+        '<div class="card card-s2 card-flat panel-verdict">Not enough shared hands to show opponent stats. Keep playing to build data.</div>';
       return;
     }
     var watched = getWatchedPlayers();
@@ -215,7 +215,7 @@ function renderPlayers(container, d, hands) {
           ph += '<div class="grid-auto ins-grid mb-16">' + exploitIns.join('') + '</div>';
         }
       } else {
-        ph += '<div class="panel-verdict">Need ' + Math.max(0, 5 - oppStats.hands) + ' more shared hands to show tendency stats (' + oppStats.hands + '/5 hands).</div>';
+        ph += '<div class="card card-s2 card-flat panel-verdict">Need ' + Math.max(0, 5 - oppStats.hands) + ' more shared hands to show tendency stats (' + oppStats.hands + '/5 hands).</div>';
       }
 
       ph += '<div class="label sec-subtitle">Shared Hands</div>';
@@ -498,7 +498,7 @@ function renderCompare(container, d, hands) {
     if (s1.hands < 10 || s2.hands < 10) {
       var lowName = s1.hands < 10 ? p1Name : p2Name;
       var lowCount = s1.hands < 10 ? s1.hands : s2.hands;
-      warnHtml = '<div class="p-row"><div class="ins"><div class="ins-badge a"><div class="dot"></div><div class="ins-word">Warning</div></div><div class="ins-title">Small Sample</div><div class="text-body ins-text">' + lowName + ' only has ' + lowCount + ' hands. Stats may be unreliable until 20+ hands are available.</div></div></div>';
+      warnHtml = '<div class="p-row"><div class="card card-s2 card-flat ins"><div class="ins-badge a"><div class="dot"></div><div class="ins-word">Warning</div></div><div class="ins-title">Small Sample</div><div class="text-body ins-text">' + lowName + ' only has ' + lowCount + ' hands. Stats may be unreliable until 20+ hands are available.</div></div></div>';
     }
 
     body.innerHTML = warnHtml + '<div class="p-row">' + tableHtml + '</div>' + h2hHtml + exploitHtml;

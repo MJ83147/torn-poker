@@ -197,7 +197,7 @@ function renderEquityResults(container, simResult) {
 
   if (summary && summary.text) {
     var sumClass = summary.quality === 'good' ? 'val-pos' : summary.quality === 'bad' ? 'val-neg' : 'text-gold';
-    html += '<div class="eq-summary">';
+    html += '<div class="card card-s2 card-flat eq-summary">';
     html += '<div class="label gold eq-summary-label">Hand Summary</div>';
     html += '<div class="text-meta eq-summary-text ' + sumClass + '">' + summary.text + '</div>';
     html += '</div>';

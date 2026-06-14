@@ -44,7 +44,7 @@ function renderTrends(container, hands, meta, overallData) {
   if (sorted.length < 5) {
     container.innerHTML = '<div class="panel-title">Trends</div>' +
       '<div class="text-body panel-desc">Session-over-session charts for win rate, VPIP, and P&L.</div>' +
-      '<div class="panel-verdict">Need at least 5 hands to show trends. Keep playing and tracking.</div>';
+      '<div class="card card-s2 card-flat panel-verdict">Need at least 5 hands to show trends. Keep playing and tracking.</div>';
     return;
   }
   var sessions = [];
