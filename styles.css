@@ -1075,8 +1075,6 @@ textarea#jin:focus {
 }
 
 .work-on-action {
-  font-size: var(--fs-md);
-  color: var(--text);
   line-height: var(--lh-body);
 }
 
@@ -1170,17 +1168,12 @@ textarea#jin:focus {
 
 .story-impact,
 .story-sowhat {
-  font-size: var(--fs-md);
   line-height: var(--lh-body);
   padding: var(--sp-12) 0 0;
   margin-top: var(--sp-12);
   border-top: var(--sp-1) solid var(--border);
-  color: var(--text);
 }
 
-.story-sowhat {
-  color: var(--gold);
-}
 
 .story-tag {
   display: inline-block;
@@ -1347,8 +1340,6 @@ textarea#jin:focus {
 
 .dynamics-vs-top {
   gap: var(--sp-8);
-  font-size: var(--fs-sm);
-  color: var(--text);
 }
 
 .dynamics-vs-verdict {
@@ -2301,8 +2292,6 @@ textarea#jin:focus {
 }
 
 .modal-notes-status {
-  font-size: var(--fs-xs);
-  color: var(--muted);
   transition: color .3s;
 }
 
@@ -2315,8 +2304,6 @@ textarea#jin:focus {
 }
 
 .profile-meta {
-  font-size: var(--fs-md);
-  color: var(--dim);
   margin-top: var(--sp-4);
 }
 
@@ -2578,8 +2565,6 @@ textarea#jin:focus {
 .modal-coaching {
   margin-top: var(--sp-16);
   padding: var(--sp-12);
-  font-size: var(--fs-sm);
-  color: var(--text);
   line-height: var(--lh-loose);
 }
 
@@ -2922,8 +2907,6 @@ tr.hrow:hover .hrow-star {
 }
 
 .saved-note-preview {
-  font-size: var(--fs-xs);
-  color: var(--text);
   line-height: var(--lh-normal);
   display: -webkit-box;
   -webkit-line-clamp: 3;
@@ -3435,8 +3418,6 @@ tr.hrow:hover .hrow-star {
 }
 
 .allin-caveat {
-  font-size: var(--fs-xs);
-  color: var(--dim);
   margin-bottom: var(--sp-12);
   padding: var(--sp-8) var(--sp-12);
   background: color-mix(in srgb, var(--white) 2%, transparent);
@@ -3450,8 +3431,6 @@ tr.hrow:hover .hrow-star {
 }
 
 .compare-vs {
-  font-size: var(--fs-md);
-  color: var(--dim);
   font-weight: var(--fw-semibold);
 }
 
@@ -3506,8 +3485,6 @@ tr.hrow:hover .hrow-star {
 
 .compare-exploit-item {
   padding: var(--sp-8) var(--sp-12);
-  font-size: var(--fs-sm);
-  color: var(--text);
   line-height: var(--lh-snug);
 }
 
@@ -3555,8 +3532,6 @@ tr.hrow:hover .hrow-star {
   gap: var(--sp-6);
   padding: var(--sp-4) var(--sp-10);
   font-family: var(--mono);
-  font-size: var(--fs-sm);
-  color: var(--text);
 }
 
 .style-display .sd-you-label,
@@ -3615,7 +3590,6 @@ tr.hrow:hover .hrow-star {
 
 .style-welcome-eyebrow {
   font-family: var(--mono);
-  font-size: var(--fs-sm);
   letter-spacing: 0.18em;
   margin-bottom: 18px;
 }
@@ -3721,7 +3695,6 @@ body.maintenance #maintenance {
 
 .m-eyebrow {
   font-family: var(--mono);
-  font-size: var(--fs-sm);
   letter-spacing: 0.18em;
   margin-bottom: 18px;
 }

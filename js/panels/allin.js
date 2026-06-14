@@ -271,7 +271,7 @@ function showAllInResults(container) {
   html += '<div class="p-row"><div class="p-section">';
   html += '<div class="label mb-8">All-In Hand Details</div>';
   if (cashAllIns.length < allInHands.length) {
-    html += '<div class="card allin-caveat">Side pots are approximated using total pot. Tournament hands are included in the table but excluded from the cumulative graph.</div>';
+    html += '<div class="card text-micro allin-caveat">Side pots are approximated using total pot. Tournament hands are included in the table but excluded from the cumulative graph.</div>';
   }
   html += '<div class="allin-table-wrap"><table class="allin-table">';
   html += '<thead><tr><th>#</th><th>Hole</th><th>vs</th><th>Board</th><th>Street</th><th>Equity</th><th>Fair Share</th><th>Actual</th><th>EV Diff</th></tr></thead><tbody>';

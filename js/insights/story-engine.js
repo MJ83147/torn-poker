@@ -301,7 +301,7 @@
       html += '<div class="story-impact"><span class="story-tag">Impact</span> ' + escapeHtml(finding.impactText) + '</div>';
     }
     if (finding.soWhatText) {
-      html += '<div class="story-sowhat"><span class="story-tag">So what</span> ' + escapeHtml(finding.soWhatText) + '</div>';
+      html += '<div class="text-body story-sowhat"><span class="story-tag">So what</span> ' + escapeHtml(finding.soWhatText) + '</div>';
     }
     html += renderExampleButtons(finding);
     html += '</div>';

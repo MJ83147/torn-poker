@@ -287,7 +287,7 @@ function renderCompare(container, d, hands) {
     '<div class="p-row">' +
     '<div class="compare-selectors">' +
     '<select id="compare-p1" class="table-filter">' + buildOptions(p1Default) + '</select>' +
-    '<span class="compare-vs">vs</span>' +
+    '<span class="text-body compare-vs">vs</span>' +
     '<select id="compare-p2" class="table-filter">' + buildOptions(p2Default) + '</select>' +
     '</div>' +
     '</div>' +
@@ -489,7 +489,7 @@ function renderCompare(container, d, hands) {
     if (exploits.length > 0) {
       exploitHtml = '<div class="p-row"><div class="label">Exploit Tips</div><div class="compare-exploits">';
       for (var i = 0; i < exploits.length; i++) {
-        exploitHtml += '<div class="card card-s2 compare-exploit-item">' + exploits[i] + '</div>';
+        exploitHtml += '<div class="card card-s2 text-meta compare-exploit-item">' + exploits[i] + '</div>';
       }
       exploitHtml += '</div></div>';
     }

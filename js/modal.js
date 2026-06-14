@@ -75,7 +75,7 @@ function showExampleHandModal(hand, coachingNote) {
   }
 
   var coaching = coachingNote
-    ? '<div class="card card-sm card-s2 modal-coaching"><div class="modal-coaching-head label">What to improve</div>' + coachingNote + '</div>'
+    ? '<div class="card card-sm card-s2 text-meta modal-coaching"><div class="modal-coaching-head label">What to improve</div>' + coachingNote + '</div>'
     : '';
 
   var starred = isHandStarred(hand);
@@ -85,7 +85,7 @@ function showExampleHandModal(hand, coachingNote) {
   var notesSection = '<div class="modal-notes' + (starred ? ' show' : '') + '" id="modal-notes">' +
     '<div class="flex-between modal-notes-header">' +
       '<div class="label mb-0">Your Notes</div>' +
-      '<div class="modal-notes-status" id="modal-notes-status">Saves automatically</div>' +
+      '<div class="text-micro modal-notes-status" id="modal-notes-status">Saves automatically</div>' +
     '</div>' +
     '<textarea class="modal-notes-input" id="modal-notes-input" placeholder="Add notes about this hand...">' + noteVal + '</textarea>' +
     '</div>';
@@ -172,7 +172,7 @@ function showExampleHandListModal(title, handsList, coachingNote) {
     '<div class="mb-16">' + handsList.length + ' example hand' + (handsList.length !== 1 ? 's' : '') + '</div>';
 
   if (coachingNote) {
-    header += '<div class="card card-sm card-s2 modal-coaching"><div class="modal-coaching-head label">What to look for</div>' + coachingNote + '</div>';
+    header += '<div class="card card-sm card-s2 text-meta modal-coaching"><div class="modal-coaching-head label">What to look for</div>' + coachingNote + '</div>';
   }
 
   box.innerHTML = '<button class="modal-close" id="modal-close-btn">&times;</button>' +

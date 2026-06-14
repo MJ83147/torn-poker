@@ -33,7 +33,7 @@ function renderMyGame(container, d, hands) {
   html += '<div>';
   html += '<div class="label mb-12">MY GAME</div>';
   html += '<div class="profile-name">' + playerName + '</div>';
-  html += '<div class="profile-meta">';
+  html += '<div class="text-body profile-meta">';
   if (exportDate) html += exportDate + ' &middot; ';
   html += d.n + ' hands';
   html += '</div>';
@@ -106,7 +106,7 @@ function renderMyGame(container, d, hands) {
       html += '<div class="work-on-block work-on-' + workOn.sev + '">';
       html += '<div class="work-on-title">' + workOn.label + '</div>';
       if (workOn.desc) html += '<div class="text-body work-on-desc">' + workOn.desc + '</div>';
-      html += '<div class="work-on-action">' + workOn.action + '</div>';
+      html += '<div class="text-body work-on-action">' + workOn.action + '</div>';
       html += '</div>';
     } else {
       html += '<div class="work-on-block work-on-g">';
@@ -143,7 +143,7 @@ function _vsRow(label, actualPct, actualDenom, targetText) {
   var labelHtml = label ? '<div class="dynamics-vs-stat label">' + label + '</div>' : '';
   return '<div class="dynamics-vs ' + v.cls + '">' +
     labelHtml +
-    '<div class="flex-between dynamics-vs-top"><span>You: <strong>' + actualStr + '</strong>' + sampleStr + '</span>' +
+    '<div class="flex-between text-meta dynamics-vs-top"><span>You: <strong>' + actualStr + '</strong>' + sampleStr + '</span>' +
     '<span class="label">Target: ' + targetText + '</span></div>' +
     (v.label ? '<div class="label dynamics-vs-verdict">' + v.label + '</div>' : '') +
     '</div>';

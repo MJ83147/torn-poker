@@ -107,7 +107,7 @@ function renderSavedSection() {
     var res = renderResult(h, 'span', 'saved-res');
 
     var notePreview = entry.note
-      ? '<div class="saved-note-preview">' + entry.note.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, ' ') + '</div>'
+      ? '<div class="text-micro saved-note-preview">' + entry.note.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, ' ') + '</div>'
       : '';
 
     var savedDate = entry.savedAt ? new Date(entry.savedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '';
