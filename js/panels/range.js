@@ -538,7 +538,7 @@ function twoGridHtml(chart, filtered, scenarioType, tallies) {
   var colors = chartToColorMap(chart);
   var byKey = heroComboBreakdown(filtered, scenarioType);
   var hasChart = !!(chart && chart.length);
-  return '<div class="range-compare">' +
+  return '<div class="grid-2 range-compare">' +
     '<div class="range-compare-col">' +
       '<div class="sec-subtitle mt-0">GTO chart</div>' +
       buildGtoGridHtml(chart, tallies) +
@@ -664,7 +664,7 @@ function renderRange(container, d, hands) {
       '</div>' +
       headerStats +
       note +
-      '<div class="range-legends"><div class="range-legend-col">' + gtoLegendHtml() + '</div><div class="range-legend-col">' + heroLegendHtml() + '</div></div>' +
+      '<div class="grid-2 range-legends"><div class="range-legend-col">' + gtoLegendHtml() + '</div><div class="range-legend-col">' + heroLegendHtml() + '</div></div>' +
       twoGridHtml(chart, filtered, scenarioType, tallies) +
       storiesHtml(
         buildSpotFindings(

@@ -58,7 +58,7 @@ function renderWelcome(container, d, hands, meta) {
     '</div>' +
     '<button class="take-tour-btn" onclick="startWelcomeTour()">Take a Tour</button>' +
     '</div>' +
-    '<div class="welcome-body">' +
+    '<div class="grid-2 welcome-body">' +
     '<div class="welcome-toc">' +
     tabDescs.map(function(t) {
       return '<div class="card card-sm card-s1 welcome-toc-row" data-goto="' + t.tab + '">' +

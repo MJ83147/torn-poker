@@ -355,6 +355,13 @@ body {
   border-radius: var(--r-sm);
 }
 
+/* --- Layout: grids --- */
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-16);
+}
+
 
 /* ==========================================================================
    4. FEATURES
@@ -1367,8 +1374,6 @@ textarea#jin:focus {
 }
 
 .two-col {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
   gap: var(--sp-32);
   margin-bottom: var(--sp-12);
 }
@@ -1642,8 +1647,6 @@ textarea#jin:focus {
 }
 
 .range-compare {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
   gap: var(--sp-24);
   align-items: start;
 }
@@ -1657,8 +1660,6 @@ textarea#jin:focus {
 }
 
 .range-legends {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
   gap: var(--sp-24);
   margin-bottom: var(--sp-12);
 }
@@ -2546,9 +2547,6 @@ textarea#jin:focus {
 }
 
 .trends-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: var(--sp-16);
   margin-bottom: var(--sp-24);
 }
 
@@ -3036,8 +3034,6 @@ tr.hrow:hover .hrow-star {
 }
 
 .welcome-body {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
   gap: 40px;
   align-items: flex-start;
 }
