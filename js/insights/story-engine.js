@@ -280,7 +280,7 @@
 
     var html = '<div class="' + classes + '" data-story-id="' + escapeHtml(storyId) + '">';
     html += '<div class="story-card-head">';
-    html += '<div class="ins-badge ' + sev + '"><div class="ins-dot"></div><div class="ins-word">' + sevWord + '</div></div>';
+    html += '<div class="ins-badge ' + sev + '"><div class="dot"></div><div class="ins-word">' + sevWord + '</div></div>';
     html += '<div class="ins-title">' + name + '</div>';
     if (teaser) html += '<div class="text-body story-teaser">' + escapeHtml(teaser) + '</div>';
     html += '<div class="story-card-chev">&#9662;</div>';

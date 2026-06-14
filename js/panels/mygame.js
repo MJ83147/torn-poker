@@ -311,11 +311,11 @@ function renderStyleMap(container, d, hands) {
   html += '<div class="style-map-canvas-wrap"><canvas id="style-map-chart"></canvas></div>';
 
   html += '<div class="style-map-legend">';
-  html += '<div class="sm-legend-item"><span class="sm-dot sm-dot-you"></span><span>You (overall)</span></div>';
-  html += '<div class="sm-legend-item"><span class="sm-dot sm-dot-pos"></span><span>By position</span></div>';
-  html += '<div class="sm-legend-item"><span class="sm-dot sm-dot-seat"></span><span>By table size</span></div>';
-  html += '<div class="sm-legend-item"><span class="sm-dot sm-dot-tag"></span><span>TAG reference</span></div>';
-  html += '<div class="sm-legend-item"><span class="sm-dot sm-dot-target"></span><span>Target: ' + targetStyleName + '</span></div>';
+  html += '<div class="sm-legend-item"><span class="dot dot-lg dot-g sm-dot-you"></span><span>You (overall)</span></div>';
+  html += '<div class="sm-legend-item"><span class="dot dot-lg dot-cat-pos"></span><span>By position</span></div>';
+  html += '<div class="sm-legend-item"><span class="dot dot-lg dot-cat-seat"></span><span>By table size</span></div>';
+  html += '<div class="sm-legend-item"><span class="dot dot-lg dot-cat-tag sm-dot-tag"></span><span>TAG reference</span></div>';
+  html += '<div class="sm-legend-item"><span class="dot dot-lg dot-gold"></span><span>Target: ' + targetStyleName + '</span></div>';
   html += '</div>';
   html += '</div>';
 

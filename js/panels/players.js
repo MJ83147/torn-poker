@@ -498,7 +498,7 @@ function renderCompare(container, d, hands) {
     if (s1.hands < 10 || s2.hands < 10) {
       var lowName = s1.hands < 10 ? p1Name : p2Name;
       var lowCount = s1.hands < 10 ? s1.hands : s2.hands;
-      warnHtml = '<div class="p-row"><div class="ins"><div class="ins-badge a"><div class="ins-dot"></div><div class="ins-word">Warning</div></div><div class="ins-title">Small Sample</div><div class="text-body ins-text">' + lowName + ' only has ' + lowCount + ' hands. Stats may be unreliable until 20+ hands are available.</div></div></div>';
+      warnHtml = '<div class="p-row"><div class="ins"><div class="ins-badge a"><div class="dot"></div><div class="ins-word">Warning</div></div><div class="ins-title">Small Sample</div><div class="text-body ins-text">' + lowName + ' only has ' + lowCount + ' hands. Stats may be unreliable until 20+ hands are available.</div></div></div>';
     }
 
     body.innerHTML = warnHtml + '<div class="p-row">' + tableHtml + '</div>' + h2hHtml + exploitHtml;

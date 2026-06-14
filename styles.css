@@ -289,6 +289,39 @@ body {
   background: color-mix(in srgb, var(--gold) 8%, transparent);
 }
 
+/* --- Dots (round markers) --- */
+.dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: var(--r-pill);
+}
+
+.dot-lg {
+  width: 11px;
+  height: 11px;
+}
+
+.dot-g {
+  background: var(--green);
+}
+
+.dot-gold {
+  background: var(--gold);
+}
+
+.dot-cat-pos {
+  background: var(--dot-pos);
+}
+
+.dot-cat-seat {
+  background: var(--dot-seat);
+}
+
+.dot-cat-tag {
+  background: var(--dot-tag);
+}
+
 
 /* ==========================================================================
    4. FEATURES
@@ -781,13 +814,8 @@ textarea#jin:focus {
   text-transform: uppercase;
 }
 
-.ins-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: var(--r-pill);
-}
 
-.ins-badge.g .ins-dot {
+.ins-badge.g .dot {
   background: var(--green);
 }
 
@@ -795,7 +823,7 @@ textarea#jin:focus {
   color: var(--green);
 }
 
-.ins-badge.r .ins-dot {
+.ins-badge.r .dot {
   background: var(--red);
 }
 
@@ -803,7 +831,7 @@ textarea#jin:focus {
   color: var(--red);
 }
 
-.ins-badge.a .ins-dot {
+.ins-badge.a .dot {
   background: var(--amber);
 }
 
@@ -811,7 +839,7 @@ textarea#jin:focus {
   color: var(--amber);
 }
 
-.ins-badge.n .ins-dot {
+.ins-badge.n .dot {
   background: var(--dim);
 }
 
@@ -819,7 +847,7 @@ textarea#jin:focus {
   color: var(--dim);
 }
 
-.ins-badge.o .ins-dot {
+.ins-badge.o .dot {
   background: var(--gold);
 }
 
@@ -1569,11 +1597,6 @@ textarea#jin:focus {
   color: var(--dim);
 }
 
-.stack-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: var(--r-pill);
-}
 
 .range-grid {
   display: grid;
@@ -3195,9 +3218,6 @@ tr.hrow:hover .hrow-star {
 }
 
 .tips-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: var(--r-pill);
   background: var(--border);
   cursor: pointer;
   transition: background .2s;
@@ -3800,35 +3820,16 @@ tr.hrow:hover .hrow-star {
   gap: var(--sp-6);
 }
 
-.sm-dot {
-  width: 11px;
-  height: 11px;
-  border-radius: var(--r-pill);
-  display: inline-block;
-}
 
 .sm-dot-you {
-  background: var(--green);
   border: var(--sp-2) solid var(--white);
 }
 
-.sm-dot-pos {
-  background: var(--dot-pos);
-}
-
-.sm-dot-seat {
-  background: var(--dot-seat);
-}
-
 .sm-dot-tag {
-  background: var(--dot-tag);
   border-radius: var(--r-sm);
   transform: rotate(45deg);
 }
 
-.sm-dot-target {
-  background: var(--gold);
-}
 
 body.maintenance #loader,
 body.maintenance #app {

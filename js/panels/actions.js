@@ -31,7 +31,7 @@ function renderActions(container, d, hands) {
     { p: raPct || 0, c: 'var(--green)', l: 'Raise ' + raPct + '%' },
   ];
   setSlot(container, 'actionSplitBar', segs.map(function (s) { return '<div class="stack-seg" style="width:' + s.p + '%;background:' + s.c + ';"></div>'; }).join(''));
-  setSlot(container, 'actionSplitLabels', segs.map(function (s) { return '<div class="stack-li"><div class="stack-dot" style="background:' + s.c + ';"></div>' + s.l + '</div>'; }).join(''));
+  setSlot(container, 'actionSplitLabels', segs.map(function (s) { return '<div class="stack-li"><div class="dot" style="background:' + s.c + ';"></div>' + s.l + '</div>'; }).join(''));
 
   function sitStatColour(label, p) {
     if (p === null) return 'o';

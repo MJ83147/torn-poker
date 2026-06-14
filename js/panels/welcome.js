@@ -81,7 +81,7 @@ function renderWelcome(container, d, hands, meta) {
     '</div>' +
     '<div class="tips-dots">' +
     tips.map(function(_, i) {
-      return '<span class="tips-dot' + (i === 0 ? ' active' : '') + '" data-tip="' + i + '"></span>';
+      return '<span class="dot tips-dot' + (i === 0 ? ' active' : '') + '" data-tip="' + i + '"></span>';
     }).join('') +
     '</div>' +
     '</div>' +
