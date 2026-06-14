@@ -396,10 +396,7 @@ body {
 }
 
 .l-eyebrow {
-  font-size: var(--fs-xs);
   letter-spacing: var(--sp-6);
-  color: var(--dim);
-  text-transform: uppercase;
   margin-bottom: var(--sp-14);
 }
 
@@ -410,10 +407,7 @@ body {
 }
 
 .l-sub {
-  font-size: var(--fs-xs);
   letter-spacing: 5px;
-  color: var(--dim);
-  text-transform: uppercase;
   margin-bottom: 52px;
 }
 
@@ -1379,6 +1373,8 @@ textarea#jin:focus {
 }
 
 .l-title,
+.m-title,
+.style-welcome-headline,
 .header-title,
 .panel-title,
 .profile-name,
@@ -3718,15 +3714,11 @@ tr.hrow:hover .hrow-star {
   font-family: var(--mono);
   font-size: var(--fs-sm);
   letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--dim);
   margin-bottom: 18px;
 }
 
 .style-welcome-headline {
-  font-family: var(--serif);
   font-size: var(--fs-3xl);
-  font-weight: var(--fw-bold);
   color: var(--text);
   line-height: var(--lh-tight);
   margin-bottom: var(--sp-14);
@@ -3836,15 +3828,11 @@ body.maintenance #maintenance {
   font-family: var(--mono);
   font-size: var(--fs-sm);
   letter-spacing: 0.18em;
-  color: var(--dim);
-  text-transform: uppercase;
   margin-bottom: 18px;
 }
 
 .m-title {
-  font-family: var(--serif);
   font-size: 88px;
-  font-weight: var(--fw-bold);
   line-height: var(--lh-none);
   color: var(--gold);
   margin-bottom: 18px;
