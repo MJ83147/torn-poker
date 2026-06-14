@@ -118,7 +118,7 @@ function renderEquityResults(container, simResult) {
   }
 
   var html = '<div class="card card-s1 eq-sim">';
-  html += '<div class="flex-between eq-sim-header"><span class="eq-sim-title">Equity Simulation</span><span class="text-meta eq-sim-note">' + headerNote + '</span></div>';
+  html += '<div class="flex-between eq-sim-header"><span class="label gold eq-sim-title">Equity Simulation</span><span class="text-meta eq-sim-note">' + headerNote + '</span></div>';
 
   var curvePoints = [];
 
@@ -132,7 +132,7 @@ function renderEquityResults(container, simResult) {
 
     html += '<div class="eq-row">';
     html += '<div class="eq-row-top">';
-    html += '<div class="eq-street">' + res.street + '</div>';
+    html += '<div class="gold-heading eq-street">' + res.street + '</div>';
     if (res.texture) {
       var texCls = res.texture.wetness === 'wet' ? 'tex-wet' : res.texture.wetness === 'dry' ? 'tex-dry' : 'tex-med';
       html += '<span class="badge board-texture-badge ' + texCls + '">' + res.texture.label + '</span>';
@@ -168,7 +168,7 @@ function renderEquityResults(container, simResult) {
         }
         html += '</div>';
       }
-      html += '<div class="eq-detail ' + qualClass + '">' + res.actionDesc + ' ' + res.guidance.text + '</div>';
+      html += '<div class="text-micro eq-detail ' + qualClass + '">' + res.actionDesc + ' ' + res.guidance.text + '</div>';
       if (res.villainProfile && res.guidance.text.indexOf(res.villainProfile.name) === -1) {
         html += '<div class="villain-profile-line">vs ' + res.villainProfile.type + ' (' + res.villainProfile.name + ' \u00b7 VPIP ' + (res.villainProfile.vpip || '?') + '% \u00b7 Fold to raise ' + (res.villainProfile.foldToRaise || '?') + '%)</div>';
       }
@@ -198,13 +198,13 @@ function renderEquityResults(container, simResult) {
   if (summary && summary.text) {
     var sumClass = summary.quality === 'good' ? 'val-pos' : summary.quality === 'bad' ? 'val-neg' : 'text-gold';
     html += '<div class="eq-summary">';
-    html += '<div class="eq-summary-label">Hand Summary</div>';
-    html += '<div class="eq-summary-text ' + sumClass + '">' + summary.text + '</div>';
+    html += '<div class="label gold eq-summary-label">Hand Summary</div>';
+    html += '<div class="text-meta eq-summary-text ' + sumClass + '">' + summary.text + '</div>';
     html += '</div>';
   }
 
   var hasFlopOrTurn = results.some(function (r) { return r.street === 'Flop' || r.street === 'Turn'; });
-  var caveats = '<div class="eq-caveats">';
+  var caveats = '<div class="text-micro eq-caveats">';
   caveats += 'Equity calculated against a single random hand. In multiway pots, true equity may be lower.';
   if (hasFlopOrTurn) {
     caveats += ' Pot odds comparisons use raw equity; implied odds (potential to win more on later streets) are not factored in and may justify calls that appear unprofitable.';

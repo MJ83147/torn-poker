@@ -2634,11 +2634,8 @@ textarea#jin:focus {
 }
 
 .eq-sim-title {
-  color: var(--gold);
   font-family: var(--mono);
-  font-size: var(--fs-xs);
   font-weight: var(--fw-medium);
-  text-transform: uppercase;
   letter-spacing: var(--sp-1);
 }
 
@@ -2673,10 +2670,7 @@ textarea#jin:focus {
 }
 
 .eq-street {
-  color: var(--gold);
   font-family: var(--mono);
-  font-size: var(--fs-sm);
-  font-weight: var(--fw-semibold);
   min-width: 58px;
 }
 
@@ -2706,7 +2700,6 @@ textarea#jin:focus {
 }
 
 .eq-detail {
-  font-size: var(--fs-xs);
   font-family: var(--mono);
   line-height: var(--lh-normal);
   margin-top: var(--sp-4);
@@ -2729,17 +2722,13 @@ textarea#jin:focus {
 }
 
 .eq-summary-label {
-  font-size: var(--fs-xs);
   font-weight: var(--fw-semibold);
-  color: var(--gold);
   font-family: var(--mono);
-  text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-bottom: var(--sp-6);
 }
 
 .eq-summary-text {
-  font-size: var(--fs-sm);
   font-family: var(--mono);
   line-height: var(--lh-body);
 }
@@ -2748,8 +2737,6 @@ textarea#jin:focus {
   margin-top: var(--sp-10);
   padding-top: var(--sp-8);
   border-top: var(--sp-1) solid var(--border);
-  font-size: var(--fs-xs);
-  color: var(--dim);
   font-family: var(--mono);
   line-height: var(--lh-normal);
 }
