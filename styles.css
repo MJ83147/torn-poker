@@ -2222,7 +2222,7 @@ textarea#jin:focus {
   cursor: pointer;
   padding: var(--sp-4) var(--sp-8);
   border-radius: var(--r-md);
-  border: 1px solid transparent;
+  border: var(--sp-1) solid transparent;
   transition: border-color .2s, color .2s;
 }
 
@@ -2248,7 +2248,7 @@ textarea#jin:focus {
   font-size: var(--fs-12);
   color: var(--amber);
   background: color-mix(in srgb, var(--amber) 8%, transparent);
-  border-bottom: 1px solid var(--border);
+  border-bottom: var(--sp-1) solid var(--border);
 }
 
 .cta-block {
@@ -2274,7 +2274,7 @@ textarea#jin:focus {
 }
 
 .saved-section-divider {
-  border-bottom: 1px solid var(--border);
+  border-bottom: var(--sp-1) solid var(--border);
   padding-bottom: var(--sp-16);
 }
 
