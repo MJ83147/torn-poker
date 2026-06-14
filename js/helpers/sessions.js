@@ -110,7 +110,7 @@ function renderBestWorstSessions(hands, overallData) {
   }
 
   var html = '<div class="sec-subtitle mt-20">Best &amp; Worst Sessions</div>';
-  html += '<div class="best-worst-grid">';
+  html += '<div class="grid-auto best-worst-grid">';
 
   var sessionPairs = [
     { session: best, label: 'Best Session', frame: 'right' },

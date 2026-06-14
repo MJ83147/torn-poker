@@ -212,7 +212,7 @@ function renderPlayers(container, d, hands) {
 
         var exploitIns = generateExploitInsights(oppStats, playerName, hands);
         if (exploitIns.length) {
-          ph += '<div class="ins-grid mb-16">' + exploitIns.join('') + '</div>';
+          ph += '<div class="grid-auto ins-grid mb-16">' + exploitIns.join('') + '</div>';
         }
       } else {
         ph += '<div class="panel-verdict">Need ' + Math.max(0, 5 - oppStats.hands) + ' more shared hands to show tendency stats (' + oppStats.hands + '/5 hands).</div>';

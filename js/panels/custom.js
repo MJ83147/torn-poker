@@ -924,7 +924,7 @@ function _crRenderHeadline(result, compareResult) {
   var wrCol = m.wr == null ? 'var(--dim)' : wrColor(m.wr);
 
   if (!compareResult) {
-    return '<div class="cr-headline">' +
+    return '<div class="grid-auto cr-headline">' +
       tile('Hands matched', result.sampleSize, 'var(--gold)') +
       tile('Sessions', result.sessions, 'var(--text)') +
       tile('bb/100', bb100Str, bb100Col) +
@@ -944,7 +944,7 @@ function _crRenderHeadline(result, compareResult) {
   var wrDelta = (m.wr != null && mB.wr != null) ? m.wr - mB.wr : null;
   var wrBCol = mB.wr == null ? 'var(--dim)' : wrColor(mB.wr);
 
-  return '<div class="cr-headline cr-headline-compare">' +
+  return '<div class="grid-auto cr-headline cr-headline-compare">' +
     tileCompare('Hands matched', result.sampleSize, compareResult.sampleSize, 'var(--gold)', 'var(--gold)', (result.sampleSize - compareResult.sampleSize), 'var(--dim)') +
     tileCompare('bb/100', bb100Str, bb100B, bb100Col, bb100BCol, bb100DeltaStr, bb100DeltaCol) +
     tileCompare('Win rate', wrStr, mB.wr != null ? mB.wr + '%' : '-', wrCol, wrBCol, wrDelta != null ? (wrDelta > 0 ? '+' : '') + wrDelta + '%' : '-', 'var(--dim)') +
@@ -954,7 +954,7 @@ function _crRenderHeadline(result, compareResult) {
 
 function _crRenderInsightCards(cards) {
   if (!cards.length) return '';
-  return '<div class="ins-grid">' + cards.map(function(c) {
+  return '<div class="grid-auto ins-grid">' + cards.map(function(c) {
     return ins(c.sev, c.title, c.body, c.chips || []);
   }).join('') + '</div>';
 }

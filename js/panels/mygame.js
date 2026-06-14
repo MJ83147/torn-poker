@@ -172,7 +172,7 @@ function renderTableDynamicsReference(hands, d) {
   };
 
   h += '<div class="sec-subtitle mt-12">By Table Size</div>';
-  h += '<div class="dynamics-cards">';
+  h += '<div class="grid-auto dynamics-cards">';
   for (var si = 0; si < seatKeys.length; si++) {
     var seats = seatKeys[si];
     var entry = SEAT_MATRIX[seats];
@@ -211,7 +211,7 @@ function renderTableDynamicsReference(hands, d) {
   h += '</div>';
 
   h += '<div class="sec-subtitle mt-20">By Flop Players</div>';
-  h += '<div class="dynamics-cards">';
+  h += '<div class="grid-auto dynamics-cards">';
   var flopKeys = ['HU', '3-way', 'multiway'];
   var flopLabels = { HU: 'Heads-up flop', '3-way': '3-way flop', multiway: 'Multiway flop (4+)' };
   var flopCbetMod = { HU: 5, '3-way': 0, multiway: -10 };

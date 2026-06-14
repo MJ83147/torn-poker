@@ -97,7 +97,7 @@ function renderSavedSection() {
     '</div>' +
     '<div class="saved-section-body"' + (expanded ? '' : ' style="display:none;"') + '>';
 
-  html += '<div class="saved-hands-list">';
+  html += '<div class="grid-auto saved-hands-list">';
   for (var i = 0; i < keys.length; i++) {
     var entry = map[keys[i]];
     var h = entry.hand;

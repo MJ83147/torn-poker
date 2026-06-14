@@ -186,7 +186,7 @@ function renderInsights(insArr, fallbackLabel, fallbackText) {
   if (!insArr.length) {
     insArr.push(ins('n', fallbackLabel, fallbackText || 'More hands needed for ' + fallbackLabel.toLowerCase() + ' patterns.', []));
   }
-  return '<div class="ins-grid">' + insArr.join('') + '</div>';
+  return '<div class="grid-auto ins-grid">' + insArr.join('') + '</div>';
 }
 
 function renderResult(h, tag, baseClass) {
@@ -270,7 +270,7 @@ function pRow(body, label) {
 
 function insGrid(items, label) {
   if (!items || !items.length) return '';
-  var inner = '<div class="ins-grid">' + items.join('') + '</div>';
+  var inner = '<div class="grid-auto ins-grid">' + items.join('') + '</div>';
   return label ? pRow(inner, label) : inner;
 }
 
