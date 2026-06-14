@@ -489,7 +489,7 @@ function renderCompare(container, d, hands) {
     if (exploits.length > 0) {
       exploitHtml = '<div class="p-row"><div class="label">Exploit Tips</div><div class="compare-exploits">';
       for (var i = 0; i < exploits.length; i++) {
-        exploitHtml += '<div class="compare-exploit-item">' + exploits[i] + '</div>';
+        exploitHtml += '<div class="card card-s2 compare-exploit-item">' + exploits[i] + '</div>';
       }
       exploitHtml += '</div></div>';
     }

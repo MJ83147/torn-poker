@@ -61,7 +61,7 @@ function renderWelcome(container, d, hands, meta) {
     '<div class="welcome-body">' +
     '<div class="welcome-toc">' +
     tabDescs.map(function(t) {
-      return '<div class="welcome-toc-row" data-goto="' + t.tab + '">' +
+      return '<div class="card card-sm card-s1 welcome-toc-row" data-goto="' + t.tab + '">' +
         '<div class="gold-heading">' + t.name + '</div>' +
         '<div class="text-body">' + t.desc + '</div>' +
         '</div>';
@@ -87,13 +87,13 @@ function renderWelcome(container, d, hands, meta) {
     '</div>' +
     '<div class="welcome-whatsnew">' +
       '<div class="welcome-whatsnew-label">What\'s new</div>' +
-      '<button type="button" class="whatsnew-card whatsnew-card-hero" data-goto="custom">' +
+      '<button type="button" class="card card-s1 whatsnew-card whatsnew-card-hero" data-goto="custom">' +
         '<div class="badge whatsnew-card-tag">New</div>' +
         '<div class="whatsnew-card-name">Custom Report</div>' +
         '<div class="text-body">Build your own report by clicking together clauses like a sentence. Twelve filters across table, position, opponent, stake, time window, pot type and more, with a trend chart, breakdowns and a side-by-side compare mode.</div>' +
         '<div class="gold-heading whatsnew-card-cta">Open the Custom Report &rarr;</div>' +
       '</button>' +
-      '<div class="whatsnew-card whatsnew-card-static">' +
+      '<div class="card card-s1 whatsnew-card whatsnew-card-static">' +
         '<div class="badge whatsnew-card-tag">Improved</div>' +
         '<div class="whatsnew-card-name">Detailed insights</div>' +
         '<div class="text-body">Every analysis tab now ships story cards that flag strengths, leaks and patterns in your data, each with a real example hand from your session.</div>' +

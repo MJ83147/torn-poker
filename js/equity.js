@@ -117,7 +117,7 @@ function renderEquityResults(container, simResult) {
     headerNote = 'Exact enumeration';
   }
 
-  var html = '<div class="eq-sim">';
+  var html = '<div class="card card-s1 eq-sim">';
   html += '<div class="eq-sim-header"><span class="eq-sim-title">Equity Simulation</span><span class="text-meta eq-sim-note">' + headerNote + '</span></div>';
 
   var curvePoints = [];

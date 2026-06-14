@@ -123,7 +123,7 @@ function renderSavedSection() {
       '</div>' +
       '<div class="text-meta saved-card-board">' + (h.board && h.board.length ? h.board.join(' ') : 'No board') + '</div>' +
       '<div class="text-meta saved-card-acts">' + (myActs || 'No actions') + '</div>' +
-      (notePreview ? '<div class="saved-card-note-wrap">' + notePreview + '</div>' : '<div class="text-micro saved-card-note-empty">No notes</div>') +
+      (notePreview ? '<div class="card card-sm card-s2 saved-card-note-wrap">' + notePreview + '</div>' : '<div class="text-micro saved-card-note-empty">No notes</div>') +
       '<div class="text-micro saved-card-date">' + savedDate + '</div>' +
       '</div>';
   }

@@ -65,14 +65,14 @@ function renderShowdown(container, hands, meta, overallData) {
 
   var statsHtml = '<div class="mini-row mini-row-2col">';
 
-  statsHtml += '<div class="mini">';
+  statsHtml += '<div class="card mini">';
   statsHtml += '<div class="mini-label-dot label">' +
     '<span class="line-dot line-dot-blue"></span>Showdown</div>';
   statsHtml += '<div class="value ' + pnlValCls(cumSd) + '">' + fmtPnl(cumSd) + '</div>';
   statsHtml += '<div class="text-meta mini-meta">' + sdTotal + ' hands · ' + (sdWinRate !== null ? sdWinRate + '% win rate' : 'no data') + '</div>';
   statsHtml += '</div>';
 
-  statsHtml += '<div class="mini">';
+  statsHtml += '<div class="card mini">';
   statsHtml += '<div class="mini-label-dot label">' +
     '<span class="line-dot line-dot-red"></span>Non-Showdown</div>';
   statsHtml += '<div class="value ' + pnlValCls(cumNsd) + '">' + fmtPnl(cumNsd) + '</div>';
@@ -86,19 +86,19 @@ function renderShowdown(container, hands, meta, overallData) {
   var winLossRatio = avgLossPot > 0 ? (avgWinPot / avgLossPot).toFixed(2) : null;
 
   var potStatsHtml = '<div class="mini-row mini-row-3col">';
-  potStatsHtml += '<div class="mini">';
+  potStatsHtml += '<div class="card mini">';
   potStatsHtml += '<div class="mini-l label">Avg Pot Won</div>';
   potStatsHtml += '<div class="value val-pos">' + fmt(avgWinPot) + '</div>';
   potStatsHtml += '<div class="text-meta mini-meta">' + (potSdWin.length + potNsdWin.length) + ' hands</div>';
   potStatsHtml += '</div>';
 
-  potStatsHtml += '<div class="mini">';
+  potStatsHtml += '<div class="card mini">';
   potStatsHtml += '<div class="mini-l label">Avg Pot Lost</div>';
   potStatsHtml += '<div class="value val-neg">' + fmt(avgLossPot) + '</div>';
   potStatsHtml += '<div class="text-meta mini-meta">' + (potSdLoss.length + potNsdLoss.length) + ' hands</div>';
   potStatsHtml += '</div>';
 
-  potStatsHtml += '<div class="mini">';
+  potStatsHtml += '<div class="card mini">';
   potStatsHtml += '<div class="mini-l label">Win/Loss Pot Ratio</div>';
   potStatsHtml += '<div class="value ' + (winLossRatio !== null ? pnlValCls(winLossRatio - 1) : 'val-neg') + '">' + (winLossRatio !== null ? winLossRatio + 'x' : '-') + '</div>';
   potStatsHtml += '<div class="text-meta mini-meta">Target: above 1.0x</div>';

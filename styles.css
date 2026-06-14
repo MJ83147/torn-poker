@@ -342,6 +342,19 @@ body {
   color: var(--text);
 }
 
+/* --- Card surface modifiers (base .card is above) --- */
+.card-s1 {
+  background: var(--s1);
+}
+
+.card-s2 {
+  background: var(--s2);
+}
+
+.card-sm {
+  border-radius: var(--r-sm);
+}
+
 
 /* ==========================================================================
    4. FEATURES
@@ -1378,9 +1391,6 @@ textarea#jin:focus {
 }
 
 .mini {
-  background: transparent;
-  border: var(--sp-1) solid var(--border);
-  border-radius: var(--r-lg);
   padding: var(--sp-12) var(--sp-14);
 }
 
@@ -2661,10 +2671,7 @@ textarea#jin:focus {
 
 .eq-sim {
   margin-top: var(--sp-16);
-  border: var(--sp-1) solid var(--border);
-  border-radius: var(--r-lg);
   padding: var(--sp-12) var(--sp-14);
-  background: var(--s1);
 }
 
 .eq-sim-header {
@@ -3000,9 +3007,6 @@ tr.hrow:hover .hrow-star {
 }
 
 .saved-card-note-wrap {
-  background: var(--s2);
-  border: var(--sp-1) solid var(--border);
-  border-radius: var(--r-sm);
   padding: var(--sp-6) var(--sp-8);
   margin-bottom: var(--sp-6);
 }
@@ -3075,9 +3079,6 @@ tr.hrow:hover .hrow-star {
   display: block;
   width: 100%;
   text-align: left;
-  background: var(--s1);
-  border: var(--sp-1) solid var(--border);
-  border-radius: var(--r-lg);
   padding: var(--sp-16) var(--sp-20);
   cursor: pointer;
   transition: background .15s, border-color .15s, transform .15s;
@@ -3154,10 +3155,7 @@ tr.hrow:hover .hrow-star {
   grid-template-columns: 100px 1fr;
   gap: var(--sp-16);
   padding: var(--sp-12) var(--sp-14);
-  border: var(--sp-1) solid var(--border);
-  border-radius: var(--r-sm);
   margin-bottom: var(--sp-4);
-  background: var(--s1);
   cursor: pointer;
   transition: background .15s, border-color .15s;
 }
@@ -3540,8 +3538,6 @@ tr.hrow:hover .hrow-star {
   margin-bottom: var(--sp-12);
   padding: var(--sp-8) var(--sp-12);
   background: color-mix(in srgb, var(--white) 2%, transparent);
-  border-radius: var(--r-lg);
-  border: var(--sp-1) solid var(--border);
 }
 
 .compare-selectors {
@@ -3610,9 +3606,6 @@ tr.hrow:hover .hrow-star {
 
 .compare-exploit-item {
   padding: var(--sp-8) var(--sp-12);
-  background: var(--s2);
-  border: var(--sp-1) solid var(--border);
-  border-radius: var(--r-lg);
   font-size: var(--fs-sm);
   color: var(--text);
   line-height: var(--lh-snug);
@@ -3750,9 +3743,6 @@ tr.hrow:hover .hrow-star {
 }
 
 .style-card {
-  background: var(--s1);
-  border: var(--sp-1) solid var(--border);
-  border-radius: var(--r-lg);
   padding: 22px 18px;
   text-align: left;
   cursor: pointer;
