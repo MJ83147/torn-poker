@@ -156,7 +156,7 @@ function renderAllIn(container, d, hands) {
   if (!_allinHands.length) {
     container.innerHTML = '<div class="panel-title">All-In EV</div>' +
       '<div class="text-body panel-desc">Tracks every all-in showdown to measure luck vs skill.</div>' +
-      '<div class="card card-s2 card-flat panel-verdict">No all-in showdown hands found yet. When you go all-in and both players show cards, those hands appear here with equity calculations.</div>';
+      '<div class="panel-verdict">No all-in showdown hands found yet. When you go all-in and both players show cards, those hands appear here with equity calculations.</div>';
     return;
   }
 
@@ -265,7 +265,7 @@ function showAllInResults(container) {
     variance = 'You\'re frequently all-in as an underdog (' + equityWinRate + '% favourite rate). Check whether the spots are +EV given pot odds, or if tighter selection helps.';
   }
   if (variance) {
-    html += '<div class="card card-s2 card-flat panel-verdict">' + variance + '</div>';
+    html += '<div class="panel-verdict">' + variance + '</div>';
   }
 
   html += '<div class="p-row"><div class="p-section">';

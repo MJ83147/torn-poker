@@ -264,7 +264,7 @@
   function renderVerdict(findings, fallback) {
     var text = synthesiseVerdict(findings, fallback);
     if (!text) return '';
-    return '<div class="card card-s2 card-flat panel-verdict">' + escapeHtml(text) + '</div>';
+    return '<div class="panel-verdict">' + escapeHtml(text) + '</div>';
   }
 
   function renderStoryCard(finding) {
