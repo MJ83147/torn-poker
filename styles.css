@@ -322,6 +322,26 @@ body {
   background: var(--dot-tag);
 }
 
+/* --- Badges (inline pills) --- */
+.badge {
+  display: inline-block;
+  padding: var(--sp-2) var(--sp-8);
+  border-radius: var(--r-sm);
+  font-family: var(--mono);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+}
+
+.badge-warn {
+  background: color-mix(in srgb, var(--amber) 12%, transparent);
+  color: var(--amber);
+}
+
+.badge-neutral {
+  background: var(--tint-light-2);
+  color: var(--text);
+}
+
 
 /* ==========================================================================
    4. FEATURES
@@ -3092,14 +3112,9 @@ tr.hrow:hover .hrow-star {
 }
 
 .whatsnew-card-tag {
-  display: inline-block;
-  font-family: var(--mono);
-  font-size: var(--fs-xs);
   color: var(--gold);
   background: var(--bg);
   border: var(--sp-1) solid var(--gold2);
-  border-radius: var(--r-sm);
-  padding: var(--sp-2) var(--sp-8);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   margin-bottom: var(--sp-8);
@@ -3604,12 +3619,6 @@ tr.hrow:hover .hrow-star {
 }
 
 .board-texture-badge {
-  display: inline-block;
-  padding: var(--sp-2) var(--sp-8);
-  border-radius: var(--r-sm);
-  font-size: var(--fs-xs);
-  font-family: var(--mono);
-  font-weight: var(--fw-medium);
   letter-spacing: 0.02em;
   margin-right: var(--sp-6);
   vertical-align: middle;
@@ -3631,13 +3640,7 @@ tr.hrow:hover .hrow-star {
 }
 
 .draw-outs {
-  display: inline-block;
   padding: var(--sp-1) var(--sp-6);
-  border-radius: var(--r-sm);
-  font-size: var(--fs-xs);
-  font-family: var(--mono);
-  background: color-mix(in srgb, var(--amber) 12%, transparent);
-  color: var(--amber);
   margin-left: var(--sp-4);
 }
 
@@ -3646,17 +3649,6 @@ tr.hrow:hover .hrow-star {
   flex-wrap: wrap;
   align-items: center;
   gap: var(--sp-6);
-}
-
-.eq-made-hand {
-  display: inline-block;
-  padding: var(--sp-2) var(--sp-8);
-  border-radius: var(--r-sm);
-  font-size: var(--fs-xs);
-  font-family: var(--mono);
-  color: var(--text);
-  font-weight: var(--fw-medium);
-  background: var(--tint-light-2);
 }
 
 .villain-profile-line {

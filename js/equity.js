@@ -135,7 +135,7 @@ function renderEquityResults(container, simResult) {
     html += '<div class="eq-street">' + res.street + '</div>';
     if (res.texture) {
       var texCls = res.texture.wetness === 'wet' ? 'tex-wet' : res.texture.wetness === 'dry' ? 'tex-dry' : 'tex-med';
-      html += '<span class="board-texture-badge ' + texCls + '">' + res.texture.label + '</span>';
+      html += '<span class="badge board-texture-badge ' + texCls + '">' + res.texture.label + '</span>';
     }
     html += '<div class="eq-pct">' + eqPct + '</div>';
     html += '<div class="eq-bar-track"><div class="eq-bar-fill" style="width:' + barWidth + '%"></div></div>';
@@ -160,10 +160,10 @@ function renderEquityResults(container, simResult) {
       html += '<div class="eq-row-bottom">';
       if (res.madeHand) {
         html += '<div class="eq-badges">';
-        html += '<span class="eq-made-hand">' + res.madeHand.label + '</span>';
+        html += '<span class="badge badge-neutral">' + res.madeHand.label + '</span>';
         if (res.madeHand.draws.length) {
           for (var dri = 0; dri < res.madeHand.draws.length; dri++) {
-            html += '<span class="draw-outs">' + res.madeHand.draws[dri] + '</span>';
+            html += '<span class="badge badge-warn draw-outs">' + res.madeHand.draws[dri] + '</span>';
           }
         }
         html += '</div>';
