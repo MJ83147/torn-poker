@@ -1041,9 +1041,7 @@ textarea#jin:focus {
 }
 
 .ins-coaching-head {
-  font-size: var(--fs-sm);
   letter-spacing: 0.06em;
-  color: var(--gold);
   margin-bottom: var(--sp-4);
 }
 
@@ -1288,8 +1286,6 @@ textarea#jin:focus {
 }
 
 .dynamics-card-note {
-  font-size: var(--fs-sm);
-  color: var(--dim);
   line-height: 1.45;
   margin-bottom: var(--sp-8);
 }
@@ -1332,16 +1328,13 @@ textarea#jin:focus {
 }
 
 .dynamics-vs-stat {
-  font-size: var(--fs-sm);
   letter-spacing: 0.04em;
   margin-bottom: var(--sp-4);
 }
 
 .dynamics-zone-head {
-  font-size: var(--fs-sm);
   letter-spacing: 0.06em;
   margin-bottom: var(--sp-6);
-  color: var(--gold);
 }
 
 .dynamics-coaching-head {
@@ -1362,9 +1355,7 @@ textarea#jin:focus {
 
 .dynamics-vs-verdict {
   margin-top: var(--sp-4);
-  font-size: var(--fs-xs);
   font-weight: var(--fw-bold);
-  text-transform: uppercase;
   letter-spacing: 0.06em;
 }
 
@@ -1482,10 +1473,6 @@ textarea#jin:focus {
   grid-template-columns: 110px 1fr 50px 60px;
 }
 
-.bar-name {
-  font-size: var(--fs-sm);
-  color: var(--gold);
-}
 
 .bar-track {
   background: var(--muted);
@@ -1517,14 +1504,10 @@ textarea#jin:focus {
 }
 
 .bar-val {
-  font-size: var(--fs-sm);
-  color: var(--text);
   text-align: right;
 }
 
 .bar-val2 {
-  font-size: var(--fs-xs);
-  color: var(--dim);
   text-align: right;
 }
 
@@ -1856,10 +1839,7 @@ textarea#jin:focus {
 }
 
 .sec-subtitle {
-  font-size: var(--fs-sm);
   letter-spacing: 3px;
-  color: var(--dim);
-  text-transform: uppercase;
   margin-bottom: var(--sp-14);
   margin-top: 36px;
   padding-top: var(--sp-24);

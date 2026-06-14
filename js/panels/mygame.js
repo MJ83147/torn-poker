@@ -81,7 +81,7 @@ function renderMyGame(container, d, hands) {
         })
       : [];
 
-    html += '<div class="sec-subtitle mt-20">Work On Next</div>';
+    html += '<div class="label sec-subtitle mt-20">Work On Next</div>';
     var workOn = null;
     var _workAggFloor = _afBandMG ? _afBandMG.tight - 3 : 15;
     var _workLimpCeil = _domSeatsMG && _domSeatsMG <= 2 ? 70 : _domSeatsMG && _domSeatsMG <= 3 ? 45 : 22;
@@ -145,14 +145,14 @@ function _vsRow(label, actualPct, actualDenom, targetText) {
     labelHtml +
     '<div class="flex-between dynamics-vs-top"><span>You: <strong>' + actualStr + '</strong>' + sampleStr + '</span>' +
     '<span class="label">Target: ' + targetText + '</span></div>' +
-    (v.label ? '<div class="dynamics-vs-verdict">' + v.label + '</div>' : '') +
+    (v.label ? '<div class="label dynamics-vs-verdict">' + v.label + '</div>' : '') +
     '</div>';
 }
 
 // Targets must come from matrixTarget so the user's style offset (TAG/LAG/Nit/etc)
 // is applied — reading SEAT_MATRIX / FLOP_MATRIX directly would skip the offset.
 function renderTableDynamicsReference(hands, d) {
-  var h = '<div class="sec-subtitle mt-20">Table Dynamics: You vs Target</div>';
+  var h = '<div class="label sec-subtitle mt-20">Table Dynamics: You vs Target</div>';
   h += '<div class="text-body mb-16">Your actual play at each table size and flop multiplicity, compared to the recommended benchmarks for your target style. <span class="v-ok">Green = on target</span>, <span class="v-low">amber = too low / too tight</span>, <span class="v-high">red = too high / too loose</span>.</div>';
 
   var styleKey = (typeof getUserStyle === 'function') ? getUserStyle() : 'TAG';
@@ -171,7 +171,7 @@ function renderTableDynamicsReference(hands, d) {
     9: 'Full-ring 9-max. Very disciplined early position: JJ+, AKs/AKo, AQs only from UTG. Exploit weak limps and small opens from the blinds when folded to.'
   };
 
-  h += '<div class="sec-subtitle mt-12">By Table Size</div>';
+  h += '<div class="label sec-subtitle mt-12">By Table Size</div>';
   h += '<div class="grid-auto dynamics-cards">';
   for (var si = 0; si < seatKeys.length; si++) {
     var seats = seatKeys[si];
@@ -189,7 +189,7 @@ function renderTableDynamicsReference(hands, d) {
       continue;
     }
 
-    h += '<div class="dynamics-zone-head label">Your play: VPIP by position</div>';
+    h += '<div class="label gold dynamics-zone-head">Your play: VPIP by position</div>';
     h += '<table class="tbl dynamics-pos-tbl"><thead><tr><th>Pos</th><th>Your VPIP</th><th>Target</th><th>Hands</th></tr></thead><tbody>';
     for (var pi = 0; pi < entry.positions.length; pi++) {
       var p = entry.positions[pi];
@@ -203,14 +203,14 @@ function renderTableDynamicsReference(hands, d) {
     h += '</tbody></table>';
 
     if (seatCoaching[seats]) {
-      h += '<div class="dynamics-zone-head label dynamics-coaching-head">Coaching</div>';
+      h += '<div class="label gold dynamics-zone-head dynamics-coaching-head">Coaching</div>';
       h += '<div class="text-body dynamics-coaching">' + seatCoaching[seats] + '</div>';
     }
     h += '</div>';
   }
   h += '</div>';
 
-  h += '<div class="sec-subtitle mt-20">By Flop Players</div>';
+  h += '<div class="label sec-subtitle mt-20">By Flop Players</div>';
   h += '<div class="grid-auto dynamics-cards">';
   var flopKeys = ['HU', '3-way', 'multiway'];
   var flopLabels = { HU: 'Heads-up flop', '3-way': '3-way flop', multiway: 'Multiway flop (4+)' };
@@ -232,7 +232,7 @@ function renderTableDynamicsReference(hands, d) {
       continue;
     }
 
-    h += '<div class="dynamics-zone-head label">Your play</div>';
+    h += '<div class="label gold dynamics-zone-head">Your play</div>';
     var cbetActual = subF.cbetOpps > 0 ? pct(subF.cbetDone, subF.cbetOpps) : null;
     var cbetSeatBand = matrixTarget('cbet', domPos, domSeats, styleKey);
     var cbetMod = flopCbetMod[bk] || 0;
@@ -243,7 +243,7 @@ function renderTableDynamicsReference(hands, d) {
     } : null;
     h += _vsRow('C-bet', cbetActual, subF.cbetOpps, fmtBandRange(cbetBand));
 
-    h += '<div class="dynamics-zone-head label dynamics-coaching-head">Coaching</div>';
+    h += '<div class="label gold dynamics-zone-head dynamics-coaching-head">Coaching</div>';
     h += '<div class="text-body dynamics-coaching">' + fe.notes + '</div>';
     h += '<div class="dynamics-card-kv"><span>Bet sizing</span><span>' + fe.cbetSizing + '</span></div>';
     h += '<div class="dynamics-card-kv"><span>Continue with</span><span>' + fe.continueRange + '</span></div>';

@@ -540,11 +540,11 @@ function twoGridHtml(chart, filtered, scenarioType, tallies) {
   var hasChart = !!(chart && chart.length);
   return '<div class="grid-2 range-compare">' +
     '<div class="range-compare-col">' +
-      '<div class="sec-subtitle mt-0">GTO chart</div>' +
+      '<div class="label sec-subtitle mt-0">GTO chart</div>' +
       buildGtoGridHtml(chart, tallies) +
     '</div>' +
     '<div class="range-compare-col">' +
-      '<div class="sec-subtitle mt-0">Your range</div>' +
+      '<div class="label sec-subtitle mt-0">Your range</div>' +
       buildHeroGridHtml(byKey, colors, hasChart) +
     '</div>' +
   '</div>';
@@ -627,7 +627,7 @@ function renderRange(container, d, hands) {
   function renderOverall(body) {
     var tallies = tallyByCombo(hands, 'overall');
     body.innerHTML =
-      '<div class="sec-subtitle mt-0">Your Overall Range</div>' +
+      '<div class="label sec-subtitle mt-0">Your Overall Range</div>' +
       '<div class="text-meta mb-12">Every combo you have been dealt. Bold border means you played it; faded means you folded.</div>' +
       frequencyLegendHtml() +
       buildOverallGridHtml(tallies) +

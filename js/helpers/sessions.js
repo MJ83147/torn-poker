@@ -109,7 +109,7 @@ function renderBestWorstSessions(hands, overallData) {
     if (sessions[wi].pnl === worst.pnl && sessions[wi].hands.length > worst.hands.length) worst = sessions[wi];
   }
 
-  var html = '<div class="sec-subtitle mt-20">Best &amp; Worst Sessions</div>';
+  var html = '<div class="label sec-subtitle mt-20">Best &amp; Worst Sessions</div>';
   html += '<div class="grid-auto best-worst-grid">';
 
   var sessionPairs = [

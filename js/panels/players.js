@@ -207,7 +207,7 @@ function renderPlayers(container, d, hands) {
           { l: tipWrap('WSD'),          v: wsd !== null ? wsd + '%' : '-',       c: sev(wsd, 35, 999, 35, 60) },
         ];
 
-        ph += '<div class="sec-subtitle mt-0">Tendencies</div>';
+        ph += '<div class="label sec-subtitle mt-0">Tendencies</div>';
         ph += renderMiniRow(minis);
 
         var exploitIns = generateExploitInsights(oppStats, playerName, hands);
@@ -218,7 +218,7 @@ function renderPlayers(container, d, hands) {
         ph += '<div class="panel-verdict">Need ' + Math.max(0, 5 - oppStats.hands) + ' more shared hands to show tendency stats (' + oppStats.hands + '/5 hands).</div>';
       }
 
-      ph += '<div class="sec-subtitle">Shared Hands</div>';
+      ph += '<div class="label sec-subtitle">Shared Hands</div>';
       if (totalPages > 1) {
         ph += '<div class="flex-gap-6 mb-8 flex-end">' +
           renderPagination(phPage, playerHands.length, PH_SIZE, 'ph-prev', 'ph-next') + '</div>';

@@ -159,7 +159,7 @@ function ins(sev, label, text, chips, coaching) {
     }).join('') + '</div>'
     : '';
   const coachingHtml = coaching
-    ? '<div class="ins-coaching"><div class="ins-coaching-head label">Coaching</div><div class="text-body">' + coaching + '</div></div>'
+    ? '<div class="ins-coaching"><div class="label gold ins-coaching-head">Coaching</div><div class="text-body">' + coaching + '</div></div>'
     : '';
   return '<div class="ins"><div class="ins-badge ' + sev + '"><div class="dot"></div><div class="ins-word">' + words[sev] + '</div></div><div class="ins-title">' + label + '</div><div class="text-body ins-text">' + text + '</div>' + chipHtml + coachingHtml + '</div>';
 }
@@ -231,10 +231,10 @@ function renderPagination(page, totalItems, pageSize, prevId, nextId) {
 function barRow(label, val, max, cls, valStr, val2Str) {
   const w = max > 0 ? clamp(Math.round(val / max * 100), 0, 100) : 0;
   return '<div class="bar-row ' + (val2Str ? 'bw3' : 'bw2') + '">' +
-    '<div class="bar-name">' + label + '</div>' +
+    '<div class="gold-heading bar-name">' + label + '</div>' +
     '<div class="bar-track"><div class="bar-fill ' + cls + '" style="width:' + w + '%"></div></div>' +
-    '<div class="bar-val">' + valStr + '</div>' +
-    (val2Str ? '<div class="bar-val2">' + val2Str + '</div>' : '') +
+    '<div class="text-meta bar-val">' + valStr + '</div>' +
+    (val2Str ? '<div class="text-micro bar-val2">' + val2Str + '</div>' : '') +
     '</div>';
 }
 
