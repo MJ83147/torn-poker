@@ -215,12 +215,38 @@ body {
 }
 
 /* --- Text colour modifiers --- */
-.val-pos {
+/* Status colours: every green / red / amber state shares one rule each,
+   instead of each component redeclaring the same colour. */
+.val-pos,
+.chip.chip-g,
+.hs-v.g,
+.ins-badge.g .ins-word,
+.work-on-g .work-on-title,
+.v-ok,
+.dynamics-vs.v-ok .dynamics-vs-verdict {
   color: var(--green);
 }
 
-.val-neg {
+.val-neg,
+.chip.chip-r,
+.hs-v.r,
+.ins-badge.r .ins-word,
+.work-on-r .work-on-title,
+.v-high,
+.dynamics-vs.v-high .dynamics-vs-verdict,
+.range-error,
+.upload-row-error {
   color: var(--red);
+}
+
+.val-warn,
+.chip.chip-a,
+.hs-v.a,
+.ins-badge.a .ins-word,
+.work-on-a .work-on-title,
+.v-low,
+.dynamics-vs.v-low .dynamics-vs-verdict {
+  color: var(--amber);
 }
 
 .val-dim {
@@ -449,17 +475,8 @@ body {
   color: var(--gold);
 }
 
-.chip.chip-g {
-  color: var(--green);
-}
 
-.chip.chip-r {
-  color: var(--red);
-}
 
-.chip.chip-a {
-  color: var(--amber);
-}
 
 /* --- Tables --- */
 .tbl {
@@ -806,21 +823,12 @@ textarea#jin:focus {
   white-space: nowrap;
 }
 
-.hs-v.g {
-  color: var(--green);
-}
 
-.hs-v.r {
-  color: var(--red);
-}
 
 .hs-v.o {
   color: var(--gold);
 }
 
-.hs-v.a {
-  color: var(--amber);
-}
 
 .hs-v.w {
   color: var(--text);
@@ -980,25 +988,16 @@ textarea#jin:focus {
   background: var(--green);
 }
 
-.ins-badge.g .ins-word {
-  color: var(--green);
-}
 
 .ins-badge.r .dot {
   background: var(--red);
 }
 
-.ins-badge.r .ins-word {
-  color: var(--red);
-}
 
 .ins-badge.a .dot {
   background: var(--amber);
 }
 
-.ins-badge.a .ins-word {
-  color: var(--amber);
-}
 
 .ins-badge.n .dot {
   background: var(--dim);
@@ -1059,17 +1058,8 @@ textarea#jin:focus {
   margin-bottom: var(--sp-8);
 }
 
-.work-on-r .work-on-title {
-  color: var(--red);
-}
 
-.work-on-a .work-on-title {
-  color: var(--amber);
-}
 
-.work-on-g .work-on-title {
-  color: var(--green);
-}
 
 .work-on-desc {
   margin-bottom: var(--sp-8);
@@ -1346,17 +1336,8 @@ textarea#jin:focus {
   letter-spacing: 0.06em;
 }
 
-.v-ok {
-  color: var(--green);
-}
 
-.v-low {
-  color: var(--amber);
-}
 
-.v-high {
-  color: var(--red);
-}
 
 .v-na {
   color: var(--muted);
@@ -1377,17 +1358,8 @@ textarea#jin:focus {
   background: color-mix(in srgb, var(--red) 8%, transparent);
 }
 
-.dynamics-vs.v-ok .dynamics-vs-verdict {
-  color: var(--green);
-}
 
-.dynamics-vs.v-low .dynamics-vs-verdict {
-  color: var(--amber);
-}
 
-.dynamics-vs.v-high .dynamics-vs-verdict {
-  color: var(--red);
-}
 
 .dynamics-pos-tbl tr.v-ok td:nth-child(2) {
   color: var(--green);
@@ -1996,9 +1968,6 @@ textarea#jin:focus {
   margin-bottom: var(--sp-12);
 }
 
-.range-error {
-  color: var(--red);
-}
 
 .example-hand-btn {
   background: transparent;
@@ -2243,9 +2212,6 @@ textarea#jin:focus {
   margin-bottom: var(--sp-6);
 }
 
-.upload-row-error {
-  color: var(--red);
-}
 
 .upload-row-empty {
   color: var(--muted);
