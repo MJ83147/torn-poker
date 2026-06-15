@@ -570,6 +570,7 @@ body {
    4. FEATURES
    ========================================================================== */
 
+/* --- Loader screen --- */
 #loader {
   position: fixed;
   inset: 0;
@@ -690,6 +691,7 @@ body {
   to { transform: translateX(190px); }
 }
 
+/* --- Paste & import screens --- */
 #app {
   display: none;
 }
@@ -799,6 +801,7 @@ textarea#jin:focus {
   margin-top: var(--sp-8);
 }
 
+/* --- Dashboard header & tabs --- */
 #dash {
   display: none;
 }
@@ -941,6 +944,7 @@ textarea#jin:focus {
   display: block;
 }
 
+/* --- Panels, insights & story cards --- */
 .tab-item {
   display: block;
   width: 100%;
@@ -1205,6 +1209,7 @@ textarea#jin:focus {
   gap: var(--sp-8);
 }
 
+/* --- Hand-type tags --- */
 .ht-tags {
   display: inline-flex;
   flex-wrap: wrap;
@@ -1270,6 +1275,7 @@ textarea#jin:focus {
   border-style: dashed;
 }
 
+/* --- My Game: table dynamics --- */
 .dynamics-cards {
   gap: var(--sp-12);
   margin-top: var(--sp-12);
@@ -1391,6 +1397,7 @@ textarea#jin:focus {
   font-weight: var(--fw-semibold);
 }
 
+/* --- Best / worst sessions --- */
 .best-worst-grid {
   --grid-min: 300px;
   gap: var(--sp-12);
@@ -1418,6 +1425,7 @@ textarea#jin:focus {
   margin-bottom: var(--sp-4);
 }
 
+/* --- Bars & stacked meters --- */
 .mini {
   padding: var(--sp-12) var(--sp-14);
 }
@@ -1600,6 +1608,7 @@ textarea#jin:focus {
 }
 
 
+/* --- Range grid & legends --- */
 .range-grid {
   display: grid;
   grid-template-columns: repeat(13, 1fr);
@@ -1933,6 +1942,7 @@ textarea#jin:focus {
   opacity: var(--range-folded-opacity);
 }
 
+/* --- Range controls & subtabs --- */
 .range-subtabs {
   display: flex;
   flex-wrap: wrap;
@@ -1998,6 +2008,7 @@ textarea#jin:focus {
   color: var(--gold);
 }
 
+/* --- Assorted controls (toggles, filters, search) --- */
 .divider {
   height: 1px;
   background: var(--border);
@@ -2128,6 +2139,7 @@ textarea#jin:focus {
   color: var(--gold) !important;
 }
 
+/* --- Spacing & helper utilities --- */
 .mt-0 {
   margin-top: 0;
   padding-top: 0;
@@ -2220,6 +2232,7 @@ textarea#jin:focus {
   color: var(--gold);
 }
 
+/* --- Assorted components (profile, CTA, charts, rows) --- */
 .upload-row {
   margin-bottom: var(--sp-6);
 }
@@ -2449,6 +2462,7 @@ textarea#jin:focus {
   padding: var(--sp-16);
 }
 
+/* --- Modals (hand replay) --- */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -2539,6 +2553,7 @@ textarea#jin:focus {
   color: var(--dim);
 }
 
+/* --- Equity simulation --- */
 .eq-sim {
   margin-top: var(--sp-16);
   padding: var(--sp-12) var(--sp-14);
@@ -2692,6 +2707,7 @@ textarea#jin:focus {
   }
 }
 
+/* --- Hand log & saved hands --- */
 .hrow-star {
   font-size: var(--fs-md);
   color: var(--dim);
@@ -2865,6 +2881,7 @@ tr.hrow:hover .hrow-star {
   text-align: right;
 }
 
+/* --- Welcome screen --- */
 .welcome-wrap {
   max-width: none;
 }
@@ -3055,6 +3072,7 @@ tr.hrow:hover .hrow-star {
   background: var(--gold);
 }
 
+/* --- How-it-works modal --- */
 .hiw-overlay {
   pointer-events: none;
 }
@@ -3146,6 +3164,7 @@ tr.hrow:hover .hrow-star {
   transform: translateY(0);
 }
 
+/* --- Guided tour (intro.js) --- */
 .introjs-overlay {
   background: rgba(0, 0, 0, 0.6) !important;
 }
@@ -3295,6 +3314,7 @@ tr.hrow:hover .hrow-star {
   color: var(--text) !important;
 }
 
+/* --- All-In EV --- */
 .allin-table-wrap {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
@@ -3350,6 +3370,7 @@ tr.hrow:hover .hrow-star {
   background: color-mix(in srgb, var(--white) 2%, transparent);
 }
 
+/* --- Players & head-to-head compare --- */
 .compare-selectors {
   display: flex;
   align-items: center;
@@ -3447,6 +3468,7 @@ tr.hrow:hover .hrow-star {
   margin-top: var(--sp-2);
 }
 
+/* --- Style display & picker --- */
 .style-display {
   display: inline-flex;
   align-items: center;
@@ -3585,6 +3607,7 @@ tr.hrow:hover .hrow-star {
 
 
 body.maintenance #loader,
+/* --- Maintenance screen --- */
 body.maintenance #app {
   display: none !important;
 }
@@ -3655,6 +3678,7 @@ body.maintenance #maintenance {
   color: var(--red);
 }
 
+/* --- Custom report --- */
 .cr-toolbar {
   display: flex;
   justify-content: space-between;
