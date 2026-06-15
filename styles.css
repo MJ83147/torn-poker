@@ -188,9 +188,6 @@ body {
   text-transform: uppercase;
 }
 
-.label.gold {
-  color: var(--gold);
-}
 
 .value {
   font-family: var(--serif);
@@ -249,11 +246,37 @@ body {
   color: var(--amber);
 }
 
-.val-dim {
+.text-gold,
+.label.gold,
+.chip.hi,
+.hs-v.o,
+.ins-badge.o .ins-word,
+.modal-action-line.me,
+.modal-hand-meta strong,
+.modal-star-btn.starred,
+.tab-item.active,
+.tab-menu-btn.active,
+.tbl td:first-child {
+  color: var(--gold);
+}
+
+.text-dim,
+.val-dim,
+.compare-h2h-record,
+.cr-joiner,
+.cr-stem,
+.ht-tag.ht-stack-standard,
+.ins-badge.n .ins-word,
+.modal-hand-meta span,
+.story-impact .story-tag,
+.player-search::placeholder {
   color: var(--dim);
 }
 
-.val-muted {
+.val-muted,
+.upload-row-empty,
+.v-na,
+.modal-notes-input::placeholder {
   color: var(--muted);
 }
 
@@ -471,9 +494,6 @@ body {
   color: var(--dim);
 }
 
-.chip.hi {
-  color: var(--gold);
-}
 
 
 
@@ -507,9 +527,6 @@ body {
   overflow: visible;
 }
 
-.tbl td:first-child {
-  color: var(--gold);
-}
 
 .tbl tr:last-child td {
   border-bottom: none;
@@ -825,9 +842,6 @@ textarea#jin:focus {
 
 
 
-.hs-v.o {
-  color: var(--gold);
-}
 
 
 .hs-v.w {
@@ -871,9 +885,6 @@ textarea#jin:focus {
   background: var(--tint-light);
 }
 
-.tab-menu-btn.active {
-  color: var(--gold);
-}
 
 .tab-arrow {
   font-size: var(--fs-xs);
@@ -929,9 +940,6 @@ textarea#jin:focus {
   background: color-mix(in srgb, var(--white) 8%, transparent);
 }
 
-.tab-item.active {
-  color: var(--gold);
-}
 
 .panel {
   display: none;
@@ -1003,17 +1011,11 @@ textarea#jin:focus {
   background: var(--dim);
 }
 
-.ins-badge.n .ins-word {
-  color: var(--dim);
-}
 
 .ins-badge.o .dot {
   background: var(--gold);
 }
 
-.ins-badge.o .ins-word {
-  color: var(--gold);
-}
 
 .ins-title {
   margin-bottom: 5px;
@@ -1173,9 +1175,6 @@ textarea#jin:focus {
   font-weight: var(--fw-bold);
 }
 
-.story-impact .story-tag {
-  color: var(--dim);
-}
 
 .story-examples {
   margin-top: var(--sp-14);
@@ -1237,9 +1236,6 @@ textarea#jin:focus {
   background: color-mix(in srgb, var(--amber) 6%, transparent);
 }
 
-.ht-tag.ht-stack-standard {
-  color: var(--dim);
-}
 
 .ht-tag.ht-stack-deep {
   color: var(--gto-blue);
@@ -1339,9 +1335,6 @@ textarea#jin:focus {
 
 
 
-.v-na {
-  color: var(--muted);
-}
 
 .dynamics-vs.v-ok {
   border-color: color-mix(in srgb, var(--green) 35%, transparent);
@@ -2082,9 +2075,6 @@ textarea#jin:focus {
   width: 180px;
 }
 
-.player-search::placeholder {
-  color: var(--dim);
-}
 
 .players-table-scroll {
   max-height: 520px;
@@ -2213,9 +2203,6 @@ textarea#jin:focus {
 }
 
 
-.upload-row-empty {
-  color: var(--muted);
-}
 
 .sample-warning {
   padding: var(--sp-12) var(--sp-32);
@@ -2300,13 +2287,7 @@ textarea#jin:focus {
   align-items: center;
 }
 
-.text-gold {
-  color: var(--gold);
-}
 
-.text-dim {
-  color: var(--dim);
-}
 
 .excluded-row {
   opacity: 0.35;
@@ -2499,22 +2480,13 @@ textarea#jin:focus {
   margin-bottom: var(--sp-16);
 }
 
-.modal-hand-meta span {
-  color: var(--dim);
-}
 
-.modal-hand-meta strong {
-  color: var(--gold);
-}
 
 .modal-action-line {
   padding: var(--sp-4) 0;
   border-bottom: var(--sp-1) solid color-mix(in srgb, var(--border) 50%, transparent);
 }
 
-.modal-action-line.me {
-  color: var(--gold);
-}
 
 .modal-action-line.street-label {
   color: var(--dim);
@@ -2745,9 +2717,6 @@ tr.hrow:hover .hrow-star {
   transform: scale(1.15);
 }
 
-.modal-star-btn.starred {
-  color: var(--gold);
-}
 
 .modal-notes {
   display: none;
@@ -2766,9 +2735,6 @@ tr.hrow:hover .hrow-star {
   transition: border-color .2s;
 }
 
-.modal-notes-input::placeholder {
-  color: var(--muted);
-}
 
 .saved-toggle {
   display: flex;
@@ -3434,9 +3400,6 @@ tr.hrow:hover .hrow-star {
   margin: var(--sp-8) 0 var(--sp-12);
 }
 
-.compare-h2h-record {
-  color: var(--dim);
-}
 
 .compare-exploits {
   display: flex;
@@ -3744,9 +3707,6 @@ body.maintenance #maintenance {
   margin: var(--sp-12) 0;
 }
 
-.cr-stem {
-  color: var(--dim);
-}
 
 .cr-seg-tag {
   display: inline-block;
@@ -3775,9 +3735,6 @@ body.maintenance #maintenance {
   font-style: italic;
 }
 
-.cr-joiner {
-  color: var(--dim);
-}
 
 .cr-add-btn {
   display: inline-block;
