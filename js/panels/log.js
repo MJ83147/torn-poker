@@ -112,7 +112,7 @@ function renderSavedSection() {
 
     var savedDate = entry.savedAt ? new Date(entry.savedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '';
 
-    html += '<div class="card saved-card" data-saved-key="' + keys[i].replace(/"/g, '&quot;') + '">' +
+    html += '<div class="card card-link saved-card" data-saved-key="' + keys[i].replace(/"/g, '&quot;') + '">' +
       '<div class="flex-between saved-card-top">' +
         '<div class="saved-card-hole">' + (h.hole ? h.hole.join(' ') : '??') + '</div>' +
         '<div class="text-meta saved-card-meta">' +

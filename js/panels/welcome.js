@@ -61,7 +61,7 @@ function renderWelcome(container, d, hands, meta) {
     '<div class="grid-2 welcome-body">' +
     '<div class="welcome-toc">' +
     tabDescs.map(function(t) {
-      return '<div class="card card-sm card-s1 welcome-toc-row" data-goto="' + t.tab + '">' +
+      return '<div class="card card-sm card-s1 card-link welcome-toc-row" data-goto="' + t.tab + '">' +
         '<div class="gold-heading">' + t.name + '</div>' +
         '<div class="text-body">' + t.desc + '</div>' +
         '</div>';

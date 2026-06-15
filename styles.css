@@ -439,6 +439,28 @@ body {
   padding: var(--sp-16) var(--sp-20);
 }
 
+/* --- Clickable cards ---
+   .card-link carries the cursor + lift hover once, so individual cards stop
+   redefining it. Add it alongside .card on any clickable card. */
+.card-link {
+  cursor: pointer;
+  transition: background .15s, border-color .15s, transform .15s;
+}
+
+.card-link:hover,
+.whatsnew-card:hover {
+  background: var(--s2);
+  border-color: var(--gold2);
+  transform: translateY(-1px);
+}
+
+/* Row tint on hover (table rows) */
+.range-hand-row:hover,
+.allin-row:hover,
+.compare-table tr:hover {
+  background: var(--s2);
+}
+
 /* --- Layout: grids --- */
 .grid-2 {
   display: grid;
@@ -2375,9 +2397,6 @@ textarea#jin:focus {
   transition: background .15s;
 }
 
-.range-hand-row:hover {
-  background: var(--s2);
-}
 
 .range-hand-row-pos {
   min-width: 28px;
@@ -2767,15 +2786,9 @@ tr.hrow:hover .hrow-star {
 }
 
 .saved-card {
-  background: transparent;
-  cursor: pointer;
-  transition: border-color .15s;
   position: relative;
 }
 
-.saved-card:hover {
-  border-color: var(--gold2);
-}
 
 .saved-card-top {
   margin-bottom: var(--sp-6);
@@ -2899,11 +2912,6 @@ tr.hrow:hover .hrow-star {
   color: inherit;
 }
 
-.whatsnew-card:hover {
-  background: var(--s2);
-  border-color: var(--gold2);
-  transform: translateY(-1px);
-}
 
 .whatsnew-card-static {
   cursor: default;
@@ -2969,14 +2977,8 @@ tr.hrow:hover .hrow-star {
   gap: var(--sp-16);
   padding: var(--sp-12) var(--sp-14);
   margin-bottom: var(--sp-4);
-  cursor: pointer;
-  transition: background .15s, border-color .15s;
 }
 
-.welcome-toc-row:hover {
-  background: var(--s2);
-  border-color: var(--gold2);
-}
 
 .welcome-tips {
   width: 100%;
@@ -3328,9 +3330,6 @@ tr.hrow:hover .hrow-star {
   transition: background 0.15s;
 }
 
-.allin-row:hover {
-  background: var(--tint-light);
-}
 
 .allin-cards {
   font-size: var(--fs-sm);
@@ -3384,9 +3383,6 @@ tr.hrow:hover .hrow-star {
   color: var(--text);
 }
 
-.compare-table tr:hover {
-  background: color-mix(in srgb, var(--white) 2%, transparent);
-}
 
 .compare-better {
   color: var(--green);
@@ -3533,17 +3529,10 @@ tr.hrow:hover .hrow-star {
 .style-card {
   padding: 22px 18px;
   text-align: left;
-  cursor: pointer;
-  transition: border-color .2s, transform .15s, background .2s;
   font-family: var(--mono);
   color: var(--text);
 }
 
-.style-card:hover {
-  border-color: var(--gold);
-  background: var(--s2);
-  transform: translateY(-2px);
-}
 
 .style-card-name {
   font-size: var(--fs-2xl);
