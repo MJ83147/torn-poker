@@ -15,7 +15,7 @@ function renderShowdown(container, hands, meta, overallData) {
   if (cash.length < 5) {
     container.innerHTML = '<div class="panel-title">Showdown</div>' +
       '<div class="text-body panel-desc">Showdown vs non-showdown P&L breakdown.</div>' +
-      '<div class="panel-verdict">Need at least 5 cash hands with outcomes to show the showdown graph. Keep playing and tracking.</div>';
+      '<div class="box panel-verdict">Need at least 5 cash hands with outcomes to show the showdown graph. Keep playing and tracking.</div>';
     return;
   }
 

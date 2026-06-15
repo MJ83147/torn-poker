@@ -113,7 +113,6 @@
   --r-sm: 4px;
   --r-lg: 8px;
   --r-pill: 50%;
-  --radius: var(--r-lg);
 }
 
 
@@ -380,6 +379,15 @@ body {
 
 .card-sm {
   border-radius: var(--r-sm);
+}
+
+/* Filled content box: one shared style for every panel callout
+   (insights, verdicts, work-on, etc). Panels add their own text and
+   margins on their own class; the box treatment lives only here. */
+.box {
+  background: var(--s2);
+  border-radius: var(--r-lg);
+  padding: var(--sp-16) var(--sp-20);
 }
 
 /* --- Layout: grids --- */
@@ -952,10 +960,6 @@ textarea#jin:focus {
 }
 
 .ins {
-  background: var(--s2);
-  border: none;
-  border-radius: var(--r-lg);
-  padding: 18px var(--sp-20);
   position: relative;
 }
 
@@ -1046,9 +1050,6 @@ textarea#jin:focus {
 }
 
 .work-on-block {
-  background: var(--s2);
-  border-radius: var(--r-lg);
-  padding: var(--sp-16) var(--sp-20);
   margin: var(--sp-12) 0;
 }
 
@@ -1082,9 +1083,6 @@ textarea#jin:focus {
   font-size: var(--fs-lg);
   line-height: var(--lh-normal);
   color: var(--text);
-  background: var(--s2);
-  border-radius: var(--r-lg);
-  padding: var(--sp-16) var(--sp-20);
   margin-bottom: var(--sp-24);
 }
 
@@ -2679,8 +2677,6 @@ textarea#jin:focus {
 .eq-summary {
   margin-top: var(--sp-12);
   padding: var(--sp-10) var(--sp-12);
-  background: var(--s2);
-  border-radius: var(--radius);
   border-left: 3px solid var(--gold);
 }
 
@@ -3764,9 +3760,6 @@ body.maintenance #maintenance {
 }
 
 .cr-sentence-wrap {
-  background: var(--s2);
-  border-radius: var(--r-lg);
-  padding: var(--sp-20) var(--sp-24);
   margin-bottom: var(--sp-28);
 }
 
@@ -3922,13 +3915,6 @@ body.maintenance #maintenance {
 
 .cr-headline-compare {
   --grid-min: 220px;
-}
-
-.cr-tile,
-.cr-chart-card {
-  background: var(--s2);
-  border-radius: var(--r-lg);
-  padding: var(--sp-16) var(--sp-20);
 }
 
 .cr-tile-dim {

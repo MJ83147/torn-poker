@@ -902,14 +902,14 @@ function _crRenderHeadline(result, compareResult) {
   var dim = result.sampleSize < CR_SAMPLE_MIN;
 
   function tile(label, val, color) {
-    return '<div class="cr-tile' + (dim ? ' cr-tile-dim' : '') + '">' +
+    return '<div class="box cr-tile' + (dim ? ' cr-tile-dim' : '') + '">' +
       '<div class="mb-6 label">' + label + '</div>' +
       '<div class="cr-tile-value value" style="color:' + color + '">' + val + '</div>' +
       '</div>';
   }
 
   function tileCompare(label, valA, valB, colorA, colorB, delta, deltaColor) {
-    return '<div class="cr-tile cr-tile-compare">' +
+    return '<div class="box cr-tile cr-tile-compare">' +
       '<div class="mb-6 label">' + label + '</div>' +
       '<div class="cr-tile-trio">' +
       '<div><div class="label cr-tile-mini-label">A</div><div class="value" style="color:' + colorA + '">' + valA + '</div></div>' +

@@ -103,13 +103,13 @@ function renderMyGame(container, d, hands) {
     if (!workOn && allLeaks.length) workOn = { sev: allLeaks[0].severity, label: allLeaks[0].name, desc: '', action: 'Focus on this pattern in your next session and track whether the stat improves.' };
 
     if (workOn) {
-      html += '<div class="work-on-block work-on-' + workOn.sev + '">';
+      html += '<div class="box work-on-block work-on-' + workOn.sev + '">';
       html += '<div class="work-on-title">' + workOn.label + '</div>';
       if (workOn.desc) html += '<div class="text-body work-on-desc">' + workOn.desc + '</div>';
       html += '<div class="text-body work-on-action">' + workOn.action + '</div>';
       html += '</div>';
     } else {
-      html += '<div class="work-on-block work-on-g">';
+      html += '<div class="box work-on-block work-on-g">';
       html += '<div class="work-on-title">Solid game</div>';
       html += '<div class="text-body work-on-desc">No major leaks detected from ' + d.n + ' hands. Keep playing to refine the picture.</div>';
       html += '</div>';

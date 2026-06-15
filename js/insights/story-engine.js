@@ -264,7 +264,7 @@
   function renderVerdict(findings, fallback) {
     var text = synthesiseVerdict(findings, fallback);
     if (!text) return '';
-    return '<div class="panel-verdict">' + escapeHtml(text) + '</div>';
+    return '<div class="box panel-verdict">' + escapeHtml(text) + '</div>';
   }
 
   function renderStoryCard(finding) {
@@ -276,7 +276,7 @@
     var teaser = buildTeaser(finding);
 
     var isOpen = storyId ? getSession('story-open:' + storyId, null) === '1' : false;
-    var classes = 'ins story-card story-card-' + sev + (isOpen ? '' : ' is-collapsed');
+    var classes = 'box ins story-card story-card-' + sev + (isOpen ? '' : ' is-collapsed');
 
     var html = '<div class="' + classes + '" data-story-id="' + escapeHtml(storyId) + '">';
     html += '<div class="story-card-head">';
