@@ -2997,7 +2997,7 @@ tr.hrow:hover .hrow-star {
   background: none;
   border: var(--sp-1) solid var(--border);
   color: var(--dim);
-  font-size: 20px;
+  font-size: var(--fs-xl);
   line-height: var(--lh-none);
   width: 28px;
   height: 28px;
@@ -3869,7 +3869,7 @@ body.maintenance #maintenance {
   }
 
   .paste-title {
-    font-size: 20px;
+    font-size: var(--fs-xl);
   }
 
   .two-col {
@@ -4269,7 +4269,7 @@ body.maintenance #maintenance {
   .modal-star-btn {
     top: var(--sp-6);
     right: 38px;
-    font-size: 20px;
+    font-size: var(--fs-xl);
   }
 
   .modal-action-line {
