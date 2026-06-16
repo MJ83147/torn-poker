@@ -3099,7 +3099,6 @@ tr.hrow:hover .hrow-star {
 }
 
 .take-tour-btn:hover {
-  background: var(--gold);
   transform: translateY(-1px);
 }
 
