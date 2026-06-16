@@ -70,7 +70,7 @@
   var tabTourSteps = {
     cards: [
       { el: '.panel-title', intro: '<strong>Cards</strong><br>This tab breaks down your performance by starting hand category: pocket pairs, broadway, suited connectors, ace-rag, and more.', pos: 'bottom' },
-      { el: '.ht-stack-legend', intro: '<strong>Legend</strong><br>The colour key: green = hands won, blue = hands played but lost, grey = hands dealt but folded preflop.', pos: 'bottom' },
+      { el: '[data-tour="ht-legend"]', intro: '<strong>Legend</strong><br>The colour key: green = hands won, blue = hands played but lost, grey = hands dealt but folded preflop.', pos: 'bottom' },
       { el: '.ht-stack-item', intro: '<strong>Hand Type Bars</strong><br>Each bar shows a hand category. The wider the green segment, the better your win rate. The number on the right is your win percentage for that type.', pos: 'top' },
       { el: '.story-grid', intro: '<strong>Story</strong><br>Plain-English findings about your hand-type performance, ranked by impact. Click any card to expand the breakdown and jump to an example hand.', pos: 'top',
         fallback: '<strong>Story</strong><br>Story cards appear here once you have enough hands. They call out your strongest and leakiest hand types in plain English.' }

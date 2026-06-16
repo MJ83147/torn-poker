@@ -131,7 +131,7 @@ function renderEquityResults(container, simResult) {
     curvePoints.push({ street: res.street, equity: res.equity });
 
     html += '<div class="eq-row">';
-    html += '<div class="eq-row-top">';
+    html += '<div class="flex items-center gap-10">';
     html += '<div class="gold-heading eq-street">' + res.street + '</div>';
     if (res.texture) {
       var texCls = res.texture.wetness === 'wet' ? 'tex-wet' : res.texture.wetness === 'dry' ? 'tex-dry' : 'tex-med';
@@ -159,7 +159,7 @@ function renderEquityResults(container, simResult) {
     if (hasBottom) {
       html += '<div class="eq-row-bottom">';
       if (res.madeHand) {
-        html += '<div class="eq-badges">';
+        html += '<div class="flex flex-wrap items-center gap-6">';
         html += '<span class="badge badge-neutral">' + res.madeHand.label + '</span>';
         if (res.madeHand.draws.length) {
           for (var dri = 0; dri < res.madeHand.draws.length; dri++) {

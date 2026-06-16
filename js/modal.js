@@ -147,12 +147,12 @@ function buildHandRow(h, idx) {
   var res = renderResult(h, 'span', 'saved-res range-hand-row-result');
   return '<div class="range-hand-row" data-ridx="' + idx + '">' +
     '<div class="flex-between range-hand-row-top">' +
-      '<div class="range-hand-row-side">' +
+      '<div class="flex items-center gap-12">' +
         '<span class="label range-hand-row-pos">' + (h.position || '?') + '</span>' +
         '<span class="range-hand-row-hole">' + (h.hole ? h.hole.join(' ') : '??') + '</span>' +
         '<span class="text-meta range-hand-row-board">' + (h.board && h.board.length ? h.board.join(' ') : '-') + '</span>' +
       '</div>' +
-      '<div class="range-hand-row-side">' + res + '</div>' +
+      '<div class="flex items-center gap-12">' + res + '</div>' +
     '</div>' +
     '<div class="text-meta range-hand-row-actions">' + myActs + '</div>' +
     '</div>';

@@ -220,7 +220,7 @@ function renderPlayers(container, d, hands) {
 
       ph += '<div class="label sec-subtitle">Shared Hands</div>';
       if (totalPages > 1) {
-        ph += '<div class="flex-gap-6 mb-8 flex-end">' +
+        ph += '<div class="flex items-center gap-6 mb-8 flex-end">' +
           renderPagination(phPage, playerHands.length, PH_SIZE, 'ph-prev', 'ph-next') + '</div>';
       }
       ph += '<div class="overflow-x"><table class="tbl hlog-tbl"><thead><tr><th>Pos</th><th>Cards</th><th>Board</th><th>Pot</th><th>Actions</th><th>Result</th></tr></thead><tbody>';
@@ -285,7 +285,7 @@ function renderCompare(container, d, hands) {
     '<div class="panel-title">Head to Head</div>' +
     '<div class="text-body panel-desc">Compare two players side by side.</div>' +
     '<div class="p-row">' +
-    '<div class="compare-selectors">' +
+    '<div class="flex items-center gap-12 flex-wrap">' +
     '<select id="compare-p1">' + buildOptions(p1Default) + '</select>' +
     '<span class="text-body compare-vs">vs</span>' +
     '<select id="compare-p2">' + buildOptions(p2Default) + '</select>' +

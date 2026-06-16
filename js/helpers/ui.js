@@ -201,7 +201,7 @@ function handTagsHtml(h) {
   if (h.flopBucket) {
     parts.push('<span class="ht-tag ht-flop ht-flop-' + h.flopBucket.replace('-', '_') + '">' + h.flopBucket + '</span>');
   }
-  return '<span class="ht-tags">' + parts.join('') + '</span>';
+  return '<span class="inline-flex flex-wrap items-center gap-4">' + parts.join('') + '</span>';
 }
 
 function renderHandRow(h, idx, opts) {

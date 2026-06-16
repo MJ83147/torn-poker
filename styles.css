@@ -583,6 +583,30 @@ select option {
 }
 
 /* --- Layout: flex --- */
+.flex {
+  display: flex;
+}
+
+.inline-flex {
+  display: inline-flex;
+}
+
+.flex-col {
+  flex-direction: column;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.items-baseline {
+  align-items: baseline;
+}
+
+.flex-wrap {
+  flex-wrap: wrap;
+}
+
 .flex-end {
   justify-content: flex-end;
 }
@@ -591,6 +615,34 @@ select option {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.gap-4 {
+  gap: var(--sp-4);
+}
+
+.gap-6 {
+  gap: var(--sp-6);
+}
+
+.gap-8 {
+  gap: var(--sp-8);
+}
+
+.gap-10 {
+  gap: var(--sp-10);
+}
+
+.gap-12 {
+  gap: var(--sp-12);
+}
+
+.gap-14 {
+  gap: var(--sp-14);
+}
+
+.gap-16 {
+  gap: var(--sp-16);
 }
 
 /* --- Chips --- */
@@ -1268,12 +1320,6 @@ textarea#jin {
 }
 
 /* --- Hand-type tags --- */
-.ht-tags {
-  display: inline-flex;
-  flex-wrap: wrap;
-  gap: var(--sp-4);
-  align-items: center;
-}
 
 .ht-tag {
   font-size: var(--fs-xs);
@@ -1581,12 +1627,6 @@ textarea#jin {
   height: 100%;
 }
 
-.ht-stack-legend {
-  display: flex;
-  gap: var(--sp-14);
-  margin-top: var(--sp-10);
-  margin-bottom: var(--sp-24);
-}
 
 .ht-leg-item {
   display: flex;
@@ -1634,18 +1674,7 @@ textarea#jin {
   transition: width .8s ease;
 }
 
-.stack-labels {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-14);
-  margin-top: var(--sp-8);
-}
 
-.stack-li {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
 
 
 /* --- Range grid & legends --- */
@@ -2145,6 +2174,10 @@ textarea#jin {
   margin-top: var(--sp-8);
 }
 
+.mt-10 {
+  margin-top: var(--sp-10);
+}
+
 .mt-12 {
   margin-top: var(--sp-12);
 }
@@ -2210,11 +2243,6 @@ textarea#jin {
   overflow-x: auto;
 }
 
-.flex-gap-6 {
-  display: flex;
-  gap: var(--sp-6);
-  align-items: center;
-}
 
 .text-strong {
   color: var(--text);
@@ -2415,11 +2443,6 @@ textarea#jin {
   white-space: nowrap;
 }
 
-.range-hand-row-side {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-12);
-}
 
 .range-hand-row-actions {
   line-height: var(--lh-snug);
@@ -2550,11 +2573,6 @@ textarea#jin {
 }
 
 
-.eq-row-top {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-10);
-}
 
 .eq-meta-line {
   margin-top: var(--sp-4);
@@ -2769,11 +2787,6 @@ tr.hrow:hover .hrow-star {
   color: var(--gold);
 }
 
-.saved-card-meta {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-8);
-}
 
 .saved-pos {
   color: var(--gold2);
@@ -3312,12 +3325,6 @@ tr.hrow:hover .hrow-star {
 }
 
 /* --- Players & head-to-head compare --- */
-.compare-selectors {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-12);
-  flex-wrap: wrap;
-}
 
 .compare-vs {
   font-weight: var(--fw-semibold);
@@ -3391,12 +3398,6 @@ tr.hrow:hover .hrow-star {
   margin-left: var(--sp-4);
 }
 
-.eq-badges {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--sp-6);
-}
 
 .villain-profile-line {
   margin-top: var(--sp-2);
@@ -3516,11 +3517,6 @@ tr.hrow:hover .hrow-star {
   gap: var(--sp-16);
 }
 
-.sm-legend-item {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--sp-6);
-}
 
 
 .sm-dot-you {
@@ -3572,10 +3568,6 @@ body.maintenance #maintenance {
   margin-bottom: 36px;
 }
 
-.m-cards {
-  display: flex;
-  gap: var(--sp-10);
-}
 
 .mc {
   font-family: var(--serif);
@@ -4405,14 +4397,7 @@ body.maintenance #maintenance {
     margin: var(--sp-16) 0;
   }
 
-  .stack-labels {
-    gap: var(--sp-10);
-    flex-wrap: wrap;
-  }
 
-  .stack-li {
-    font-size: var(--fs-sm);
-  }
 
   .ht-stack-name {
     font-size: var(--fs-sm);
@@ -4422,10 +4407,6 @@ body.maintenance #maintenance {
     font-size: var(--fs-xs);
   }
 
-  .ht-stack-legend {
-    gap: var(--sp-10);
-    flex-wrap: wrap;
-  }
 
   .ht-leg-item {
     font-size: var(--fs-xs);
