@@ -143,6 +143,16 @@ body {
   min-height: 100vh;
 }
 
+/* Form elements don't inherit font by default; make them inherit the mono
+   body font so components (and their children) never need to redeclare it.
+   Serif is applied explicitly where wanted (titles, values, primary buttons). */
+button,
+input,
+textarea,
+select {
+  font-family: inherit;
+}
+
 
 /* ==========================================================================
    3. COMPONENTS
@@ -290,7 +300,6 @@ body {
   border: var(--sp-1) solid transparent;
   border-radius: var(--r-sm);
   background: transparent;
-  font-family: var(--mono);
   transition: background .2s, color .2s, border-color .2s;
 }
 
@@ -396,7 +405,6 @@ body {
   display: inline-block;
   padding: var(--sp-2) var(--sp-8);
   border-radius: var(--r-sm);
-  font-family: var(--mono);
   font-size: var(--fs-xs);
   font-weight: var(--fw-medium);
 }
@@ -735,7 +743,6 @@ textarea#jin {
   border: var(--sp-1) solid var(--border);
   border-radius: var(--r-sm);
   color: var(--dim);
-  font-family: var(--mono);
   font-size: var(--fs-xs);
   padding: var(--sp-10);
   resize: vertical;
@@ -779,7 +786,6 @@ textarea#jin:focus {
 }
 
 .paste-nav-link {
-  font-family: var(--mono);
   font-size: var(--fs-xs);
   color: var(--dim);
   cursor: pointer;
@@ -893,7 +899,6 @@ textarea#jin:focus {
 .tab-menu-btn {
   width: 100%;
   padding: var(--sp-12) var(--sp-20);
-  font-family: var(--mono);
   font-size: var(--fs-xs);
   letter-spacing: 1.5px;
   text-transform: uppercase;
@@ -949,7 +954,6 @@ textarea#jin:focus {
   display: block;
   width: 100%;
   padding: var(--sp-10) var(--sp-20);
-  font-family: var(--mono);
   font-size: var(--fs-xs);
   letter-spacing: var(--sp-1);
   text-transform: uppercase;
@@ -1952,7 +1956,6 @@ textarea#jin:focus {
 }
 
 .range-subtab {
-  font-family: var(--mono);
   font-size: var(--fs-sm);
   letter-spacing: var(--sp-1);
   text-transform: uppercase;
@@ -2027,7 +2030,6 @@ textarea#jin:focus {
   border-radius: var(--r-sm);
   overflow: hidden;
   cursor: pointer;
-  font-family: var(--mono);
   font-size: var(--fs-sm);
   font-weight: var(--fw-semibold);
 }
@@ -2051,7 +2053,6 @@ textarea#jin:focus {
   background: var(--s2);
   border: var(--sp-1) solid var(--border);
   color: var(--text);
-  font-family: var(--mono);
   font-size: var(--fs-sm);
   padding: var(--sp-6) var(--sp-10);
   border-radius: var(--r-sm);
@@ -2551,13 +2552,11 @@ textarea#jin:focus {
 }
 
 .eq-sim-title {
-  font-family: var(--mono);
   font-weight: var(--fw-medium);
   letter-spacing: var(--sp-1);
 }
 
 .eq-sim-note {
-  font-family: var(--mono);
 }
 
 .eq-row {
@@ -2578,7 +2577,6 @@ textarea#jin:focus {
 .eq-meta-line {
   margin-top: var(--sp-4);
   padding-left: var(--sp-2);
-  font-family: var(--mono);
 }
 
 .eq-row-bottom {
@@ -2587,13 +2585,11 @@ textarea#jin:focus {
 }
 
 .eq-street {
-  font-family: var(--mono);
   min-width: 58px;
 }
 
 .eq-pct {
   color: var(--text);
-  font-family: var(--mono);
   font-size: var(--fs-sm);
   font-weight: var(--fw-semibold);
   text-align: right;
@@ -2617,7 +2613,6 @@ textarea#jin:focus {
 }
 
 .eq-detail {
-  font-family: var(--mono);
   line-height: var(--lh-normal);
   margin-top: var(--sp-4);
 }
@@ -2638,13 +2633,11 @@ textarea#jin:focus {
 
 .eq-summary-label {
   font-weight: var(--fw-semibold);
-  font-family: var(--mono);
   letter-spacing: 0.5px;
   margin-bottom: var(--sp-6);
 }
 
 .eq-summary-text {
-  font-family: var(--mono);
   line-height: var(--lh-body);
 }
 
@@ -2652,7 +2645,6 @@ textarea#jin:focus {
   margin-top: var(--sp-10);
   padding-top: var(--sp-8);
   border-top: var(--sp-1) solid var(--border);
-  font-family: var(--mono);
   line-height: var(--lh-normal);
 }
 
@@ -2682,7 +2674,6 @@ textarea#jin:focus {
 }
 
 .eq-spinner-text {
-  font-family: var(--mono);
 }
 
 @keyframes eq-spin {
@@ -2897,7 +2888,6 @@ tr.hrow:hover .hrow-star {
 }
 
 .welcome-whatsnew-label {
-  font-family: var(--mono);
   letter-spacing: 0.08em;
   margin-bottom: var(--sp-4);
 }
@@ -2955,7 +2945,6 @@ tr.hrow:hover .hrow-star {
 }
 
 .whatsnew-card-cta {
-  font-family: var(--mono);
   margin-top: var(--sp-12);
 }
 
@@ -3131,7 +3120,6 @@ tr.hrow:hover .hrow-star {
   color: var(--bg);
   border: none;
   border-radius: var(--r-lg);
-  font-family: var(--mono);
   font-size: var(--fs-md);
   font-weight: var(--fw-medium);
   cursor: pointer;
@@ -3308,7 +3296,6 @@ tr.hrow:hover .hrow-star {
   width: 100%;
   border-collapse: collapse;
   font-size: var(--fs-sm);
-  font-family: var(--mono);
 }
 
 .allin-table th {
@@ -3448,7 +3435,6 @@ tr.hrow:hover .hrow-star {
 }
 
 .villain-profile-line {
-  font-family: var(--mono);
   margin-top: var(--sp-2);
 }
 
@@ -3458,7 +3444,6 @@ tr.hrow:hover .hrow-star {
   align-items: center;
   gap: var(--sp-6);
   padding: var(--sp-4) var(--sp-10);
-  font-family: var(--mono);
 }
 
 .style-display .sd-you-label,
@@ -3483,7 +3468,6 @@ tr.hrow:hover .hrow-star {
   border: var(--sp-1) solid var(--border);
   border-radius: var(--r-sm);
   padding: var(--sp-2) var(--sp-6);
-  font-family: var(--mono);
   font-size: var(--fs-sm);
   font-weight: var(--fw-semibold);
   cursor: pointer;
@@ -3516,7 +3500,6 @@ tr.hrow:hover .hrow-star {
 }
 
 .style-welcome-eyebrow {
-  font-family: var(--mono);
   letter-spacing: 0.18em;
   margin-bottom: 18px;
 }
@@ -3535,7 +3518,6 @@ tr.hrow:hover .hrow-star {
 .style-card {
   padding: 22px 18px;
   text-align: left;
-  font-family: var(--mono);
   color: var(--text);
 }
 
@@ -3570,7 +3552,6 @@ tr.hrow:hover .hrow-star {
   display: flex;
   flex-wrap: wrap;
   gap: var(--sp-16);
-  font-family: var(--mono);
 }
 
 .sm-legend-item {
@@ -3615,7 +3596,6 @@ body.maintenance #maintenance {
 }
 
 .m-eyebrow {
-  font-family: var(--mono);
   letter-spacing: 0.18em;
   margin-bottom: 18px;
 }
@@ -3628,7 +3608,6 @@ body.maintenance #maintenance {
 }
 
 .m-sub {
-  font-family: var(--mono);
   font-size: var(--fs-lg);
   color: var(--text);
   max-width: 520px;
@@ -3699,7 +3678,6 @@ body.maintenance #maintenance {
 .cr-sentence+.cr-vs,
 .cr-vs {
   text-align: center;
-  font-family: var(--mono);
   letter-spacing: var(--sp-4);
   margin: var(--sp-12) 0;
 }
@@ -3707,7 +3685,6 @@ body.maintenance #maintenance {
 
 .cr-seg-tag {
   display: inline-block;
-  font-family: var(--mono);
   letter-spacing: var(--sp-2);
   margin-right: var(--sp-8);
   vertical-align: middle;
@@ -3738,7 +3715,6 @@ body.maintenance #maintenance {
   background: transparent;
   border: var(--sp-1) dashed var(--border);
   color: var(--dim);
-  font-family: var(--mono);
   font-size: var(--fs-sm);
   padding: var(--sp-4) var(--sp-10);
   border-radius: var(--r-sm);
@@ -3785,7 +3761,6 @@ body.maintenance #maintenance {
   gap: var(--sp-8);
   background: transparent;
   border: none;
-  font-family: var(--mono);
   text-align: left;
   padding: var(--sp-6) var(--sp-8);
   border-radius: var(--r-sm);
@@ -3818,7 +3793,6 @@ body.maintenance #maintenance {
   background: transparent;
   border: var(--sp-1) solid var(--border);
   color: var(--red);
-  font-family: var(--mono);
   font-size: var(--fs-sm);
   border-radius: var(--r-sm);
   cursor: pointer;
@@ -3858,7 +3832,6 @@ body.maintenance #maintenance {
 }
 
 .cr-tile-mini-label {
-  font-family: var(--mono);
   letter-spacing: var(--sp-1);
   margin-bottom: var(--sp-2);
 }
