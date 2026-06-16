@@ -1994,19 +1994,13 @@ textarea#jin:focus {
 }
 
 
+/* Uppercase add-on; the button base/hover come from .btn .btn-ghost */
 .example-hand-btn {
-  background: transparent;
-  border: var(--sp-1) solid var(--border);
-  color: var(--dim);
-  font-family: var(--mono);
-  cursor: pointer;
-  border-radius: var(--r-sm);
+  margin-top: var(--sp-10);
+  text-transform: uppercase;
+  letter-spacing: var(--sp-1);
 }
 
-.example-hand-btn:hover {
-  border-color: var(--gold2);
-  color: var(--gold);
-}
 
 /* --- Assorted controls (toggles, filters, search) --- */
 .divider {
@@ -2542,16 +2536,6 @@ textarea#jin:focus {
   margin-bottom: var(--sp-6);
 }
 
-.example-hand-btn {
-  display: inline-block;
-  margin-top: var(--sp-10);
-  padding: var(--sp-4) var(--sp-10);
-  font-size: var(--fs-xs);
-  letter-spacing: var(--sp-1);
-  text-transform: uppercase;
-  border: var(--sp-1) solid var(--dim);
-  color: var(--dim);
-}
 
 /* --- Equity simulation --- */
 .eq-sim {

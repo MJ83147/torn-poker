@@ -432,7 +432,7 @@ function renderCompare(container, d, hands) {
         '<span>' + sharedHands.length + ' shared hands</span>' +
         '<span class="compare-h2h-record">' + p1Name + ' won ' + p1Wins + ' (' + p1WinPct + '%) · ' + p2Name + ' won ' + p2Wins + '</span>' +
         '</div>';
-      h2hHtml += '<button class="example-hand-btn" id="compare-shared-btn">View ' + sharedHands.length + ' shared hands</button>';
+      h2hHtml += '<button class="btn btn-ghost example-hand-btn" id="compare-shared-btn">View ' + sharedHands.length + ' shared hands</button>';
     }
     h2hHtml += '</div>';
 

@@ -152,7 +152,7 @@ function renderBestWorstSessions(hands, overallData) {
 
     var seeHandsBtnId = 'see-sess-' + Math.random().toString(36).slice(2, 8);
     var sessTitle = sess.label + ' Hands';
-    html += '<button class="example-hand-btn mt-8" id="' + seeHandsBtnId + '">Show hands played</button>';
+    html += '<button class="btn btn-ghost example-hand-btn mt-8" id="' + seeHandsBtnId + '">Show hands played</button>';
     setTimeout((function(id, title, h2) {
       return function() {
         var el = document.getElementById(id);

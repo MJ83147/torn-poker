@@ -169,7 +169,7 @@ function insWithExample(sev, label, text, chips, exampleHands, coachingNote, coa
   var handsList = !exampleHands ? [] : Array.isArray(exampleHands) ? exampleHands : [exampleHands];
   if (!handsList.length) return base;
   const btnId = 'ex-' + Math.random().toString(36).slice(2, 8);
-  const btn = '<button class="example-hand-btn" id="' + btnId + '">See example hands</button>';
+  const btn = '<button class="btn btn-ghost example-hand-btn" id="' + btnId + '">See example hands</button>';
   const insertPoint = base.lastIndexOf('</div>');
   const result = base.slice(0, insertPoint) + btn + base.slice(insertPoint);
   setTimeout(function() {
