@@ -2390,15 +2390,17 @@ textarea#jin {
   margin-bottom: var(--sp-8);
 }
 
-.chart-wrap {
+.chart-wrap,
+.chart-wrap-full {
   position: relative;
   width: 100%;
+}
+
+.chart-wrap {
   max-width: 720px;
 }
 
 .chart-wrap-full {
-  position: relative;
-  width: 100%;
   max-width: 900px;
   margin-bottom: var(--sp-24);
 }
