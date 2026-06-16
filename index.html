@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=IBM+Plex+Mono:wght@300;400;500&display=swap" onload="this.rel='stylesheet'">
   <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=IBM+Plex+Mono:wght@300;400;500&display=swap"></noscript>
-  <link rel="stylesheet" href="styles.css?v=60">
+  <link rel="stylesheet" href="styles.css?v=61">
 </head>
 
 <body class="maintenance">
@@ -47,7 +47,7 @@
     <div class="label l-eyebrow">Torn City</div>
     <div class="l-title">Poker Analysis</div>
     <div class="label l-sub">Session Intelligence</div>
-    <div class="l-cards">
+    <div class="l-cards flex gap-12">
       <div class="lc flex-center b" id="lc0">A♠</div>
       <div class="lc flex-center r" id="lc1">K♥</div>
       <div class="lc flex-center b" id="lc2">Q♣</div>
@@ -114,7 +114,7 @@
             <select id="players-filter" class="hidden">
               <option value="all">All Sizes</option>
             </select>
-            <div id="style-display" class="card card-sm card-s2 style-display" title="Your detected style and your target style"></div>
+            <div id="style-display" class="card card-sm card-s2 style-display inline-flex items-center gap-6" title="Your detected style and your target style"></div>
             <div class="text-meta page-meta-link" id="page-meta"></div>
             <button class="btn btn-icon" id="tour-btn" title="Guided tour of this page">?</button>
           </div>

@@ -780,8 +780,6 @@ select option {
 }
 
 .l-cards {
-  display: flex;
-  gap: var(--sp-12);
   margin-bottom: 44px;
 }
 
@@ -1625,7 +1623,6 @@ textarea#jin {
 
 .ht-stack-inner {
   height: 100%;
-  display: flex;
   border-radius: var(--r-sm);
   overflow: hidden;
   transition: width .9s cubic-bezier(.4, 0, .2, 1);
@@ -1680,7 +1677,6 @@ textarea#jin {
   height: 18px;
   border-radius: var(--r-sm);
   overflow: hidden;
-  display: flex;
   margin: var(--sp-10) 0;
 }
 
@@ -1779,11 +1775,7 @@ textarea#jin {
 }
 
 .range-legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-10);
   margin-top: var(--sp-10);
-  justify-content: flex-start;
 }
 
 .leg {
@@ -2393,9 +2385,6 @@ textarea#jin {
 
 .mini-label-dot {
   margin-bottom: var(--sp-6);
-  display: flex;
-  align-items: center;
-  gap: var(--sp-6);
 }
 
 .mini-meta {
@@ -3356,9 +3345,6 @@ tr.hrow:hover .hrow-star {
 
 /* --- Style display & picker --- */
 .style-display {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--sp-6);
   padding: var(--sp-4) var(--sp-10);
 }
 

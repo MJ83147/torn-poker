@@ -551,7 +551,7 @@ function twoGridHtml(chart, filtered, scenarioType, tallies) {
 }
 
 function gtoLegendHtml() {
-  return '<div class="range-legend">' +
+  return '<div class="range-legend flex flex-wrap gap-10">' +
     '<div class="leg"><div class="leg-sw leg-sw-gto-red"></div>Raise for value</div>' +
     '<div class="leg"><div class="leg-sw leg-sw-gto-blue"></div>Raise for bluff</div>' +
     '<div class="leg"><div class="leg-sw leg-sw-gto-green"></div>Call</div>' +
@@ -561,7 +561,7 @@ function gtoLegendHtml() {
 }
 
 function heroLegendHtml() {
-  return '<div class="range-legend">' +
+  return '<div class="range-legend flex flex-wrap gap-10">' +
     '<div class="leg"><div class="leg-sw leg-sw-gto-green"></div>On target</div>' +
     '<div class="leg"><div class="leg-sw leg-sw-gto-red"></div>Playing wrong</div>' +
     '<div class="leg"><div class="rc-unseen leg-sw"></div>Not dealt</div>' +
@@ -569,7 +569,7 @@ function heroLegendHtml() {
 }
 
 function frequencyLegendHtml() {
-  return '<div class="range-legend">' +
+  return '<div class="range-legend flex flex-wrap gap-10">' +
     '<div class="leg"><div class="leg-sw leg-sw-low"></div>Rarely</div>' +
     '<div class="leg"><div class="leg-sw leg-sw-med"></div>Sometimes</div>' +
     '<div class="leg"><div class="leg-sw leg-sw-high"></div>Most played</div>' +

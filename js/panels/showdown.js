@@ -66,14 +66,14 @@ function renderShowdown(container, hands, meta, overallData) {
   var statsHtml = '<div class="mini-row mini-row-2col">';
 
   statsHtml += '<div class="card mini">';
-  statsHtml += '<div class="mini-label-dot label">' +
+  statsHtml += '<div class="mini-label-dot flex items-center gap-6 label">' +
     '<span class="line-dot line-dot-blue"></span>Showdown</div>';
   statsHtml += '<div class="value ' + pnlValCls(cumSd) + '">' + fmtPnl(cumSd) + '</div>';
   statsHtml += '<div class="text-meta mini-meta">' + sdTotal + ' hands · ' + (sdWinRate !== null ? sdWinRate + '% win rate' : 'no data') + '</div>';
   statsHtml += '</div>';
 
   statsHtml += '<div class="card mini">';
-  statsHtml += '<div class="mini-label-dot label">' +
+  statsHtml += '<div class="mini-label-dot flex items-center gap-6 label">' +
     '<span class="line-dot line-dot-red"></span>Non-Showdown</div>';
   statsHtml += '<div class="value ' + pnlValCls(cumNsd) + '">' + fmtPnl(cumNsd) + '</div>';
   statsHtml += '<div class="text-meta mini-meta">' + nsdTotal + ' hands · ' + (nsdWinRate !== null ? nsdWinRate + '% win rate' : 'no data') + '</div>';
