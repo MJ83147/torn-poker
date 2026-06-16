@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=IBM+Plex+Mono:wght@300;400;500&display=swap" onload="this.rel='stylesheet'">
   <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=IBM+Plex+Mono:wght@300;400;500&display=swap"></noscript>
-  <link rel="stylesheet" href="styles.css?v=51">
+  <link rel="stylesheet" href="styles.css?v=52">
 </head>
 
 <body class="maintenance">
@@ -187,7 +187,7 @@
         <div class="text-body mb-24">A free, private analysis tool for Torn City poker. It reads your hand history and breaks down how you play, where you leak chips, and what to work on. Everything runs in your browser. No accounts, no servers, no data leaves your device.</div>
 
         <div class="label mt-32 mb-16">How it works</div>
-        <div class="hiw-steps">
+        <div class="flex flex-col gap-20">
           <div class="hiw-step">
             <div class="hiw-num">1</div>
             <div class="fw-600">Install Tampermonkey</div>
@@ -216,7 +216,7 @@
         </div>
 
         <div class="label mt-32 mb-16">What it analyses</div>
-        <div class="hiw-features">
+        <div class="flex flex-col gap-8">
           <div class="hiw-feat"><span class="gold-heading">Hand types</span><span class="text-body">Win rates for pairs, broadway, suited connectors, ace-rag, and more</span></div>
           <div class="hiw-feat"><span class="gold-heading">Position</span><span class="text-body">VPIP, fold rate, win rate, and P&L from every seat at the table</span></div>
           <div class="hiw-feat"><span class="gold-heading">Street action</span><span class="text-body">How you play on each street: fold rates, aggression, bet sizing</span></div>
@@ -239,7 +239,7 @@
   </div>
 
   <!-- App (bundled + minified). Chart.js and intro.js are loaded on demand from app.min.js. -->
-  <script defer src="app.min.js?v=87"></script>
+  <script defer src="app.min.js?v=88"></script>
 </body>
 
 </html>

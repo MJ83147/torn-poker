@@ -611,10 +611,24 @@ select option {
   justify-content: flex-end;
 }
 
+.justify-center {
+  justify-content: center;
+}
+
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .flex-between {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.gap-2 {
+  gap: var(--sp-2);
 }
 
 .gap-4 {
@@ -643,6 +657,14 @@ select option {
 
 .gap-16 {
   gap: var(--sp-16);
+}
+
+.gap-20 {
+  gap: var(--sp-20);
+}
+
+.gap-32 {
+  gap: var(--sp-32);
 }
 
 /* --- Chips --- */
@@ -2867,17 +2889,7 @@ tr.hrow:hover .hrow-star {
   min-width: 0;
 }
 
-.welcome-right {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-32);
-}
 
-.welcome-whatsnew {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-12);
-}
 
 .welcome-whatsnew-label {
   letter-spacing: 0.08em;
@@ -3044,11 +3056,6 @@ tr.hrow:hover .hrow-star {
   padding: var(--sp-32);
 }
 
-.hiw-steps {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-20);
-}
 
 .hiw-step {
   display: grid;
@@ -3073,11 +3080,6 @@ tr.hrow:hover .hrow-star {
   justify-content: center;
 }
 
-.hiw-features {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-8);
-}
 
 .hiw-feat {
   display: grid;
@@ -3495,11 +3497,6 @@ tr.hrow:hover .hrow-star {
   line-height: 1.55;
 }
 
-.style-map-wrap {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-14);
-}
 
 .style-map-canvas-wrap {
   position: relative;
@@ -3511,11 +3508,6 @@ tr.hrow:hover .hrow-star {
   padding: var(--sp-12);
 }
 
-.style-map-legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-16);
-}
 
 
 
@@ -3698,11 +3690,6 @@ body.maintenance #maintenance {
   letter-spacing: var(--sp-1);
 }
 
-.cr-pop-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-2);
-}
 
 .cr-pop-opt {
   display: flex;

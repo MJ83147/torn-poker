@@ -307,10 +307,10 @@ function renderStyleMap(container, d, hands) {
   var html = '';
   html += '<div class="text-body mb-16">' + titleSentence + '</div>';
 
-  html += '<div class="style-map-wrap">';
+  html += '<div class="flex flex-col gap-14">';
   html += '<div class="style-map-canvas-wrap"><canvas id="style-map-chart"></canvas></div>';
 
-  html += '<div class="text-meta style-map-legend">';
+  html += '<div class="text-meta flex flex-wrap gap-16">';
   html += '<div class="inline-flex items-center gap-6"><span class="dot dot-lg dot-g sm-dot-you"></span><span>You (overall)</span></div>';
   html += '<div class="inline-flex items-center gap-6"><span class="dot dot-lg dot-cat-pos"></span><span>By position</span></div>';
   html += '<div class="inline-flex items-center gap-6"><span class="dot dot-lg dot-cat-seat"></span><span>By table size</span></div>';

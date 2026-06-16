@@ -825,7 +825,7 @@ function _crOpenClausePopover(targetEl, segLabel, clauseId) {
   if (!def.options.length) {
     html += '<div class="text-body">No options available. None of your hands match this clause yet.</div>';
   } else if (def.multi) {
-    html += '<div class="cr-pop-list">';
+    html += '<div class="flex flex-col gap-2">';
     current = Array.isArray(current) ? current : [];
     html += def.options.map(function(o) {
       var checked = current.indexOf(o.value) !== -1;
@@ -836,7 +836,7 @@ function _crOpenClausePopover(targetEl, segLabel, clauseId) {
     }).join('');
     html += '</div>';
   } else {
-    html += '<div class="cr-pop-list">';
+    html += '<div class="flex flex-col gap-2">';
     html += def.options.map(function(o) {
       var sel = current === o.value;
       return '<button class="text-meta cr-pop-opt' + (sel ? ' selected' : '') + '" data-val="' + o.value + '">' +

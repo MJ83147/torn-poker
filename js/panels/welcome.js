@@ -67,7 +67,7 @@ function renderWelcome(container, d, hands, meta) {
         '</div>';
     }).join('') +
     '</div>' +
-    '<div class="welcome-right">' +
+    '<div class="flex flex-col gap-32">' +
     '<div class="text-body welcome-tips">' +
     '<div class="label mb-12">Tips</div>' +
     '<div class="tips-carousel">' +
@@ -85,7 +85,7 @@ function renderWelcome(container, d, hands, meta) {
     }).join('') +
     '</div>' +
     '</div>' +
-    '<div class="welcome-whatsnew">' +
+    '<div class="flex flex-col gap-12">' +
       '<div class="label welcome-whatsnew-label">What\'s new</div>' +
       '<button type="button" class="card card-s1 whatsnew-card whatsnew-card-hero" data-goto="custom">' +
         '<div class="badge whatsnew-card-tag">New</div>' +
