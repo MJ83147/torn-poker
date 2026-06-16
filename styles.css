@@ -791,9 +791,6 @@ select option {
   border-radius: var(--r-lg);
   background: var(--s2);
   border: var(--sp-1) solid var(--border);
-  display: flex;
-  align-items: center;
-  justify-content: center;
   font-family: var(--serif);
   font-size: var(--fs-xl);
   font-weight: var(--fw-semibold);
@@ -2984,9 +2981,6 @@ tr.hrow:hover .hrow-star {
   height: 28px;
   border-radius: var(--r-pill);
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   flex-shrink: 0;
   transition: border-color .2s, color .2s;
 }
@@ -3040,9 +3034,6 @@ tr.hrow:hover .hrow-star {
   font-family: var(--serif);
   font-size: 15px;
   font-weight: var(--fw-bold);
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 

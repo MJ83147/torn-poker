@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=IBM+Plex+Mono:wght@300;400;500&display=swap" onload="this.rel='stylesheet'">
   <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=IBM+Plex+Mono:wght@300;400;500&display=swap"></noscript>
-  <link rel="stylesheet" href="styles.css?v=59">
+  <link rel="stylesheet" href="styles.css?v=60">
 </head>
 
 <body class="maintenance">
@@ -48,11 +48,11 @@
     <div class="l-title">Poker Analysis</div>
     <div class="label l-sub">Session Intelligence</div>
     <div class="l-cards">
-      <div class="lc b" id="lc0">A♠</div>
-      <div class="lc r" id="lc1">K♥</div>
-      <div class="lc b" id="lc2">Q♣</div>
-      <div class="lc r" id="lc3">J♦</div>
-      <div class="lc b" id="lc4">10♠</div>
+      <div class="lc flex-center b" id="lc0">A♠</div>
+      <div class="lc flex-center r" id="lc1">K♥</div>
+      <div class="lc flex-center b" id="lc2">Q♣</div>
+      <div class="lc flex-center r" id="lc3">J♦</div>
+      <div class="lc flex-center b" id="lc4">10♠</div>
     </div>
     <div class="l-clabel">Hands analysed</div>
     <div class="l-count" id="lnum">0</div>
@@ -189,27 +189,27 @@
         <div class="label mt-32 mb-16">How it works</div>
         <div class="flex flex-col gap-20">
           <div class="hiw-step">
-            <div class="hiw-num">1</div>
+            <div class="hiw-num flex-center">1</div>
             <div class="fw-600">Install Tampermonkey</div>
             <div class="text-body">You need the <a href="https://www.tampermonkey.net/" target="_blank" rel="noopener" class="link-gold">Tampermonkey</a> browser extension first. It's free and available for Chrome, Firefox, Edge, and Safari. This is what runs the tracking script.</div>
           </div>
           <div class="hiw-step">
-            <div class="hiw-num">2</div>
+            <div class="hiw-num flex-center">2</div>
             <div class="fw-600">Install the TC Poker Export script</div>
             <div class="text-body">Install it from <a href="https://greasyfork.org/en/scripts/569290-tc-poker-export" target="_blank" rel="noopener" class="link-gold">Greasy Fork</a>. Once installed, a small tracker button appears next to the Poker header on Torn's poker page.</div>
           </div>
           <div class="hiw-step">
-            <div class="hiw-num">3</div>
+            <div class="hiw-num flex-center">3</div>
             <div class="fw-600">Play poker on Torn</div>
             <div class="text-body">Play as normal. The script silently captures every hand in the background and stores it in your browser's local storage. Nothing is sent anywhere.</div>
           </div>
           <div class="hiw-step">
-            <div class="hiw-num">4</div>
+            <div class="hiw-num flex-center">4</div>
             <div class="fw-600">Export your session</div>
             <div class="text-body">Click the TC Poker Tracker button on the poker page, then hit Analyse Session. Your hand data is copied to your clipboard.</div>
           </div>
           <div class="hiw-step">
-            <div class="hiw-num">5</div>
+            <div class="hiw-num flex-center">5</div>
             <div class="fw-600">Paste and analyse</div>
             <div class="text-body">Come here and click Paste from Clipboard. Your full session is broken down instantly.</div>
           </div>
