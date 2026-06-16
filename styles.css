@@ -3252,7 +3252,8 @@ tr.hrow:hover .hrow-star {
   -webkit-overflow-scrolling: touch;
 }
 
-.allin-table {
+.allin-table,
+.compare-table {
   width: 100%;
   border-collapse: collapse;
   font-size: var(--fs-sm);
@@ -3311,12 +3312,6 @@ tr.hrow:hover .hrow-star {
 
 .compare-vs {
   font-weight: var(--fw-semibold);
-}
-
-.compare-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: var(--fs-sm);
 }
 
 .compare-table th {
@@ -3459,7 +3454,8 @@ tr.hrow:hover .hrow-star {
   text-align: center;
 }
 
-.style-welcome-eyebrow {
+.style-welcome-eyebrow,
+.m-eyebrow {
   letter-spacing: 0.18em;
   margin-bottom: 18px;
 }
@@ -3553,11 +3549,6 @@ body.maintenance #maintenance {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-}
-
-.m-eyebrow {
-  letter-spacing: 0.18em;
-  margin-bottom: 18px;
 }
 
 .m-title {
