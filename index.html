@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=IBM+Plex+Mono:wght@300;400;500&display=swap" onload="this.rel='stylesheet'">
   <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=IBM+Plex+Mono:wght@300;400;500&display=swap"></noscript>
-  <link rel="stylesheet" href="styles.css?v=48">
+  <link rel="stylesheet" href="styles.css?v=49">
 </head>
 
 <body class="maintenance">
@@ -108,10 +108,10 @@
           <div class="header-title">TC Poker Analysis</div>
           <div class="header-controls">
             <div id="bb-toggle" class="bb-toggle" title="Toggle between dollar amounts and Big Blinds"><span class="bb-opt active" data-mode="dollar">$</span><span class="bb-opt" data-mode="bb">BB</span></div>
-            <select id="table-filter" class="table-filter hidden">
+            <select id="table-filter" class="hidden">
               <option value="all">All Tables</option>
             </select>
-            <select id="players-filter" class="table-filter hidden">
+            <select id="players-filter" class="hidden">
               <option value="all">All Sizes</option>
             </select>
             <div id="style-display" class="card card-sm card-s2 style-display" title="Your detected style and your target style"></div>
@@ -239,7 +239,7 @@
   </div>
 
   <!-- App (bundled + minified). Chart.js and intro.js are loaded on demand from app.min.js. -->
-  <script defer src="app.min.js?v=85"></script>
+  <script defer src="app.min.js?v=86"></script>
 </body>
 
 </html>

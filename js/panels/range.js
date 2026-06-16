@@ -653,7 +653,7 @@ function renderRange(container, d, hands) {
       var sel = s.key === state.scenario ? ' selected' : '';
       return '<option value="' + s.key + '"' + sel + '>' + s.label + '</option>';
     }).join('');
-    var scenarioSelectorHtml = '<select id="range-scenario" class="table-filter">' + scenarioOptions + '</select>';
+    var scenarioSelectorHtml = '<select id="range-scenario">' + scenarioOptions + '</select>';
     var label = entry ? entry.label : '';
     var headerStats = renderHeaderStats(filtered, state.hero + ' · ' + label);
     var note = chart ? '' : '<div class="range-empty">No GTO reference for ' + state.hero + ' ' + label + '.</div>';
@@ -731,7 +731,7 @@ function positionSelector(id, options, current) {
     var sel = p === current ? ' selected' : '';
     return '<option value="' + p + '"' + sel + '>' + p + '</option>';
   }).join('');
-  return '<select id="' + id + '" class="table-filter">' + opts + '</select>';
+  return '<select id="' + id + '">' + opts + '</select>';
 }
 
 function bindSelector(scope, id, cb) {

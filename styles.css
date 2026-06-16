@@ -153,6 +153,50 @@ select {
   font-family: inherit;
 }
 
+/* Form fields: one primitive for every text input, textarea and select,
+   keyed off the element (not per-component classes). Checkboxes, radios and
+   file inputs keep their native look. */
+input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+textarea,
+select {
+  background: var(--s2);
+  border: var(--sp-1) solid var(--border);
+  color: var(--text);
+  font-size: var(--fs-sm);
+  padding: var(--sp-6) var(--sp-10);
+  border-radius: var(--r-sm);
+  outline: none;
+}
+
+input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):focus,
+textarea:focus,
+select:focus {
+  border-color: var(--gold2);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--dim);
+}
+
+textarea {
+  width: 100%;
+  resize: vertical;
+}
+
+select {
+  cursor: pointer;
+  max-width: 220px;
+}
+
+select:hover {
+  border-color: var(--dim);
+}
+
+select option {
+  background: var(--s1);
+}
+
 
 /* ==========================================================================
    3. COMPONENTS
@@ -278,15 +322,13 @@ select {
 .ht-tag.ht-stack-standard,
 .ins-badge.n .ins-word,
 .modal-hand-meta span,
-.story-impact .story-tag,
-.player-search::placeholder {
+.story-impact .story-tag {
   color: var(--dim);
 }
 
 .val-muted,
 .upload-row-empty,
-.v-na,
-.modal-notes-input::placeholder {
+.v-na {
   color: var(--muted);
 }
 
@@ -764,20 +806,9 @@ select {
 }
 
 textarea#jin {
-  width: 100%;
-  background: var(--s2);
-  border: var(--sp-1) solid var(--border);
-  border-radius: var(--r-sm);
-  color: var(--dim);
-  font-size: var(--fs-xs);
-  padding: var(--sp-10);
-  resize: vertical;
   min-height: 50px;
-  outline: none;
 }
 
-textarea#jin:focus,
-.modal-notes-input:focus,
 .row-hover:hover {
   border-color: var(--gold2);
 }
@@ -2029,35 +2060,6 @@ textarea#jin:focus,
   color: var(--bg);
 }
 
-.table-filter,
-.player-search,
-.modal-notes-input {
-  background: var(--s2);
-  border: var(--sp-1) solid var(--border);
-  color: var(--text);
-  font-size: var(--fs-sm);
-  padding: var(--sp-6) var(--sp-10);
-  border-radius: var(--r-sm);
-  outline: none;
-}
-
-.table-filter:focus,
-.player-search:focus,
-
-.table-filter {
-  cursor: pointer;
-  max-width: 220px;
-}
-
-.table-filter:hover {
-  border-color: var(--dim);
-}
-
-.table-filter option {
-  background: var(--s1);
-  color: var(--text);
-}
-
 .filter-banner {
   padding: var(--sp-8) var(--sp-16);
   font-size: var(--fs-xs);
@@ -2078,7 +2080,7 @@ textarea#jin:focus,
   opacity: 0.5;
 }
 
-.player-search {
+#player-search {
   width: 180px;
 }
 
@@ -2189,6 +2191,20 @@ textarea#jin:focus,
   text-decoration: underline;
 }
 
+.w-100 {
+  width: 100%;
+}
+
+.overflow-x {
+  overflow-x: auto;
+}
+
+.flex-gap-6 {
+  display: flex;
+  gap: var(--sp-6);
+  align-items: center;
+}
+
 .text-strong {
   color: var(--text);
 }
@@ -2282,19 +2298,6 @@ textarea#jin:focus,
   margin-top: var(--sp-6);
 }
 
-.w-100 {
-  width: 100%;
-}
-
-.overflow-x {
-  overflow-x: auto;
-}
-
-.flex-gap-6 {
-  display: flex;
-  gap: var(--sp-6);
-  align-items: center;
-}
 
 
 
@@ -2706,11 +2709,8 @@ tr.hrow:hover .hrow-star {
   display: block;
 }
 
-.modal-notes-input {
-  width: 100%;
+#modal-notes-input {
   min-height: 60px;
-  padding: var(--sp-8) var(--sp-10);
-  resize: vertical;
   transition: border-color .2s;
 }
 
@@ -4319,7 +4319,7 @@ body.maintenance #maintenance {
     margin-top: var(--sp-12);
   }
 
-  .modal-notes-input {
+  #modal-notes-input {
     min-height: 50px;
     font-size: var(--fs-sm);
   }
@@ -4340,7 +4340,7 @@ body.maintenance #maintenance {
     min-height: 36px;
   }
 
-  .table-filter {
+  select {
     font-size: var(--fs-xs);
     padding: var(--sp-8) var(--sp-10);
     max-width: 140px;

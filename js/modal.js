@@ -87,7 +87,7 @@ function showExampleHandModal(hand, coachingNote) {
       '<div class="label mb-0">Your Notes</div>' +
       '<div class="text-micro modal-notes-status" id="modal-notes-status">Saves automatically</div>' +
     '</div>' +
-    '<textarea class="modal-notes-input" id="modal-notes-input" placeholder="Add notes about this hand...">' + noteVal + '</textarea>' +
+    '<textarea id="modal-notes-input" placeholder="Add notes about this hand...">' + noteVal + '</textarea>' +
     '</div>';
 
   var equitySlot = '<div id="equity-slot"></div>';

@@ -286,9 +286,9 @@ function renderCompare(container, d, hands) {
     '<div class="text-body panel-desc">Compare two players side by side.</div>' +
     '<div class="p-row">' +
     '<div class="compare-selectors">' +
-    '<select id="compare-p1" class="table-filter">' + buildOptions(p1Default) + '</select>' +
+    '<select id="compare-p1">' + buildOptions(p1Default) + '</select>' +
     '<span class="text-body compare-vs">vs</span>' +
-    '<select id="compare-p2" class="table-filter">' + buildOptions(p2Default) + '</select>' +
+    '<select id="compare-p2">' + buildOptions(p2Default) + '</select>' +
     '</div>' +
     '</div>' +
     '<div id="compare-body"></div>';
