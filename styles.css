@@ -584,9 +584,9 @@ select {
 }
 
 
-.tbl tr:last-child td {
-  border-bottom: none;
-}
+.tbl tr:last-child td,
+.eq-row:last-of-type,
+.welcome-tip:last-child,
 
 .tbl th.sortable {
   cursor: pointer;
@@ -776,7 +776,9 @@ textarea#jin {
   outline: none;
 }
 
-textarea#jin:focus {
+textarea#jin:focus,
+.modal-notes-input:focus,
+.row-hover:hover {
   border-color: var(--gold2);
 }
 
@@ -868,10 +870,6 @@ textarea#jin:focus {
   flex-wrap: wrap;
 }
 
-.header-meta {
-  font-size: var(--fs-sm);
-  color: var(--dim);
-}
 
 .hero-strip {
   display: flex;
@@ -2045,9 +2043,6 @@ textarea#jin:focus {
 
 .table-filter:focus,
 .player-search:focus,
-.modal-notes-input:focus {
-  border-color: var(--gold2);
-}
 
 .table-filter {
   cursor: pointer;
@@ -2366,10 +2361,6 @@ textarea#jin:focus {
   transition: border-color .15s;
 }
 
-.row-hover:hover {
-  border-color: var(--gold2);
-}
-
 .profile-name {
   font-size: var(--fs-3xl);
   color: var(--gold);
@@ -2545,9 +2536,6 @@ textarea#jin:focus {
   border-bottom: var(--sp-1) solid var(--border);
 }
 
-.eq-row:last-of-type {
-  border-bottom: none;
-}
 
 .eq-row-top {
   display: flex;
@@ -2960,9 +2948,6 @@ tr.hrow:hover .hrow-star {
   border-bottom: var(--sp-1) solid var(--border);
 }
 
-.welcome-tip:last-child {
-  border-bottom: none;
-}
 
 .tips-carousel {
   display: flex;
@@ -3080,9 +3065,6 @@ tr.hrow:hover .hrow-star {
   border-bottom: var(--sp-1) solid var(--border);
 }
 
-.hiw-feat:last-child {
-  border-bottom: none;
-}
 
 .hiw-footer {
   margin-top: var(--sp-24);
@@ -4106,7 +4088,7 @@ body.maintenance #maintenance {
     flex-wrap: wrap;
   }
 
-  .header-meta {
+  .page-meta-link {
     font-size: var(--fs-xs);
     max-width: 100%;
     overflow: hidden;
