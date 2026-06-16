@@ -908,9 +908,6 @@ textarea#jin {
   margin-bottom: var(--sp-24);
 }
 
-.paste-box .restore-btn {
-  margin-top: 0;
-}
 
 .restore-block {
   display: none;
@@ -1360,17 +1357,14 @@ textarea#jin {
   background: color-mix(in srgb, var(--gold) 6%, transparent);
 }
 
-.ht-tag.ht-flop {
+.ht-tag.ht-flop,
+.ht-tag.ht-flop-3_way {
   color: var(--text);
 }
 
 .ht-tag.ht-flop-HU {
   color: var(--gold);
   border-color: color-mix(in srgb, var(--gold) 35%, transparent);
-}
-
-.ht-tag.ht-flop-3_way {
-  color: var(--text);
 }
 
 .ht-tag.ht-flop-multiway {
@@ -1599,10 +1593,7 @@ textarea#jin {
 
 
 
-.bar-val {
-  text-align: right;
-}
-
+.bar-val,
 .bar-val2 {
   text-align: right;
 }
@@ -2586,8 +2577,6 @@ textarea#jin {
   letter-spacing: var(--sp-1);
 }
 
-.eq-sim-note {
-}
 
 .eq-row {
   padding: var(--sp-10) 0;
@@ -2695,8 +2684,6 @@ textarea#jin {
   animation: eq-spin .8s linear infinite;
 }
 
-.eq-spinner-text {
-}
 
 @keyframes eq-spin {
   to {
@@ -2999,7 +2986,6 @@ tr.hrow:hover .hrow-star {
 .tips-track .welcome-tip {
   display: none;
   border-bottom: none;
-  padding: var(--sp-8) 0;
 }
 
 .tips-track .welcome-tip.active {
@@ -3233,9 +3219,6 @@ tr.hrow:hover .hrow-star {
   color: var(--bg) !important;
 }
 
-.introjs-progressbar {
-  background: var(--border) !important;
-}
 
 .introjs-progress {
   background: var(--border) !important;
