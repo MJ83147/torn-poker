@@ -31,7 +31,7 @@ function renderLog(container, hands) {
     setSlot(container, 'rows', pageHands.map(function(h, pi) {
       var globalIdx = start + pi;
       var starred = isHandStarred(h);
-      var starHtml = '<span class="hrow-star' + (starred ? ' starred' : '') + '" data-star-idx="' + globalIdx + '" title="' + (starred ? 'Unsave' : 'Save') + ' hand">' + (starred ? '&#9733;' : '&#9734;') + '</span>';
+      var starHtml = '<span class="icon-btn hrow-star' + (starred ? ' starred' : '') + '" data-star-idx="' + globalIdx + '" title="' + (starred ? 'Unsave' : 'Save') + ' hand">' + (starred ? '&#9733;' : '&#9734;') + '</span>';
       return renderHandRow(h, globalIdx, { starHtml: starHtml });
     }).join(''));
 
@@ -119,7 +119,7 @@ function renderSavedSection() {
           '<span class="saved-pos">' + (h.position || '?') + '</span>' +
           res +
         '</div>' +
-        '<button class="saved-unsave" data-unsave-key="' + keys[i].replace(/"/g, '&quot;') + '" title="Remove from saved">&#9733;</button>' +
+        '<button class="icon-btn saved-unsave" data-unsave-key="' + keys[i].replace(/"/g, '&quot;') + '" title="Remove from saved">&#9733;</button>' +
       '</div>' +
       '<div class="text-meta saved-card-board">' + (h.board && h.board.length ? h.board.join(' ') : 'No board') + '</div>' +
       '<div class="text-meta saved-card-acts">' + (myActs || 'No actions') + '</div>' +

@@ -207,7 +207,7 @@ function handTagsHtml(h) {
 function renderHandRow(h, idx, opts) {
   var myActs = getActsSummary(h);
   var res = renderResult(h, 'td', 'hrow-res');
-  var starCol = opts && opts.starHtml ? '<td class="hrow-star-col">' + opts.starHtml + '</td>' : '';
+  var starCol = opts && opts.starHtml ? '<td class="icon-btn hrow-star-col">' + opts.starHtml + '</td>' : '';
   var tags = handTagsHtml(h);
   return '<tr class="hrow row-hover" data-hand-idx="' + idx + '">' +
     starCol +

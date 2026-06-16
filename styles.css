@@ -453,6 +453,19 @@ select option {
   background: color-mix(in srgb, var(--gold) 8%, transparent);
 }
 
+/* Small inline icon button (stars, unsave). Each keeps its own size/colour. */
+.icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  line-height: var(--lh-none);
+  transition: color .15s, transform .15s;
+}
+
+.icon-btn:hover {
+  transform: scale(1.15);
+}
+
 /* --- Dots (round markers) --- */
 .dot {
   display: inline-block;
@@ -2251,6 +2264,14 @@ textarea#jin {
   white-space: nowrap;
 }
 
+.border-top {
+  border-top: var(--sp-1) solid var(--border);
+}
+
+.border-bottom {
+  border-bottom: var(--sp-1) solid var(--border);
+}
+
 .text-strong {
   color: var(--text);
 }
@@ -2689,9 +2710,6 @@ textarea#jin {
 .hrow-star {
   font-size: var(--fs-md);
   color: var(--dim);
-  cursor: pointer;
-  transition: color .15s, transform .15s;
-  line-height: var(--lh-none);
   opacity: 0.5;
   padding: var(--sp-6) var(--sp-8);
 }
@@ -2702,7 +2720,6 @@ tr.hrow:hover .hrow-star {
 
 .hrow-star:hover {
   color: var(--gold);
-  transform: scale(1.2);
   opacity: 1;
 }
 
@@ -2715,19 +2732,13 @@ tr.hrow:hover .hrow-star {
   position: absolute;
   top: var(--sp-8);
   right: 52px;
-  background: none;
-  border: none;
   font-size: var(--fs-xl);
   color: var(--dim);
-  cursor: pointer;
-  transition: color .15s, transform .15s;
   padding: var(--sp-6) var(--sp-8);
-  line-height: var(--lh-none);
 }
 
 .modal-star-btn:hover {
   color: var(--gold);
-  transform: scale(1.15);
 }
 
 
@@ -2802,19 +2813,13 @@ tr.hrow:hover .hrow-star {
 
 
 .saved-unsave {
-  background: none;
-  border: none;
   font-size: var(--fs-lg);
   color: var(--gold);
-  cursor: pointer;
   padding: 0 0 0 var(--sp-8);
-  transition: color .15s, transform .15s;
-  line-height: var(--lh-none);
 }
 
 .saved-unsave:hover {
   color: var(--red);
-  transform: scale(1.2);
 }
 
 .saved-card-board {
