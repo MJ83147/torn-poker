@@ -1649,11 +1649,6 @@ textarea#jin {
   color: var(--text);
 }
 
-.ht-leg-sw {
-  width: 9px;
-  height: 9px;
-  border-radius: var(--r-sm);
-}
 
 
 .leg-sw-played {
@@ -1841,17 +1836,11 @@ textarea#jin {
   color: var(--dim);
   font-size: var(--fs-xs);
   max-width: 180px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .hlog-tbl .hrow-acts {
   color: var(--dim);
   font-size: var(--fs-xs);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .hlog-tbl .hrow-res {
@@ -2256,6 +2245,11 @@ textarea#jin {
   overflow-x: auto;
 }
 
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 .text-strong {
   color: var(--text);

@@ -214,9 +214,9 @@ function renderHandRow(h, idx, opts) {
     '<td class="hrow-pos">' + (h.position || '?') + '</td>' +
     '<td class="hrow-cards">' + (h.hole && h.hole.length ? h.hole.join(' ') : '?? ??') + '</td>' +
     '<td class="hrow-tags">' + tags + '</td>' +
-    '<td class="hrow-board">' + (h.board && h.board.length ? h.board.join(' ') : '-') + '</td>' +
+    '<td class="hrow-board truncate">' + (h.board && h.board.length ? h.board.join(' ') : '-') + '</td>' +
     '<td class="hrow-pot">' + fmtBB(h.pot || 0, getHandBB(h)) + '</td>' +
-    '<td class="hrow-acts">' + myActs + '</td>' +
+    '<td class="hrow-acts truncate">' + myActs + '</td>' +
     res + '</tr>';
 }
 
