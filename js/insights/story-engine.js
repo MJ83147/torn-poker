@@ -190,7 +190,7 @@
       );
     }
     if (!parts.length) return '';
-    return '<div class="story-examples">' + parts.join('') + '</div>';
+    return '<div class="story-examples flex flex-wrap gap-8">' + parts.join('') + '</div>';
   }
 
   function wireExampleButtons(root) {

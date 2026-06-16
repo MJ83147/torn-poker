@@ -70,7 +70,7 @@ function renderWelcome(container, d, hands, meta) {
     '<div class="flex flex-col gap-32">' +
     '<div class="text-body welcome-tips">' +
     '<div class="label mb-12">Tips</div>' +
-    '<div class="tips-carousel">' +
+    '<div class="tips-carousel flex items-center gap-8">' +
     '<button class="tips-arrow tips-arrow-left" id="tip-prev">&#8249;</button>' +
     '<div class="tips-track">' +
     tips.map(function(t, i) {
@@ -79,7 +79,7 @@ function renderWelcome(container, d, hands, meta) {
     '</div>' +
     '<button class="tips-arrow tips-arrow-right" id="tip-next">&#8250;</button>' +
     '</div>' +
-    '<div class="tips-dots">' +
+    '<div class="tips-dots flex justify-center gap-6">' +
     tips.map(function(_, i) {
       return '<span class="dot tips-dot' + (i === 0 ? ' active' : '') + '" data-tip="' + i + '"></span>';
     }).join('') +

@@ -1346,9 +1346,6 @@ textarea#jin {
 
 .story-examples {
   margin-top: var(--sp-14);
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-8);
 }
 
 /* --- Hand-type tags --- */
@@ -2016,11 +2013,7 @@ textarea#jin {
 
 /* --- Range controls & subtabs --- */
 .range-subtabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-2);
   margin-bottom: var(--sp-16);
-  border-bottom: var(--sp-1) solid var(--border);
 }
 
 .range-subtab {
@@ -2046,10 +2039,6 @@ textarea#jin {
 }
 
 .range-controls {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--sp-10);
   margin-bottom: var(--sp-16);
 }
 
@@ -2541,8 +2530,6 @@ textarea#jin {
 }
 
 .modal-hand-meta {
-  display: flex;
-  gap: var(--sp-16);
   margin-bottom: var(--sp-16);
 }
 
@@ -2760,9 +2747,6 @@ tr.hrow:hover .hrow-star {
 
 
 .saved-toggle {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-8);
   cursor: pointer;
   user-select: none;
   padding: var(--sp-8) 0;
@@ -2972,9 +2956,6 @@ tr.hrow:hover .hrow-star {
 
 
 .tips-carousel {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-8);
   position: relative;
 }
 
@@ -3016,9 +2997,6 @@ tr.hrow:hover .hrow-star {
 }
 
 .tips-dots {
-  display: flex;
-  justify-content: center;
-  gap: var(--sp-6);
   margin-top: var(--sp-8);
 }
 
@@ -3346,9 +3324,6 @@ tr.hrow:hover .hrow-star {
 
 
 .compare-exploits {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-8);
   margin-top: var(--sp-8);
 }
 
@@ -3567,11 +3542,7 @@ body.maintenance #maintenance {
 
 /* --- Custom report --- */
 .cr-toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   margin-bottom: var(--sp-16);
-  gap: var(--sp-16);
 }
 
 .cr-compare-toggle {

@@ -658,7 +658,7 @@ function renderRange(container, d, hands) {
     var headerStats = renderHeaderStats(filtered, state.hero + ' · ' + label);
     var note = chart ? '' : '<div class="range-empty">No GTO reference for ' + state.hero + ' ' + label + '.</div>';
     body.innerHTML =
-      '<div class="range-controls">' +
+      '<div class="range-controls flex flex-wrap items-center gap-10">' +
       '<label class="label">Position</label>' + heroSelectorHtml +
       '<label class="label">Scenario</label>' + scenarioSelectorHtml +
       '</div>' +

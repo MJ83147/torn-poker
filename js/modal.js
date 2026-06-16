@@ -33,7 +33,7 @@ function showExampleHandModal(hand, coachingNote) {
   var tagStrip = handTagsHtml(hand);
   var subtitle = '<div class="label mb-16">Example hand · ' + (hand.position || '?') + ' position' + (tagStrip ? ' · ' + tagStrip : '') + '</div>';
 
-  var metaHtml = '<div class="text-meta modal-hand-meta">' +
+  var metaHtml = '<div class="text-meta modal-hand-meta flex gap-16">' +
     '<span>Board: <strong>' + (hand.board && hand.board.length ? hand.board.join(' ') : 'none') + '</strong></span>' +
     '<span>Pot: <strong>' + fmtBB(hand.pot || 0, getHandBB(hand)) + '</strong></span>' +
     (function() {

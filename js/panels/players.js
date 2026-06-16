@@ -487,7 +487,7 @@ function renderCompare(container, d, hands) {
 
     var exploitHtml = '';
     if (exploits.length > 0) {
-      exploitHtml = '<div class="p-row"><div class="label">Exploit Tips</div><div class="compare-exploits">';
+      exploitHtml = '<div class="p-row"><div class="label">Exploit Tips</div><div class="compare-exploits flex flex-col gap-8">';
       for (var i = 0; i < exploits.length; i++) {
         exploitHtml += '<div class="card card-s2 text-meta compare-exploit-item">' + exploits[i] + '</div>';
       }
