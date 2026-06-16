@@ -290,6 +290,38 @@ select {
   color: var(--muted);
 }
 
+/* Status backgrounds: dots, bar fills, badges and chart cells share one
+   rule per colour instead of each redeclaring the same background. */
+.dot-g,
+.bar-fill.g,
+.ins-badge.g .dot,
+.leg-sw-won,
+.leg-sw-high,
+.leg-sw-gto-green,
+.rc[data-gto="green"],
+.rc[data-hero="ontarget"],
+.rc.rc-played[data-freq="high"] {
+  background: var(--green);
+}
+
+.bar-fill.r,
+.ins-badge.r .dot,
+.line-dot-red {
+  background: var(--red);
+}
+
+.bar-fill.a,
+.ins-badge.a .dot {
+  background: var(--amber);
+}
+
+.dot-gold,
+.bar-fill.o,
+.ins-badge.o .dot,
+.tips-dot.active {
+  background: var(--gold);
+}
+
 /* --- Buttons --- */
 .btn {
   display: inline-flex;
@@ -380,13 +412,7 @@ select {
   height: 11px;
 }
 
-.dot-g {
-  background: var(--green);
-}
 
-.dot-gold {
-  background: var(--gold);
-}
 
 .dot-cat-pos {
   background: var(--dot-pos);
@@ -1022,19 +1048,10 @@ textarea#jin:focus {
 }
 
 
-.ins-badge.g .dot {
-  background: var(--green);
-}
 
 
-.ins-badge.r .dot {
-  background: var(--red);
-}
 
 
-.ins-badge.a .dot {
-  background: var(--amber);
-}
 
 
 .ins-badge.n .dot {
@@ -1042,9 +1059,6 @@ textarea#jin:focus {
 }
 
 
-.ins-badge.o .dot {
-  background: var(--gold);
-}
 
 
 .ins-title {
@@ -1473,21 +1487,9 @@ textarea#jin:focus {
   transition: width .9s cubic-bezier(.4, 0, .2, 1);
 }
 
-.bar-fill.g {
-  background: var(--green);
-}
 
-.bar-fill.r {
-  background: var(--red);
-}
 
-.bar-fill.o {
-  background: var(--gold);
-}
 
-.bar-fill.a {
-  background: var(--amber);
-}
 
 .bar-val {
   text-align: right;
@@ -1560,9 +1562,6 @@ textarea#jin:focus {
   border-radius: var(--r-sm);
 }
 
-.leg-sw-won {
-  background: var(--green);
-}
 
 .leg-sw-played {
   background: var(--amber);
@@ -1581,9 +1580,6 @@ textarea#jin:focus {
   background: var(--freq-med);
 }
 
-.leg-sw-high {
-  background: var(--green);
-}
 
 .stack-bar {
   height: 18px;
@@ -1648,9 +1644,6 @@ textarea#jin:focus {
   min-width: 0;
 }
 
-.rc[data-hero="ontarget"] {
-  background: var(--green);
-}
 
 .rc[data-hero="wrong"] {
   background: var(--gto-red);
@@ -1846,9 +1839,6 @@ textarea#jin:focus {
   background: var(--gto-red);
 }
 
-.rc[data-gto="green"] {
-  background: var(--green);
-}
 
 .rc[data-gto="blue"] {
   background: var(--gto-blue);
@@ -1910,17 +1900,11 @@ textarea#jin:focus {
   background: var(--freq-high);
 }
 
-.rc.rc-played[data-freq="high"] {
-  background: var(--green);
-}
 
 .leg-sw-gto-red {
   background: var(--gto-red);
 }
 
-.leg-sw-gto-green {
-  background: var(--green);
-}
 
 .leg-sw-gto-blue {
   background: var(--gto-blue);
@@ -2376,9 +2360,6 @@ textarea#jin:focus {
   background: var(--gto-blue);
 }
 
-.line-dot-red {
-  background: var(--red);
-}
 
 .row-hover {
   cursor: pointer;
@@ -3041,9 +3022,6 @@ tr.hrow:hover .hrow-star {
   transition: background .2s;
 }
 
-.tips-dot.active {
-  background: var(--gold);
-}
 
 /* --- How-it-works modal --- */
 .hiw-overlay {
