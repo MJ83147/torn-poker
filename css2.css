@@ -1017,6 +1017,253 @@ a {
    5. FEATURES   (built per CSS2-BUILD.md)
    ========================================================================== */
 
+/* --- Range matrix cell ---
+   The GTO matrix (data-gto) and the "your" matrix (data-hero) are SEPARATE
+   grids, so a cell carries data-gto OR data-hero, never both. That makes it
+   safe to merge same-colour rules across the two. Cell text colour stays
+   white except where the fill is light (white/grey/blue/empty). */
+.range-grid {
+  display: grid;
+  grid-template-columns: repeat(13, 1fr);
+  gap: var(--sp-2);
+}
+
+.range-grid-sm {
+  grid-template-columns: repeat(13, 1fr);
+  gap: var(--sp-1);
+  max-width: 560px;
+}
+
+.rc {
+  position: relative;
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r-sm);
+  cursor: default;
+}
+
+.rc span {
+  font-size: var(--fs-xs);
+  line-height: var(--lh-none);
+  font-weight: var(--fw-semibold);
+  text-align: center;
+  color: var(--white);
+  pointer-events: none;
+}
+
+.rc:hover { transform: scale(1.5); z-index: 20; }
+
+/* colour states (green is shared by gto/hero/high-freq — safe, see note) */
+.rc[data-gto="green"],
+.rc[data-hero="ontarget"],
+.rc.rc-played[data-freq="high"],
+.rc.rc-played[data-freq="med-high"] {
+  background: var(--green);
+}
+
+.rc[data-gto="red"],
+.rc[data-hero="wrong"] { background: var(--gto-red); }
+
+.rc[data-gto="blue"] { background: var(--gto-blue); }
+.rc[data-gto="grey"] { background: var(--gto-grey); }
+
+.rc[data-gto="white"],
+.rc[data-hero="unjudged"] { background: var(--gto-white); }
+
+.rc[data-gto="white"] span,
+.rc[data-hero="unjudged"] span { color: var(--gto-dark-fg); }
+
+.rc[data-gto="grey"] span,
+.rc[data-gto="blue"] span { color: var(--white); }
+
+.rc[data-gto="none"],
+.rc[data-hero="none"] {
+  background: var(--gto-empty-bg);
+  border: var(--sp-1) solid var(--border);
+}
+
+.rc[data-gto="none"] span,
+.rc[data-hero="none"] span { color: var(--gto-empty-fg); }
+
+.rc.rc-played[data-freq="low"] { background: var(--freq-low); }
+.rc.rc-played[data-freq="med"] { background: var(--freq-med); }
+
+/* cell state modifiers */
+.rc.rc-played {
+  outline: var(--sp-2) solid var(--gold);
+  outline-offset: -2px;
+  box-shadow: 0 0 0 var(--sp-1) rgba(0, 0, 0, 0.35) inset;
+}
+
+.rc.rc-folded { opacity: var(--range-folded-opacity); }
+.rc.rc-undealt { opacity: 0.85; }
+
+/* --- Equity viz ---
+   The equity bar reuses .bar / .bar-track / .bar-fill.bg-pos. These add the
+   gold summary callout and the centred SVG-curve container. */
+.equity-summary {
+  margin-top: var(--sp-12);
+  padding: var(--sp-10) var(--sp-12);
+  border-left: 3px solid var(--gold);
+}
+
+.equity-curve {
+  margin-top: var(--sp-10);
+  padding-top: var(--sp-8);
+  border-top: var(--sp-1) solid var(--border);
+  text-align: center;
+}
+
+/* --- Carousel: track of slides + arrows + dots --- */
+.carousel { position: relative; }
+
+.carousel-track {
+  flex: 1;
+  position: relative;
+  min-height: 42px;
+}
+
+.carousel-slide { display: none; }
+.carousel-slide.active { display: block; }
+
+.carousel-arrow {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--r-pill);
+  border: var(--sp-1) solid var(--border);
+  background: none;
+  color: var(--dim);
+  font-size: var(--fs-xl);
+  line-height: var(--lh-none);
+  cursor: pointer;
+  transition: border-color .2s, color .2s;
+}
+
+.carousel-arrow:hover { border-color: var(--gold2); color: var(--gold); }
+
+.carousel-dots {
+  display: flex;
+  gap: var(--sp-6);
+  justify-content: center;
+  margin-top: var(--sp-8);
+}
+
+.carousel-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--r-pill);
+  background: var(--border);
+  cursor: pointer;
+  transition: background .2s;
+}
+
+.carousel-dot.active { background: var(--gold); }
+
+/* --- Sentence builder: serif stem with clickable clause tokens --- */
+.sentence {
+  font-family: var(--serif);
+  font-size: var(--fs-xl);
+  line-height: var(--lh-body);
+  color: var(--text);
+}
+
+.sentence-stem,
+.sentence-join { color: var(--dim); }
+
+.sentence-token {
+  display: inline-block;
+  padding: 0 var(--sp-2);
+  color: var(--gold);
+  border-bottom: var(--sp-1) dashed var(--gold2);
+  cursor: pointer;
+  transition: color .15s, border-color .15s;
+}
+
+.sentence-token:hover { color: var(--text); border-bottom-color: var(--gold); }
+
+.sentence-empty { color: var(--dim); font-style: italic; }
+
+.sentence-add {
+  display: inline-block;
+  margin-left: var(--sp-12);
+  padding: var(--sp-4) var(--sp-10);
+  background: transparent;
+  border: var(--sp-1) dashed var(--border);
+  border-radius: var(--r-sm);
+  color: var(--dim);
+  font-size: var(--fs-sm);
+  cursor: pointer;
+  vertical-align: middle;
+}
+
+.sentence-add:hover { border-color: var(--gold2); color: var(--gold); }
+
+.sentence-seg-tag {
+  display: inline-block;
+  margin-right: var(--sp-8);
+  font-size: var(--fs-xs);
+  letter-spacing: var(--sp-2);
+  text-transform: uppercase;
+  color: var(--gold);
+  font-weight: var(--fw-bold);
+  vertical-align: middle;
+}
+
+.sentence-vs {
+  text-align: center;
+  letter-spacing: var(--sp-4);
+  margin: var(--sp-12) 0;
+  color: var(--dim);
+}
+
+/* --- Expandable section: header + chevron + collapsible body ---
+   Generic version of the story-card pattern; toggle .open on the root. */
+.expand-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--sp-12) 0;
+  cursor: pointer;
+}
+
+.expand-chevron { color: var(--dim); transition: transform .15s; }
+.expand.open .expand-chevron { transform: rotate(180deg); }
+
+.expand-body { display: none; padding-bottom: var(--sp-12); }
+.expand.open .expand-body { display: block; }
+
+/* --- Card-deal animation (loader / maintenance) ---
+   Cards start offset + transparent; adding .show deals each one in. */
+.deal {
+  display: flex;
+  gap: var(--sp-10);
+  justify-content: center;
+}
+
+.deal-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 66px;
+  border-radius: var(--r-lg);
+  background: var(--s2);
+  border: var(--sp-1) solid var(--border);
+  font-family: var(--serif);
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-semibold);
+  opacity: 0;
+  transform: translateY(18px) scale(.92);
+  transition: opacity .38s ease, transform .38s ease;
+}
+
+.deal-card.show { opacity: 1; transform: none; }
+.deal-card.red { color: var(--red); }
+.deal-card.black { color: var(--text); }
+
 
 /* ==========================================================================
    6. RESPONSIVE
