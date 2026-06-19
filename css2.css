@@ -1,0 +1,1023 @@
+/* ==========================================================================
+   css2 — rebuilt from the component blueprint (COMPONENTS_PER_PANEL.md)
+   Order: 1 tokens · 2 base/reset · 3 utilities · 4 components · 5 features · 6 responsive
+   Sections 4-5 are built out against the checklist in CSS2-BUILD.md.
+   ========================================================================== */
+
+/* ==========================================================================
+   1. TOKENS
+   ========================================================================== */
+:root {
+  /* surfaces */
+  --bg: #07090a;
+  --s1: #0e1410;
+  --s2: #121a14;
+  --border: #1a2a1c;
+  --menu-bg: #1e3024;
+
+  /* brand */
+  --gold: #c8a94a;
+  --gold2: #8a7030;
+
+  /* status */
+  --green: #3fad64;
+  --red: #c94040;
+  --amber: #d4842a;
+
+  /* text */
+  --text: #d0d8d0;
+  --dim: #7a9a7a;
+  --muted: #5a7a5c;
+  --white: #fff;
+
+  /* tints & overlays */
+  --bg-overlay: rgba(0, 0, 0, 0.5);
+  --bg-scrim: rgba(0, 0, 0, 0.85);
+  --tint-light: rgba(255, 255, 255, 0.03);
+  --tint-light-2: rgba(255, 255, 255, 0.06);
+
+  /* GTO / range viz */
+  --gto-red: #b8403a;
+  --gto-blue: #4a90d9;
+  --gto-grey: #6a7068;
+  --gto-white: #d0d4cf;
+  --range-folded-opacity: 0.25;
+  --freq-low: #24422a;
+  --freq-med: #2e5835;
+  --freq-high: #3a7a42;
+  --gto-empty-bg: #0e1310;
+  --gto-empty-fg: #2a3e2c;
+  --gto-dark-fg: #1a1f1a;
+  --dot-pos: rgba(160, 200, 240, 0.7);
+  --dot-seat: rgba(200, 160, 220, 0.7);
+  --dot-tag: rgba(200, 200, 200, 0.7);
+
+  /* type */
+  --mono: 'IBM Plex Mono', monospace;
+  --serif: 'Cormorant Garamond', serif;
+  /* one scale, one job per step, real gaps: 12 / 14 / 16 / 20 / 26 / 32.
+     no off-scale 15/17/18/28px values anywhere. */
+  --fs-xs: 12px;   /* labels, eyebrows, badges (uppercase) */
+  --fs-sm: 14px;   /* alias of body; kept so existing refs hold */
+  --fs-md: 14px;   /* body, table cells, insight text */
+  --fs-lg: 16px;   /* lead callout (verdict box), inline value */
+  --fs-xl: 20px;   /* stat number */
+  --fs-2xl: 26px;  /* section title */
+  --fs-3xl: 32px;  /* page title */
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+  --lh-none: 1;
+  --lh-tight: 1.15;
+  --lh-snug: 1.4;
+  --lh-normal: 1.5;
+  --lh-body: 1.6;
+
+  /* spacing */
+  --sp-1: 1px;
+  --sp-2: 2px;
+  --sp-4: 4px;
+  --sp-6: 6px;
+  --sp-8: 8px;
+  --sp-10: 10px;
+  --sp-12: 12px;
+  --sp-14: 14px;
+  --sp-16: 16px;
+  --sp-20: 20px;
+  --sp-24: 24px;
+  --sp-28: 28px;
+  --sp-32: 32px;
+
+  /* radius */
+  --r-sm: 4px;
+  --r-lg: 8px;
+  --r-pill: 50%;
+}
+
+/* ==========================================================================
+   2. BASE / RESET
+   ========================================================================== */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+*,
+*::before,
+*::after {
+  min-width: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: var(--fs-md);
+  line-height: var(--lh-normal);
+  min-height: 100vh;
+}
+
+/* form elements don't inherit font; make them, so nothing redeclares it */
+button,
+input,
+textarea,
+select {
+  font-family: inherit;
+}
+
+/* one field primitive for text inputs, textareas, selects */
+input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+textarea,
+select {
+  background: var(--s2);
+  border: var(--sp-1) solid var(--border);
+  color: var(--text);
+  font-size: var(--fs-sm);
+  padding: var(--sp-6) var(--sp-10);
+  border-radius: var(--r-sm);
+  outline: none;
+}
+
+input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):focus,
+textarea:focus,
+select:focus {
+  border-color: var(--gold2);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--dim);
+}
+
+textarea {
+  width: 100%;
+  resize: vertical;
+}
+
+select {
+  cursor: pointer;
+}
+
+a {
+  color: inherit;
+}
+
+/* ==========================================================================
+   3. UTILITIES
+   ========================================================================== */
+
+/* --- display / flow --- */
+.hidden { display: none; }
+.block { display: block; }
+.w-100 { width: 100%; }
+.overflow-x { overflow-x: auto; }
+.relative { position: relative; }
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* --- layout: rows, columns, grids ---
+   .row = horizontal, .col = vertical stack, .cols-* = grids.
+   Spacing is always set with a gap-* class so it's explicit and on one scale. */
+.row { display: flex; }
+.col { display: flex; flex-direction: column; }
+.cols-2 { display: grid; grid-template-columns: 1fr 1fr; }
+.cols-3 { display: grid; grid-template-columns: repeat(3, 1fr); }
+.cols-auto {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(var(--col-min, 280px), 1fr));
+}
+
+/* row/col alignment modifiers */
+.center { align-items: center; }        /* cross-axis */
+.middle { justify-content: center; }    /* main-axis */
+.between { justify-content: space-between; }
+.end { justify-content: flex-end; }
+.wrap { flex-wrap: wrap; }
+.grow { flex: 1; }
+.inline { display: inline-flex; }
+
+/* --- gap scale --- */
+.gap-2 { gap: var(--sp-2); }
+.gap-4 { gap: var(--sp-4); }
+.gap-6 { gap: var(--sp-6); }
+.gap-8 { gap: var(--sp-8); }
+.gap-10 { gap: var(--sp-10); }
+.gap-12 { gap: var(--sp-12); }
+.gap-14 { gap: var(--sp-14); }
+.gap-16 { gap: var(--sp-16); }
+.gap-20 { gap: var(--sp-20); }
+.gap-24 { gap: var(--sp-24); }
+.gap-32 { gap: var(--sp-32); }
+
+/* --- margin scale --- */
+.mt-0 { margin-top: 0; }
+.mt-4 { margin-top: var(--sp-4); }
+.mt-8 { margin-top: var(--sp-8); }
+.mt-10 { margin-top: var(--sp-10); }
+.mt-12 { margin-top: var(--sp-12); }
+.mt-16 { margin-top: var(--sp-16); }
+.mt-20 { margin-top: var(--sp-20); }
+.mt-32 { margin-top: var(--sp-32); }
+.mb-0 { margin-bottom: 0; }
+.mb-4 { margin-bottom: var(--sp-4); }
+.mb-6 { margin-bottom: var(--sp-6); }
+.mb-8 { margin-bottom: var(--sp-8); }
+.mb-12 { margin-bottom: var(--sp-12); }
+.mb-16 { margin-bottom: var(--sp-16); }
+.mb-20 { margin-bottom: var(--sp-20); }
+.mb-24 { margin-bottom: var(--sp-24); }
+.mb-28 { margin-bottom: var(--sp-28); }
+
+/* --- borders --- */
+.border-top { border-top: var(--sp-1) solid var(--border); }
+.border-bottom { border-bottom: var(--sp-1) solid var(--border); }
+
+/* --- text roles --- */
+.title {
+  font-family: var(--serif);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-tight);
+}
+.title-xl { font-size: var(--fs-3xl); }
+.title-lg { font-size: var(--fs-2xl); }
+.title-md { font-size: var(--fs-xl); }
+
+.eyebrow {
+  font-size: var(--fs-xs);
+  letter-spacing: var(--sp-2);
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+.text-body { font-size: var(--fs-md); color: var(--dim); line-height: var(--lh-body); }
+.text-meta { font-size: var(--fs-sm); color: var(--dim); }
+.text-micro { font-size: var(--fs-xs); color: var(--muted); }
+.text-strong { color: var(--text); }
+.value {
+  font-family: var(--serif);
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-none);
+}
+
+/* --- text colour modifiers --- */
+.c-gold { color: var(--gold); }
+.c-dim { color: var(--dim); }
+.c-muted { color: var(--muted); }
+.c-pos { color: var(--green); }
+.c-neg { color: var(--red); }
+.c-warn { color: var(--amber); }
+
+/* --- background fill modifiers (bar fills, dots, swatches, segments) --- */
+.bg-gold { background: var(--gold); }
+.bg-pos { background: var(--green); }
+.bg-neg { background: var(--red); }
+.bg-warn { background: var(--amber); }
+.bg-muted { background: var(--muted); }
+.bg-freq-low { background: var(--freq-low); }
+.bg-freq-med { background: var(--freq-med); }
+.bg-freq-high { background: var(--freq-high); }
+
+/* --- weight / transform helpers --- */
+.fw-medium { font-weight: var(--fw-medium); }
+.fw-semibold { font-weight: var(--fw-semibold); }
+.uppercase { text-transform: uppercase; }
+.text-right { text-align: right; }
+.text-center { text-align: center; }
+.cursor-pointer { cursor: pointer; }
+
+/* ==========================================================================
+   4. COMPONENTS   (built per CSS2-BUILD.md)
+   ========================================================================== */
+
+/* --- Card & box: padded, rounded containers ---
+   .card  = outlined (border). Add .card-s1/.card-s2 for a surface fill.
+   .box   = filled callout, no border (verdict, work-on, insight).
+   .card-link = clickable, lifts on hover (works on either).
+   .radius-sm shrinks the corner. */
+.card {
+  border: var(--sp-1) solid var(--border);
+  border-radius: var(--r-lg);
+  padding: var(--sp-14) var(--sp-16);
+}
+
+.card-s1 { background: var(--s1); }
+.card-s2 { background: var(--s2); }
+
+.box {
+  background: var(--s2);
+  border-radius: var(--r-lg);
+  padding: var(--sp-16) var(--sp-20);
+}
+
+.radius-sm { border-radius: var(--r-sm); }
+
+.card-link {
+  cursor: pointer;
+  transition: background .15s, border-color .15s, transform .15s;
+}
+
+.card-link:hover {
+  background: var(--s2);
+  border-color: var(--gold2);
+  transform: translateY(-1px);
+}
+
+/* --- Table ---
+   Plain rows with a header rule and per-row dividers; last row has none.
+   Colour-coded cells use the .c-* utilities (c-gold/c-pos/c-neg) on the cell.
+   .sortable header is clickable; .num right-aligns a column. */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th {
+  font-size: var(--fs-xs);
+  letter-spacing: var(--sp-2);
+  text-transform: uppercase;
+  font-weight: var(--fw-regular);
+  color: var(--dim);
+  text-align: left;
+  padding: 0 var(--sp-16) var(--sp-12) 0;
+  border-bottom: var(--sp-1) solid var(--border);
+}
+
+.table td {
+  font-size: var(--fs-md);
+  padding: var(--sp-12) var(--sp-16);
+  padding-left: 0;
+  border-bottom: var(--sp-1) solid var(--border);
+  vertical-align: middle;
+}
+
+.table th:last-child,
+.table td:last-child {
+  padding-right: 0;
+}
+
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+.table .num {
+  text-align: right;
+}
+
+.table th.sortable {
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  transition: color .2s;
+}
+
+.table th.sortable:hover {
+  color: var(--gold);
+}
+
+/* --- Bar: label + track + fill + value/meta ---
+   .bar is a grid row. Default cols = label | track | value; add .bar-3
+   for an extra meta column. Fill colour comes from a .bg-* utility on
+   .bar-fill, width is set inline (data-driven). */
+.bar {
+  display: grid;
+  grid-template-columns: var(--bar-label, 110px) 1fr auto;
+  gap: var(--sp-10);
+  align-items: center;
+}
+
+.bar-3 {
+  grid-template-columns: var(--bar-label, 110px) 1fr auto auto;
+}
+
+.bar-track {
+  height: 6px;
+  background: var(--s2);
+  border-radius: var(--r-sm);
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: var(--r-sm);
+  transition: width .9s cubic-bezier(.4, 0, .2, 1);
+}
+
+.bar-value { text-align: right; }
+
+/* Segmented / stacked bar: a flex track of .bar-seg pieces (widths inline). */
+.bar-stack {
+  display: flex;
+  height: 18px;
+  border-radius: var(--r-sm);
+  overflow: hidden;
+}
+
+.bar-seg {
+  height: 100%;
+  transition: width .8s ease;
+}
+
+/* --- Chart wrapper: positioned canvas container --- */
+.chart {
+  position: relative;
+  width: 100%;
+  max-width: 720px;
+}
+
+.chart-full { max-width: 900px; }
+
+/* --- Insight card: built on .box ---
+   Severity colour comes from utilities on the markup: the badge dot is
+   .dot.bg-* and the badge word is .c-* (no per-severity classes here). */
+.insight { position: relative; }
+
+.insight-badge {
+  position: absolute;
+  top: var(--sp-16);
+  right: var(--sp-20);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-6);
+  font-size: var(--fs-xs);
+  letter-spacing: var(--sp-2);
+  text-transform: uppercase;
+}
+
+.insight-title {
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-semibold);
+  margin-bottom: var(--sp-4);
+  padding-right: 80px;
+}
+
+.insight-body {
+  color: var(--dim);
+  line-height: var(--lh-body);
+}
+
+.insight-chips,
+.insight-coaching {
+  margin-top: var(--sp-12);
+  padding-top: var(--sp-10);
+  border-top: var(--sp-1) solid var(--border);
+}
+
+.insight-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-4) var(--sp-12);
+}
+
+.insight-coaching-head {
+  font-size: var(--fs-xs);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--dim);
+  margin-bottom: var(--sp-4);
+}
+
+/* --- Story card: an expandable insight (head + collapsible body) ---
+   Compose on .box. Toggle .open/.collapsed on the root .story. */
+.story {
+  padding: 0;
+  cursor: pointer;
+  transition: background .15s;
+}
+
+.story-head {
+  position: relative;
+  padding: var(--sp-16) var(--sp-20);
+  border-radius: var(--r-lg);
+  transition: background .15s;
+}
+
+.story:hover .story-head { background: var(--s1); }
+
+.story-chevron {
+  position: absolute;
+  bottom: var(--sp-12);
+  right: var(--sp-16);
+  color: var(--dim);
+  transition: transform .15s;
+}
+
+.story.open .story-chevron { transform: rotate(180deg); }
+
+.story-body { padding: 0 var(--sp-20) var(--sp-20); }
+
+.story.collapsed .story-body { display: none; }
+
+.story-teaser {
+  margin-top: var(--sp-8);
+  padding-right: var(--sp-24);
+  color: var(--dim);
+}
+
+.story.open .story-teaser { display: none; }
+
+.story-branches {
+  margin: var(--sp-10) 0 var(--sp-14);
+  padding-left: var(--sp-20);
+}
+
+.story-branches li { margin-bottom: var(--sp-8); }
+.story-branches li:last-child { margin-bottom: 0; }
+
+.story-impact,
+.story-sowhat {
+  line-height: var(--lh-body);
+  padding-top: var(--sp-12);
+  margin-top: var(--sp-12);
+  border-top: var(--sp-1) solid var(--border);
+}
+
+.story-tag {
+  display: inline-block;
+  font-size: var(--fs-xs);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--gold);
+  font-weight: var(--fw-bold);
+  margin-right: var(--sp-8);
+}
+
+/* --- Markers: dot, badge, chip, tag --- */
+.dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: var(--r-pill);
+}
+
+.dot-lg { width: 11px; height: 11px; }
+
+.badge {
+  display: inline-block;
+  padding: var(--sp-2) var(--sp-8);
+  border-radius: var(--r-sm);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+}
+
+.badge-warn {
+  background: color-mix(in srgb, var(--amber) 12%, transparent);
+  color: var(--amber);
+}
+
+.badge-soft {
+  background: var(--tint-light-2);
+  color: var(--text);
+}
+
+/* .chip = inline text token (colour via .c-*); .tag = bordered pill. */
+.chip {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--dim);
+}
+
+.tag {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  padding: var(--sp-2) var(--sp-6);
+  border-radius: var(--r-sm);
+  border: var(--sp-1) solid var(--border);
+  background: var(--tint-light);
+  color: var(--dim);
+  white-space: nowrap;
+}
+
+.tag-gold {
+  color: var(--gold);
+  border-color: color-mix(in srgb, var(--gold) 35%, transparent);
+  background: color-mix(in srgb, var(--gold) 6%, transparent);
+}
+
+/* --- Buttons ---
+   Serif face matches the live app. Padding/size come from tokens, not
+   off-scale px. .btn-icon is a round single-glyph button. */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-6);
+  cursor: pointer;
+  border: var(--sp-1) solid transparent;
+  border-radius: var(--r-sm);
+  background: transparent;
+  transition: background .2s, color .2s, border-color .2s;
+}
+
+.btn[disabled] { opacity: .3; cursor: default; }
+
+.btn-primary {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: var(--bg);
+  font-family: var(--serif);
+  font-size: var(--fs-lg);
+  letter-spacing: .05em;
+  padding: var(--sp-10);
+}
+
+.btn-primary:hover {
+  background: var(--gold2);
+  border-color: var(--gold2);
+}
+
+.btn-secondary {
+  border-color: var(--gold2);
+  color: var(--gold2);
+  font-family: var(--serif);
+  font-size: var(--fs-lg);
+  letter-spacing: .05em;
+  padding: var(--sp-10);
+}
+
+.btn-secondary:hover {
+  background: var(--gold2);
+  color: var(--bg);
+}
+
+.btn-ghost {
+  border-color: var(--border);
+  color: var(--dim);
+  padding: var(--sp-4) var(--sp-10);
+  font-size: var(--fs-xs);
+}
+
+.btn-ghost:hover:not([disabled]) {
+  border-color: var(--gold2);
+  color: var(--gold);
+}
+
+.btn-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--r-pill);
+  border-color: var(--border);
+  color: var(--dim);
+  font-family: var(--serif);
+  font-weight: var(--fw-bold);
+  padding: 0;
+}
+
+.btn-icon:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+  background: color-mix(in srgb, var(--gold) 8%, transparent);
+}
+
+/* --- Form controls (field base lives in the reset) ---
+   .select adds the caret chrome; .toggle is the $/BB segmented switch. */
+.select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, var(--dim) 50%),
+                    linear-gradient(135deg, var(--dim) 50%, transparent 50%);
+  background-position: calc(100% - 16px) center, calc(100% - 11px) center;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  padding-right: var(--sp-28);
+}
+
+.toggle {
+  display: inline-flex;
+  border: var(--sp-1) solid var(--border);
+  border-radius: var(--r-sm);
+  overflow: hidden;
+  cursor: pointer;
+  font-weight: var(--fw-semibold);
+  font-size: var(--fs-sm);
+}
+
+.toggle-opt {
+  padding: 5px 9px;
+  color: var(--dim);
+  background: var(--s2);
+  transition: background .2s, color .2s;
+  user-select: none;
+}
+
+.toggle-opt.active {
+  background: var(--gold2);
+  color: var(--bg);
+}
+
+.check {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-8);
+  cursor: pointer;
+}
+
+.check input[type="checkbox"] {
+  accent-color: var(--gold);
+  width: 14px;
+  height: 14px;
+}
+
+/* --- Tabs: grouped dropdown menu + items + inline subtabs --- */
+.tabs {
+  display: flex;
+  position: relative;
+  border-bottom: var(--sp-1) solid var(--border);
+  background: var(--menu-bg);
+}
+
+.tab-group {
+  flex: 1;
+  position: relative;
+}
+
+.tab-group + .tab-group { border-left: var(--sp-1) solid var(--border); }
+
+.tab-btn {
+  width: 100%;
+  padding: var(--sp-12) var(--sp-20);
+  font-size: var(--fs-xs);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--dim);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: color .2s, background .2s;
+}
+
+.tab-btn:hover { color: var(--text); background: var(--tint-light); }
+.tab-btn.active { color: var(--gold); }
+
+.tab-menu {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 100%;
+  background: var(--menu-bg);
+  border: var(--sp-1) solid var(--tint-light-2);
+  border-top: none;
+  border-radius: 0 0 var(--r-lg) var(--r-lg);
+  box-shadow: 0 8px 32px var(--bg-overlay);
+  z-index: 1001;
+}
+
+.tab-group.open .tab-menu { display: block; }
+
+.tab-item {
+  display: block;
+  width: 100%;
+  padding: var(--sp-10) var(--sp-20);
+  font-size: var(--fs-xs);
+  letter-spacing: var(--sp-1);
+  text-transform: uppercase;
+  color: var(--text);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: color .15s, background .15s;
+}
+
+.tab-item:hover { color: var(--white); background: var(--tint-light-2); }
+.tab-item.active { color: var(--gold); }
+
+.subtabs {
+  display: flex;
+  gap: var(--sp-4);
+}
+
+.subtab {
+  padding: var(--sp-4) var(--sp-12);
+  font-size: var(--fs-xs);
+  letter-spacing: var(--sp-1);
+  text-transform: uppercase;
+  color: var(--dim);
+  cursor: pointer;
+  border-bottom: var(--sp-2) solid transparent;
+  transition: color .15s, border-color .15s;
+}
+
+.subtab.active { color: var(--gold); border-bottom-color: var(--gold); }
+
+/* --- Stat block: label + value. Reuse .value for the number ---
+   .stat-grid = the header strip (auto-fit cells with dividers). */
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.stat-label {
+  font-size: var(--fs-xs);
+  letter-spacing: var(--sp-1);
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+}
+
+.stat-grid .stat {
+  padding: var(--sp-14) var(--sp-16);
+  border-right: var(--sp-1) solid var(--border);
+  border-bottom: var(--sp-1) solid var(--border);
+}
+
+/* --- Legend: swatch + label --- */
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-8) var(--sp-16);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-6);
+  font-size: var(--fs-xs);
+  color: var(--text);
+}
+
+.swatch {
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  border-radius: var(--r-sm);
+}
+
+.swatch-line { width: 10px; height: 3px; }
+.swatch-dot { width: 8px; height: 8px; border-radius: var(--r-pill); }
+
+/* --- Overlay / modal / popover / tooltip --- */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--bg-scrim);
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity .2s;
+}
+
+.overlay.show { opacity: 1; }
+
+.modal {
+  position: relative;
+  background: var(--s2);
+  border: var(--sp-1) solid var(--border);
+  border-radius: var(--r-lg);
+  width: 90vw;
+  max-width: 600px;
+  max-height: 80vh;
+  overflow-y: auto;
+  padding: var(--sp-24);
+}
+
+.modal-close {
+  position: absolute;
+  top: var(--sp-12);
+  right: var(--sp-16);
+  background: none;
+  border: none;
+  color: var(--dim);
+  font-size: var(--fs-lg);
+  cursor: pointer;
+}
+
+.modal-close:hover { color: var(--text); }
+
+.popover {
+  position: absolute;
+  background: var(--s1);
+  border: var(--sp-1) solid var(--border);
+  border-radius: var(--r-sm);
+  box-shadow: 0 8px 32px var(--bg-overlay);
+  padding: var(--sp-10) var(--sp-12);
+  z-index: 200;
+}
+
+.tooltip {
+  position: relative;
+  display: inline-block;
+  cursor: help;
+}
+
+.tooltip-box {
+  visibility: hidden;
+  opacity: 0;
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: var(--sp-6);
+  min-width: 160px;
+  max-width: 240px;
+  padding: var(--sp-6) var(--sp-10);
+  background: var(--s1);
+  border: var(--sp-1) solid var(--border);
+  border-radius: var(--r-sm);
+  color: var(--text);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-normal);
+  text-align: left;
+  white-space: normal;
+  pointer-events: none;
+  z-index: 200;
+  transition: opacity .15s;
+}
+
+.tooltip:hover .tooltip-box,
+.tooltip.active .tooltip-box {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* --- Spinner + loading row --- */
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: var(--sp-2) solid var(--border);
+  border-top-color: var(--gold);
+  border-radius: var(--r-pill);
+  animation: spin .8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-10);
+  padding: var(--sp-32) 0;
+  min-height: 160px;
+}
+
+/* --- Pagination (prev/next use .btn-ghost) --- */
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-12);
+  margin-top: var(--sp-16);
+}
+
+.pager-info {
+  font-size: var(--fs-xs);
+  letter-spacing: var(--sp-1);
+  color: var(--dim);
+}
+
+/* --- Notice / banner (info / warn / danger) --- */
+.notice {
+  padding: var(--sp-8) var(--sp-16);
+  border-radius: var(--r-sm);
+  border: var(--sp-1) solid transparent;
+  font-size: var(--fs-xs);
+  letter-spacing: var(--sp-1);
+}
+
+.notice-info {
+  color: var(--gold);
+  background: color-mix(in srgb, var(--gold) 6%, transparent);
+  border-color: color-mix(in srgb, var(--gold) 15%, transparent);
+}
+
+.notice-warn {
+  color: var(--amber);
+  background: color-mix(in srgb, var(--amber) 8%, transparent);
+  border-color: color-mix(in srgb, var(--amber) 25%, transparent);
+}
+
+.notice-danger {
+  color: var(--red);
+  background: color-mix(in srgb, var(--red) 8%, transparent);
+  border-color: color-mix(in srgb, var(--red) 25%, transparent);
+}
+
+
+
+/* ==========================================================================
+   5. FEATURES   (built per CSS2-BUILD.md)
+   ========================================================================== */
+
+
+/* ==========================================================================
+   6. RESPONSIVE
+   ========================================================================== */
