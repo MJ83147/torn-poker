@@ -296,7 +296,6 @@ a {
 .uppercase { text-transform: uppercase; }
 .text-right { text-align: right; }
 .text-center { text-align: center; }
-.cursor-pointer { cursor: pointer; }
 
 /* ==========================================================================
    4. COMPONENTS   (built per CSS2-BUILD.md)

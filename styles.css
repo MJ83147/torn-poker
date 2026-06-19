@@ -2215,9 +2215,6 @@ textarea#jin {
   display: none;
 }
 
-.cursor-pointer {
-  cursor: pointer;
-}
 
 .fw-600 {
   font-weight: var(--fw-semibold);
