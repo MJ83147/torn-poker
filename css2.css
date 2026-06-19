@@ -64,6 +64,9 @@
   --fs-xl: 20px;   /* stat number */
   --fs-2xl: 26px;  /* section title */
   --fs-3xl: 32px;  /* page title */
+  /* hero display sizes — loader / maintenance splash only, NOT the content scale */
+  --fs-hero: clamp(40px, 7vw, 68px);
+  --fs-hero-xl: clamp(54px, 12vw, 88px);
   --fw-regular: 400;
   --fw-medium: 500;
   --fw-semibold: 600;
@@ -1263,6 +1266,187 @@ a {
 .deal-card.show { opacity: 1; transform: none; }
 .deal-card.red { color: var(--red); }
 .deal-card.black { color: var(--text); }
+
+/* --- App chrome: header bar ---
+   Title + controls row; the stat strip below it is a .stat-grid. */
+.app-header { padding: var(--sp-14) 0 0; }
+
+.app-title {
+  font-size: var(--fs-xl);
+  color: var(--gold);
+}
+
+.app-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-16);
+  flex-wrap: wrap;
+}
+
+/* --- App chrome: loader splash ---
+   Full-screen during analysis. Cards reuse .deal/.deal-card. The progress
+   bar runs a compositor-only sweep so it stays alive during heavy JS. */
+.loader {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  transition: opacity .8s;
+}
+
+.loader.out { opacity: 0; pointer-events: none; }
+
+.loader-eyebrow {
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--sp-6);
+  color: var(--dim);
+  margin-bottom: var(--sp-14);
+}
+
+.loader-title {
+  font-size: var(--fs-hero);
+  color: var(--gold);
+  margin-bottom: var(--sp-4);
+}
+
+.loader-sub {
+  letter-spacing: var(--sp-4);
+  color: var(--dim);
+  margin-bottom: var(--sp-32);
+}
+
+.loader-label {
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--sp-4);
+  color: var(--dim);
+  text-align: center;
+  margin-bottom: var(--sp-10);
+}
+
+.loader-count {
+  display: inline-block;
+  min-width: 120px;
+  font-size: var(--fs-hero);
+  font-weight: var(--fw-regular);
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.loader-prog {
+  position: relative;
+  width: 190px;
+  height: 1px;
+  margin: var(--sp-12) auto 0;
+  background: var(--muted);
+  overflow: hidden;
+}
+
+.loader-prog-fill {
+  width: 0;
+  height: 100%;
+  background: var(--gold);
+  transition: width .06s linear;
+}
+
+.loader-prog::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  transform: translateX(-100%);
+  animation: loader-sweep 1.1s linear infinite;
+}
+
+@keyframes loader-sweep { to { transform: translateX(190px); } }
+
+/* --- App chrome: maintenance splash --- */
+.maintenance {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background: var(--bg);
+  color: var(--text);
+  padding: 48px var(--sp-24);
+}
+
+.maintenance-title {
+  font-size: var(--fs-hero-xl);
+  line-height: var(--lh-none);
+  color: var(--gold);
+  margin-bottom: var(--sp-16);
+}
+
+.maintenance-sub {
+  font-size: var(--fs-lg);
+  line-height: var(--lh-normal);
+  max-width: 520px;
+  margin-bottom: var(--sp-32);
+}
+
+/* --- App chrome: paste / import screen --- */
+.paste-screen {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 40px var(--sp-24);
+}
+
+.paste-box {
+  padding: 44px var(--sp-28);
+  text-align: center;
+  background: var(--s1);
+  border: var(--sp-1) solid var(--border);
+  border-radius: var(--r-lg);
+}
+
+.paste-suit {
+  font-family: var(--serif);
+  font-size: var(--fs-3xl);
+  color: var(--gold2);
+  opacity: .5;
+  margin-bottom: var(--sp-16);
+}
+
+.paste-title {
+  font-family: var(--serif);
+  font-size: var(--fs-xl);
+  color: var(--text);
+  margin-bottom: var(--sp-10);
+}
+
+.paste-error {
+  font-size: var(--fs-sm);
+  color: var(--red);
+  margin-bottom: var(--sp-10);
+}
+
+.paste-nav {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--sp-24);
+  padding: var(--sp-14) var(--sp-24) 0;
+}
+
+.paste-nav-link {
+  font-size: var(--fs-xs);
+  letter-spacing: var(--sp-1);
+  color: var(--dim);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.paste-nav-link:hover { color: var(--gold); }
 
 
 /* ==========================================================================
