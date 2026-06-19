@@ -71,14 +71,14 @@
   --mono: 'IBM Plex Mono', monospace;
   --serif: 'Cormorant Garamond', serif;
 
-  /* --- Type: sizes (one scale: body + headings) --- */
-  --fs-xs: 11px;
-  --fs-sm: 13px;
-  --fs-md: 14px;
-  --fs-lg: 16px;
-  --fs-xl: 20px;
-  --fs-2xl: 26px;
-  --fs-3xl: 32px;
+  /* --- Type: sizes (one scale, one job per step: 12/14/16/20/26/32) --- */
+  --fs-xs: 12px;   /* labels, eyebrows, badges (uppercase) */
+  --fs-sm: 14px;   /* alias of body; kept so existing refs hold */
+  --fs-md: 14px;   /* body, table cells, insight text */
+  --fs-lg: 16px;   /* lead callout (verdict box), inline value */
+  --fs-xl: 20px;   /* stat number */
+  --fs-2xl: 26px;  /* section title */
+  --fs-3xl: 32px;  /* page title */
 
   /* --- Type: weights --- */
   --fw-regular: 400;
@@ -394,7 +394,7 @@ select option {
   border-color: var(--gold);
   color: var(--bg);
   font-family: var(--serif);
-  font-size: 17px;
+  font-size: var(--fs-lg);
   letter-spacing: .05em;
   padding: var(--sp-10);
 }
@@ -408,7 +408,7 @@ select option {
   border-color: var(--gold2);
   color: var(--gold2);
   font-family: var(--serif);
-  font-size: 17px;
+  font-size: var(--fs-lg);
   letter-spacing: .05em;
   padding: var(--sp-10);
 }
@@ -442,7 +442,7 @@ select option {
   border-color: var(--border);
   color: var(--dim);
   font-family: var(--serif);
-  font-size: 15px;
+  font-size: var(--fs-md);
   font-weight: var(--fw-bold);
   padding: 0;
 }
@@ -2134,7 +2134,7 @@ textarea#jin {
 }
 
 .watch-star {
-  font-size: 18px !important;
+  font-size: var(--fs-lg) !important;
   color: var(--gold2) !important;
   transition: color .15s, transform .15s;
 }
@@ -2430,7 +2430,7 @@ textarea#jin {
 
 .range-hand-row-hole {
   font-family: var(--serif);
-  font-size: 18px;
+  font-size: var(--fs-lg);
   font-weight: var(--fw-bold);
   line-height: var(--lh-none);
   color: var(--text);
@@ -2507,7 +2507,7 @@ textarea#jin {
   background: none;
   border: none;
   color: var(--dim);
-  font-size: 18px;
+  font-size: var(--fs-lg);
   cursor: pointer;
 }
 
@@ -3021,7 +3021,7 @@ tr.hrow:hover .hrow-star {
   border: var(--sp-1) solid var(--gold2);
   color: var(--gold);
   font-family: var(--serif);
-  font-size: 15px;
+  font-size: var(--fs-md);
   font-weight: var(--fw-bold);
 }
 
@@ -3204,7 +3204,7 @@ tr.hrow:hover .hrow-star {
 
 .introjs-skipbutton {
   color: var(--dim) !important;
-  font-size: 18px !important;
+  font-size: var(--fs-lg) !important;
 }
 
 .introjs-skipbutton:hover {
@@ -3498,7 +3498,7 @@ body.maintenance #maintenance {
 
 .mc {
   font-family: var(--serif);
-  font-size: 28px;
+  font-size: var(--fs-2xl);
   width: 44px;
   height: 60px;
   border: var(--sp-1) solid var(--border);
@@ -3753,7 +3753,7 @@ body.maintenance #maintenance {
   }
 
   .header-title {
-    font-size: 17px;
+    font-size: var(--fs-lg);
     flex: 1 1 auto;
   }
 
@@ -3769,7 +3769,7 @@ body.maintenance #maintenance {
   }
 
   .hs-v {
-    font-size: 18px;
+    font-size: var(--fs-lg);
     overflow: hidden;
     text-overflow: ellipsis;
   }
@@ -3984,7 +3984,7 @@ body.maintenance #maintenance {
   }
 
   .header-title {
-    font-size: 15px;
+    font-size: var(--fs-md);
     width: 100%;
   }
 
@@ -4051,12 +4051,12 @@ body.maintenance #maintenance {
   }
 
   .paste-suit {
-    font-size: 28px;
+    font-size: var(--fs-2xl);
     margin-bottom: var(--sp-10);
   }
 
   .paste-title {
-    font-size: 18px;
+    font-size: var(--fs-lg);
   }
 
   .paste-sub {
@@ -4066,7 +4066,7 @@ body.maintenance #maintenance {
 
   .paste-box .btn {
     padding: var(--sp-12);
-    font-size: 15px;
+    font-size: var(--fs-md);
     width: 100%;
   }
 
@@ -4195,7 +4195,7 @@ body.maintenance #maintenance {
   }
 
   .modal-title {
-    font-size: 18px;
+    font-size: var(--fs-lg);
     padding-right: 60px;
   }
 
