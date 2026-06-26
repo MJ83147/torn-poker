@@ -502,16 +502,20 @@ function buildHeroGridHtml(byKey, colors, hasChart) {
       var key = rangeBuildKey(r, c);
       var rec = byKey[key];
       var target = hasChart ? gtoTargetAction(colors[key]) : null;
-      var state = 'none';
+      var attr = 'data-hero="none"';
+      var mark = '';
       if (rec && rec.dealt > 0) {
-        if (!target) state = 'unjudged';
-        else {
+        // Cell colour follows YOUR action (same palette as the GTO chart);
+        // a ✓/✗ shows whether that action matched the GTO target.
+        attr = 'data-act="' + spotHeroAction(rec) + '"';
+        if (target) {
           var on = rec[target].n;
-          state = on >= (rec.dealt - on) ? 'ontarget' : 'wrong';
+          var ok = on >= (rec.dealt - on);
+          mark = '<i class="rc-mark ' + (ok ? 'ok' : 'bad') + '">' + (ok ? '✓' : '✗') + '</i>';
         }
       }
       var tip = heroTipForCombo(key, rec, target);
-      html += '<div class="rc rc-hero" data-hero="' + state + '" data-key="' + key + '" data-tip="' + tip + '"><span>' + key + '</span></div>';
+      html += '<div class="rc rc-hero" ' + attr + ' data-key="' + key + '" data-tip="' + tip + '"><span>' + key + '</span>' + mark + '</div>';
     }
   }
   html += '</div>';
@@ -593,8 +597,9 @@ function gtoLegendHtml() {
 
 function heroLegendHtml() {
   return '<div class="legend">' +
-    '<div class="legend-item"><span class="swatch" style="background:var(--green)"></span>On target</div>' +
-    '<div class="legend-item"><span class="swatch" style="background:var(--gto-red)"></span>Playing wrong</div>' +
+    '<div class="legend-item">Cells use the same action colours. Then:</div>' +
+    '<div class="legend-item"><span class="rc-mark-key ok">&#10003;</span>Matched GTO</div>' +
+    '<div class="legend-item"><span class="rc-mark-key bad">&#10007;</span>Off GTO</div>' +
     '<div class="legend-item"><span class="swatch" style="background:var(--gto-empty-bg);border:var(--sp-1) solid var(--border)"></span>Not dealt</div>' +
     '</div>';
 }

@@ -1111,6 +1111,36 @@ a {
 .rc[data-gto="none"] span,
 .rc[data-hero="none"] span { color: var(--gto-empty-fg); }
 
+/* "Your range" cells coloured by the action YOU took, same palette as the
+   GTO chart, with a ✓/✗ overlay for whether it matched GTO. */
+.rc[data-act="raise"] { background: var(--gto-red); }
+.rc[data-act="call"] { background: var(--green); }
+.rc[data-act="fold"] { background: var(--gto-grey); }
+.rc[data-act="fold"] span { color: var(--white); }
+
+.rc-mark {
+  position: absolute;
+  top: 0;
+  right: var(--sp-2);
+  font-size: var(--fs-xs);
+  line-height: 1;
+  font-weight: var(--fw-semibold);
+  font-style: normal;
+  pointer-events: none;
+  text-shadow: 0 0 2px #000, 0 0 2px #000;
+}
+.rc-mark.ok { color: #daffdc; }
+.rc-mark.bad { color: #ffd4d4; }
+
+.rc-mark-key {
+  display: inline-block;
+  width: 14px;
+  text-align: center;
+  font-weight: var(--fw-semibold);
+}
+.rc-mark-key.ok { color: var(--green); }
+.rc-mark-key.bad { color: var(--gto-red); }
+
 .rc.rc-played[data-freq="low"] { background: var(--freq-low); }
 .rc.rc-played[data-freq="med"] { background: var(--freq-med); }
 
