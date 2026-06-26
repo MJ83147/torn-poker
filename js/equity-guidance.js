@@ -472,7 +472,9 @@ function generateHandSummary(results, hand, villainProfile) {
   var villainHandDesc = null;
   if (hand.actions) {
     for (var ai = 0; ai < hand.actions.length; ai++) {
-      var line = hand.actions[ai] || '';
+      var line = hand.actions[ai];
+      // Reveal text only exists in legacy (v1) string actions; skip v2 objects.
+      if (typeof line !== 'string') continue;
       if (line.indexOf(' reveals ') !== -1 && line.indexOf('>>') === -1 && line.indexOf('&gt;&gt;') === -1) {
         var revealMatch = line.match(/reveals \[([^\]]+)\]/);
         var strengthMatch = line.match(/\(([^)]+)\)/);

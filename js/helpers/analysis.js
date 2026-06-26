@@ -214,10 +214,19 @@ function detectPlayerFromActions(hands) {
   for (let i = 0; i < hands.length; i++) {
     const actions = hands[i].actions || [];
     for (let j = 0; j < actions.length; j++) {
-      const line = (actions[j] || '');
-      const isMe = line.indexOf('>>') === 0 || line.indexOf('&gt;&gt;') === 0;
+      const line = actions[j];
+      // Structured (v2) actions are objects: the hero is the `isMe` author.
+      if (line && typeof line === 'object') {
+        if (line.isMe && line.author) {
+          nameCounts[line.author] = (nameCounts[line.author] || 0) + 1;
+        }
+        continue;
+      }
+      // Legacy (v1) text lines: the hero is prefixed with `>>`.
+      const str = line || '';
+      const isMe = str.indexOf('>>') === 0 || str.indexOf('&gt;&gt;') === 0;
       if (isMe) {
-        const clean = line.replace(/^(>>|&gt;&gt;)\s*/, '').trim();
+        const clean = str.replace(/^(>>|&gt;&gt;)\s*/, '').trim();
         const ci = clean.indexOf(': ');
         if (ci > 0) {
           const name = clean.slice(0, ci);

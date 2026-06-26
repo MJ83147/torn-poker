@@ -73,7 +73,10 @@ function classifyHandForPlayer(h, playerName) {
   var playerReveals = [];
   var raw = (h && h.actions) ? h.actions : [];
   for (var li = 0; li < raw.length; li++) {
-    var line = raw[li] || '';
+    var line = raw[li];
+    // Reveal strings only exist in legacy (v1) text actions; v2 actions are
+    // objects and carry no showdown text, so skip them.
+    if (typeof line !== 'string') continue;
     if (line.indexOf(' reveals ') === -1) continue;
     handHasShowdown = true;
     if (line.indexOf(playerName) !== -1) {
@@ -260,7 +263,9 @@ function computeAllOpponentStats(hands) {
     var handHasShowdown = false;
     var revealStrengths = {};
     for (var li = 0; li < raw.length; li++) {
-      var line = raw[li] || '';
+      var line = raw[li];
+      // v2 actions are objects with no reveal text; only v1 strings carry it.
+      if (typeof line !== 'string') continue;
       if (line.indexOf(' reveals ') === -1) continue;
       handHasShowdown = true;
       var sm = line.match(/\(([^)]+)\)/);
