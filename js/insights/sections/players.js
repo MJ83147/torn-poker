@@ -209,13 +209,22 @@
     else if (avgPerHand < 0) severity = 'a';
     else severity = 'g';
 
-    var openingText = 'Across ' + matching.length + ' ' + meta.shortPlural +
-      ' with ' + MIN_PROFILE_HANDS + '+ hands each you have played ' + totalHands +
-      ' hands. Net P&L vs this group: ' + fmtPnl(totalPnl) +
-      ' (' + fmtPnl(avgPerHand) + ' per hand)' +
-      (winRate != null ? ', win rate ' + Math.round(winRate) + '%' : '') + '.';
+    var openingText = 'You have played ' + totalHands + ' hands against ' + matching.length + ' ' +
+      meta.shortPlural + ' (' + MIN_PROFILE_HANDS + '+ hands each). ' +
+      (totalPnl < 0 ? 'You are down ' : 'You are up ') + fmt(Math.abs(totalPnl)) +
+      ' against them, about ' + fmt(Math.abs(avgPerHand)) + ' a hand.';
 
     var branchTexts = [];
+
+    if (winRate != null) {
+      if (winRate >= 50 && totalPnl < 0) {
+        branchTexts.push('You win ' + Math.round(winRate) + '% of the pots you contest with this group but still lose overall, so the pots you lose are bigger than the ones you win.');
+      } else if (winRate < 50 && totalPnl > 0) {
+        branchTexts.push('You win only ' + Math.round(winRate) + '% of contested pots here yet still come out ahead, so your winning pots are the bigger ones.');
+      } else {
+        branchTexts.push('You win ' + Math.round(winRate) + '% of the pots you contest against this group.');
+      }
+    }
 
     var sortedByPnl = matching.slice().sort(function(a, b) { return a.heroPnl - b.heroPnl; });
     if (sortedByPnl.length >= 2) {

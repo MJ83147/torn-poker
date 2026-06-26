@@ -359,9 +359,31 @@ function classifySpotDeviations(byKey, colors, hasChart) {
 // Always returns at least one finding so the spot view never looks empty: a
 // green "playing it well" card when on target, deviation cards when not, and a
 // neutral note when there's no sample or no GTO chart to grade against.
-function buildSpotFindings(seatLabel, byKey, colors, hasChart, handCount) {
+function buildSpotFindings(seatLabel, byKey, colors, hasChart, handCount, spotHands) {
   var dev = classifySpotDeviations(byKey, colors, hasChart);
   var plText = dev.pnlKnown ? ' Your P/L from this spot is ' + fmtPnl(dev.pnl) + '.' : '';
+
+  // Replay support: turn the dealt combos behind this spot into example hands.
+  function exForKeys(arr, label, note) {
+    if (!arr || !arr.length || !spotHands || !spotHands.length) return null;
+    var keySet = {};
+    for (var i = 0; i < arr.length; i++) keySet[arr[i].key] = true;
+    var hs = [];
+    for (var j = spotHands.length - 1; j >= 0 && hs.length < 15; j--) {
+      var h = spotHands[j];
+      if (!h || !h.hole) continue;
+      var k = (typeof parseHoleKey === 'function') ? parseHoleKey(h.hole) : null;
+      if (k && keySet[k]) hs.push(h);
+    }
+    if (!hs.length) return null;
+    return { id: 'range-spot-' + label.replace(/\W+/g, '-').toLowerCase(), label: label, hands: hs, coachingNote: note };
+  }
+  function allSpotEx() {
+    if (!spotHands || !spotHands.length) return null;
+    var hs = spotHands.slice(Math.max(0, spotHands.length - 15)).reverse();
+    return { id: 'range-spot-all', label: 'Hands from ' + seatLabel, hands: hs,
+      coachingNote: 'Recent hands you played from this spot.' };
+  }
 
   if (handCount === 0 || dev.dealt === 0) {
     return [{
@@ -372,11 +394,12 @@ function buildSpotFindings(seatLabel, byKey, colors, hasChart, handCount) {
   }
 
   if (!hasChart) {
+    var allEx0 = allSpotEx();
     return [{
       sectionId: 'range-spot', id: 'spot-nochart', severity: 'o', name: seatLabel,
       openingText: 'You have ' + handCount + ' hands from this spot.' + plText,
       branchTexts: ['No GTO reference chart for this spot yet, so your actions cannot be graded against a target.'],
-      examples: []
+      examples: allEx0 ? [allEx0] : []
     }];
   }
 
@@ -384,11 +407,12 @@ function buildSpotFindings(seatLabel, byKey, colors, hasChart, handCount) {
   var findings = [];
 
   if (wrong === 0) {
+    var allExWell = allSpotEx();
     findings.push({
       sectionId: 'range-spot', id: 'spot-accuracy', severity: 'g', name: seatLabel,
       openingText: 'You have ' + handCount + ' hands from this spot.' + plText,
       branchTexts: ['You are playing this seat effectively, taking the GTO action on all ' + dev.graded + ' combos you have been dealt here.'],
-      examples: []
+      examples: allExWell ? [allExWell] : []
     });
   } else {
     var ratio = dev.graded ? wrong / dev.graded : 0;
@@ -409,13 +433,20 @@ function buildSpotFindings(seatLabel, byKey, colors, hasChart, handCount) {
       soWhat = (soWhat ? soWhat + ' ' : '') + 'Raise the hands GTO raises rather than flat-calling, you are leaving value and fold equity behind.';
     }
 
+    var devExamples = [];
+    var de;
+    de = exForKeys(dev.overplay, 'Overplayed hands', 'GTO folds these from this seat. Watch how they played out.'); if (de) devExamples.push(de);
+    de = exForKeys(dev.callNotRaise, 'Flat-called when GTO raises', 'Hands you just called where GTO raises. See the value and fold equity left behind.'); if (de) devExamples.push(de);
+    de = exForKeys(dev.raiseNotCall, 'Raised when GTO calls', 'Hands you raised where GTO prefers a call.'); if (de) devExamples.push(de);
+    de = exForKeys(dev.underplay, 'Folded when GTO opens', 'Hands you folded that GTO opens from this seat.'); if (de) devExamples.push(de);
+    if (!devExamples.length) { var allExDev = allSpotEx(); if (allExDev) devExamples.push(allExDev); }
     findings.push({
       sectionId: 'range-spot', id: 'spot-accuracy', severity: sev, name: seatLabel,
       openingText: 'You have ' + handCount + ' hands from this spot, taking the GTO action on ' +
         dev.onTarget.length + ' of ' + dev.graded + ' combos.' + plText,
       branchTexts: branches,
       soWhatText: soWhat,
-      examples: []
+      examples: devExamples
     });
   }
 
@@ -552,9 +583,9 @@ function twoGridHtml(chart, filtered, scenarioType, tallies) {
 
 function gtoLegendHtml() {
   return '<div class="legend">' +
-    '<div class="legend-item"><span class="swatch" style="background:var(--gto-red)"></span>Raise for value</div>' +
+    '<div class="legend-item"><span class="swatch" style="background:var(--gto-raise)"></span>Raise for value</div>' +
     '<div class="legend-item"><span class="swatch" style="background:var(--gto-blue)"></span>Raise for bluff</div>' +
-    '<div class="legend-item"><span class="swatch" style="background:var(--green)"></span>Call</div>' +
+    '<div class="legend-item"><span class="swatch" style="background:var(--gto-call)"></span>Call</div>' +
     '<div class="legend-item"><span class="swatch" style="background:var(--gto-grey)"></span>Fold (you were in this hand)</div>' +
     '<div class="legend-item"><span class="swatch" style="background:var(--gto-white)"></span>Fold</div>' +
     '</div>';
@@ -563,7 +594,7 @@ function gtoLegendHtml() {
 function heroLegendHtml() {
   return '<div class="legend">' +
     '<div class="legend-item"><span class="swatch" style="background:var(--green)"></span>On target</div>' +
-    '<div class="legend-item"><span class="swatch" style="background:var(--gto-red)"></span>Playing wrong</div>' +
+    '<div class="legend-item"><span class="swatch" style="background:var(--red)"></span>Playing wrong</div>' +
     '<div class="legend-item"><span class="swatch" style="background:var(--gto-empty-bg);border:var(--sp-1) solid var(--border)"></span>Not dealt</div>' +
     '</div>';
 }
@@ -672,7 +703,8 @@ function renderRange(container, d, hands) {
           heroComboBreakdown(filtered, scenarioType),
           chartToColorMap(chart),
           !!(chart && chart.length),
-          filtered.length
+          filtered.length,
+          filtered
         ),
         'Play more hands from this spot to grade it.'
       );

@@ -37,11 +37,16 @@
   --tint-light: rgba(255, 255, 255, 0.03);
   --tint-light-2: rgba(255, 255, 255, 0.06);
 
-  /* GTO / range viz */
-  --gto-red: #b8403a;
-  --gto-blue: #4a90d9;
+  /* GTO / range viz.
+     The GTO chart shows ACTIONS (raise/bluff/call/fold) and uses its own palette.
+     The "your range" grid shows RESULTS (on-target/wrong) and uses --green/--red.
+     These two languages must not share a hue, or the grids read as contradictory. */
+  --gto-raise: #d4842a;  /* raise for value (amber) */
+  --gto-blue: #4a90d9;   /* raise as a bluff */
+  --gto-call: #2e8b8b;   /* call (teal) */
   --gto-grey: #6a7068;
   --gto-white: #d0d4cf;
+  --gto-red: #b8403a;    /* legacy alias, kept for any remaining refs */
   --range-folded-opacity: 0.25;
   --freq-low: #24422a;
   --freq-med: #2e5835;
@@ -533,13 +538,31 @@ a {
 
 .story-chevron {
   position: absolute;
-  bottom: var(--sp-12);
+  top: var(--sp-16);
   right: var(--sp-16);
-  color: var(--dim);
-  transition: transform .15s;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--s2);
+  border: var(--sp-1) solid var(--border);
+  color: var(--gold);
+  font-size: var(--fs-sm);
+  line-height: 1;
+  transition: transform .15s, background .15s, border-color .15s;
 }
 
-.story.open .story-chevron { transform: rotate(180deg); }
+.story:hover .story-chevron {
+  background: var(--s1);
+  border-color: var(--gold2);
+}
+
+.story.open .story-chevron {
+  transform: rotate(180deg);
+  border-color: var(--gold2);
+}
 
 .story-body { display: none; padding: 0 var(--sp-20) var(--sp-20); }
 
@@ -1061,17 +1084,19 @@ a {
 
 .rc:hover { transform: scale(1.5); z-index: 20; }
 
-/* colour states (green is shared by gto/hero/high-freq — safe, see note) */
-.rc[data-gto="green"],
+/* Result language (your range + frequency view): green = good, red = wrong. */
 .rc[data-hero="ontarget"],
 .rc.rc-played[data-freq="high"],
 .rc.rc-played[data-freq="med-high"] {
   background: var(--green);
 }
 
-.rc[data-gto="red"],
-.rc[data-hero="wrong"] { background: var(--gto-red); }
+.rc[data-hero="wrong"] { background: var(--red); }
 
+/* Action language (GTO chart): a separate palette so the two grids never
+   read as "this green means the same as that green". */
+.rc[data-gto="green"] { background: var(--gto-call); }   /* call */
+.rc[data-gto="red"] { background: var(--gto-raise); }     /* raise for value */
 .rc[data-gto="blue"] { background: var(--gto-blue); }
 .rc[data-gto="grey"] { background: var(--gto-grey); }
 
@@ -2027,6 +2052,17 @@ textarea#jin { min-height: 50px; }
   text-transform: uppercase;
   letter-spacing: var(--sp-1);
 }
+
+/* Cards panel: each hand-type bar is a button into its example hands. */
+.cards-bar-row {
+  cursor: pointer;
+  padding: var(--sp-8);
+  margin: calc(-1 * var(--sp-8));
+  border-radius: var(--r-sm);
+  transition: background .15s;
+}
+.cards-bar-row:hover { background: var(--s1); }
+.cards-row-cue { font-size: var(--fs-xs); }
 
 /* --- Equity simulator (hand-detail popup) --- */
 .eq-sim {

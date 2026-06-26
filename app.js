@@ -273,32 +273,12 @@ function checkSavedSession() {
 }
 
 function _renderStyleDisplay(d) {
+  // The header "You → Target" archetype chip was removed: it confused more than
+  // it helped. The target style still defaults to TAG via getUserStyle().
   var host = document.getElementById('style-display');
   if (!host) return;
-  var current = (typeof detectCurrentStyle === 'function' && d) ? detectCurrentStyle(d).name : null;
-  var target = (typeof getTargetStyle === 'function') ? getTargetStyle() : 'TAG';
-
-  var styles = ['TAG', 'LAG', 'Nit', 'Station', 'Maniac'];
-  var optionsHtml = '';
-  for (var i = 0; i < styles.length; i++) {
-    var s = styles[i];
-    optionsHtml += '<option value="' + s + '"' + (s === target ? ' selected' : '') + '>' + s + '</option>';
-  }
-
-  var youLabel = current ? current : '?';
-  host.innerHTML = '<span class="sd-you-label">You:</span>' +
-    '<span class="sd-you-val">' + youLabel + '</span>' +
-    '<span class="sd-arrow">&rarr;</span>' +
-    '<span class="sd-target-label">Target:</span>' +
-    '<select class="sd-target-pick" id="sd-target-pick">' + optionsHtml + '</select>';
-
-  var picker = host.querySelector('#sd-target-pick');
-  if (picker) {
-    picker.onchange = function() {
-      if (typeof setUserStyle === 'function') setUserStyle(this.value);
-      renderAll();
-    };
-  }
+  host.innerHTML = '';
+  host.style.display = 'none';
 }
 
 function _maybeShowStyleWelcome(d, hands, meta) {

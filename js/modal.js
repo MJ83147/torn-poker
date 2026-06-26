@@ -1,3 +1,49 @@
+// Render a structured action (v2 object) or legacy-parsed action into readable
+// text. parseActions() normalises both formats to the same {type, amount, ...}
+// shape, so this single path covers v1 strings and v2 objects alike.
+function describeAction(a, hand) {
+  function amt(v) { return fmtBB(v || 0, getHandBB(hand)); }
+  switch (a.type) {
+    case 'sb': return 'posted small blind ' + amt(a.amount);
+    case 'bb': return 'posted big blind ' + amt(a.amount);
+    case 'fold': return 'folded';
+    case 'check': return 'checked';
+    case 'call': return 'called ' + amt(a.amount);
+    case 'bet': return 'bet ' + amt(a.amount) + (a.allIn ? ' (all in)' : '');
+    case 'raise':
+      if (typeof a.raiseTo === 'number' && a.raiseTo) {
+        return 'raised to ' + amt(a.raiseTo) + (a.allIn ? ' (all in)' : '');
+      }
+      return 'raised ' + amt(a.amount) + (a.allIn ? ' (all in)' : '');
+    case 'won': return 'won ' + amt(a.amount);
+    default: return a.msg || a.type || '';
+  }
+}
+
+function buildModalActionLines(hand) {
+  var acts = parseActions(hand.actions) || [];
+  var board = hand.board || [];
+  var streetBoard = { Flop: board.slice(0, 3), Turn: board.slice(3, 4), River: board.slice(4, 5) };
+  var html = '';
+  var lastStreet = null;
+  for (var i = 0; i < acts.length; i++) {
+    var a = acts[i];
+    if (!a || !a.type) continue;
+    if (a.street && a.street !== lastStreet) {
+      lastStreet = a.street;
+      if (a.street !== 'Preflop') {
+        var bc = streetBoard[a.street] || [];
+        html += '<div class="modal-action-line street-label">' + a.street +
+          (bc.length ? ': ' + bc.join(' ') : '') + '</div>';
+      }
+    }
+    var isMe = !!a.isMe;
+    html += '<div class="text-meta modal-action-line' + (isMe ? ' me' : '') + '">' +
+      (isMe ? '▸ ' : '  ') + (a.author || '?') + ': ' + describeAction(a, hand) + '</div>';
+  }
+  return html;
+}
+
 function createExampleModal() {
   var existing = document.getElementById('example-hand-modal');
   if (existing) existing.remove();
@@ -47,32 +93,7 @@ function showExampleHandModal(hand, coachingNote) {
     })() +
     '</div>';
 
-  var actionsHtml = '';
-  var actions = hand.actions || [];
-  var prevNorm = '';
-  for (var i = 0; i < actions.length; i++) {
-    var raw = (actions[i] || '');
-    var norm = raw.replace(/\s+/g, ' ').trim();
-    if (norm === prevNorm) continue;
-    prevNorm = norm;
-    var decoded = raw.replace(/&gt;/g, '>').replace(/&lt;/g, '<').replace(/&amp;/g, '&');
-    var isMe = decoded.indexOf('>>') === 0;
-    var clean = decoded.replace(/^>>\s*/, '').replace(/^\s+/, '').trim();
-
-    if (
-      clean.indexOf('The flop') === 0 ||
-      clean.indexOf('The turn') === 0 ||
-      clean.indexOf('The river') === 0 ||
-      clean.indexOf('The preflop') === 0
-    ) {
-      actionsHtml += '<div class="modal-action-line street-label">' +
-        clean.replace(/: :/, ':').replace(/: $/, '') +
-        '</div>';
-    } else if (clean.indexOf(': ') > 0) {
-      actionsHtml += '<div class="text-meta modal-action-line' + (isMe ? ' me' : '') + '">' +
-        (isMe ? '▸ ' : '  ') + clean + '</div>';
-    }
-  }
+  var actionsHtml = buildModalActionLines(hand);
 
   var coaching = coachingNote
     ? '<div class="card card-s2 text-meta modal-coaching"><div class="modal-coaching-head">What to improve</div>' + coachingNote + '</div>'
@@ -207,8 +228,7 @@ function showExampleHandListModal(title, handsList, coachingNote) {
     if (remaining > 0) {
       var btn = document.createElement('button');
       btn.id = 'load-more-btn';
-      btn.className = 'example-hand-btn';
-      btn.style.marginTop = '12px';
+      btn.className = 'btn btn-ghost example-hand-btn';
       btn.textContent = 'Load more (' + remaining + ' remaining)';
       btn.onclick = loadBatch;
       rowsContainer.parentNode.appendChild(btn);

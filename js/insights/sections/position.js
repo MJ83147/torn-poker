@@ -191,9 +191,9 @@
     }
 
     var fmtFn = (typeof fmtPnl === 'function') ? fmtPnl : function(v) { return String(Math.round(v)); };
-    var branchText = position + ' is your worst position by P&L: ' + fmtFn(s.pnl) +
-      ' across ' + s.hands + ' hands' +
-      (overallPerHand > 0 ? ', against your overall rate of ' + fmtFn(overallPerHand) + ' per hand' : '') + '.';
+    var branchText = 'This seat runs at a loss: ' + fmtFn(s.pnl) +
+      ' over ' + s.hands + ' hands (' + fmtFn(seatPnlPerHand) + ' per hand)' +
+      (overallPerHand > 0 ? ', while your overall rate is ' + fmtFn(overallPerHand) + ' per hand' : '') + '.';
 
     var lostHere = pickHands(hands, function(h) {
       return (h.position || '?') === position && heroLost(h);
