@@ -330,6 +330,34 @@
     return html;
   }
 
+  // Render findings under a sequence of labelled groups (e.g. by street). Each
+  // group is { label, findings, emptyNote }. Empty groups show their note so the
+  // full sequence (Preflop/Flop/Turn/River) is always visible and in order.
+  function renderFindingsGrouped(groups) {
+    if (!groups || !groups.length) return '';
+    var parts = [];
+    for (var g = 0; g < groups.length; g++) {
+      var grp = groups[g];
+      if (!grp) continue;
+      parts.push('<div class="eyebrow c-dim mb-8 mt-20">' + escapeHtml(grp.label) + '</div>');
+      if (grp.findings && grp.findings.length) {
+        var cards = [];
+        for (var i = 0; i < grp.findings.length; i++) cards.push(renderStoryCard(grp.findings[i]));
+        parts.push('<div class="cols-2 gap-20" data-findings>' + cards.join('') + '</div>');
+      } else {
+        parts.push('<div class="box lead">' + escapeHtml(grp.emptyNote || 'Nothing flagged here yet.') + '</div>');
+      }
+    }
+    setTimeout(function() {
+      var nodes = document.querySelectorAll('[data-findings]');
+      for (var i = 0; i < nodes.length; i++) {
+        wireExampleButtons(nodes[i]);
+        wireCardToggles(nodes[i]);
+      }
+    }, 0);
+    return parts.join('');
+  }
+
   window.Sections = {
     defineSection: defineSection,
     evaluateSections: evaluateSections,
@@ -343,6 +371,7 @@
     score: score,
     renderStoryCard: renderStoryCard,
     renderFindings: renderFindings,
+    renderFindingsGrouped: renderFindingsGrouped,
     renderVerdict: renderVerdict,
     synthesiseVerdict: synthesiseVerdict,
     _sections: SECTIONS

@@ -583,9 +583,9 @@ function twoGridHtml(chart, filtered, scenarioType, tallies) {
 
 function gtoLegendHtml() {
   return '<div class="legend">' +
-    '<div class="legend-item"><span class="swatch" style="background:var(--gto-raise)"></span>Raise for value</div>' +
+    '<div class="legend-item"><span class="swatch" style="background:var(--gto-red)"></span>Raise for value</div>' +
     '<div class="legend-item"><span class="swatch" style="background:var(--gto-blue)"></span>Raise for bluff</div>' +
-    '<div class="legend-item"><span class="swatch" style="background:var(--gto-call)"></span>Call</div>' +
+    '<div class="legend-item"><span class="swatch" style="background:var(--green)"></span>Call</div>' +
     '<div class="legend-item"><span class="swatch" style="background:var(--gto-grey)"></span>Fold (you were in this hand)</div>' +
     '<div class="legend-item"><span class="swatch" style="background:var(--gto-white)"></span>Fold</div>' +
     '</div>';
@@ -594,7 +594,7 @@ function gtoLegendHtml() {
 function heroLegendHtml() {
   return '<div class="legend">' +
     '<div class="legend-item"><span class="swatch" style="background:var(--green)"></span>On target</div>' +
-    '<div class="legend-item"><span class="swatch" style="background:var(--red)"></span>Playing wrong</div>' +
+    '<div class="legend-item"><span class="swatch" style="background:var(--gto-red)"></span>Playing wrong</div>' +
     '<div class="legend-item"><span class="swatch" style="background:var(--gto-empty-bg);border:var(--sp-1) solid var(--border)"></span>Not dealt</div>' +
     '</div>';
 }

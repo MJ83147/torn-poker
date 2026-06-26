@@ -1,5 +1,50 @@
 var _streetChart = null;
 
+// One-line read of a street for when no leak fired there, so every street
+// (Preflop / Flop / Turn / River) still shows something useful.
+function streetSummaryNote(d, street) {
+  var ss = d.ss && d.ss[street];
+  if (!ss) return 'No ' + street.toLowerCase() + ' data yet.';
+  var reached = ss.seen || 0;
+  var tot = ss.f + ss.ch + ss.ca + ss.ra;
+  if (street !== 'Preflop' && reached === 0) {
+    return 'You rarely see the ' + street.toLowerCase() + ' in this sample.';
+  }
+  if (!tot) return 'Reached the ' + street.toLowerCase() + ' ' + reached + ' times. Nothing to flag.';
+  var fp = pct(ss.f, tot);
+  var aggP = pct(ss.ra, tot);
+  var passP = pct(ss.ch + ss.ca, tot);
+  var lead = street === 'Preflop'
+    ? 'Across all hands you'
+    : 'On ' + reached + ' ' + street.toLowerCase() + 's you';
+  return lead + ' raise or bet ' + (aggP || 0) + '%, check or call ' + (passP || 0) +
+    '%, and fold ' + (fp || 0) + '%. No leak flagged here.';
+}
+
+// Render the Street story cards grouped under Preflop / Flop / Turn / River.
+function mountStreetFindings(container, d, hands) {
+  if (typeof Sections === 'undefined' || typeof Sections.evaluateSections !== 'function') return;
+  var findings = Sections.findingsForPanel(Sections.evaluateSections(d, {}, hands), 'Street');
+  setSlot(container, 'verdict', Sections.renderVerdict(findings, 'Street-by-street action looks balanced for now.'));
+
+  var STREET_ORDER = ['Preflop', 'Flop', 'Turn', 'River'];
+  var byStreet = { Preflop: [], Flop: [], Turn: [], River: [] };
+  for (var i = 0; i < findings.length; i++) {
+    var st = findings[i].street;
+    if (!byStreet[st]) st = 'Flop';
+    byStreet[st].push(findings[i]);
+  }
+  var groups = STREET_ORDER.map(function(s) {
+    return { label: s, findings: byStreet[s], emptyNote: streetSummaryNote(d, s) };
+  });
+
+  var slot = container.querySelector('[data-slot="findings"]');
+  if (slot) {
+    slot.innerHTML = Sections.renderFindingsGrouped(groups);
+    slot.removeAttribute('hidden');
+  }
+}
+
 function renderStreet(container, d, hands) {
   if (_streetChart) { _streetChart.destroy(); _streetChart = null; }
   if (!container) return;
@@ -8,7 +53,7 @@ function renderStreet(container, d, hands) {
   var maxSeen = d.ss.Preflop.seen || 1;
 
   mountPanel(container, 'street', { title: 'Streets', desc: 'Action breakdown by preflop, flop, turn, and river.' });
-  mountFindings(container, 'Street', d, hands, 'Street-by-street action looks balanced for now.');
+  mountStreetFindings(container, d, hands);
 
   setSlot(container, 'seenBars', streets.map(function(s) {
     var seen2 = d.ss[s].seen;

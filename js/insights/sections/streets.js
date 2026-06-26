@@ -885,6 +885,18 @@
     });
   }
 
+  // Which street each story belongs to, so the Street panel can group the
+  // cards under Preflop / Flop / Turn / River headings.
+  var STREET_BY_ID = {
+    'streets-three-bet': 'Preflop',
+    'streets-fold-to-three-bet': 'Preflop',
+    'streets-cbet': 'Flop',
+    'streets-fold-to-cbet': 'Flop',
+    'streets-check-fold': 'Flop',
+    'streets-donk': 'Flop',
+    'streets-delay-cbet': 'Turn'
+  };
+
   Sections.defineSection({
     id: 'streets',
     panel: 'Street',
@@ -898,6 +910,9 @@
       s = buildCheckFold(d, extras, hands);       if (s) out.push(s);
       s = buildDonk(d, extras, hands);            if (s) out.push(s);
       s = buildDelayCbet(d, extras, hands);       if (s) out.push(s);
+      for (var i = 0; i < out.length; i++) {
+        out[i].street = STREET_BY_ID[out[i].id] || 'Flop';
+      }
       return out;
     }
   });

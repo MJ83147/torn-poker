@@ -37,16 +37,11 @@
   --tint-light: rgba(255, 255, 255, 0.03);
   --tint-light-2: rgba(255, 255, 255, 0.06);
 
-  /* GTO / range viz.
-     The GTO chart shows ACTIONS (raise/bluff/call/fold) and uses its own palette.
-     The "your range" grid shows RESULTS (on-target/wrong) and uses --green/--red.
-     These two languages must not share a hue, or the grids read as contradictory. */
-  --gto-raise: #d4842a;  /* raise for value (amber) */
-  --gto-blue: #4a90d9;   /* raise as a bluff */
-  --gto-call: #2e8b8b;   /* call (teal) */
+  /* GTO / range viz */
+  --gto-red: #b8403a;
+  --gto-blue: #4a90d9;
   --gto-grey: #6a7068;
   --gto-white: #d0d4cf;
-  --gto-red: #b8403a;    /* legacy alias, kept for any remaining refs */
   --range-folded-opacity: 0.25;
   --freq-low: #24422a;
   --freq-med: #2e5835;
@@ -1084,19 +1079,17 @@ a {
 
 .rc:hover { transform: scale(1.5); z-index: 20; }
 
-/* Result language (your range + frequency view): green = good, red = wrong. */
+/* colour states (green is shared by gto/hero/high-freq) */
+.rc[data-gto="green"],
 .rc[data-hero="ontarget"],
 .rc.rc-played[data-freq="high"],
 .rc.rc-played[data-freq="med-high"] {
   background: var(--green);
 }
 
-.rc[data-hero="wrong"] { background: var(--red); }
+.rc[data-gto="red"],
+.rc[data-hero="wrong"] { background: var(--gto-red); }
 
-/* Action language (GTO chart): a separate palette so the two grids never
-   read as "this green means the same as that green". */
-.rc[data-gto="green"] { background: var(--gto-call); }   /* call */
-.rc[data-gto="red"] { background: var(--gto-raise); }     /* raise for value */
 .rc[data-gto="blue"] { background: var(--gto-blue); }
 .rc[data-gto="grey"] { background: var(--gto-grey); }
 
