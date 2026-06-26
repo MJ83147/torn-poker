@@ -51,51 +51,51 @@ function renderWelcome(container, d, hands, meta) {
     'Use the <strong>table filter</strong> in the header to isolate stats to one table.',
   ];
   var welcomeHtml = '<div class="welcome-wrap">' +
-    '<div class="flex-between welcome-intro">' +
+    '<div class="row between center welcome-intro">' +
     '<div class="welcome-intro-text">' +
-    '<div class="welcome-intro-heading">Welcome back, ' + meta.player + '</div>' +
+    '<div class="title title-xl c-gold welcome-intro-heading">Welcome back, ' + meta.player + '</div>' +
     '<div class="text-body">' + d.n + ' hands loaded. Here\'s what each tab shows.</div>' +
     '</div>' +
-    '<button class="take-tour-btn" onclick="startWelcomeTour()">Take a Tour</button>' +
+    '<button class="btn btn-primary" onclick="startWelcomeTour()">Take a Tour</button>' +
     '</div>' +
-    '<div class="grid-2 welcome-body">' +
-    '<div class="welcome-toc">' +
+    '<div class="cols-2 gap-16 welcome-body">' +
+    '<div class="col welcome-toc">' +
     tabDescs.map(function(t) {
-      return '<div class="card card-sm card-s1 card-link welcome-toc-row" data-goto="' + t.tab + '">' +
-        '<div class="gold-heading">' + t.name + '</div>' +
+      return '<div class="card card-s1 card-link welcome-toc-row" data-goto="' + t.tab + '">' +
+        '<div class="c-gold fw-semibold">' + t.name + '</div>' +
         '<div class="text-body">' + t.desc + '</div>' +
         '</div>';
     }).join('') +
     '</div>' +
-    '<div class="flex flex-col gap-32">' +
+    '<div class="col gap-32">' +
     '<div class="text-body welcome-tips">' +
-    '<div class="label mb-12">Tips</div>' +
-    '<div class="tips-carousel flex items-center gap-8">' +
-    '<button class="tips-arrow flex-center tips-arrow-left" id="tip-prev">&#8249;</button>' +
-    '<div class="tips-track">' +
+    '<div class="eyebrow c-dim mb-12">Tips</div>' +
+    '<div class="carousel row center gap-8">' +
+    '<button class="carousel-arrow row center middle" id="tip-prev">&#8249;</button>' +
+    '<div class="carousel-track">' +
     tips.map(function(t, i) {
-      return '<div class="text-body welcome-tip' + (i === 0 ? ' active' : '') + '">' + t + '</div>';
+      return '<div class="carousel-slide text-body welcome-tip' + (i === 0 ? ' active' : '') + '">' + t + '</div>';
     }).join('') +
     '</div>' +
-    '<button class="tips-arrow flex-center tips-arrow-right" id="tip-next">&#8250;</button>' +
+    '<button class="carousel-arrow row center middle" id="tip-next">&#8250;</button>' +
     '</div>' +
-    '<div class="tips-dots flex justify-center gap-6">' +
+    '<div class="carousel-dots">' +
     tips.map(function(_, i) {
-      return '<span class="dot tips-dot' + (i === 0 ? ' active' : '') + '" data-tip="' + i + '"></span>';
+      return '<span class="carousel-dot tips-dot' + (i === 0 ? ' active' : '') + '" data-tip="' + i + '"></span>';
     }).join('') +
     '</div>' +
     '</div>' +
-    '<div class="flex flex-col gap-12">' +
-      '<div class="label welcome-whatsnew-label">What\'s new</div>' +
-      '<button type="button" class="card card-s1 whatsnew-card whatsnew-card-hero" data-goto="custom">' +
-        '<div class="badge whatsnew-card-tag">New</div>' +
-        '<div class="whatsnew-card-name">Custom Report</div>' +
+    '<div class="col gap-12">' +
+      '<div class="eyebrow c-dim welcome-whatsnew-label">What\'s new</div>' +
+      '<button type="button" class="card card-hero card-link whatsnew-card" data-goto="custom">' +
+        '<div class="badge badge-gold">New</div>' +
+        '<div class="title title-lg c-gold">Custom Report</div>' +
         '<div class="text-body">Build your own report by clicking together clauses like a sentence. Twelve filters across table, position, opponent, stake, time window, pot type and more, with a trend chart, breakdowns and a side-by-side compare mode.</div>' +
-        '<div class="gold-heading whatsnew-card-cta">Open the Custom Report &rarr;</div>' +
+        '<div class="c-gold fw-semibold">Open the Custom Report &rarr;</div>' +
       '</button>' +
-      '<div class="card card-s1 whatsnew-card whatsnew-card-static">' +
-        '<div class="badge whatsnew-card-tag">Improved</div>' +
-        '<div class="whatsnew-card-name">Detailed insights</div>' +
+      '<div class="card card-s1 whatsnew-card">' +
+        '<div class="badge badge-gold">Improved</div>' +
+        '<div class="title title-lg c-gold">Detailed insights</div>' +
         '<div class="text-body">Every analysis tab now ships story cards that flag strengths, leaks and patterns in your data, each with a real example hand from your session.</div>' +
       '</div>' +
     '</div>' +

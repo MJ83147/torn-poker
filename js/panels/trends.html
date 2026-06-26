@@ -1,13 +1,9 @@
-<div class="panel-title">Trends</div>
-<div class="text-body panel-desc">Session-over-session charts for win rate, VPIP, and P&L.</div>
-<div data-slot="verdict"></div>
-<div class="p-row" data-slot="findings" hidden></div>
-<div class="p-row"><div class="grid-2 trends-grid" data-slot="charts"></div></div>
-<div class="p-row" data-slot="bestWorst" hidden></div>
-<div class="p-row">
-  <div class="label sec-subtitle mt-0">Session Breakdown</div>
+<div data-slot="charts" class="cols-2 gap-16"></div>
+<div data-slot="bestWorst" hidden></div>
+<div>
+  <div class="eyebrow c-dim mb-8">Session Breakdown</div>
   <div class="overflow-x">
-    <table class="tbl">
+    <table class="table">
       <thead data-slot="head"></thead>
       <tbody data-slot="rows"></tbody>
     </table>

@@ -109,8 +109,8 @@ function renderBestWorstSessions(hands, overallData) {
     if (sessions[wi].pnl === worst.pnl && sessions[wi].hands.length > worst.hands.length) worst = sessions[wi];
   }
 
-  var html = '<div class="label sec-subtitle mt-20">Best &amp; Worst Sessions</div>';
-  html += '<div class="grid-auto best-worst-grid">';
+  var html = '<div class="eyebrow c-dim mb-8 mt-20">Best &amp; Worst Sessions</div>';
+  html += '<div class="cols-2 gap-16">';
 
   var sessionPairs = [
     { session: best, label: 'Best Session', frame: 'right' },
@@ -123,31 +123,31 @@ function renderBestWorstSessions(hands, overallData) {
     var tableName = s.tableId ? getTableLabel(s.tableId) : 'Unknown Table';
     var isTourney = s.hands.some(function(h) { return !isCashHand(h); });
     var pnlDisplay = isTourney ? 'Tournament' : fmtPnl(s.pnl);
-    var pnlCol = isTourney ? 'var(--text)' : (typeof pnlColor === 'function' ? pnlColor(s.pnl) : 'var(--text)');
+    var pnlCellCls = isTourney ? '' : (typeof pnlValCls === 'function' ? pnlValCls(s.pnl) : '');
 
     var sessStart = s.startTs ? new Date(s.startTs).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
     var lastHand = s.hands[s.hands.length - 1];
     var sessEnd = (lastHand && lastHand.timestamp) ? new Date(lastHand.timestamp).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
     var dateLabel = sessStart ? (sessStart === sessEnd ? sessStart : sessStart + ' - ' + sessEnd) : '';
 
-    html += '<div class="card best-worst-card">';
-    html += '<div class="label mb-12">' + sess.label + '</div>';
-    if (dateLabel) html += '<div class="text-body best-worst-meta">' + dateLabel + '</div>';
-    html += '<div class="text-body best-worst-meta">' + tableName + ' &middot; ' + s.hands.length + ' hands &middot; <span class="value best-worst-pnl" style="color:' + pnlCol + ';">' + pnlDisplay + '</span></div>';
+    html += '<div class="card">';
+    html += '<div class="eyebrow c-dim mb-12">' + sess.label + '</div>';
+    if (dateLabel) html += '<div class="text-body">' + dateLabel + '</div>';
+    html += '<div class="text-body">' + tableName + ' &middot; ' + s.hands.length + ' hands &middot; <span class="value ' + pnlCellCls + '">' + pnlDisplay + '</span></div>';
 
     var sessionData = analyse(s.hands);
     var patterns = detectSessionPatterns(sessionData, overallData);
 
     if (patterns.length) {
       var frameWord = sess.frame === 'right' ? 'what went right' : 'what went wrong';
-      html += '<div class="text-body best-worst-patterns-head">Patterns: ' + frameWord + ':</div>';
-      html += '<ul class="text-body best-worst-patterns">';
+      html += '<div class="text-body">Patterns: ' + frameWord + ':</div>';
+      html += '<ul class="text-body">';
       for (var pi2 = 0; pi2 < patterns.length; pi2++) {
         html += '<li>' + patterns[pi2].text + '</li>';
       }
       html += '</ul>';
     } else if (sess.frame === 'wrong') {
-      html += '<div class="text-body best-worst-meta">No clear pattern detected. Review the hands below for specific spots.</div>';
+      html += '<div class="text-body">No clear pattern detected. Review the hands below for specific spots.</div>';
     }
 
     var seeHandsBtnId = 'see-sess-' + Math.random().toString(36).slice(2, 8);

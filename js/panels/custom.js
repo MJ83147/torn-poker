@@ -740,31 +740,31 @@ function _crRenderSentence(segment, segLabel) {
     var def = _crClauseDefs.find(function(c) { return c.id === clauseId; });
     if (!def) continue;
     var phrase = _crClausePhrase(clauseId, segment);
-    var displayPhrase = phrase || '<span class="cr-empty">choose ' + def.label.toLowerCase() + '</span>';
+    var displayPhrase = phrase || '<span class="sentence-empty">choose ' + def.label.toLowerCase() + '</span>';
     parts.push(
-      '<span class="cr-token" data-segment="' + segLabel + '" data-clause="' + clauseId + '">' +
+      '<span class="sentence-token" data-segment="' + segLabel + '" data-clause="' + clauseId + '">' +
       displayPhrase +
       '</span>'
     );
   }
 
   var sentence = '';
-  if (segLabel === 'A' && _crState.compare) sentence += '<span class="gold-heading cr-seg-tag">A:</span> ';
-  if (segLabel === 'B') sentence += '<span class="gold-heading cr-seg-tag">B:</span> ';
-  sentence += '<span class="cr-stem">Show me how I play</span> ';
+  if (segLabel === 'A' && _crState.compare) sentence += '<span class="sentence-seg-tag">A:</span> ';
+  if (segLabel === 'B') sentence += '<span class="sentence-seg-tag">B:</span> ';
+  sentence += '<span class="sentence-stem">Show me how I play</span> ';
   for (var pi = 0; pi < parts.length; pi++) {
     if (pi > 0) {
-      sentence += (pi === parts.length - 1) ? ' <span class="cr-joiner">and</span> ' : '<span class="cr-joiner">,</span> ';
+      sentence += (pi === parts.length - 1) ? ' <span class="sentence-join">and</span> ' : '<span class="sentence-join">,</span> ';
     }
     sentence += parts[pi];
   }
 
   var available = _crClauseDefs.filter(function(c) { return segment.clauses.indexOf(c.id) === -1; });
   var addBtn = available.length
-    ? ' <button class="cr-add-btn" data-segment="' + segLabel + '">+ add clause</button>'
+    ? ' <button class="sentence-add" data-segment="' + segLabel + '">+ add clause</button>'
     : '';
   sentence += addBtn;
-  return '<div class="cr-sentence">' + sentence + '</div>';
+  return '<div class="sentence">' + sentence + '</div>';
 }
 
 function _crClosePopover() {
@@ -781,15 +781,15 @@ function _crOpenAddClausePopover(targetEl, segLabel) {
   var hand = available.filter(function(c) { return c.kind === 'hand'; });
   var decision = available.filter(function(c) { return c.kind === 'decision'; });
 
-  var html = '<div class="gold-heading cr-pop-title">Add a clause</div>';
+  var html = '<div class="c-gold fw-semibold cr-pop-title">Add a clause</div>';
   if (hand.length) {
-    html += '<div class="cr-pop-section label">Hand-level</div>';
+    html += '<div class="cr-pop-section eyebrow c-dim">Hand-level</div>';
     html += hand.map(function(c) {
       return '<button class="text-meta cr-pop-opt" data-add-clause="' + c.id + '">' + c.label + '</button>';
     }).join('');
   }
   if (decision.length) {
-    html += '<div class="cr-pop-section label">Decision-level</div>';
+    html += '<div class="cr-pop-section eyebrow c-dim">Decision-level</div>';
     html += decision.map(function(c) {
       return '<button class="text-meta cr-pop-opt" data-add-clause="' + c.id + '">' + c.label + '</button>';
     }).join('');
@@ -821,11 +821,11 @@ function _crOpenClausePopover(targetEl, segLabel, clauseId) {
   var segment = _crState[segLabel];
   var current = segment.values[clauseId];
 
-  var html = '<div class="gold-heading cr-pop-title">' + def.label + '</div>';
+  var html = '<div class="c-gold fw-semibold cr-pop-title">' + def.label + '</div>';
   if (!def.options.length) {
     html += '<div class="text-body">No options available. None of your hands match this clause yet.</div>';
   } else if (def.multi) {
-    html += '<div class="flex flex-col gap-2">';
+    html += '<div class="col gap-2">';
     current = Array.isArray(current) ? current : [];
     html += def.options.map(function(o) {
       var checked = current.indexOf(o.value) !== -1;
@@ -836,7 +836,7 @@ function _crOpenClausePopover(targetEl, segLabel, clauseId) {
     }).join('');
     html += '</div>';
   } else {
-    html += '<div class="flex flex-col gap-2">';
+    html += '<div class="col gap-2">';
     html += def.options.map(function(o) {
       var sel = current === o.value;
       return '<button class="text-meta cr-pop-opt' + (sel ? ' selected' : '') + '" data-val="' + o.value + '">' +
@@ -901,60 +901,68 @@ function _crRenderHeadline(result, compareResult) {
   var m = result.metrics;
   var dim = result.sampleSize < CR_SAMPLE_MIN;
 
-  function tile(label, val, color) {
-    return '<div class="box cr-tile' + (dim ? ' cr-tile-dim' : '') + '">' +
-      '<div class="mb-6 label">' + label + '</div>' +
-      '<div class="cr-tile-value value" style="color:' + color + '">' + val + '</div>' +
+  function tile(label, val, cls) {
+    return '<div class="box ' + (dim ? ' -dim' : '') + '">' +
+      '<div class="mb-6 eyebrow c-dim">' + label + '</div>' +
+      '<div class="-value value ' + cls + '">' + val + '</div>' +
       '</div>';
   }
 
-  function tileCompare(label, valA, valB, colorA, colorB, delta, deltaColor) {
-    return '<div class="box cr-tile cr-tile-compare">' +
-      '<div class="mb-6 label">' + label + '</div>' +
-      '<div class="cr-tile-trio">' +
-      '<div><div class="label cr-tile-mini-label">A</div><div class="value" style="color:' + colorA + '">' + valA + '</div></div>' +
-      '<div><div class="label cr-tile-mini-label">Δ</div><div class="value" style="color:' + deltaColor + '">' + delta + '</div></div>' +
-      '<div><div class="label cr-tile-mini-label">B</div><div class="value" style="color:' + colorB + '">' + valB + '</div></div>' +
+  function tileCompare(label, valA, valB, clsA, clsB, delta, deltaCls) {
+    return '<div class="box -compare">' +
+      '<div class="mb-6 eyebrow c-dim">' + label + '</div>' +
+      '<div class="-trio">' +
+      '<div><div class="eyebrow c-dim -mini-label">A</div><div class="value ' + clsA + '">' + valA + '</div></div>' +
+      '<div><div class="eyebrow c-dim -mini-label">Δ</div><div class="value ' + deltaCls + '">' + delta + '</div></div>' +
+      '<div><div class="eyebrow c-dim -mini-label">B</div><div class="value ' + clsB + '">' + valB + '</div></div>' +
       '</div></div>';
   }
 
+  function pnlCol(v) { return v == null ? 'c-dim' : (v >= 0 ? 'c-pos' : 'c-neg'); }
+  function deltaCol(v) { return v == null ? 'c-dim' : (v > 0 ? 'c-pos' : v < 0 ? 'c-neg' : 'text-strong'); }
+  function wrCol2(v) {
+    if (v == null) return 'c-dim';
+    var c = wrColor(v);
+    return c === 'var(--green)' ? 'c-pos' : c === 'var(--red)' ? 'c-neg' : 'text-strong';
+  }
+
   var bb100Str = m.bb100 != null ? (m.bb100 > 0 ? '+' : '') + m.bb100 : '-';
-  var bb100Col = m.bb100 == null ? 'var(--dim)' : (m.bb100 >= 0 ? 'var(--green)' : 'var(--red)');
+  var bb100Cls = pnlCol(m.bb100);
   var wrStr = m.wr != null ? m.wr + '%' : '-';
-  var wrCol = m.wr == null ? 'var(--dim)' : wrColor(m.wr);
+  var wrCls = wrCol2(m.wr);
 
   if (!compareResult) {
-    return '<div class="grid-auto cr-headline">' +
-      tile('Hands matched', result.sampleSize, 'var(--gold)') +
-      tile('Sessions', result.sessions, 'var(--text)') +
-      tile('bb/100', bb100Str, bb100Col) +
-      tile('Win rate', wrStr, wrCol) +
-      tile('VPIP', m.vpip != null ? m.vpip + '%' : '-', 'var(--text)') +
-      tile('PFR', m.pfr != null ? m.pfr + '%' : '-', 'var(--text)') +
+    return '<div class="cols-auto cr-headline gap-12">' +
+      tile('Hands matched', result.sampleSize, 'c-gold') +
+      tile('Sessions', result.sessions, 'text-strong') +
+      tile('bb/100', bb100Str, bb100Cls) +
+      tile('Win rate', wrStr, wrCls) +
+      tile('VPIP', m.vpip != null ? m.vpip + '%' : '-', 'text-strong') +
+      tile('PFR', m.pfr != null ? m.pfr + '%' : '-', 'text-strong') +
       '</div>';
   }
 
   var mB = compareResult.metrics;
   var bb100B = mB.bb100 != null ? (mB.bb100 > 0 ? '+' : '') + mB.bb100 : '-';
-  var bb100BCol = mB.bb100 == null ? 'var(--dim)' : (mB.bb100 >= 0 ? 'var(--green)' : 'var(--red)');
+  var bb100BCls = pnlCol(mB.bb100);
   var bb100Delta = (m.bb100 != null && mB.bb100 != null) ? Math.round((m.bb100 - mB.bb100) * 10) / 10 : null;
   var bb100DeltaStr = bb100Delta == null ? '-' : (bb100Delta > 0 ? '+' : '') + bb100Delta;
-  var bb100DeltaCol = bb100Delta == null ? 'var(--dim)' : (bb100Delta > 0 ? 'var(--green)' : bb100Delta < 0 ? 'var(--red)' : 'var(--text)');
+  var bb100DeltaCls = deltaCol(bb100Delta);
 
   var wrDelta = (m.wr != null && mB.wr != null) ? m.wr - mB.wr : null;
-  var wrBCol = mB.wr == null ? 'var(--dim)' : wrColor(mB.wr);
+  var wrBCls = wrCol2(mB.wr);
 
-  return '<div class="grid-auto cr-headline cr-headline-compare">' +
-    tileCompare('Hands matched', result.sampleSize, compareResult.sampleSize, 'var(--gold)', 'var(--gold)', (result.sampleSize - compareResult.sampleSize), 'var(--dim)') +
-    tileCompare('bb/100', bb100Str, bb100B, bb100Col, bb100BCol, bb100DeltaStr, bb100DeltaCol) +
-    tileCompare('Win rate', wrStr, mB.wr != null ? mB.wr + '%' : '-', wrCol, wrBCol, wrDelta != null ? (wrDelta > 0 ? '+' : '') + wrDelta + '%' : '-', 'var(--dim)') +
-    tileCompare('VPIP', m.vpip != null ? m.vpip + '%' : '-', mB.vpip != null ? mB.vpip + '%' : '-', 'var(--text)', 'var(--text)', (m.vpip != null && mB.vpip != null) ? (m.vpip - mB.vpip > 0 ? '+' : '') + (m.vpip - mB.vpip) + '%' : '-', 'var(--dim)') +
+  return '<div class="cols-auto cr-headline cr-headline-compare gap-12">' +
+    tileCompare('Hands matched', result.sampleSize, compareResult.sampleSize, 'c-gold', 'c-gold', (result.sampleSize - compareResult.sampleSize), 'c-dim') +
+    tileCompare('bb/100', bb100Str, bb100B, bb100Cls, bb100BCls, bb100DeltaStr, bb100DeltaCls) +
+    tileCompare('Win rate', wrStr, mB.wr != null ? mB.wr + '%' : '-', wrCls, wrBCls, wrDelta != null ? (wrDelta > 0 ? '+' : '') + wrDelta + '%' : '-', 'c-dim') +
+    tileCompare('VPIP', m.vpip != null ? m.vpip + '%' : '-', mB.vpip != null ? mB.vpip + '%' : '-', 'text-strong', 'text-strong', (m.vpip != null && mB.vpip != null) ? (m.vpip - mB.vpip > 0 ? '+' : '') + (m.vpip - mB.vpip) + '%' : '-', 'c-dim') +
     '</div>';
 }
 
 function _crRenderInsightCards(cards) {
   if (!cards.length) return '';
-  return '<div class="grid-auto ins-grid">' + cards.map(function(c) {
+  return '<div class="cols-auto gap-16">' + cards.map(function(c) {
     return ins(c.sev, c.title, c.body, c.chips || []);
   }).join('') + '</div>';
 }
@@ -990,60 +998,72 @@ function _crRenderInto(container) {
   var resultA = runCustomReport(_crHands, _crState.A, _crClauseDefs);
   var resultB = _crState.compare ? runCustomReport(_crHands, _crState.B, _crClauseDefs) : null;
 
-  mountTemplate(container, 'custom');
+  mountPanel(container, 'custom', {
+    title: 'Custom Report',
+    desc: 'Build your own report. Click any underlined word to change it. Add clauses to narrow further.',
+  });
 
   var compareToggle = container.querySelector('#cr-compare-toggle');
   if (compareToggle) compareToggle.checked = !!_crState.compare;
 
   var sentenceHtml = _crRenderSentence(_crState.A, 'A');
   if (_crState.compare) {
-    sentenceHtml += '<div class="label cr-vs">vs</div>';
+    sentenceHtml += '<div class="sentence-vs">vs</div>';
     sentenceHtml += _crRenderSentence(_crState.B, 'B');
   }
   setSlot(container, 'sentence', sentenceHtml);
 
-  setSlot(container, 'headline', _crRenderHeadline(resultA, resultB));
+  // Nothing renders until the user has narrowed the report with a clause.
+  var hasSelection = (_crState.A.clauses && _crState.A.clauses.length > 0) ||
+    (_crState.compare && _crState.B.clauses && _crState.B.clauses.length > 0);
 
-  var cards = [];
-  if (_crState.compare) {
-    if (resultA.sampleSize < CR_SAMPLE_MIN || resultB.sampleSize < CR_SAMPLE_MIN) {
-      var which = resultA.sampleSize < CR_SAMPLE_MIN ? 'A' : 'B';
-      var n = resultA.sampleSize < CR_SAMPLE_MIN ? resultA.sampleSize : resultB.sampleSize;
-      cards.push({
-        sev: 'n',
-        title: 'Not enough hands in segment ' + which,
-        body: 'Segment ' + which + ' has ' + n + ' hands. Both segments need at least ' + CR_SAMPLE_MIN + ' to compare meaningfully.',
-        chips: [{ v: n + ' / ' + CR_SAMPLE_MIN, hi: true }],
-      });
-    } else {
-      var aCards = _crEvaluateRules(resultA, _crBaseline);
-      var bCards = _crEvaluateRules(resultB, _crBaseline);
-      aCards.forEach(function(c) { c.title = '[A] ' + c.title; });
-      bCards.forEach(function(c) { c.title = '[B] ' + c.title; });
-      cards = aCards.slice(0, 2).concat(bCards.slice(0, 2));
-      for (var ci = 0; ci < CR_COMPARE_RULES.length; ci++) {
-        var card = CR_COMPARE_RULES[ci].eval(resultA.metrics, resultB.metrics);
-        if (card) cards.push(card);
-      }
-    }
+  if (!hasSelection) {
+    setSlot(container, 'headline', '<div class="text-body">Add a clause above to build your report.</div>');
+    setSlot(container, 'cards', '');
   } else {
-    cards = _crEvaluateRules(resultA, _crBaseline);
-  }
-  setSlot(container, 'cards', _crRenderInsightCards(cards));
+    setSlot(container, 'headline', _crRenderHeadline(resultA, resultB));
 
-  var showCharts = resultA.sampleSize >= CR_SAMPLE_MIN || (resultB && resultB.sampleSize >= CR_SAMPLE_MIN);
-  if (showCharts) {
-    var chartSection = container.querySelector('[data-slot="chartSection"]');
-    if (chartSection) chartSection.removeAttribute('hidden');
+    var cards = [];
+    if (_crState.compare) {
+      if (resultA.sampleSize < CR_SAMPLE_MIN || resultB.sampleSize < CR_SAMPLE_MIN) {
+        var which = resultA.sampleSize < CR_SAMPLE_MIN ? 'A' : 'B';
+        var n = resultA.sampleSize < CR_SAMPLE_MIN ? resultA.sampleSize : resultB.sampleSize;
+        cards.push({
+          sev: 'n',
+          title: 'Not enough hands in segment ' + which,
+          body: 'Segment ' + which + ' has ' + n + ' hands. Both segments need at least ' + CR_SAMPLE_MIN + ' to compare meaningfully.',
+          chips: [{ v: n + ' / ' + CR_SAMPLE_MIN, hi: true }],
+        });
+      } else {
+        var aCards = _crEvaluateRules(resultA, _crBaseline);
+        var bCards = _crEvaluateRules(resultB, _crBaseline);
+        aCards.forEach(function(c) { c.title = '[A] ' + c.title; });
+        bCards.forEach(function(c) { c.title = '[B] ' + c.title; });
+        cards = aCards.slice(0, 2).concat(bCards.slice(0, 2));
+        for (var ci = 0; ci < CR_COMPARE_RULES.length; ci++) {
+          var card = CR_COMPARE_RULES[ci].eval(resultA.metrics, resultB.metrics);
+          if (card) cards.push(card);
+        }
+      }
+    } else {
+      cards = _crEvaluateRules(resultA, _crBaseline);
+    }
+    setSlot(container, 'cards', _crRenderInsightCards(cards));
+
+    var showCharts = resultA.sampleSize >= CR_SAMPLE_MIN || (resultB && resultB.sampleSize >= CR_SAMPLE_MIN);
+    if (showCharts) {
+      var chartSection = container.querySelector('[data-slot="chartSection"]');
+      if (chartSection) chartSection.removeAttribute('hidden');
+    }
   }
 
-  container.querySelectorAll('.cr-token').forEach(function(tok) {
+  container.querySelectorAll('.sentence-token').forEach(function(tok) {
     tok.onclick = function(e) {
       e.stopPropagation();
       _crOpenClausePopover(this, this.getAttribute('data-segment'), this.getAttribute('data-clause'));
     };
   });
-  container.querySelectorAll('.cr-add-btn').forEach(function(btn) {
+  container.querySelectorAll('.sentence-add').forEach(function(btn) {
     btn.onclick = function(e) {
       e.stopPropagation();
       _crOpenAddClausePopover(this, this.getAttribute('data-segment'));
@@ -1114,7 +1134,7 @@ function _crRenderCharts(resultA, resultB) {
       },
     }));
   } else if (trendCanvas) {
-    trendCanvas.parentNode.parentNode.innerHTML = '<div class="label sec-subtitle mt-0">bb/100 over time</div><div class="text-body">Need at least 2 sessions of cash hands in this report.</div>';
+    trendCanvas.parentNode.parentNode.innerHTML = '<div class="eyebrow c-dim mb-8 mt-0">bb/100 over time</div><div class="text-body">Need at least 2 sessions of cash hands in this report.</div>';
   }
 
   var posCanvas = document.getElementById('cr-position');
@@ -1146,7 +1166,7 @@ function _crRenderCharts(resultA, resultB) {
         scales: { x: chartXScale(colors), y: chartYScaleZeroLine(colors, { tickCallback: function(v) { return v + ''; } }) },
       }));
     } else {
-      posCanvas.parentNode.parentNode.innerHTML = '<div class="label sec-subtitle mt-0">bb/100 by position</div><div class="text-body">Need at least two positions with cash data in this report.</div>';
+      posCanvas.parentNode.parentNode.innerHTML = '<div class="eyebrow c-dim mb-8 mt-0">bb/100 by position</div><div class="text-body">Need at least two positions with cash data in this report.</div>';
     }
   }
 
@@ -1181,7 +1201,7 @@ function _crRenderCharts(resultA, resultB) {
         scales: { x: chartXScale(colors), y: chartYScale(colors, { max: 100, tickCallback: function(v) { return v + '%'; } }) },
       }));
     } else {
-      cardsCanvas.parentNode.parentNode.innerHTML = '<div class="label sec-subtitle mt-0">Win rate by hand class</div><div class="text-body">Need at least two hand classes in this report.</div>';
+      cardsCanvas.parentNode.parentNode.innerHTML = '<div class="eyebrow c-dim mb-8 mt-0">Win rate by hand class</div><div class="text-body">Need at least two hand classes in this report.</div>';
     }
   }
 
@@ -1213,7 +1233,7 @@ function _crRenderCharts(resultA, resultB) {
         },
       }));
     } else {
-      actCanvas.parentNode.parentNode.innerHTML = '<div class="label sec-subtitle mt-0">Action breakdown</div><div class="text-body">No action data in this report.</div>';
+      actCanvas.parentNode.parentNode.innerHTML = '<div class="eyebrow c-dim mb-8 mt-0">Action breakdown</div><div class="text-body">No action data in this report.</div>';
     }
   }
 }
@@ -1246,6 +1266,6 @@ function renderCustomReport(container, hands) {
 document.addEventListener('click', function(e) {
   if (!_crPopover) return;
   if (_crPopover.contains(e.target)) return;
-  if (e.target.closest && e.target.closest('.cr-token, .cr-add-btn')) return;
+  if (e.target.closest && e.target.closest('.sentence-token, .sentence-add')) return;
   _crClosePopover();
 });

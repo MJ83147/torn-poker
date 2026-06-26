@@ -1,16 +1,12 @@
-<div class="panel-title">Showdown</div>
-<div class="text-body panel-desc">Showdown vs non-showdown P&L breakdown.</div>
-<div data-slot="verdict"></div>
-<div class="p-row" data-slot="findings" hidden></div>
-<div class="p-row">
-  <div class="label sec-subtitle mt-0">Showdown vs Non-Showdown P&L</div>
-  <div class="chart-wrap-full"><canvas id="showdown-chart"></canvas></div>
+<div>
+  <div class="eyebrow c-dim mb-8">Showdown vs Non-Showdown P&L</div>
+  <div class="chart-full"><canvas id="showdown-chart"></canvas></div>
   <div data-slot="stats"></div>
 </div>
-<div class="p-row">
-  <div class="label sec-subtitle mt-0">Average Pot Size by Outcome</div>
-  <div class="grid-2 two-col">
-    <div><div class="chart-wrap"><canvas id="pot-size-chart"></canvas></div></div>
+<div>
+  <div class="eyebrow c-dim mb-8">Average Pot Size by Outcome</div>
+  <div class="cols-2 gap-32">
+    <div><div class="chart"><canvas id="pot-size-chart"></canvas></div></div>
     <div data-slot="potStats"></div>
   </div>
 </div>

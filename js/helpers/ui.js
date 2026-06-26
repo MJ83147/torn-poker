@@ -119,17 +119,18 @@ function renderMiniRow(items, opts) {
   if (opts.columns) rowAttrs += ' style="grid-template-columns:' + opts.columns + ';"';
   else if (opts.dim) rowAttrs += ' style="opacity:0.45"';
   if (opts.columns && opts.dim) rowAttrs = ' style="grid-template-columns:' + opts.columns + ';opacity:0.45;"';
-  return '<div class="mini-row"' + rowAttrs + '>' + items.map(function(m) {
-    var color = m.c === 'g' ? 'green' : m.c === 'r' ? 'red' : m.c === 'a' ? 'amber' : m.c || 'text';
-    var dot = m.dot ? '<span class="line-dot ' + m.dot + '"></span> ' : '';
-    return '<div class="mini"><div class="mini-l label">' + dot + m.l + '</div><div class="value" style="color:var(--' + color + ')">' + m.v + '</div></div>';
+  var CMAP = { g: 'c-pos', r: 'c-neg', a: 'c-warn' };
+  return '<div class="stat-grid gap-10"' + rowAttrs + '>' + items.map(function(m) {
+    var cc = CMAP[m.c] || (m.c && m.c !== 'text' ? 'c-' + m.c : '');
+    var dot = m.dot ? '<span class="swatch-line ' + m.dot + '"></span> ' : '';
+    return '<div class="stat"><div class="stat-label">' + dot + m.l + '</div><div class="value ' + cc + '">' + m.v + '</div></div>';
   }).join('') + '</div>';
 }
 
 function renderStatsTable(rows, columns, opts) {
   opts = opts || {};
   var wrapClass = opts.wrapClass || 'overflow-x';
-  var tableClass = opts.tableClass || 'tbl';
+  var tableClass = opts.tableClass || 'table';
   var head = '<thead><tr>' + columns.map(function(c) {
     return '<th>' + (c.tip ? tipWrap(c.label) : c.label) + '</th>';
   }).join('') + '</tr></thead>';
@@ -146,22 +147,27 @@ function renderStatsTable(rows, columns, opts) {
 function tipWrap(label) {
   const def = TIPS[label];
   if (!def) return label;
-  return '<span class="tooltip">' + label + ' <span class="text-micro tip-q">?</span><span class="tip-box">' + def + '</span></span>';
+  return '<span class="tooltip">' + label + ' <span class="text-micro">?</span><span class="tooltip-box">' + def + '</span></span>';
 }
 
+// severity -> css2 colour utilities (shared with story-engine vocabulary)
+var INS_WORDS = { g: 'Good', r: 'Leak', a: 'Warning', n: 'Note', o: 'Info' };
+var INS_C = { g: 'c-pos', r: 'c-neg', a: 'c-warn', n: 'c-dim', o: 'c-gold' };
+var INS_BG = { g: 'bg-pos', r: 'bg-neg', a: 'bg-warn', n: 'bg-dim', o: 'bg-gold' };
 function ins(sev, label, text, chips, coaching) {
-  const words = { g: 'Good', r: 'Leak', a: 'Warning', n: 'Note', o: 'Info' };
+  var wordCls = INS_C[sev] || 'c-dim';
+  var dotCls = INS_BG[sev] || 'bg-dim';
   const chipHtml = chips && chips.length
-    ? '<div class="ins-chips">' + chips.map(c => {
+    ? '<div class="insight-chips">' + chips.map(c => {
       var cls = 'chip';
-      if (c.hi) cls += ' chip-' + sev;
+      if (c.hi) cls += ' ' + (INS_C[sev] || 'c-dim');
       return '<span class="' + cls + '">' + c.v + '</span>';
     }).join('') + '</div>'
     : '';
   const coachingHtml = coaching
-    ? '<div class="ins-coaching"><div class="label gold ins-coaching-head">Coaching</div><div class="text-body">' + coaching + '</div></div>'
+    ? '<div class="insight-coaching"><div class="insight-coaching-head c-gold">Coaching</div><div class="text-body">' + coaching + '</div></div>'
     : '';
-  return '<div class="box ins"><div class="ins-badge ' + sev + '"><div class="dot"></div><div class="ins-word">' + words[sev] + '</div></div><div class="ins-title">' + label + '</div><div class="text-body ins-text">' + text + '</div>' + chipHtml + coachingHtml + '</div>';
+  return '<div class="box insight"><div class="insight-badge"><span class="dot ' + dotCls + '"></span><span class="' + wordCls + '">' + INS_WORDS[sev] + '</span></div><div class="insight-title">' + label + '</div><div class="insight-body">' + text + '</div>' + chipHtml + coachingHtml + '</div>';
 }
 
 function insWithExample(sev, label, text, chips, exampleHands, coachingNote, coaching) {
@@ -186,7 +192,7 @@ function renderInsights(insArr, fallbackLabel, fallbackText) {
   if (!insArr.length) {
     insArr.push(ins('n', fallbackLabel, fallbackText || 'More hands needed for ' + fallbackLabel.toLowerCase() + ' patterns.', []));
   }
-  return '<div class="grid-auto ins-grid">' + insArr.join('') + '</div>';
+  return '<div class="cols-auto gap-16">' + insArr.join('') + '</div>';
 }
 
 function renderResult(h, tag, baseClass) {
@@ -197,26 +203,26 @@ function renderResult(h, tag, baseClass) {
 function handTagsHtml(h) {
   if (!h || !h.seatBucket) return '';
   var parts = [];
-  parts.push('<span class="ht-tag ht-seat">' + h.seatBucket + '</span>');
+  parts.push('<span class="tag tag-gold">' + h.seatBucket + '</span>');
   if (h.flopBucket) {
-    parts.push('<span class="ht-tag ht-flop ht-flop-' + h.flopBucket.replace('-', '_') + '">' + h.flopBucket + '</span>');
+    parts.push('<span class="tag">' + h.flopBucket + '</span>');
   }
-  return '<span class="inline-flex flex-wrap items-center gap-4">' + parts.join('') + '</span>';
+  return '<span class="row wrap center gap-4">' + parts.join('') + '</span>';
 }
 
 function renderHandRow(h, idx, opts) {
   var myActs = getActsSummary(h);
-  var res = renderResult(h, 'td', 'hrow-res');
-  var starCol = opts && opts.starHtml ? '<td class="icon-btn hrow-star-col">' + opts.starHtml + '</td>' : '';
+  var res = renderResult(h, 'td', 'num');
+  var starCol = opts && opts.starHtml ? '<td>' + opts.starHtml + '</td>' : '';
   var tags = handTagsHtml(h);
-  return '<tr class="hrow row-hover" data-hand-idx="' + idx + '">' +
+  return '<tr class="hrow link" data-hand-idx="' + idx + '">' +
     starCol +
-    '<td class="hrow-pos">' + (h.position || '?') + '</td>' +
-    '<td class="hrow-cards">' + (h.hole && h.hole.length ? h.hole.join(' ') : '?? ??') + '</td>' +
-    '<td class="hrow-tags">' + tags + '</td>' +
-    '<td class="hrow-board truncate">' + (h.board && h.board.length ? h.board.join(' ') : '-') + '</td>' +
-    '<td class="hrow-pot">' + fmtBB(h.pot || 0, getHandBB(h)) + '</td>' +
-    '<td class="hrow-acts truncate">' + myActs + '</td>' +
+    '<td class="c-gold">' + (h.position || '?') + '</td>' +
+    '<td>' + (h.hole && h.hole.length ? h.hole.join(' ') : '?? ??') + '</td>' +
+    '<td>' + tags + '</td>' +
+    '<td class="c-dim truncate">' + (h.board && h.board.length ? h.board.join(' ') : '-') + '</td>' +
+    '<td>' + fmtBB(h.pot || 0, getHandBB(h)) + '</td>' +
+    '<td class="c-dim truncate">' + myActs + '</td>' +
     res + '</tr>';
 }
 
@@ -228,24 +234,27 @@ function renderPagination(page, totalItems, pageSize, prevId, nextId) {
     '<button class="btn btn-ghost" id="' + nextId + '" ' + (page >= totalPages - 1 ? 'disabled' : '') + '>Next &raquo;</button>';
 }
 
+// Maps the old severity letter (g/r/a/o) to a css2 background-fill utility.
+var BAR_BG = { g: 'bg-pos', r: 'bg-neg', a: 'bg-warn', o: 'bg-gold' };
 function barRow(label, val, max, cls, valStr, val2Str) {
   const w = max > 0 ? clamp(Math.round(val / max * 100), 0, 100) : 0;
-  return '<div class="bar-row ' + (val2Str ? 'bw3' : 'bw2') + '">' +
-    '<div class="gold-heading bar-name">' + label + '</div>' +
-    '<div class="bar-track"><div class="bar-fill ' + cls + '" style="width:' + w + '%"></div></div>' +
-    '<div class="text-meta bar-val">' + valStr + '</div>' +
-    (val2Str ? '<div class="text-micro bar-val2">' + val2Str + '</div>' : '') +
+  var fill = BAR_BG[cls] || (cls || 'bg-gold');
+  return '<div class="bar ' + (val2Str ? 'bar-3' : '') + '">' +
+    '<div class="c-gold fw-semibold">' + label + '</div>' +
+    '<div class="bar-track"><div class="bar-fill ' + fill + '" style="width:' + w + '%"></div></div>' +
+    '<div class="bar-value text-meta">' + valStr + '</div>' +
+    (val2Str ? '<div class="bar-value text-micro">' + val2Str + '</div>' : '') +
     '</div>';
 }
 
 
 /* ===== merged from panel-shared.js ===== */
 function panelTitle(text) {
-  return '<div class="panel-title">' + text + '</div>';
+  return '<div class="title title-lg c-gold">' + text + '</div>';
 }
 
 function panelDesc(text) {
-  return '<div class="text-body panel-desc">' + text + '</div>';
+  return '<div class="text-body">' + text + '</div>';
 }
 
 function panelHeader(title, desc) {
@@ -253,7 +262,7 @@ function panelHeader(title, desc) {
 }
 
 function dimLabel(text) {
-  return '<div class="label">' + text + '</div>';
+  return '<div class="eyebrow c-dim">' + text + '</div>';
 }
 
 function descText(text) {
@@ -261,7 +270,7 @@ function descText(text) {
 }
 
 function pRow(body, label) {
-  var html = '<div class="p-row">';
+  var html = '<div class="">';
   if (label) html += dimLabel(label);
   html += (body || '');
   html += '</div>';
@@ -270,13 +279,8 @@ function pRow(body, label) {
 
 function insGrid(items, label) {
   if (!items || !items.length) return '';
-  var inner = '<div class="grid-auto ins-grid">' + items.join('') + '</div>';
+  var inner = '<div class="">' + items.join('') + '</div>';
   return label ? pRow(inner, label) : inner;
-}
-
-function mountPanel(container, html) {
-  if (!container) return;
-  container.innerHTML = html;
 }
 
 function mountTemplate(container, name) {
@@ -289,6 +293,33 @@ function mountTemplate(container, name) {
     return;
   }
   container.innerHTML = html;
+}
+
+// css2 panel shell. The whole panel is one .col.gap-32 of sections:
+//   header (title + subtitle), verdict slot, findings slot, then the body.
+// The panel's __TPL[name] template holds ONLY the body markup (its own
+// sections). title/desc are passed as data, not baked into every template.
+function mountPanel(container, name, opts) {
+  if (!container) return;
+  opts = opts || {};
+  var TPL = (typeof window !== 'undefined' && window.__TPL) || {};
+  var body = TPL[name];
+  if (body == null) {
+    console.warn('[panel-shared] missing template for "' + name + '"');
+    body = '';
+  }
+  var title = opts.title || '';
+  var desc = opts.desc || '';
+  container.innerHTML =
+    '<div class="col gap-32">' +
+      '<div>' +
+        '<div class="title title-lg c-gold">' + title + '</div>' +
+        (desc ? '<div class="text-body mt-4">' + desc + '</div>' : '') +
+      '</div>' +
+      '<div data-slot="verdict"></div>' +
+      '<div data-slot="findings" hidden></div>' +
+      body +
+    '</div>';
 }
 
 function bind(root, data) {

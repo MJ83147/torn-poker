@@ -23,7 +23,7 @@ function renderLog(container, hands) {
     var end = Math.min(start + PAGE_SIZE, sortedHands.length);
     var pageHands = sortedHands.slice(start, end);
 
-    mountTemplate(container, 'log');
+    mountPanel(container, 'log', { title: 'Hand Log', desc: 'Every hand played. Click any row to replay.' });
     setSlot(container, 'saved', renderSavedSection());
     setSlot(container, 'meta', sortedHands.length + ' hands total · showing ' + (start + 1) + '-' + end);
     setSlot(container, 'pagination', renderPagination(_logPage, sortedHands.length, PAGE_SIZE, 'log-prev', 'log-next'));
@@ -90,14 +90,14 @@ function renderSavedSection() {
   var expanded = State.savedExpanded !== false;
 
   var html = '<div class="saved-section saved-section-divider mb-20">' +
-    '<div class="saved-toggle flex items-center gap-8">' +
+    '<div class="saved-toggle row center gap-8">' +
       '<span class="saved-toggle-arrow" style="transform:rotate(' + (expanded ? '90' : '0') + 'deg);">&#9654;</span>' +
-      '<span class="label">&#9733; Saved Hands</span>' +
+      '<span class="eyebrow c-dim">&#9733; Saved Hands</span>' +
       '<span class="text-meta">(' + keys.length + ')</span>' +
     '</div>' +
     '<div class="saved-section-body"' + (expanded ? '' : ' style="display:none;"') + '>';
 
-  html += '<div class="grid-auto saved-hands-list">';
+  html += '<div class="cols-auto gap-16 saved-hands-list">';
   for (var i = 0; i < keys.length; i++) {
     var entry = map[keys[i]];
     var h = entry.hand;
@@ -113,9 +113,9 @@ function renderSavedSection() {
     var savedDate = entry.savedAt ? new Date(entry.savedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '';
 
     html += '<div class="card card-link saved-card" data-saved-key="' + keys[i].replace(/"/g, '&quot;') + '">' +
-      '<div class="flex-between saved-card-top">' +
+      '<div class="row between saved-card-top">' +
         '<div class="saved-card-hole">' + (h.hole ? h.hole.join(' ') : '??') + '</div>' +
-        '<div class="text-meta flex items-center gap-8">' +
+        '<div class="text-meta row center gap-8">' +
           '<span class="saved-pos">' + (h.position || '?') + '</span>' +
           res +
         '</div>' +
@@ -123,7 +123,7 @@ function renderSavedSection() {
       '</div>' +
       '<div class="text-meta saved-card-board">' + (h.board && h.board.length ? h.board.join(' ') : 'No board') + '</div>' +
       '<div class="text-meta saved-card-acts">' + (myActs || 'No actions') + '</div>' +
-      (notePreview ? '<div class="card card-sm card-s2 saved-card-note-wrap">' + notePreview + '</div>' : '<div class="text-micro saved-card-note-empty">No notes</div>') +
+      (notePreview ? '<div class="card card-s2 saved-card-note-wrap">' + notePreview + '</div>' : '<div class="text-micro saved-card-note-empty">No notes</div>') +
       '<div class="text-micro saved-card-date">' + savedDate + '</div>' +
       '</div>';
   }

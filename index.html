@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=IBM+Plex+Mono:wght@300;400;500&display=swap" onload="this.rel='stylesheet'">
   <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=IBM+Plex+Mono:wght@300;400;500&display=swap"></noscript>
-  <link rel="stylesheet" href="styles.css?v=63">
+  <link rel="stylesheet" href="css2.css?v=1">
 </head>
 
 <body class="maintenance">
@@ -34,7 +34,7 @@
     <div class="label m-eyebrow">TC Poker Analysis</div>
     <div class="m-title">Back soon</div>
     <div class="m-sub">Exciting updates in progress. Check back shortly.</div>
-    <div class="flex gap-10">
+    <div class="row gap-10">
       <span class="mc b">A&spades;</span>
       <span class="mc r">K&hearts;</span>
       <span class="mc b">Q&clubs;</span>
@@ -47,12 +47,12 @@
     <div class="label l-eyebrow">Torn City</div>
     <div class="l-title">Poker Analysis</div>
     <div class="label l-sub">Session Intelligence</div>
-    <div class="l-cards flex gap-12">
-      <div class="lc flex-center b" id="lc0">A♠</div>
-      <div class="lc flex-center r" id="lc1">K♥</div>
-      <div class="lc flex-center b" id="lc2">Q♣</div>
-      <div class="lc flex-center r" id="lc3">J♦</div>
-      <div class="lc flex-center b" id="lc4">10♠</div>
+    <div class="l-cards">
+      <div class="lc b" id="lc0">A♠</div>
+      <div class="lc r" id="lc1">K♥</div>
+      <div class="lc b" id="lc2">Q♣</div>
+      <div class="lc r" id="lc3">J♦</div>
+      <div class="lc b" id="lc4">10♠</div>
     </div>
     <div class="l-clabel">Hands analysed</div>
     <div class="l-count" id="lnum">0</div>
@@ -104,7 +104,7 @@
 
     <div id="dash">
       <div class="dash-header">
-        <div class="flex-between header-inner">
+        <div class="header-inner row between center">
           <div class="header-title">TC Poker Analysis</div>
           <div class="header-controls">
             <div id="bb-toggle" class="bb-toggle" title="Toggle between dollar amounts and Big Blinds"><span class="bb-opt active" data-mode="dollar">$</span><span class="bb-opt" data-mode="bb">BB</span></div>
@@ -114,7 +114,7 @@
             <select id="players-filter" class="hidden">
               <option value="all">All Sizes</option>
             </select>
-            <div id="style-display" class="card card-sm card-s2 style-display inline-flex items-center gap-6" title="Your detected style and your target style"></div>
+            <div id="style-display" class="card card-s2 style-display inline center gap-6" title="Your detected style and your target style"></div>
             <div class="text-meta page-meta-link" id="page-meta"></div>
             <button class="btn btn-icon" id="tour-btn" title="Guided tour of this page">?</button>
           </div>
@@ -179,44 +179,44 @@
       <div class="panel" id="p-custom"></div>
       </div>
     </div>
-    <div class="modal-overlay hiw-overlay" id="hiw-modal">
-      <div class="card card-s1 modal-box hiw-box">
+    <div class="overlay hiw-overlay" id="hiw-modal">
+      <div class="modal hiw-box">
         <button class="modal-close" id="hiw-close">&times;</button>
 
-        <div class="modal-title">TC Poker Analysis</div>
+        <div class="title title-md c-gold mb-4">TC Poker Analysis</div>
         <div class="text-body mb-24">A free, private analysis tool for Torn City poker. It reads your hand history and breaks down how you play, where you leak chips, and what to work on. Everything runs in your browser. No accounts, no servers, no data leaves your device.</div>
 
         <div class="label mt-32 mb-16">How it works</div>
-        <div class="flex flex-col gap-20">
+        <div class="col gap-20">
           <div class="hiw-step">
-            <div class="hiw-num flex-center">1</div>
+            <div class="hiw-num">1</div>
             <div class="fw-600">Install Tampermonkey</div>
             <div class="text-body">You need the <a href="https://www.tampermonkey.net/" target="_blank" rel="noopener" class="link-gold">Tampermonkey</a> browser extension first. It's free and available for Chrome, Firefox, Edge, and Safari. This is what runs the tracking script.</div>
           </div>
           <div class="hiw-step">
-            <div class="hiw-num flex-center">2</div>
+            <div class="hiw-num">2</div>
             <div class="fw-600">Install the TC Poker Export script</div>
             <div class="text-body">Install it from <a href="https://greasyfork.org/en/scripts/569290-tc-poker-export" target="_blank" rel="noopener" class="link-gold">Greasy Fork</a>. Once installed, a small tracker button appears next to the Poker header on Torn's poker page.</div>
           </div>
           <div class="hiw-step">
-            <div class="hiw-num flex-center">3</div>
+            <div class="hiw-num">3</div>
             <div class="fw-600">Play poker on Torn</div>
             <div class="text-body">Play as normal. The script silently captures every hand in the background and stores it in your browser's local storage. Nothing is sent anywhere.</div>
           </div>
           <div class="hiw-step">
-            <div class="hiw-num flex-center">4</div>
+            <div class="hiw-num">4</div>
             <div class="fw-600">Export your session</div>
             <div class="text-body">Click the TC Poker Tracker button on the poker page, then hit Analyse Session. Your hand data is copied to your clipboard.</div>
           </div>
           <div class="hiw-step">
-            <div class="hiw-num flex-center">5</div>
+            <div class="hiw-num">5</div>
             <div class="fw-600">Paste and analyse</div>
             <div class="text-body">Come here and click Paste from Clipboard. Your full session is broken down instantly.</div>
           </div>
         </div>
 
         <div class="label mt-32 mb-16">What it analyses</div>
-        <div class="flex flex-col gap-8">
+        <div class="col gap-8">
           <div class="hiw-feat"><span class="gold-heading">Hand types</span><span class="text-body">Win rates for pairs, broadway, suited connectors, ace-rag, and more</span></div>
           <div class="hiw-feat"><span class="gold-heading">Position</span><span class="text-body">VPIP, fold rate, win rate, and P&L from every seat at the table</span></div>
           <div class="hiw-feat"><span class="gold-heading">Street action</span><span class="text-body">How you play on each street: fold rates, aggression, bet sizing</span></div>

@@ -7,7 +7,7 @@ function renderPosition(container, d, hands) {
   var activePosOrder = POSITION_ORDER.filter(function(p) { return d.posMap[p] && d.posMap[p].hands > 0; });
   var ctx = getGameContext(d);
 
-  mountTemplate(container, 'position');
+  mountPanel(container, 'position', { title: 'Position', desc: 'Which seats make and lose you money.' });
   mountFindings(container, 'Position', d, hands, 'No standout positional patterns yet.');
 
   setSlot(container, 'head', renderTableHead(['Position', 'Hands', { tip: 'Fold Pre' }, 'VPIP &Delta; vs target', { tip: 'Net P&L' }, { tip: 'Avg Pot' }]));
@@ -27,11 +27,11 @@ function renderPosition(container, d, hands) {
       var hi = Math.round(band.loose);
       var delta = vp2 < lo ? vp2 - lo : (vp2 > hi ? vp2 - hi : 0);
       var deltaStr = delta === 0
-        ? '<span style="color:var(--green)">on target</span>'
+        ? '<span class="c-pos">on target</span>'
         : (delta > 0
-          ? '<span style="color:var(--amber)">+' + delta + '%</span>'
-          : '<span style="color:var(--amber)">' + delta + '%</span>');
-      deltaCell = deltaStr + ' <span class="label">(' + lo + '-' + hi + '%)</span>';
+          ? '<span class="c-warn">+' + delta + '%</span>'
+          : '<span class="c-warn">' + delta + '%</span>');
+      deltaCell = deltaStr + ' <span class="text-micro">(' + lo + '-' + hi + '%)</span>';
     }
     return '<tr><td>' + tipWrap(p) + '</td><td>' + s.hands + '</td><td>' + (fp2 !== null ? fp2 + '%' : '-') + '</td><td>' + deltaCell + '</td><td class="' + pnlCls(s.pnl) + '">' + fmtPnl(s.pnl) + '</td><td>' + avgPotDisplay + '</td></tr>';
   }).join(''));

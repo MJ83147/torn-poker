@@ -1,16 +1,10 @@
-<div class="panel-title">Position</div>
-<div class="text-body panel-desc">Which seats make and lose you money.</div>
-<div data-slot="verdict"></div>
-<div class="p-row" data-slot="findings" hidden></div>
-<div class="p-row">
-  <div class="overflow-x">
-    <table class="tbl">
-      <thead data-slot="head"></thead>
-      <tbody data-slot="rows"></tbody>
-    </table>
-  </div>
+<div class="overflow-x">
+  <table class="table">
+    <thead data-slot="head"></thead>
+    <tbody data-slot="rows"></tbody>
+  </table>
 </div>
-<div class="p-row" data-slot="chartSection" hidden>
-  <div class="label sec-subtitle mt-0">Net P&L by Position</div>
-  <div class="chart-wrap-full"><canvas id="position-chart"></canvas></div>
+<div data-slot="chartSection" hidden>
+  <div class="eyebrow c-dim mb-8">Net P&L by Position</div>
+  <div class="chart-full"><canvas id="position-chart"></canvas></div>
 </div>

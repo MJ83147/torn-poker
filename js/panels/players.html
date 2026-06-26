@@ -1,26 +1,22 @@
-<div class="panel-title">Players</div>
-<div class="text-body panel-desc">Opponent records, head-to-head stats, and watch list.</div>
-<div data-slot="verdict"></div>
-<div class="p-row" data-slot="findings" hidden></div>
 <div class="mb-16"><button class="btn btn-ghost example-hand-btn" id="open-compare-btn">Compare Players</button></div>
-<div class="p-row" data-slot="watchedSection" hidden>
-  <div class="label sec-subtitle mt-0">Watched Players</div>
-  <div class="text-micro meta-text-mb">Click star to unwatch · click row to view hands</div>
+<div data-slot="watchedSection" hidden>
+  <div class="eyebrow c-dim mb-8 mt-0">Watched Players</div>
+  <div class="text-micro mb-8">Click star to unwatch · click row to view hands</div>
   <div class="overflow-x">
-    <table class="tbl">
+    <table class="table">
       <thead data-slot="watchedHead"></thead>
       <tbody data-slot="watchedRows"></tbody>
     </table>
   </div>
 </div>
-<div class="p-row">
-  <div class="flex-between">
-    <div class="label sec-subtitle mt-0">All Opponents</div>
+<div>
+  <div class="row between">
+    <div class="eyebrow c-dim mb-8 mt-0">All Opponents</div>
     <input type="text" id="player-search" placeholder="Search players…">
   </div>
-  <div class="text-micro meta-text-mb" data-slot="allMeta"></div>
-  <div class="players-table-scroll">
-    <table class="tbl">
+  <div class="text-micro mb-8" data-slot="allMeta"></div>
+  <div class="">
+    <table class="table">
       <thead data-slot="allHead"></thead>
       <tbody data-slot="allRows"></tbody>
     </table>

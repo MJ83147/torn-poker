@@ -13,7 +13,7 @@ function renderActions(container, d, hands) {
   var _cbetBand = ctx.band('cbet');
   var _ftrBand = ctx.band('foldToRaise');
 
-  mountTemplate(container, 'actions');
+  mountPanel(container, 'actions', { title: 'Betting', desc: 'How you size your bets and choose your actions.' });
   mountFindings(container, 'Betting', d, hands, 'Betting profile looks balanced at this sample size.');
 
   setSlot(container, 'miniRow', renderMiniRow([
@@ -25,13 +25,13 @@ function renderActions(container, d, hands) {
   ]));
 
   var segs = [
-    { p: fPct || 0, c: 'var(--red)', l: 'Fold ' + fPct + '%' },
-    { p: chPct || 0, c: '#2a3a2c', l: 'Check ' + chPct + '%' },
-    { p: caPct || 0, c: 'var(--amber)', l: 'Call ' + caPct + '%' },
-    { p: raPct || 0, c: 'var(--green)', l: 'Raise ' + raPct + '%' },
+    { p: fPct || 0, bg: 'bg-neg', l: 'Fold ' + fPct + '%' },
+    { p: chPct || 0, bg: 'bg-muted', l: 'Check ' + chPct + '%' },
+    { p: caPct || 0, bg: 'bg-warn', l: 'Call ' + caPct + '%' },
+    { p: raPct || 0, bg: 'bg-pos', l: 'Raise ' + raPct + '%' },
   ];
-  setSlot(container, 'actionSplitBar', segs.map(function (s) { return '<div class="stack-seg" style="width:' + s.p + '%;background:' + s.c + ';"></div>'; }).join(''));
-  setSlot(container, 'actionSplitLabels', segs.map(function (s) { return '<div class="text-meta flex items-center gap-6"><div class="dot" style="background:' + s.c + ';"></div>' + s.l + '</div>'; }).join(''));
+  setSlot(container, 'actionSplitBar', segs.map(function (s) { return '<div class="bar-seg ' + s.bg + '" style="width:' + s.p + '%;"></div>'; }).join(''));
+  setSlot(container, 'actionSplitLabels', segs.map(function (s) { return '<div class="text-meta row center gap-6"><div class="swatch ' + s.bg + '"></div>' + s.l + '</div>'; }).join(''));
 
   function sitStatColour(label, p) {
     if (p === null) return 'o';

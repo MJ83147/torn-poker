@@ -58,9 +58,9 @@ function renderPlayers(container, d, hands) {
 
   function renderPlayerList() {
     if (!filtered.length) {
-      container.innerHTML = '<div class="panel-title">Players</div>' +
-        '<div class="text-body panel-desc">Opponent records, head-to-head stats, and watch list.</div>' +
-        '<div class="box panel-verdict">Not enough shared hands to show opponent stats. Keep playing to build data.</div>';
+      mountPanel(container, 'players', { title: 'Players', desc: 'Opponent records, head-to-head stats, and watch list.' });
+      var body = container.querySelector('.col.gap-32') || container;
+      body.innerHTML = '<div class="box lead">Not enough shared hands to show opponent stats. Keep playing to build data.</div>';
       return;
     }
     var watched = getWatchedPlayers();
@@ -72,7 +72,7 @@ function renderPlayers(container, d, hands) {
     var maxH = Math.max.apply(null, filtered.map(function(o) { return o.hands; }));
     var watchedOpps = filtered.filter(function(o) { return watched.indexOf(o.name) >= 0; });
 
-    mountTemplate(container, 'players');
+    mountPanel(container, 'players', { title: 'Players', desc: 'Opponent records, head-to-head stats, and watch list.' });
     mountFindings(container, 'Players', d, hands, 'Opponent pool is still forming.');
 
     if (watchedOpps.length) {
@@ -84,10 +84,10 @@ function renderPlayers(container, d, hands) {
         var o = watchedOpps[w];
         var wr = pct(o.won, o.won + o.lost);
         var barW = Math.round(o.hands / maxH * 100);
-        watchedRowsHtml += '<tr class="player-row row-hover" data-player="' + o.name + '">';
+        watchedRowsHtml += '<tr class="player-row link" data-player="' + o.name + '">';
         watchedRowsHtml += '<td class="watch-star watched" data-watch="' + o.name + '" title="Unwatch player">&#9733;</td>';
         watchedRowsHtml += '<td>' + o.name + '</td><td>' + o.hands + '</td>';
-        watchedRowsHtml += '<td class="spark-cell"><span class="tbl-spark" style="width:' + barW + '%;background:var(--gold2);"></span></td>';
+        watchedRowsHtml += '<td class="spark-cell"><span class="spark" style="width:' + barW + '%;background:var(--gold2);"></span></td>';
         watchedRowsHtml += '<td class="' + wrCls(wr) + '">' + (wr !== null ? wr + '%' : '-') + '</td>';
         watchedRowsHtml += '<td class="' + pnlCls(o.profit) + '">' + fmtPnl(o.profit) + '</td></tr>';
       }
@@ -106,10 +106,10 @@ function renderPlayers(container, d, hands) {
       var wr2 = pct(o2.won, o2.won + o2.lost);
       var barW2 = Math.round(o2.hands / maxH * 100);
       var isWatched = watched.indexOf(o2.name) >= 0;
-      allRowsHtml += '<tr class="player-row row-hover" data-player="' + o2.name + '">';
+      allRowsHtml += '<tr class="player-row link" data-player="' + o2.name + '">';
       allRowsHtml += '<td class="watch-star' + (isWatched ? ' watched' : '') + '" data-watch="' + o2.name + '" title="' + (isWatched ? 'Unwatch' : 'Watch') + ' player">' + (isWatched ? '&#9733;' : '&#9734;') + '</td>';
       allRowsHtml += '<td>' + o2.name + '</td><td>' + o2.hands + '</td>';
-      allRowsHtml += '<td class="spark-cell"><span class="tbl-spark" style="width:' + barW2 + '%;background:var(--gold2);"></span></td>';
+      allRowsHtml += '<td class="spark-cell"><span class="spark" style="width:' + barW2 + '%;background:var(--gold2);"></span></td>';
       allRowsHtml += '<td class="' + wrCls(wr2) + '">' + (wr2 !== null ? wr2 + '%' : '-') + '</td>';
       allRowsHtml += '<td class="' + pnlCls(o2.profit) + '">' + fmtPnl(o2.profit) + '</td></tr>';
     }
@@ -147,9 +147,9 @@ function renderPlayers(container, d, hands) {
     if (cmpBtn) {
       cmpBtn.onclick = function() {
         var overlay = document.createElement('div');
-        overlay.className = 'modal-overlay';
+        overlay.className = 'overlay';
         var box = document.createElement('div');
-        box.className = 'modal-box modal-box-compare';
+        box.className = 'modal modal-box-compare';
         var closeBtn = document.createElement('button');
         closeBtn.className = 'modal-close';
         closeBtn.innerHTML = '&times;';
@@ -181,9 +181,9 @@ function renderPlayers(container, d, hands) {
       var page = playerHands.slice(start, end);
       var totalPages = Math.ceil(playerHands.length / PH_SIZE);
       var wr = pct(opp.won, opp.won + opp.lost);
-      var ph = '<div class="flex-between mb-16">';
-      ph += '<div><button class="btn btn-ghost mr-12" id="players-back">&laquo; All Players</button>';
-      ph += '<span class="gold-heading">' + playerName + '</span></div>';
+      var ph = '<div class="row between mb-16">';
+      ph += '<div class="row center gap-12"><button class="btn btn-ghost" id="players-back">&laquo; All Players</button>';
+      ph += '<span class="c-gold fw-semibold">' + playerName + '</span></div>';
       ph += '<div class="text-meta">' + opp.hands + ' hands · ' + (wr !== null ? wr + '% win' : '-') + ' · ' + fmtPnl(opp.profit) + '</div></div>';
 
       var vpip = pct(oppStats.vpipHands, oppStats.hands);
@@ -207,23 +207,23 @@ function renderPlayers(container, d, hands) {
           { l: tipWrap('WSD'),          v: wsd !== null ? wsd + '%' : '-',       c: sev(wsd, 35, 999, 35, 60) },
         ];
 
-        ph += '<div class="label sec-subtitle mt-0">Tendencies</div>';
+        ph += '<div class="eyebrow c-dim mb-8 mt-0">Tendencies</div>';
         ph += renderMiniRow(minis);
 
         var exploitIns = generateExploitInsights(oppStats, playerName, hands);
         if (exploitIns.length) {
-          ph += '<div class="grid-auto ins-grid mb-16">' + exploitIns.join('') + '</div>';
+          ph += '<div class="cols-auto gap-16 mb-16">' + exploitIns.join('') + '</div>';
         }
       } else {
-        ph += '<div class="box panel-verdict">Need ' + Math.max(0, 5 - oppStats.hands) + ' more shared hands to show tendency stats (' + oppStats.hands + '/5 hands).</div>';
+        ph += '<div class="box lead">Need ' + Math.max(0, 5 - oppStats.hands) + ' more shared hands to show tendency stats (' + oppStats.hands + '/5 hands).</div>';
       }
 
-      ph += '<div class="label sec-subtitle">Shared Hands</div>';
+      ph += '<div class="eyebrow c-dim mb-8">Shared Hands</div>';
       if (totalPages > 1) {
-        ph += '<div class="flex items-center gap-6 mb-8 flex-end">' +
+        ph += '<div class="row center gap-6 mb-8 end">' +
           renderPagination(phPage, playerHands.length, PH_SIZE, 'ph-prev', 'ph-next') + '</div>';
       }
-      ph += '<div class="overflow-x"><table class="tbl hlog-tbl"><thead><tr><th>Pos</th><th>Cards</th><th>Board</th><th>Pot</th><th>Actions</th><th>Result</th></tr></thead><tbody>';
+      ph += '<div class="overflow-x"><table class="table"><thead><tr><th>Pos</th><th>Cards</th><th>Board</th><th>Pot</th><th>Actions</th><th>Result</th></tr></thead><tbody>';
       ph += page.map(function(h, pi) {
         return renderHandRow(h, start + pi, null).replace('data-hand-idx', 'data-ph-idx');
       }).join('') + '</tbody></table></div>';
@@ -265,9 +265,9 @@ function renderCompare(container, d, hands) {
 
   if (playerNames.length < 2) {
     container.innerHTML =
-      '<div class="panel-title">Head to Head</div>' +
-      '<div class="text-body panel-desc">Compare two players side by side.</div>' +
-      '<div class="p-row"><div class="text-body">Need at least two players in the data to compare.</div></div>';
+      '<div class="title title-lg c-gold">Head to Head</div>' +
+      '<div class="text-body mt-4 mb-16">Compare two players side by side.</div>' +
+      '<div class="text-body">Need at least two players in the data to compare.</div>';
     return;
   }
 
@@ -282,14 +282,12 @@ function renderCompare(container, d, hands) {
   }
 
   container.innerHTML =
-    '<div class="panel-title">Head to Head</div>' +
-    '<div class="text-body panel-desc">Compare two players side by side.</div>' +
-    '<div class="p-row">' +
-    '<div class="flex items-center gap-12 flex-wrap">' +
+    '<div class="title title-lg c-gold">Head to Head</div>' +
+    '<div class="text-body mt-4 mb-16">Compare two players side by side.</div>' +
+    '<div class="row center gap-12 wrap mb-16">' +
     '<select id="compare-p1">' + buildOptions(p1Default) + '</select>' +
-    '<span class="text-body compare-vs">vs</span>' +
+    '<span class="text-body fw-semibold">vs</span>' +
     '<select id="compare-p2">' + buildOptions(p2Default) + '</select>' +
-    '</div>' +
     '</div>' +
     '<div id="compare-body"></div>';
 
@@ -360,7 +358,7 @@ function renderCompare(container, d, hands) {
     if (!body) return;
 
     if (p1Name === p2Name) {
-      body.innerHTML = '<div class="p-row"><div class="text-body">Select two different players to compare.</div></div>';
+      body.innerHTML = '<div class="text-body">Select two different players to compare.</div>';
       return;
     }
 
@@ -379,7 +377,7 @@ function renderCompare(container, d, hands) {
       { key: 'wr', label: 'Win Rate', suffix: '%' },
     ];
 
-    var tableHtml = '<table class="compare-table">' +
+    var tableHtml = '<table class="table">' +
       '<thead><tr><th>Stat</th><th>' + p1Name + '</th><th>' + p2Name + '</th><th>Edge</th></tr></thead><tbody>';
 
     for (var i = 0; i < statRows.length; i++) {
@@ -392,9 +390,9 @@ function renderCompare(container, d, hands) {
                     (sr.key === 'limp' && v1 !== null && v2 !== null && v1 < v2);
       var better2 = !better1 && v1 !== null && v2 !== null && v1 !== v2;
       tableHtml += '<tr>' +
-        '<td class="label">' + tipWrap(sr.label) + '</td>' +
-        '<td class="' + (better1 ? 'compare-better' : '') + '">' + fmtStat(v1, sr.suffix) + (better1 && Math.abs(v1 - v2) >= 3 ? ' &#9664;' : '') + '</td>' +
-        '<td class="' + (better2 ? 'compare-better' : '') + '">' + fmtStat(v2, sr.suffix) + (better2 && Math.abs(v1 - v2) >= 3 ? ' &#9664;' : '') + '</td>' +
+        '<td class="eyebrow c-dim">' + tipWrap(sr.label) + '</td>' +
+        '<td class="' + (better1 ? 'c-pos fw-medium' : '') + '">' + fmtStat(v1, sr.suffix) + (better1 && Math.abs(v1 - v2) >= 3 ? ' &#9664;' : '') + '</td>' +
+        '<td class="' + (better2 ? 'c-pos fw-medium' : '') + '">' + fmtStat(v2, sr.suffix) + (better2 && Math.abs(v1 - v2) >= 3 ? ' &#9664;' : '') + '</td>' +
         '<td class="text-meta">' + edge + '</td>' +
         '</tr>';
     }
@@ -423,14 +421,14 @@ function renderCompare(container, d, hands) {
       }
     }
 
-    var h2hHtml = '<div class="p-row"><div class="label">Head-to-Head Record</div>';
+    var h2hHtml = '<div class="mt-16"><div class="eyebrow c-dim mb-8">Head-to-Head Record</div>';
     if (sharedHands.length === 0) {
       h2hHtml += '<div class="text-body">No shared hands found between these players.</div>';
     } else {
       var p1WinPct = Math.round(p1Wins / sharedHands.length * 100);
-      h2hHtml += '<div class="text-meta compare-h2h">' +
+      h2hHtml += '<div class="text-meta col gap-4 mb-12">' +
         '<span>' + sharedHands.length + ' shared hands</span>' +
-        '<span class="compare-h2h-record">' + p1Name + ' won ' + p1Wins + ' (' + p1WinPct + '%) · ' + p2Name + ' won ' + p2Wins + '</span>' +
+        '<span>' + p1Name + ' won ' + p1Wins + ' (' + p1WinPct + '%) · ' + p2Name + ' won ' + p2Wins + '</span>' +
         '</div>';
       h2hHtml += '<button class="btn btn-ghost example-hand-btn" id="compare-shared-btn">View ' + sharedHands.length + ' shared hands</button>';
     }
@@ -487,9 +485,9 @@ function renderCompare(container, d, hands) {
 
     var exploitHtml = '';
     if (exploits.length > 0) {
-      exploitHtml = '<div class="p-row"><div class="label">Exploit Tips</div><div class="compare-exploits flex flex-col gap-8">';
+      exploitHtml = '<div class="mt-16"><div class="eyebrow c-dim mb-8">Exploit Tips</div><div class="col gap-8">';
       for (var i = 0; i < exploits.length; i++) {
-        exploitHtml += '<div class="card card-s2 text-meta compare-exploit-item">' + exploits[i] + '</div>';
+        exploitHtml += '<div class="card card-s2 text-meta">' + exploits[i] + '</div>';
       }
       exploitHtml += '</div></div>';
     }
@@ -498,10 +496,10 @@ function renderCompare(container, d, hands) {
     if (s1.hands < 10 || s2.hands < 10) {
       var lowName = s1.hands < 10 ? p1Name : p2Name;
       var lowCount = s1.hands < 10 ? s1.hands : s2.hands;
-      warnHtml = '<div class="p-row"><div class="box ins"><div class="ins-badge a"><div class="dot"></div><div class="ins-word">Warning</div></div><div class="ins-title">Small Sample</div><div class="text-body ins-text">' + lowName + ' only has ' + lowCount + ' hands. Stats may be unreliable until 20+ hands are available.</div></div></div>';
+      warnHtml = ins('a', 'Small Sample', lowName + ' only has ' + lowCount + ' hands. Stats may be unreliable until 20+ hands are available.');
     }
 
-    body.innerHTML = warnHtml + '<div class="p-row">' + tableHtml + '</div>' + h2hHtml + exploitHtml;
+    body.innerHTML = warnHtml + '<div class="mt-16 overflow-x">' + tableHtml + '</div>' + h2hHtml + exploitHtml;
 
     if (sharedHands.length > 0) {
       var sharedBtn = container.querySelector('#compare-shared-btn');

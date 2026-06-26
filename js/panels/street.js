@@ -7,7 +7,7 @@ function renderStreet(container, d, hands) {
   var streets = STREETS;
   var maxSeen = d.ss.Preflop.seen || 1;
 
-  mountTemplate(container, 'street');
+  mountPanel(container, 'street', { title: 'Streets', desc: 'Action breakdown by preflop, flop, turn, and river.' });
   mountFindings(container, 'Street', d, hands, 'Street-by-street action looks balanced for now.');
 
   setSlot(container, 'seenBars', streets.map(function(s) {

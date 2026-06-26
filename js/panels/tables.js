@@ -28,9 +28,9 @@ function renderTables(container, hands, allHands, excludedTables, onRerender) {
   filterEl.value = prevVal;
 
   if (Object.keys(allTableGroups).length <= 1) {
-    container.innerHTML = '<div class="panel-title">Tables</div>' +
-      '<div class="text-body panel-desc">Compare stats across different stakes.</div>' +
-      '<div class="box panel-verdict">All hands are from a single table. Play across multiple tables to see comparisons.</div>';
+    container.innerHTML = '<div class="title title-lg c-gold">Tables</div>' +
+      '<div class="text-body">Compare stats across different stakes.</div>' +
+      '<div class="box lead">All hands are from a single table. Play across multiple tables to see comparisons.</div>';
     return;
   }
 
@@ -55,7 +55,7 @@ function renderTables(container, hands, allHands, excludedTables, onRerender) {
   }
   var maxHands = Math.max.apply(null, tableRows.map(function(r) { return r.n; }).concat([1]));
 
-  mountTemplate(container, 'tables');
+  mountPanel(container, 'tables', { title: 'Tables', desc: 'Compare stats across different stakes.' });
 
   var sectionInput = (allHands && allHands.length) ? allHands : hands;
   // Reuse the session-stable overall analysis so the insight pass hits the
@@ -72,8 +72,8 @@ function renderTables(container, hands, allHands, excludedTables, onRerender) {
     var r = tableRows[ri];
     var barW = Math.round(r.n / maxHands * 100);
     var isExcluded = excludedTables.has(String(r.tid));
-    rowsHtml += '<tr' + (isExcluded ? ' class="excluded-row"' : '') + '><td>' + r.label + '</td><td class="text-dim blinds-cell">' + r.blinds + '</td><td>' + r.n + '</td>';
-    rowsHtml += '<td style="width:80px;"><span class="tbl-spark" style="width:' + barW + '%;background:var(--gold2);"></span></td>';
+    rowsHtml += '<tr' + (isExcluded ? ' class="excluded"' : '') + '><td>' + r.label + '</td><td class="c-dim cell-sm">' + r.blinds + '</td><td>' + r.n + '</td>';
+    rowsHtml += '<td style="width:80px;"><span class="spark" style="width:' + barW + '%;background:var(--gold2);"></span></td>';
     rowsHtml += '<td class="' + wrCls(r.wr) + '">' + (r.wr !== null ? r.wr + '%' : '-') + '</td>';
     rowsHtml += '<td class="' + pnlCls(r.net) + '">' + fmtPnl(r.net) + '</td>';
     rowsHtml += '<td>' + (r.vpipP !== null ? r.vpipP + '%' : '-') + '</td>';
@@ -81,7 +81,7 @@ function renderTables(container, hands, allHands, excludedTables, onRerender) {
     var tblAvgPotDisp = r.tid !== 'unknown' && TABLE_META[r.tid]
       ? fmtBB(r.avgPot, TABLE_META[r.tid].bb)
       : fmt(r.avgPot);
-    rowsHtml += '<td class="text-dim">' + (r.avgPot > 0 ? tblAvgPotDisp : '-') + '</td>';
+    rowsHtml += '<td class="c-dim">' + (r.avgPot > 0 ? tblAvgPotDisp : '-') + '</td>';
     rowsHtml += '<td><button class="btn btn-ghost exclude-btn exclude-table-btn" data-tid="' + r.tid + '">' + (isExcluded ? 'Include' : 'Exclude') + '</button></td></tr>';
   }
   setSlot(container, 'rows', rowsHtml);

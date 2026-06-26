@@ -1,27 +1,23 @@
-<div class="panel-title">Betting</div>
-<div class="text-body panel-desc">How you size your bets and choose your actions.</div>
-<div data-slot="verdict"></div>
-<div class="p-row" data-slot="findings" hidden></div>
-<div class="p-row" data-slot="miniRow"></div>
-<div class="p-row">
-  <div class="label sec-subtitle">Action split</div>
-  <div class="stack-bar flex" data-slot="actionSplitBar"></div>
-  <div class="flex flex-wrap gap-14 mt-8" data-slot="actionSplitLabels"></div>
+<div data-slot="miniRow"></div>
+<div>
+  <div class="eyebrow c-dim mb-8">Action split</div>
+  <div class="bar-stack" data-slot="actionSplitBar"></div>
+  <div class="row wrap gap-14 mt-8" data-slot="actionSplitLabels"></div>
 </div>
-<div class="p-row">
-  <div class="label sec-subtitle mt-0">Situational stats</div>
-  <div class="bar-group" data-slot="sitStats"></div>
+<div>
+  <div class="eyebrow c-dim mb-8">Situational stats</div>
+  <div class="col gap-12" data-slot="sitStats"></div>
 </div>
-<div class="p-row">
-  <div class="label sec-subtitle mt-0">Bet Sizing</div>
-  <div class="grid-2 two-col">
+<div>
+  <div class="eyebrow c-dim mb-8">Bet Sizing</div>
+  <div class="cols-2 gap-32">
     <div>
-      <div class="label sec-subtitle">Average bet size by street</div>
-      <div class="bar-group" data-slot="avgBetBars"></div>
+      <div class="eyebrow c-dim mb-8">Average bet size by street</div>
+      <div class="col gap-12" data-slot="avgBetBars"></div>
     </div>
     <div>
-      <div class="label sec-subtitle">Bet frequency (when you had the option)</div>
-      <div class="bar-group" data-slot="betFreqBars"></div>
+      <div class="eyebrow c-dim mb-8">Bet frequency (when you had the option)</div>
+      <div class="col gap-12" data-slot="betFreqBars"></div>
     </div>
   </div>
 </div>

@@ -42,9 +42,9 @@ function renderTrends(container, hands, meta, overallData) {
 
   var sorted = hands.slice().sort(function(a, b) { return (a.timestamp || 0) - (b.timestamp || 0); });
   if (sorted.length < 5) {
-    container.innerHTML = '<div class="panel-title">Trends</div>' +
-      '<div class="text-body panel-desc">Session-over-session charts for win rate, VPIP, and P&L.</div>' +
-      '<div class="box panel-verdict">Need at least 5 hands to show trends. Keep playing and tracking.</div>';
+    mountPanel(container, 'trends', { title: 'Trends', desc: 'Session-over-session charts for win rate, VPIP, and P&L.' });
+    var vSlot = container.querySelector('[data-slot="verdict"]');
+    if (vSlot) vSlot.innerHTML = '<div class="box lead">Need at least 5 hands to show trends. Keep playing and tracking.</div>';
     return;
   }
   var sessions = [];
@@ -103,7 +103,7 @@ function renderTrends(container, hands, meta, overallData) {
     { id: 'trend-pnl', title: 'Cumulative Net P&L (Cash Only)', key: 'netPnl', color: greenColor, suffix: '', baseline: 0 },
   ];
 
-  mountTemplate(container, 'trends');
+  mountPanel(container, 'trends', { title: 'Trends', desc: 'Session-over-session charts for win rate, VPIP, and P&L.' });
 
   if (typeof Sections !== 'undefined' && typeof Sections.evaluateSections === 'function') {
     // overallData is cached upstream; reuse it to avoid a second full-pass analyse.
@@ -116,8 +116,8 @@ function renderTrends(container, hands, meta, overallData) {
     var cfg = chartConfigs[ci];
     var vals = points.map(function(p) { return p[cfg.key]; }).filter(function(v) { return v !== null; });
     if (vals.length < 2) continue;
-    chartsHtml += '<div><div class="label sec-subtitle mt-0">' + cfg.title + '</div>' +
-      '<div class="chart-wrap-full"><canvas id="' + cfg.id + '"></canvas></div></div>';
+    chartsHtml += '<div><div class="eyebrow c-dim mb-8">' + cfg.title + '</div>' +
+      '<div class="chart-full"><canvas id="' + cfg.id + '"></canvas></div></div>';
   }
   setSlot(container, 'charts', chartsHtml);
 
@@ -133,7 +133,7 @@ function renderTrends(container, hands, meta, overallData) {
   var rowsHtml = '';
   for (var pi = points.length - 1; pi >= 0; pi--) {
     var pt = points[pi];
-    var wrCls2 = pt.sessionWr === null ? 'val-dim' : pnlCls(pt.sessionWr - 50);
+    var wrCls2 = pt.sessionWr === null ? 'c-muted' : pnlCls(pt.sessionWr - 50);
     rowsHtml += '<tr><td>' + pt.label + '</td><td>' + pt.hands + '</td>' +
       '<td class="' + wrCls2 + '">' + (pt.sessionWr !== null ? pt.sessionWr + '%' : '-') + '</td>' +
       '<td>' + (pt.wr !== null ? pt.wr + '%' : '-') + '</td></tr>';

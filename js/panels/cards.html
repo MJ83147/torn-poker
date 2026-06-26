@@ -1,28 +1,20 @@
-<div class="panel-title">Cards</div>
-<div class="text-body panel-desc">Win rates by hand type: pairs, broadway, suited connectors, and more.</div>
-<div data-slot="verdict"></div>
-<div class="p-row" data-slot="findings" hidden></div>
-<div class="p-row">
-  <div class="flex flex-wrap gap-14 mt-10 mb-24" data-tour="ht-legend">
-    <div class="ht-leg-item"><div class="leg-sw leg-sw-won"></div>Won</div>
-    <div class="ht-leg-item"><div class="leg-sw leg-sw-played"></div>Played, not won</div>
-    <div class="ht-leg-item"><div class="leg-sw leg-sw-unplayed"></div>Dealt, not played</div>
-  </div>
-  <div data-fill="bars">
-    <template data-row>
-      <div class="ht-stack-item">
-        <div class="flex-between ht-stack-header">
-          <span class="text-meta ht-stack-name"></span>
-          <span class="text-meta ht-stack-meta"></span>
-        </div>
-        <div class="ht-stack-track">
-          <div class="ht-stack-inner flex w-100">
-            <div class="ht-seg-won"></div>
-            <div class="ht-seg-played"></div>
-            <div class="ht-seg-unplayed"></div>
-          </div>
-        </div>
+<div class="legend mt-10 mb-24" data-tour="ht-legend">
+  <div class="legend-item"><div class="swatch bg-pos"></div>Won</div>
+  <div class="legend-item"><div class="swatch bg-warn"></div>Played, not won</div>
+  <div class="legend-item"><div class="swatch bg-muted"></div>Dealt, not played</div>
+</div>
+<div data-fill="bars" class="col gap-16">
+  <template data-row>
+    <div class="col gap-6">
+      <div class="row between">
+        <span class="text-meta" data-name></span>
+        <span class="text-meta" data-meta></span>
       </div>
-    </template>
-  </div>
+      <div class="bar-stack" data-track>
+        <div class="bar-seg bg-pos" data-seg-won></div>
+        <div class="bar-seg bg-warn" data-seg-played></div>
+        <div class="bar-seg bg-muted" data-seg-unplayed></div>
+      </div>
+    </div>
+  </template>
 </div>

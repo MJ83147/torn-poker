@@ -154,13 +154,12 @@ function renderAllIn(container, d, hands) {
   }
 
   if (!_allinHands.length) {
-    container.innerHTML = '<div class="panel-title">All-In EV</div>' +
-      '<div class="text-body panel-desc">Tracks every all-in showdown to measure luck vs skill.</div>' +
-      '<div class="box panel-verdict">No all-in showdown hands found yet. When you go all-in and both players show cards, those hands appear here with equity calculations.</div>';
+    mountPanel(container, 'allin', { title: 'All-In EV', desc: 'Compares actual results vs expected value at all-in showdowns to measure variance.' });
+    setSlot(container, 'verdict', '<div class="box lead">No all-in showdown hands found yet. When you go all-in and both players show cards, those hands appear here with equity calculations.</div>');
     return;
   }
 
-  mountTemplate(container, 'allin');
+  mountPanel(container, 'allin', { title: 'All-In EV', desc: 'Compares actual results vs expected value at all-in showdowns to measure variance.' });
 
   // Reads d.facedAllin etc, so it works without the Monte Carlo step.
   if (d) mountFindings(container, 'All-In EV', d, hands, 'Not enough all-in spots yet to call out a pattern.');
@@ -170,8 +169,8 @@ function renderAllIn(container, d, hands) {
   var previewHtml = '';
   for (var ti = 0; ti < _allinHands.length; ti++) {
     var ah = _allinHands[ti];
-    var actCls = ah.actualResult >= 0 ? 'val-pos' : 'val-neg';
-    previewHtml += '<tr class="allin-row row-hover" data-allin-idx="' + ti + '">' +
+    var actCls = ah.actualResult >= 0 ? 'c-pos' : 'c-neg';
+    previewHtml += '<tr class="allin-row link" data-allin-idx="' + ti + '">' +
       '<td>' + (ti + 1) + '</td>' +
       '<td class="allin-cards">' + displayCards(ah.heroHole) + '</td>' +
       '<td class="allin-cards">' + ah.opponents.map(function (opp) { return displayCards(opp); }).join('<br>') + '</td>' +
@@ -238,8 +237,8 @@ function showAllInResults(container) {
   var equityWinRate = pct(favouriteCount, allInHands.length);
   var actualWinRate = pct(actualWins, allInHands.length);
 
-  var html = '<div class="panel-title">All-In EV</div>';
-  html += '<div class="text-body panel-desc">Compares actual results vs expected value at all-in showdowns to measure variance.</div>';
+  var html = '<div class="title title-lg c-gold">All-In EV</div>';
+  html += '<div class="text-body mt-4">Compares actual results vs expected value at all-in showdowns to measure variance.</div>';
 
   html += renderMiniRow([
     { l: 'All-In Hands', v: allInHands.length, c: 'text' },
@@ -249,10 +248,10 @@ function showAllInResults(container) {
   ]);
 
   if (cashAllIns.length >= 2) {
-    html += '<div class="p-row"><div class="p-section">';
-    html += '<div class="label mb-8">Cumulative All-In Results vs Expected Value (Cash Hands)</div>';
+    html += '<div>';
+    html += '<div class="eyebrow c-dim mb-8">Cumulative All-In Results vs Expected Value (Cash Hands)</div>';
     html += '<canvas id="allin-ev-chart"></canvas>';
-    html += '</div></div>';
+    html += '</div>';
   }
 
   var _aiN = allInHands.length;
@@ -265,22 +264,22 @@ function showAllInResults(container) {
     variance = 'You\'re frequently all-in as an underdog (' + equityWinRate + '% favourite rate). Check whether the spots are +EV given pot odds, or if tighter selection helps.';
   }
   if (variance) {
-    html += '<div class="box panel-verdict">' + variance + '</div>';
+    html += '<div class="box lead">' + variance + '</div>';
   }
 
-  html += '<div class="p-row"><div class="p-section">';
-  html += '<div class="label mb-8">All-In Hand Details</div>';
+  html += '<div>';
+  html += '<div class="eyebrow c-dim mb-8">All-In Hand Details</div>';
   if (cashAllIns.length < allInHands.length) {
     html += '<div class="card text-micro allin-caveat">Side pots are approximated using total pot. Tournament hands are included in the table but excluded from the cumulative graph.</div>';
   }
-  html += '<div class="allin-table-wrap"><table class="allin-table">';
+  html += '<div class="overflow-x"><table class="table">';
   html += '<thead><tr><th>#</th><th>Hole</th><th>vs</th><th>Board</th><th>Street</th><th>Equity</th><th>Fair Share</th><th>Actual</th><th>EV Diff</th></tr></thead><tbody>';
 
   for (var ti = 0; ti < allInHands.length; ti++) {
     var ah = allInHands[ti];
-    var evCls = ah.evDiff >= 0 ? 'val-pos' : 'val-neg';
-    var actCls = ah.actualResult >= 0 ? 'val-pos' : 'val-neg';
-    html += '<tr class="allin-row row-hover" data-allin-idx="' + ti + '">' +
+    var evCls = ah.evDiff >= 0 ? 'c-pos' : 'c-neg';
+    var actCls = ah.actualResult >= 0 ? 'c-pos' : 'c-neg';
+    html += '<tr class="allin-row link" data-allin-idx="' + ti + '">' +
       '<td>' + (ti + 1) + '</td>' +
       '<td class="allin-cards">' + displayCards(ah.heroHole) + '</td>' +
       '<td class="allin-cards">' + ah.opponents.map(function (opp) { return displayCards(opp); }).join('<br>') + '</td>' +
@@ -292,9 +291,9 @@ function showAllInResults(container) {
       '<td class="' + evCls + '">' + (ah.evDiff >= 0 ? '+' : '') + fmt(Math.round(ah.evDiff)) + '</td>' +
       '</tr>';
   }
-  html += '</tbody></table></div></div></div>';
+  html += '</tbody></table></div></div>';
 
-  container.innerHTML = html;
+  container.innerHTML = '<div class="col gap-32">' + html + '</div>';
 
   container.querySelectorAll('.allin-row').forEach(function (row) {
     row.onclick = function () {

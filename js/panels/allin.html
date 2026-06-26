@@ -1,22 +1,14 @@
-<div class="panel-title">All-In EV</div>
-<div class="text-body panel-desc">Compares actual results vs expected value at all-in showdowns to measure variance.</div>
-<div data-slot="verdict"></div>
-<div class="p-row" data-slot="findings" hidden></div>
-<div class="p-row">
-  <div class="p-section cta-block">
-    <div class="cta-count" data-bind="count"></div>
-    <div class="label mb-16">all-in showdown hands detected</div>
-    <button class="btn btn-ghost example-hand-btn cta-btn-lg" id="allin-run-btn">Run Equity Simulation</button>
-    <div class="label cta-note">Calculates equity for each hand using Monte Carlo simulation</div>
-  </div>
+<div class="box text-center">
+  <div class="title title-xl" data-bind="count"></div>
+  <div class="eyebrow c-dim mb-16">all-in showdown hands detected</div>
+  <button class="btn btn-ghost example-hand-btn" id="allin-run-btn">Run Equity Simulation</button>
+  <div class="text-meta mt-12">Calculates equity for each hand using Monte Carlo simulation</div>
 </div>
-<div class="p-row">
-  <div class="p-section">
-    <div class="label mb-8">Detected All-In Hands</div>
-    <div class="allin-table-wrap"><table class="allin-table">
-      <thead><tr><th>#</th><th>Hole</th><th>vs</th><th>Board</th><th>Street</th><th>Pot</th><th>Result</th></tr></thead>
-      <tbody data-slot="previewRows"></tbody>
-    </table></div>
-  </div>
+<div>
+  <div class="eyebrow c-dim mb-8">Detected All-In Hands</div>
+  <div class="overflow-x"><table class="table">
+    <thead><tr><th>#</th><th>Hole</th><th>vs</th><th>Board</th><th>Street</th><th>Pot</th><th>Result</th></tr></thead>
+    <tbody data-slot="previewRows"></tbody>
+  </table></div>
 </div>
 <div id="allin-results"></div>

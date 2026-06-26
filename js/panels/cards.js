@@ -2,7 +2,7 @@ var CARD_HT_ORDER = ['Pocket Pairs', 'Broadway', 'Ace-Rag', 'Suited Connectors',
 
 function renderCards(container, d, hands) {
   if (!container) return;
-  mountTemplate(container, 'cards');
+  mountPanel(container, 'cards', { title: 'Cards', desc: 'Win rates by hand type: pairs, broadway, suited connectors, and more.' });
   mountFindings(container, 'Cards', d, hands, 'Not enough hands yet to call out a hand-strength leak.');
 
   var htData = CARD_HT_ORDER.filter(function(ht) { return d.htMap[ht]; });
@@ -15,14 +15,14 @@ function renderCards(container, d, hands) {
     var playedNotWonPct = pct(s.played - s.won, s.dealt) || 0;
     var unplayedPct = 100 - wonPct - playedNotWonPct;
     var wrPct = s.played > 0 ? pct(s.won, s.played) : null;
-    var wrCol = wrPct === null ? 'var(--dim)' : wrPct >= 55 ? 'var(--green)' : wrPct <= 38 ? 'var(--red)' : 'var(--amber)';
+    var wrCls = wrPct === null ? 'c-dim' : wrPct >= 55 ? 'c-pos' : wrPct <= 38 ? 'c-neg' : 'c-warn';
 
-    row.querySelector('.ht-stack-name').innerHTML = tipWrap(ht);
-    row.querySelector('.ht-stack-meta').innerHTML = s.dealt + ' dealt · ' + s.played + ' played · ' +
-      '<span style="color:' + wrCol + ';">' + (wrPct !== null ? wrPct + '% win' : '-') + '</span>';
-    row.querySelector('.ht-stack-track').style.width = outerPct + '%';
-    row.querySelector('.ht-seg-won').style.width = wonPct + '%';
-    row.querySelector('.ht-seg-played').style.width = playedNotWonPct + '%';
-    row.querySelector('.ht-seg-unplayed').style.width = unplayedPct + '%';
+    row.querySelector('[data-name]').innerHTML = tipWrap(ht);
+    row.querySelector('[data-meta]').innerHTML = s.dealt + ' dealt · ' + s.played + ' played · ' +
+      '<span class="' + wrCls + '">' + (wrPct !== null ? wrPct + '% win' : '-') + '</span>';
+    row.querySelector('[data-track]').style.width = outerPct + '%';
+    row.querySelector('[data-seg-won]').style.width = wonPct + '%';
+    row.querySelector('[data-seg-played]').style.width = playedNotWonPct + '%';
+    row.querySelector('[data-seg-unplayed]').style.width = unplayedPct + '%';
   });
 }

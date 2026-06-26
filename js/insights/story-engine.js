@@ -170,6 +170,9 @@
   }
 
   var SEV_WORDS = { g: 'Good', r: 'Leak', a: 'Warning', n: 'Note', o: 'Info' };
+  // severity -> css2 colour utilities (text class for the word, bg class for the dot)
+  var SEV_C = { g: 'c-pos', r: 'c-neg', a: 'c-warn', n: 'c-dim', o: 'c-gold' };
+  var SEV_BG = { g: 'bg-pos', r: 'bg-neg', a: 'bg-warn', n: 'bg-dim', o: 'bg-gold' };
 
   var EXAMPLE_LOOKUP = {};
 
@@ -190,7 +193,7 @@
       );
     }
     if (!parts.length) return '';
-    return '<div class="story-examples flex flex-wrap gap-8">' + parts.join('') + '</div>';
+    return '<div class="row wrap gap-8 mt-12">' + parts.join('') + '</div>';
   }
 
   function wireExampleButtons(root) {
@@ -213,20 +216,20 @@
 
   function wireCardToggles(root) {
     if (!root) return;
-    var cards = root.querySelectorAll('.story-card');
+    var cards = root.querySelectorAll('.story');
     for (var i = 0; i < cards.length; i++) {
       (function(card) {
         if (card._wired) return;
         card._wired = true;
-        var head = card.querySelector('.story-card-head');
+        var head = card.querySelector('.story-head');
         if (!head) return;
         head.onclick = function() {
-          card.classList.toggle('is-collapsed');
+          card.classList.toggle('open');
           var id = card.getAttribute('data-story-id');
           if (id) {
             var key = 'story-open:' + id;
-            if (card.classList.contains('is-collapsed')) removeSession(key);
-            else setSession(key, '1');
+            if (card.classList.contains('open')) setSession(key, '1');
+            else removeSession(key);
           }
         };
       })(cards[i]);
@@ -264,7 +267,7 @@
   function renderVerdict(findings, fallback) {
     var text = synthesiseVerdict(findings, fallback);
     if (!text) return '';
-    return '<div class="box panel-verdict">' + escapeHtml(text) + '</div>';
+    return '<div class="box lead">' + escapeHtml(text) + '</div>';
   }
 
   function renderStoryCard(finding) {
@@ -276,22 +279,24 @@
     var teaser = buildTeaser(finding);
 
     var isOpen = storyId ? getSession('story-open:' + storyId, null) === '1' : false;
-    var classes = 'box ins story-card story-card-' + sev + (isOpen ? '' : ' is-collapsed');
+    var wordCls = SEV_C[sev] || 'c-dim';
+    var dotCls = SEV_BG[sev] || 'bg-dim';
+    var classes = 'box story' + (isOpen ? ' open' : '');
 
     var html = '<div class="' + classes + '" data-story-id="' + escapeHtml(storyId) + '">';
-    html += '<div class="story-card-head">';
-    html += '<div class="ins-badge ' + sev + '"><div class="dot"></div><div class="ins-word">' + sevWord + '</div></div>';
-    html += '<div class="ins-title">' + name + '</div>';
-    if (teaser) html += '<div class="text-body story-teaser">' + escapeHtml(teaser) + '</div>';
-    html += '<div class="story-card-chev">&#9662;</div>';
+    html += '<div class="story-head">';
+    html += '<div class="insight-badge"><span class="dot ' + dotCls + '"></span><span class="' + wordCls + '">' + sevWord + '</span></div>';
+    html += '<div class="insight-title">' + name + '</div>';
+    if (teaser) html += '<div class="story-teaser">' + escapeHtml(teaser) + '</div>';
+    html += '<div class="story-chevron">&#9662;</div>';
     html += '</div>';
 
     html += '<div class="story-body">';
     if (finding.openingText) {
-      html += '<div class="text-body ins-text">' + escapeHtml(finding.openingText) + '</div>';
+      html += '<div class="insight-body">' + escapeHtml(finding.openingText) + '</div>';
     }
     if (finding.branchTexts && finding.branchTexts.length) {
-      html += '<ul class="text-body story-branches">';
+      html += '<ul class="story-branches c-dim">';
       for (var i = 0; i < finding.branchTexts.length; i++) {
         html += '<li>' + escapeHtml(finding.branchTexts[i]) + '</li>';
       }
@@ -301,7 +306,7 @@
       html += '<div class="story-impact"><span class="story-tag">Impact</span> ' + escapeHtml(finding.impactText) + '</div>';
     }
     if (finding.soWhatText) {
-      html += '<div class="text-body story-sowhat"><span class="story-tag">So what</span> ' + escapeHtml(finding.soWhatText) + '</div>';
+      html += '<div class="story-sowhat"><span class="story-tag">So what</span> ' + escapeHtml(finding.soWhatText) + '</div>';
     }
     html += renderExampleButtons(finding);
     html += '</div>';
@@ -314,9 +319,9 @@
     if (!findings || !findings.length) return '';
     var parts = [];
     for (var i = 0; i < findings.length; i++) parts.push(renderStoryCard(findings[i]));
-    var html = '<div class="story-grid">' + parts.join('') + '</div>';
+    var html = '<div class="cols-2 gap-20" data-findings>' + parts.join('') + '</div>';
     setTimeout(function() {
-      var nodes = document.querySelectorAll('.story-grid');
+      var nodes = document.querySelectorAll('[data-findings]');
       for (var i = 0; i < nodes.length; i++) {
         wireExampleButtons(nodes[i]);
         wireCardToggles(nodes[i]);

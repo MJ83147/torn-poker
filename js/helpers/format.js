@@ -87,12 +87,12 @@ function fmtPct(v) {
 }
 
 function pnlCls(val) {
-  return val >= 0 ? 'val-pos' : 'val-neg';
+  return val >= 0 ? 'c-pos' : 'c-neg';
 }
 
 // Unscoped P&L color class for values outside .tbl (e.g. value blocks).
 function pnlValCls(val) {
-  return val >= 0 ? 'val-pos' : 'val-neg';
+  return val >= 0 ? 'c-pos' : 'c-neg';
 }
 
 function pnlColor(val) {

@@ -29,9 +29,9 @@ function renderMyGame(container, d, hands) {
     typeDesc = (typeof styleDescription === 'function') ? styleDescription(typeLabel) : '';
   }
 
-  html += '<div class="profile-row">';
+  html += '<div class="profile-row row wrap">';
   html += '<div>';
-  html += '<div class="label mb-12">MY GAME</div>';
+  html += '<div class="eyebrow c-dim mb-12">MY GAME</div>';
   html += '<div class="profile-name">' + playerName + '</div>';
   html += '<div class="text-body profile-meta">';
   if (exportDate) html += exportDate + ' &middot; ';
@@ -40,7 +40,7 @@ function renderMyGame(container, d, hands) {
   html += '</div>';
   if (typeLabel) {
     html += '<div class="profile-type-block">';
-    html += '<div class="label mb-12">PLAYER TYPE</div>';
+    html += '<div class="eyebrow c-dim mb-12">PLAYER TYPE</div>';
     html += '<div class="profile-type-name">' + typeLabel + '</div>';
     html += '<div class="text-body profile-type-desc">' + typeDesc + '</div>';
     html += '</div>';
@@ -81,7 +81,7 @@ function renderMyGame(container, d, hands) {
         })
       : [];
 
-    html += '<div class="label sec-subtitle mt-20">Work On Next</div>';
+    html += '<div class="eyebrow c-dim mb-8 mt-20">Work On Next</div>';
     var workOn = null;
     var _workAggFloor = _afBandMG ? _afBandMG.tight - 3 : 15;
     var _workLimpCeil = _domSeatsMG && _domSeatsMG <= 2 ? 70 : _domSeatsMG && _domSeatsMG <= 3 ? 45 : 22;
@@ -103,15 +103,15 @@ function renderMyGame(container, d, hands) {
     if (!workOn && allLeaks.length) workOn = { sev: allLeaks[0].severity, label: allLeaks[0].name, desc: '', action: 'Focus on this pattern in your next session and track whether the stat improves.' };
 
     if (workOn) {
-      html += '<div class="box work-on-block work-on-' + workOn.sev + '">';
+      html += '<div class="box work-on-' + workOn.sev + '">';
       html += '<div class="work-on-title">' + workOn.label + '</div>';
-      if (workOn.desc) html += '<div class="text-body work-on-desc">' + workOn.desc + '</div>';
-      html += '<div class="text-body work-on-action">' + workOn.action + '</div>';
+      if (workOn.desc) html += '<div class="text-body mb-8">' + workOn.desc + '</div>';
+      html += '<div class="text-body">' + workOn.action + '</div>';
       html += '</div>';
     } else {
-      html += '<div class="box work-on-block work-on-g">';
+      html += '<div class="box work-on-g">';
       html += '<div class="work-on-title">Solid game</div>';
-      html += '<div class="text-body work-on-desc">No major leaks detected from ' + d.n + ' hands. Keep playing to refine the picture.</div>';
+      html += '<div class="text-body">No major leaks detected from ' + d.n + ' hands. Keep playing to refine the picture.</div>';
       html += '</div>';
     }
 
@@ -119,7 +119,7 @@ function renderMyGame(container, d, hands) {
 
   html += renderTableDynamicsReference(hands, d);
 
-  mountTemplate(container, 'mygame');
+  mountPanel(container, 'mygame', { title: 'My Game', desc: 'Your scouting report: player type, the one leak to work on next, and how your play stacks up against target benchmarks by table size and flop.' });
   setSlot(container, 'body', html);
 
   var smHost = container.querySelector('#mygame-stylemap');
@@ -138,22 +138,22 @@ function _parsePctRange(s) {
 function _vsRow(label, actualPct, actualDenom, targetText) {
   var rng = _parsePctRange(targetText);
   var actualStr = (actualPct == null) ? '-' : actualPct + '%';
-  var sampleStr = actualDenom != null ? ' <span class="label">(' + actualDenom + ' spots)</span>' : '';
+  var sampleStr = actualDenom != null ? ' <span class="c-dim">(' + actualDenom + ' spots)</span>' : '';
   var v = rng ? bandVerdict(actualPct, rng[0], rng[1]) : { cls: 'v-na', label: '' };
-  var labelHtml = label ? '<div class="dynamics-vs-stat label">' + label + '</div>' : '';
+  var labelHtml = label ? '<div class="dynamics-vs-stat eyebrow c-dim">' + label + '</div>' : '';
   return '<div class="dynamics-vs ' + v.cls + '">' +
     labelHtml +
-    '<div class="flex-between text-meta dynamics-vs-top"><span>You: <strong>' + actualStr + '</strong>' + sampleStr + '</span>' +
-    '<span class="label">Target: ' + targetText + '</span></div>' +
-    (v.label ? '<div class="label dynamics-vs-verdict">' + v.label + '</div>' : '') +
+    '<div class="row between text-meta dynamics-vs-top"><span>You: <strong>' + actualStr + '</strong>' + sampleStr + '</span>' +
+    '<span class="c-dim">Target: ' + targetText + '</span></div>' +
+    (v.label ? '<div class="eyebrow dynamics-vs-verdict">' + v.label + '</div>' : '') +
     '</div>';
 }
 
 // Targets must come from matrixTarget so the user's style offset (TAG/LAG/Nit/etc)
 // is applied — reading SEAT_MATRIX / FLOP_MATRIX directly would skip the offset.
 function renderTableDynamicsReference(hands, d) {
-  var h = '<div class="label sec-subtitle mt-20">Table Dynamics: You vs Target</div>';
-  h += '<div class="text-body mb-16">Your actual play at each table size and flop multiplicity, compared to the recommended benchmarks for your target style. <span class="v-ok">Green = on target</span>, <span class="v-low">amber = too low / too tight</span>, <span class="v-high">red = too high / too loose</span>.</div>';
+  var h = '<div class="eyebrow c-dim mb-8 mt-20">Table Dynamics: You vs Target</div>';
+  h += '<div class="text-body mb-16">Your actual play at each table size and flop multiplicity, compared to the recommended benchmarks for your target style. <span class="c-pos">Green = on target</span>, <span class="c-warn">amber = too low / too tight</span>, <span class="c-neg">red = too high / too loose</span>.</div>';
 
   var styleKey = (typeof getUserStyle === 'function') ? getUserStyle() : 'TAG';
   var seatKeys = Object.keys(SEAT_MATRIX).map(Number).sort(function(a, b) { return a - b; });
@@ -171,8 +171,8 @@ function renderTableDynamicsReference(hands, d) {
     9: 'Full-ring 9-max. Very disciplined early position: JJ+, AKs/AKo, AQs only from UTG. Exploit weak limps and small opens from the blinds when folded to.'
   };
 
-  h += '<div class="label sec-subtitle mt-12">By Table Size</div>';
-  h += '<div class="grid-auto dynamics-cards">';
+  h += '<div class="eyebrow c-dim mb-8 mt-12">By Table Size</div>';
+  h += '<div class="cols-auto gap-16 dynamics-cards">';
   for (var si = 0; si < seatKeys.length; si++) {
     var seats = seatKeys[si];
     var entry = SEAT_MATRIX[seats];
@@ -182,15 +182,15 @@ function renderTableDynamicsReference(hands, d) {
     var nHands = subD ? subD.n : 0;
 
     h += '<div class="card dynamics-card">';
-    h += '<div class="gold-heading dynamics-card-head">' + seats + '-handed <span class="label">(' + nHands + ' hands)</span></div>';
+    h += '<div class="c-gold fw-semibold dynamics-card-head">' + seats + '-handed <span class="c-dim">(' + nHands + ' hands)</span></div>';
     if (!nHands) {
-      h += '<div class="dynamics-card-note label">No hands at this table size yet.</div>';
+      h += '<div class="dynamics-card-note c-dim">No hands at this table size yet.</div>';
       h += '</div>';
       continue;
     }
 
-    h += '<div class="label gold dynamics-zone-head">Your play: VPIP by position</div>';
-    h += '<table class="tbl dynamics-pos-tbl"><thead><tr><th>Pos</th><th>Your VPIP</th><th>Target</th><th>Hands</th></tr></thead><tbody>';
+    h += '<div class="eyebrow c-gold dynamics-zone-head">Your play: VPIP by position</div>';
+    h += '<table class="table dynamics-pos-tbl"><thead><tr><th>Pos</th><th>Your VPIP</th><th>Target</th><th>Hands</th></tr></thead><tbody>';
     for (var pi = 0; pi < entry.positions.length; pi++) {
       var p = entry.positions[pi];
       if (!entry.guideByPos[p]) continue;
@@ -198,20 +198,20 @@ function renderTableDynamicsReference(hands, d) {
       var actPct = (pm && pm.hands > 0) ? pct(pm.vpip, pm.hands) : null;
       var band = matrixTarget('vpip', p, seats, styleKey);
       var cls = band ? bandVerdict(actPct, Math.round(band.tight), Math.round(band.loose)).cls : 'v-na';
-      h += '<tr class="' + cls + '"><td>' + p + '</td><td>' + (actPct != null ? actPct + '%' : '-') + '</td><td class="label">' + fmtBandRange(band) + '</td><td class="label">' + (pm ? pm.hands : 0) + '</td></tr>';
+      h += '<tr class="' + cls + '"><td>' + p + '</td><td>' + (actPct != null ? actPct + '%' : '-') + '</td><td class="c-dim">' + fmtBandRange(band) + '</td><td class="c-dim">' + (pm ? pm.hands : 0) + '</td></tr>';
     }
     h += '</tbody></table>';
 
     if (seatCoaching[seats]) {
-      h += '<div class="label gold dynamics-zone-head dynamics-coaching-head">Coaching</div>';
+      h += '<div class="eyebrow c-gold dynamics-zone-head dynamics-coaching-head">Coaching</div>';
       h += '<div class="text-body dynamics-coaching">' + seatCoaching[seats] + '</div>';
     }
     h += '</div>';
   }
   h += '</div>';
 
-  h += '<div class="label sec-subtitle mt-20">By Flop Players</div>';
-  h += '<div class="grid-auto dynamics-cards">';
+  h += '<div class="eyebrow c-dim mb-8 mt-20">By Flop Players</div>';
+  h += '<div class="cols-auto gap-16 dynamics-cards">';
   var flopKeys = ['HU', '3-way', 'multiway'];
   var flopLabels = { HU: 'Heads-up flop', '3-way': '3-way flop', multiway: 'Multiway flop (4+)' };
   var flopCbetMod = { HU: 5, '3-way': 0, multiway: -10 };
@@ -225,14 +225,14 @@ function renderTableDynamicsReference(hands, d) {
     var nF = subF ? subF.n : 0;
 
     h += '<div class="card dynamics-card">';
-    h += '<div class="gold-heading dynamics-card-head">' + flopLabels[bk] + ' <span class="label">(' + nF + ' hands)</span></div>';
+    h += '<div class="c-gold fw-semibold dynamics-card-head">' + flopLabels[bk] + ' <span class="c-dim">(' + nF + ' hands)</span></div>';
     if (!nF) {
-      h += '<div class="dynamics-card-note label">No flops with this many players yet.</div>';
+      h += '<div class="dynamics-card-note c-dim">No flops with this many players yet.</div>';
       h += '</div>';
       continue;
     }
 
-    h += '<div class="label gold dynamics-zone-head">Your play</div>';
+    h += '<div class="eyebrow c-gold dynamics-zone-head">Your play</div>';
     var cbetActual = subF.cbetOpps > 0 ? pct(subF.cbetDone, subF.cbetOpps) : null;
     var cbetSeatBand = matrixTarget('cbet', domPos, domSeats, styleKey);
     var cbetMod = flopCbetMod[bk] || 0;
@@ -243,10 +243,10 @@ function renderTableDynamicsReference(hands, d) {
     } : null;
     h += _vsRow('C-bet', cbetActual, subF.cbetOpps, fmtBandRange(cbetBand));
 
-    h += '<div class="label gold dynamics-zone-head dynamics-coaching-head">Coaching</div>';
+    h += '<div class="eyebrow c-gold dynamics-zone-head dynamics-coaching-head">Coaching</div>';
     h += '<div class="text-body dynamics-coaching">' + fe.notes + '</div>';
-    h += '<div class="text-meta dynamics-card-kv"><span>Bet sizing</span><span>' + fe.cbetSizing + '</span></div>';
-    h += '<div class="text-meta dynamics-card-kv"><span>Continue with</span><span>' + fe.continueRange + '</span></div>';
+    h += '<div class="text-meta dynamics-card-kv row between"><span>Bet sizing</span><span>' + fe.cbetSizing + '</span></div>';
+    h += '<div class="text-meta dynamics-card-kv row between"><span>Continue with</span><span>' + fe.continueRange + '</span></div>';
     h += '</div>';
   }
   h += '</div>';
@@ -307,15 +307,15 @@ function renderStyleMap(container, d, hands) {
   var html = '';
   html += '<div class="text-body mb-16">' + titleSentence + '</div>';
 
-  html += '<div class="flex flex-col gap-14">';
+  html += '<div class="col gap-14">';
   html += '<div class="style-map-canvas-wrap"><canvas id="style-map-chart"></canvas></div>';
 
-  html += '<div class="text-meta flex flex-wrap gap-16">';
-  html += '<div class="inline-flex items-center gap-6"><span class="dot dot-lg dot-g sm-dot-you"></span><span>You (overall)</span></div>';
-  html += '<div class="inline-flex items-center gap-6"><span class="dot dot-lg dot-cat-pos"></span><span>By position</span></div>';
-  html += '<div class="inline-flex items-center gap-6"><span class="dot dot-lg dot-cat-seat"></span><span>By table size</span></div>';
-  html += '<div class="inline-flex items-center gap-6"><span class="dot dot-lg dot-cat-tag sm-dot-tag"></span><span>TAG reference</span></div>';
-  html += '<div class="inline-flex items-center gap-6"><span class="dot dot-lg dot-gold"></span><span>Target: ' + targetStyleName + '</span></div>';
+  html += '<div class="text-meta row wrap gap-16">';
+  html += '<div class="inline center gap-6"><span class="dot dot-lg bg-pos sm-dot-you"></span><span>You (overall)</span></div>';
+  html += '<div class="inline center gap-6"><span class="dot dot-lg dot-cat-pos"></span><span>By position</span></div>';
+  html += '<div class="inline center gap-6"><span class="dot dot-lg dot-cat-seat"></span><span>By table size</span></div>';
+  html += '<div class="inline center gap-6"><span class="dot dot-lg dot-cat-tag sm-dot-tag"></span><span>TAG reference</span></div>';
+  html += '<div class="inline center gap-6"><span class="dot dot-lg bg-gold"></span><span>Target: ' + targetStyleName + '</span></div>';
   html += '</div>';
   html += '</div>';
 

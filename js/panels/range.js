@@ -538,42 +538,42 @@ function twoGridHtml(chart, filtered, scenarioType, tallies) {
   var colors = chartToColorMap(chart);
   var byKey = heroComboBreakdown(filtered, scenarioType);
   var hasChart = !!(chart && chart.length);
-  return '<div class="grid-2 range-compare">' +
-    '<div class="range-compare-col">' +
-      '<div class="label sec-subtitle mt-0">GTO chart</div>' +
+  return '<div class="cols-2 gap-24">' +
+    '<div>' +
+      '<div class="eyebrow c-dim mb-8">GTO chart</div>' +
       buildGtoGridHtml(chart, tallies) +
     '</div>' +
-    '<div class="range-compare-col">' +
-      '<div class="label sec-subtitle mt-0">Your range</div>' +
+    '<div>' +
+      '<div class="eyebrow c-dim mb-8">Your range</div>' +
       buildHeroGridHtml(byKey, colors, hasChart) +
     '</div>' +
   '</div>';
 }
 
 function gtoLegendHtml() {
-  return '<div class="range-legend flex flex-wrap gap-10">' +
-    '<div class="leg"><div class="leg-sw leg-sw-gto-red"></div>Raise for value</div>' +
-    '<div class="leg"><div class="leg-sw leg-sw-gto-blue"></div>Raise for bluff</div>' +
-    '<div class="leg"><div class="leg-sw leg-sw-gto-green"></div>Call</div>' +
-    '<div class="leg"><div class="leg-sw leg-sw-gto-grey"></div>Fold (you were in this hand)</div>' +
-    '<div class="leg"><div class="leg-sw leg-sw-gto-white"></div>Fold</div>' +
+  return '<div class="legend">' +
+    '<div class="legend-item"><span class="swatch" style="background:var(--gto-red)"></span>Raise for value</div>' +
+    '<div class="legend-item"><span class="swatch" style="background:var(--gto-blue)"></span>Raise for bluff</div>' +
+    '<div class="legend-item"><span class="swatch" style="background:var(--green)"></span>Call</div>' +
+    '<div class="legend-item"><span class="swatch" style="background:var(--gto-grey)"></span>Fold (you were in this hand)</div>' +
+    '<div class="legend-item"><span class="swatch" style="background:var(--gto-white)"></span>Fold</div>' +
     '</div>';
 }
 
 function heroLegendHtml() {
-  return '<div class="range-legend flex flex-wrap gap-10">' +
-    '<div class="leg"><div class="leg-sw leg-sw-gto-green"></div>On target</div>' +
-    '<div class="leg"><div class="leg-sw leg-sw-gto-red"></div>Playing wrong</div>' +
-    '<div class="leg"><div class="rc-unseen leg-sw"></div>Not dealt</div>' +
+  return '<div class="legend">' +
+    '<div class="legend-item"><span class="swatch" style="background:var(--green)"></span>On target</div>' +
+    '<div class="legend-item"><span class="swatch" style="background:var(--gto-red)"></span>Playing wrong</div>' +
+    '<div class="legend-item"><span class="swatch" style="background:var(--gto-empty-bg);border:var(--sp-1) solid var(--border)"></span>Not dealt</div>' +
     '</div>';
 }
 
 function frequencyLegendHtml() {
-  return '<div class="range-legend flex flex-wrap gap-10">' +
-    '<div class="leg"><div class="leg-sw leg-sw-low"></div>Rarely</div>' +
-    '<div class="leg"><div class="leg-sw leg-sw-med"></div>Sometimes</div>' +
-    '<div class="leg"><div class="leg-sw leg-sw-high"></div>Most played</div>' +
-    '<div class="leg"><div class="leg-sw rc-unseen"></div>Not dealt</div>' +
+  return '<div class="legend">' +
+    '<div class="legend-item"><span class="swatch bg-freq-low"></span>Rarely</div>' +
+    '<div class="legend-item"><span class="swatch bg-freq-med"></span>Sometimes</div>' +
+    '<div class="legend-item"><span class="swatch bg-freq-high"></span>Most played</div>' +
+    '<div class="legend-item"><span class="swatch" style="background:var(--gto-empty-bg);border:var(--sp-1) solid var(--border)"></span>Not dealt</div>' +
     '</div>';
 }
 
@@ -588,12 +588,12 @@ function renderRange(container, d, hands) {
 
   function persist() { saveRangeState(state); }
 
-  mountTemplate(container, 'range');
+  mountPanel(container, 'range', { title: 'Range', desc: 'GTO chart on the left, what you actually did on the right.' });
   setSlot(container, 'subtabs', subTabBtn('overall', 'Overall', state) + subTabBtn('spot', 'By Spot', state));
 
   var subtabs = document.getElementById('range-subtabs');
   subtabs.addEventListener('click', function(e) {
-    var btn = e.target.closest('.range-subtab');
+    var btn = e.target.closest('.subtab');
     if (!btn) return;
     var t = btn.getAttribute('data-subtab');
     if (!t || t === state.subTab) return;
@@ -604,7 +604,7 @@ function renderRange(container, d, hands) {
   });
 
   function refreshSubTabButtons() {
-    subtabs.querySelectorAll('.range-subtab').forEach(function(b) {
+    subtabs.querySelectorAll('.subtab').forEach(function(b) {
       b.classList.toggle('active', b.getAttribute('data-subtab') === state.subTab);
     });
   }
@@ -616,18 +616,18 @@ function renderRange(container, d, hands) {
       renderOverall(body);
       return;
     }
-    body.innerHTML = '<div class="range-loading">Loading GTO chart …</div>';
+    body.innerHTML = '<div class="text-meta">Loading GTO chart …</div>';
     getRangeData().then(function(data) {
       renderSpot(body, data);
     }).catch(function() {
-      body.innerHTML = '<div class="text-body range-error">Failed to load GTO chart data. Reload the page to try again.</div>';
+      body.innerHTML = '<div class="text-body c-neg">Failed to load GTO chart data. Reload the page to try again.</div>';
     });
   }
 
   function renderOverall(body) {
     var tallies = tallyByCombo(hands, 'overall');
     body.innerHTML =
-      '<div class="label sec-subtitle mt-0">Your Overall Range</div>' +
+      '<div class="eyebrow c-dim mb-8">Your Overall Range</div>' +
       '<div class="text-meta mb-12">Every combo you have been dealt. Bold border means you played it; faded means you folded.</div>' +
       frequencyLegendHtml() +
       buildOverallGridHtml(tallies) +
@@ -653,18 +653,18 @@ function renderRange(container, d, hands) {
       var sel = s.key === state.scenario ? ' selected' : '';
       return '<option value="' + s.key + '"' + sel + '>' + s.label + '</option>';
     }).join('');
-    var scenarioSelectorHtml = '<select id="range-scenario">' + scenarioOptions + '</select>';
+    var scenarioSelectorHtml = '<select class="select" id="range-scenario">' + scenarioOptions + '</select>';
     var label = entry ? entry.label : '';
     var headerStats = renderHeaderStats(filtered, state.hero + ' · ' + label);
-    var note = chart ? '' : '<div class="range-empty">No GTO reference for ' + state.hero + ' ' + label + '.</div>';
+    var note = chart ? '' : '<div class="text-meta">No GTO reference for ' + state.hero + ' ' + label + '.</div>';
     body.innerHTML =
-      '<div class="range-controls flex flex-wrap items-center gap-10">' +
-      '<label class="label">Position</label>' + heroSelectorHtml +
-      '<label class="label">Scenario</label>' + scenarioSelectorHtml +
+      '<div class="row wrap center gap-10">' +
+      '<label class="eyebrow c-dim">Position</label>' + heroSelectorHtml +
+      '<label class="eyebrow c-dim">Scenario</label>' + scenarioSelectorHtml +
       '</div>' +
       headerStats +
       note +
-      '<div class="grid-2 range-legends"><div class="range-legend-col">' + gtoLegendHtml() + '</div><div class="range-legend-col">' + heroLegendHtml() + '</div></div>' +
+      '<div class="cols-2 gap-16"><div>' + gtoLegendHtml() + '</div><div>' + heroLegendHtml() + '</div></div>' +
       twoGridHtml(chart, filtered, scenarioType, tallies) +
       storiesHtml(
         buildSpotFindings(
@@ -692,9 +692,9 @@ function renderRange(container, d, hands) {
 
   function renderHeaderStats(filtered, label) {
     if (!filtered.length) {
-      return '<div class="text-meta range-stats range-stats-empty">No ' + label + ' hands on record yet.</div>';
+      return '<div class="text-meta">No ' + label + ' hands on record yet.</div>';
     }
-    return '<div class="text-meta range-stats">' + filtered.length + ' ' + label + ' hand' + (filtered.length === 1 ? '' : 's') + ' on record.</div>';
+    return '<div class="text-meta">' + filtered.length + ' ' + label + ' hand' + (filtered.length === 1 ? '' : 's') + ' on record.</div>';
   }
 
   function bindCellClicks(scope, scopedHands) {
@@ -722,7 +722,7 @@ function renderRange(container, d, hands) {
 
 function subTabBtn(id, label, state) {
   var active = state.subTab === id ? ' active' : '';
-  return '<button class="range-subtab' + active + '" data-subtab="' + id + '">' + label + '</button>';
+  return '<button class="subtab' + active + '" data-subtab="' + id + '">' + label + '</button>';
 }
 
 function positionSelector(id, options, current) {
@@ -731,7 +731,7 @@ function positionSelector(id, options, current) {
     var sel = p === current ? ' selected' : '';
     return '<option value="' + p + '"' + sel + '>' + p + '</option>';
   }).join('');
-  return '<select id="' + id + '">' + opts + '</select>';
+  return '<select class="select" id="' + id + '">' + opts + '</select>';
 }
 
 function bindSelector(scope, id, cb) {
@@ -745,26 +745,23 @@ function openHandModal(key, matched) {
   if (existing) existing.remove();
   var overlay = document.createElement('div');
   overlay.id = 'example-hand-modal';
-  overlay.className = 'modal-overlay';
+  overlay.className = 'overlay';
   overlay.onclick = function(ev) { if (ev.target === overlay) closeModal(); };
   var box = document.createElement('div');
-  box.className = 'card card-s1 modal-box';
-  box.style.position = 'relative';
-  box.style.maxHeight = '80vh';
-  box.style.overflowY = 'auto';
-  var summary = '<div class="modal-title">' + key + '</div>' +
+  box.className = 'modal';
+  var summary = '<div class="title c-gold mb-4">' + key + '</div>' +
     '<div class="mb-16">' + matched.length + ' hands</div>';
   var rows = matched.map(function(h, idx) {
     var myActs = getActsSummary(h);
     var res = renderResult(h, 'span', 'saved-res');
     return '<div class="range-hand-row" data-ridx="' + idx + '">' +
-      '<div class="flex-between range-hand-row-top">' +
-      '<div class="flex items-center gap-12">' +
-      '<span class="label range-hand-row-pos">' + (h.position || '?') + '</span>' +
+      '<div class="row between">' +
+      '<div class="row center gap-12">' +
+      '<span class="eyebrow c-dim range-hand-row-pos">' + (h.position || '?') + '</span>' +
       '<span class="range-hand-row-hole">' + (h.hole ? h.hole.join(' ') : '??') + '</span>' +
       '<span class="text-meta range-hand-row-board">' + (h.board && h.board.length ? h.board.join(' ') : '-') + '</span>' +
       '</div>' +
-      '<div class="flex items-center gap-12">' +
+      '<div class="row center gap-12">' +
       '<span class="text-meta range-hand-row-actions">' + myActs + '</span>' +
       res + '</div></div></div>';
   }).join('');

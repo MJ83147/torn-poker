@@ -118,7 +118,7 @@ function renderEquityResults(container, simResult) {
   }
 
   var html = '<div class="card card-s1 eq-sim">';
-  html += '<div class="flex-between eq-sim-header"><span class="label gold eq-sim-title">Equity Simulation</span><span class="text-meta eq-sim-note">' + headerNote + '</span></div>';
+  html += '<div class="row between eq-sim-header"><span class="eyebrow c-gold eq-sim-title">Equity Simulation</span><span class="text-meta eq-sim-note">' + headerNote + '</span></div>';
 
   var curvePoints = [];
 
@@ -131,8 +131,8 @@ function renderEquityResults(container, simResult) {
     curvePoints.push({ street: res.street, equity: res.equity });
 
     html += '<div class="eq-row">';
-    html += '<div class="flex items-center gap-10">';
-    html += '<div class="gold-heading eq-street">' + res.street + '</div>';
+    html += '<div class="row center gap-10">';
+    html += '<div class="c-gold fw-semibold eq-street">' + res.street + '</div>';
     if (res.texture) {
       var texCls = res.texture.wetness === 'wet' ? 'tex-wet' : res.texture.wetness === 'dry' ? 'tex-dry' : 'tex-med';
       html += '<span class="badge board-texture-badge ' + texCls + '">' + res.texture.label + '</span>';
@@ -159,7 +159,7 @@ function renderEquityResults(container, simResult) {
     if (hasBottom) {
       html += '<div class="eq-row-bottom">';
       if (res.madeHand) {
-        html += '<div class="flex flex-wrap items-center gap-6">';
+        html += '<div class="row wrap center gap-6">';
         html += '<span class="badge badge-neutral">' + res.madeHand.label + '</span>';
         if (res.madeHand.draws.length) {
           for (var dri = 0; dri < res.madeHand.draws.length; dri++) {
@@ -198,7 +198,7 @@ function renderEquityResults(container, simResult) {
   if (summary && summary.text) {
     var sumClass = summary.quality === 'good' ? 'val-pos' : summary.quality === 'bad' ? 'val-neg' : 'text-gold';
     html += '<div class="box eq-summary">';
-    html += '<div class="label gold eq-summary-label">Hand Summary</div>';
+    html += '<div class="eyebrow c-gold eq-summary-label">Hand Summary</div>';
     html += '<div class="text-meta eq-summary-text ' + sumClass + '">' + summary.text + '</div>';
     html += '</div>';
   }
@@ -246,7 +246,7 @@ function injectEquityButton(box, hand) {
   if (!hasBoard && !heroAllInPreflop) return;
 
   var btn = document.createElement('button');
-  btn.className = 'example-hand-btn';
+  btn.className = 'btn btn-secondary example-hand-btn';
   btn.id = 'mc-sim-btn';
   btn.textContent = 'Run Equity Simulation';
   slot.appendChild(btn);
