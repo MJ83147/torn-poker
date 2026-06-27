@@ -131,7 +131,7 @@ function renderEquityResults(container, simResult) {
     curvePoints.push({ street: res.street, equity: res.equity });
 
     html += '<div class="eq-row">';
-    html += '<div class="row center gap-10">';
+    html += '<div class="row center gap-8">';
     html += '<div class="c-gold fw-semibold eq-street">' + res.street + '</div>';
     if (res.texture) {
       var texCls = res.texture.wetness === 'wet' ? 'tex-wet' : res.texture.wetness === 'dry' ? 'tex-dry' : 'tex-med';
@@ -155,7 +155,7 @@ function renderEquityResults(container, simResult) {
       html += '<div class="text-meta eq-meta-line">' + metaParts.join(' · ') + '</div>';
     }
 
-    var hasBottom = res.madeHand || res.guidance.text || res.villainProfile;
+    var hasBottom = res.madeHand || res.guidance.text;
     if (hasBottom) {
       html += '<div class="eq-row-bottom">';
       if (res.madeHand) {
@@ -169,9 +169,6 @@ function renderEquityResults(container, simResult) {
         html += '</div>';
       }
       html += '<div class="text-micro eq-detail ' + qualClass + '">' + res.actionDesc + ' ' + res.guidance.text + '</div>';
-      if (res.villainProfile && res.guidance.text.indexOf(res.villainProfile.name) === -1) {
-        html += '<div class="text-micro villain-profile-line">vs ' + res.villainProfile.type + ' (' + res.villainProfile.name + ' \u00b7 VPIP ' + (res.villainProfile.vpip || '?') + '% \u00b7 Fold to raise ' + (res.villainProfile.foldToRaise || '?') + '%)</div>';
-      }
       html += '</div>';
     }
     html += '</div>';

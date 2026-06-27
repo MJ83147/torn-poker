@@ -72,7 +72,7 @@ function renderTables(container, hands, allHands, excludedTables, onRerender) {
     var r = tableRows[ri];
     var barW = Math.round(r.n / maxHands * 100);
     var isExcluded = excludedTables.has(String(r.tid));
-    rowsHtml += '<tr' + (isExcluded ? ' class="excluded"' : '') + '><td>' + r.label + '</td><td class="c-dim cell-sm">' + r.blinds + '</td><td>' + r.n + '</td>';
+    rowsHtml += '<tr class="link' + (isExcluded ? ' excluded' : '') + '" data-table-cell="' + r.tid + '"><td>' + r.label + ' <span class="c-dim cards-row-cue">&#8250;</span></td><td class="c-dim cell-sm">' + r.blinds + '</td><td>' + r.n + '</td>';
     rowsHtml += '<td style="width:80px;"><span class="spark" style="width:' + barW + '%;background:var(--gold2);"></span></td>';
     rowsHtml += '<td class="' + wrCls(r.wr) + '">' + (r.wr !== null ? r.wr + '%' : '-') + '</td>';
     rowsHtml += '<td class="' + pnlCls(r.net) + '">' + fmtPnl(r.net) + '</td>';
@@ -85,6 +85,24 @@ function renderTables(container, hands, allHands, excludedTables, onRerender) {
     rowsHtml += '<td><button class="btn btn-ghost exclude-btn exclude-table-btn" data-tid="' + r.tid + '">' + (isExcluded ? 'Include' : 'Exclude') + '</button></td></tr>';
   }
   setSlot(container, 'rows', rowsHtml);
+
+  container.querySelectorAll('[data-table-cell]').forEach(function(cell) {
+    cell.onclick = function(e) {
+      e.stopPropagation();
+      var tid = cell.getAttribute('data-table-cell');
+      var group = allTableGroups[tid] || allTableGroups[Number(tid)] || [];
+      if (!group.length) return;
+      var recent = group.slice().sort(function(a, b) {
+        return (b.timestamp || 0) - (a.timestamp || 0);
+      }).slice(0, 15);
+      var net = 0;
+      for (var gi = 0; gi < group.length; gi++) net += getHandPnlValue(group[gi]) || 0;
+      var label = tid === 'unknown' ? 'Unknown' : getTableLabel(tid);
+      showExampleHandListModal('Hands at ' + label, recent,
+        'Recent hands at ' + label + '. Net P&L here is ' + fmtPnl(net) + ' across ' + group.length +
+        ' hands. Look for the pattern that sets this table apart from the others.');
+    };
+  });
 
   container.querySelectorAll('.exclude-table-btn').forEach(function(btn) {
     btn.onclick = function(e) {

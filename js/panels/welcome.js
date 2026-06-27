@@ -37,7 +37,7 @@ function renderWelcome(container, d, hands, meta) {
     { tab: 'position', name: 'Position', desc: 'How you perform from each seat at the table' },
     { tab: 'street',   name: 'Streets',  desc: 'Action breakdown by preflop, flop, turn, and river' },
     { tab: 'actions',  name: 'Betting',  desc: 'Action frequencies, bet sizing, and situational stats' },
-    { tab: 'range',    name: 'Range',    desc: 'Full 13x13 hand grid with win rate for every combo' },
+    { tab: 'range',    name: 'Range',    desc: 'Your play and win rate by hand type, plus a 13x13 GTO comparison by spot' },
     { tab: 'tables',   name: 'Tables',   desc: 'Compare stats across different stakes' },
     { tab: 'trends',   name: 'Trends',   desc: 'Session-over-session charts for win rate, VPIP, and P&L' },
     { tab: 'log',      name: 'Hand Log', desc: 'Every hand played, click any row to replay' },
@@ -60,6 +60,7 @@ function renderWelcome(container, d, hands, meta) {
     '</div>' +
     '<div class="cols-2 gap-16 welcome-body">' +
     '<div class="col welcome-toc">' +
+    '<div class="eyebrow c-dim mb-12">The tabs</div>' +
     tabDescs.map(function(t) {
       return '<div class="card card-s1 card-link welcome-toc-row" data-goto="' + t.tab + '">' +
         '<div class="c-gold fw-semibold">' + t.name + '</div>' +
@@ -67,7 +68,7 @@ function renderWelcome(container, d, hands, meta) {
         '</div>';
     }).join('') +
     '</div>' +
-    '<div class="col gap-32">' +
+    '<div class="welcome-aside">' +
     '<div class="text-body welcome-tips">' +
     '<div class="eyebrow c-dim mb-12">Tips</div>' +
     '<div class="carousel row center gap-8">' +

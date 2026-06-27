@@ -740,7 +740,7 @@ function _crRenderSentence(segment, segLabel) {
     var def = _crClauseDefs.find(function(c) { return c.id === clauseId; });
     if (!def) continue;
     var phrase = _crClausePhrase(clauseId, segment);
-    var displayPhrase = phrase || '<span class="sentence-empty">choose ' + def.label.toLowerCase() + '</span>';
+    var displayPhrase = phrase || '<span class="sentence-empty">Select ' + def.label.toLowerCase() + '</span>';
     parts.push(
       '<span class="sentence-token" data-segment="' + segLabel + '" data-clause="' + clauseId + '">' +
       displayPhrase +
@@ -800,15 +800,17 @@ function _crOpenAddClausePopover(targetEl, segLabel) {
       btn.onclick = function() {
         var clauseId = this.getAttribute('data-add-clause');
         segment.clauses.push(clauseId);
+        // Leave the value unset so the clause reads "Select" until the user
+        // picks one. Open the value picker straight away so the next click is
+        // choosing a value, not hunting for where to set it.
         var def = _crClauseDefs.find(function(c) { return c.id === clauseId; });
-        if (def) {
-          segment.values[clauseId] = def.multi
-            ? (def.options[0] ? [def.options[0].value] : [])
-            : (def.options[0] ? def.options[0].value : null);
-        }
+        if (def) segment.values[clauseId] = def.multi ? [] : null;
         _crClosePopover();
         _crSaveState(_crState);
         _crRerender();
+        var host = document.getElementById('p-custom');
+        var tok = host && host.querySelector('.sentence-token[data-segment="' + segLabel + '"][data-clause="' + clauseId + '"]');
+        if (tok) _crOpenClausePopover(tok, segLabel, clauseId);
       };
     });
   });
@@ -1013,9 +1015,18 @@ function _crRenderInto(container) {
   }
   setSlot(container, 'sentence', sentenceHtml);
 
-  // Nothing renders until the user has narrowed the report with a clause.
-  var hasSelection = (_crState.A.clauses && _crState.A.clauses.length > 0) ||
-    (_crState.compare && _crState.B.clauses && _crState.B.clauses.length > 0);
+  // Nothing renders until the user has narrowed the report with a clause that
+  // actually has a value chosen (an unset clause filters nothing, so showing
+  // results for it would just be the whole sample and read as misleading).
+  function _crSegmentHasValue(seg) {
+    if (!seg || !seg.clauses) return false;
+    return seg.clauses.some(function(c) {
+      var v = seg.values[c];
+      return !(v == null || (Array.isArray(v) && !v.length));
+    });
+  }
+  var hasSelection = _crSegmentHasValue(_crState.A) ||
+    (_crState.compare && _crSegmentHasValue(_crState.B));
 
   if (!hasSelection) {
     setSlot(container, 'headline', '<div class="text-body">Add a clause above to build your report.</div>');
@@ -1251,7 +1262,11 @@ function renderCustomReport(container, hands) {
     _crBaseline = _crComputeBaseline(_crHands);
     _crCachedEpoch = epoch;
   }
-  if (!_crState) _crState = _crLoadState();
+  // On a fresh page load the report starts empty: no clauses, no results. We do
+  // NOT auto-restore a prior query into a populated view. In-session building is
+  // still kept (switching tabs and back keeps _crState), but the very first
+  // render of a page load begins from the empty state.
+  if (!_crState) _crState = { compare: false, A: _crDefaultSegment(), B: _crDefaultSegment() };
   // Drop saved clauses that no longer exist (defensive against schema changes).
   ['A', 'B'].forEach(function(seg) {
     if (!_crState[seg]) _crState[seg] = _crDefaultSegment();

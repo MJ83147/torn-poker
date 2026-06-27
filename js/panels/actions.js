@@ -1,3 +1,125 @@
+// Standalone hand predicates for the situational-stats rows, so each stat box
+// can open the hands behind it. These mirror the definitions used in the
+// Streets insight section but are kept local so the panel does not depend on
+// that section's internals.
+function _actPreRaiserContext(h) {
+  // Returns { pfrIsHero, pfrAuthor } or null.
+  if (!h || !h.actions) return null;
+  var acts = parseActions(h.actions);
+  var pfrAuthor = null, pfrIsHero = null;
+  for (var i = 0; i < acts.length; i++) {
+    var a = acts[i];
+    if (a.street === 'Preflop' && a.type === 'raise' && pfrAuthor == null) {
+      pfrAuthor = a.author;
+      pfrIsHero = !!a.isMe;
+      break;
+    }
+  }
+  if (pfrAuthor == null) return null;
+  return { pfrIsHero: pfrIsHero, pfrAuthor: pfrAuthor };
+}
+
+function _actHeroCbet(h) {
+  var ctx = _actPreRaiserContext(h);
+  if (!ctx || !ctx.pfrIsHero) return false;
+  var acts = parseActions(h.actions);
+  for (var i = 0; i < acts.length; i++) {
+    var a = acts[i];
+    if (a.isMe && a.street === 'Flop' && a.type !== 'sb' && a.type !== 'bb') {
+      return a.type === 'bet' || a.type === 'raise';
+    }
+  }
+  return false;
+}
+
+function _actHeroDelayCbet(h) {
+  var ctx = _actPreRaiserContext(h);
+  if (!ctx || !ctx.pfrIsHero) return false;
+  var acts = parseActions(h.actions);
+  var firstFlop = null, firstTurn = null;
+  for (var i = 0; i < acts.length; i++) {
+    var a = acts[i];
+    if (!a.isMe || a.type === 'sb' || a.type === 'bb') continue;
+    if (a.street === 'Flop' && firstFlop === null) firstFlop = a.type;
+    if (a.street === 'Turn' && firstTurn === null) firstTurn = a.type;
+  }
+  if (firstFlop !== 'check' || firstTurn === null) return false;
+  return firstTurn === 'bet' || firstTurn === 'raise';
+}
+
+function _actHeroDonk(h) {
+  var ctx = _actPreRaiserContext(h);
+  if (!ctx || ctx.pfrIsHero !== false) return false;
+  var acts = parseActions(h.actions);
+  for (var i = 0; i < acts.length; i++) {
+    var a = acts[i];
+    if (a.isMe && a.street === 'Flop' && a.type !== 'sb' && a.type !== 'bb') {
+      return a.type === 'bet' || a.type === 'raise';
+    }
+  }
+  return false;
+}
+
+function _actHeroFoldToCbet(h) {
+  var ctx = _actPreRaiserContext(h);
+  if (!ctx || ctx.pfrIsHero !== false) return false;
+  var acts = parseActions(h.actions);
+  var firstFlopBetByPfr = false;
+  for (var i = 0; i < acts.length; i++) {
+    var a = acts[i];
+    if (a.street === 'Flop' && (a.type === 'bet' || a.type === 'raise') && a.author === ctx.pfrAuthor && !firstFlopBetByPfr) {
+      firstFlopBetByPfr = true;
+      continue;
+    }
+    if (firstFlopBetByPfr && a.street === 'Flop' && a.isMe && (a.type === 'fold' || a.type === 'call' || a.type === 'raise')) {
+      return a.type === 'fold';
+    }
+  }
+  return false;
+}
+
+function _actHeroFoldToNbet(h, level) {
+  // level 3 = fold to 3-bet (hero opened, villain reraised, hero folds preflop)
+  // level 4 = fold to 4-bet (hero 3-bet, villain 4-bet, hero folds preflop)
+  if (!h || !h.actions) return false;
+  var acts = parseActions(h.actions);
+  var preRaiseLevel = 0;
+  var heroReachedLevel = false;
+  for (var i = 0; i < acts.length; i++) {
+    var a = acts[i];
+    if (a.street !== 'Preflop') break;
+    if (a.type === 'sb' || a.type === 'bb') continue;
+    if (a.type === 'raise') {
+      preRaiseLevel++;
+      // Hero made the raise that sits one below the level we are testing
+      // (open for 3-bet defence, 3-bet for 4-bet defence).
+      if (a.isMe && preRaiseLevel === level - 1) heroReachedLevel = true;
+    }
+    if (heroReachedLevel && a.isMe && a.type === 'fold' && preRaiseLevel >= level) {
+      return true;
+    }
+  }
+  return false;
+}
+
+var _ACT_SIT_PREDICATES = {
+  'C-Bet': _actHeroCbet,
+  'Delayed C-Bet': _actHeroDelayCbet,
+  'Donk Bet': _actHeroDonk,
+  'Fold to C-Bet': _actHeroFoldToCbet,
+  'Fold to 3-Bet': function(h) { return _actHeroFoldToNbet(h, 3); },
+  'Fold to 4-Bet': function(h) { return _actHeroFoldToNbet(h, 4); }
+};
+
+var _ACT_SIT_NOTES = {
+  'C-Bet': 'Flops where you had the preflop lead and bet. Look at the board texture and how often the bet got through versus got called or raised.',
+  'Delayed C-Bet': 'Turns you bet after checking back the flop as the preflop raiser. The strongest spots have a turn card that improves your range or threatens the caller.',
+  'Donk Bet': 'Flops where you bet into the preflop raiser. Donks usually only profit on textures that miss the raiser entirely.',
+  'Fold to C-Bet': 'Flops where you faced a c-bet and folded. Some are correct; the leak is folding pairs or strong backdoors that should continue at least one street.',
+  'Fold to 3-Bet': 'Opens you gave up on when an opponent 3-bet. Look for the suited broadways and pairs in this list, they are usually defends.',
+  'Fold to 4-Bet': 'Hands where you 3-bet, faced a 4-bet, and folded. Check whether any of these are strong enough to 5-bet jam or call.'
+};
+
 function renderActions(container, d, hands) {
   if (!container) return;
   var streets = STREETS;
@@ -69,15 +191,40 @@ function renderActions(container, d, hands) {
   ];
 
   var sitStatHtml = '';
+  var sitClickable = [];
   for (var si = 0; si < sitStats.length; si++) {
     var s = sitStats[si];
     if (s.opps === 0) continue;
     var p = pct(s.done, s.opps);
     var cls = sitStatColour(s.label, p);
-    var labelHtml = tipWrap(s.label);
-    sitStatHtml += barRow(labelHtml, p || 0, 100, cls, (p !== null ? p + '%' : '-'), s.done + '/' + s.opps + ' spots');
+    var pred = _ACT_SIT_PREDICATES[s.label];
+    var matches = pred ? pickHands(hands, pred, 15) : [];
+    var clickIdx = sitClickable.length;
+    var hasHands = matches.length > 0;
+    var labelHtml = tipWrap(s.label) +
+      (hasHands ? '<span class="c-dim cards-row-cue"> &middot; view hands &#8250;</span>' : '');
+    var rowHtml = barRow(labelHtml, p || 0, 100, cls, (p !== null ? p + '%' : '-'), s.done + '/' + s.opps + ' spots');
+    if (hasHands) {
+      sitStatHtml += '<div class="cards-bar-row" data-sit-idx="' + clickIdx + '">' + rowHtml + '</div>';
+      sitClickable.push({
+        title: s.label + ' hands',
+        hands: matches,
+        note: (_ACT_SIT_NOTES[s.label] || '') +
+          ' This happened in ' + s.done + ' of ' + s.opps + ' spots (' + (p !== null ? p + '%' : '-') + ').'
+      });
+    } else {
+      sitStatHtml += rowHtml;
+    }
   }
   setSlot(container, 'sitStats', sitStatHtml);
+
+  container.querySelectorAll('[data-sit-idx]').forEach(function(row) {
+    row.onclick = function() {
+      var idx = parseInt(row.getAttribute('data-sit-idx'), 10);
+      var entry = sitClickable[idx];
+      if (entry && entry.hands.length) showExampleHandListModal(entry.title, entry.hands, entry.note);
+    };
+  });
 
   var avgBets = {};
   var avgBetsBB = {};

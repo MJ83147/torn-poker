@@ -56,11 +56,11 @@
     var recentPerHand = perHandPnl(dR);
     moves.pnl = moveOf(earlyPerHand, recentPerHand, 2);
 
-    var openingText = 'Across your history you have moved from a ' +
-      Math.round(dE.core.vpipPct || 0) + '% VPIP early on to ' +
-      Math.round(dR.core.vpipPct || 0) + '% in recent hands' +
+    var openingText = 'Comparing your earliest tracked hands with your most recent: VPIP ' +
+      Math.round(dE.core.vpipPct || 0) + '% then, ' +
+      Math.round(dR.core.vpipPct || 0) + '% now' +
       (dE.core.wr != null && dR.core.wr != null
-        ? ', with a win rate going from ' + Math.round(dE.core.wr) + '% to ' + Math.round(dR.core.wr) + '%.'
+        ? ', win rate ' + Math.round(dE.core.wr) + '% then, ' + Math.round(dR.core.wr) + '% now.'
         : '.');
 
     var branchTexts = [];
@@ -76,44 +76,55 @@
     var wrMove = moves.wr;
     var pnlMove = moves.pnl;
 
+    // Render a single metric's early->recent values in its natural units.
+    function metricFromTo(key) {
+      var coreKey = key === 'agg' ? 'agg' : key === 'wr' ? 'wr' : key + 'Pct';
+      var unit = key === 'pnl' ? '' : '%';
+      if (key === 'pnl') {
+        return fmtPnl(earlyPerHand) + ' to ' + fmtPnl(recentPerHand) + ' a hand';
+      }
+      return Math.round(dE.core[coreKey] || 0) + unit + ' to ' + Math.round(dR.core[coreKey] || 0) + unit;
+    }
+
+    // Style metrics only (exclude win rate and P&L, which are results, not inputs).
+    var styleMovers = movers.filter(function(m) { return m.key !== 'wr' && m.key !== 'pnl'; });
     var sameDirCount = { up: 0, down: 0 };
-    for (var mi = 0; mi < movers.length; mi++) {
-      if (movers[mi].key === 'wr' || movers[mi].key === 'pnl') continue;
-      sameDirCount[movers[mi].move.dir]++;
+    for (var mi = 0; mi < styleMovers.length; mi++) {
+      sameDirCount[styleMovers[mi].move.dir]++;
     }
     var driftDir = null;
     if (sameDirCount.up >= 2) driftDir = 'up';
     else if (sameDirCount.down >= 2) driftDir = 'down';
 
     if (driftDir) {
-      var loud = movers.filter(function(m) {
-        return m.key !== 'wr' && m.key !== 'pnl' && m.move.dir === driftDir;
-      })[0];
+      var drifters = styleMovers.filter(function(m) { return m.move.dir === driftDir; });
+      var driftParts = drifters.map(function(m) {
+        return labels[m.key] + ' has gone from ' + metricFromTo(m.key);
+      });
+      var driftSentence = joinList(driftParts) + ' over recent hands, all moving ' + driftDir + ' together.';
+      branchTexts.push(driftSentence.charAt(0).toUpperCase() + driftSentence.slice(1));
+    } else if (styleMovers.length === 1) {
+      var solo = styleMovers[0];
       branchTexts.push(
-        'Multiple parts of your game are moving ' + driftDir + ' together. ' +
-        'The loudest is ' + labels[loud.key] + ', ' +
-        Math.round(dE.core[loud.key === 'pnl' ? 'netPnl' : loud.key === 'wr' ? 'wr' : loud.key === 'agg' ? 'agg' : loud.key + 'Pct'] || 0) +
-        (loud.key === 'pnl' ? '' : '%') +
-        ' to ' +
-        Math.round(dR.core[loud.key === 'pnl' ? 'netPnl' : loud.key === 'wr' ? 'wr' : loud.key === 'agg' ? 'agg' : loud.key + 'Pct'] || 0) +
-        (loud.key === 'pnl' ? '' : '%') + '.'
+        'One metric is shifting while the rest hold steady: your ' + labels[solo.key] +
+        ' has gone from ' + metricFromTo(solo.key) + '.'
       );
-    } else if (movers.filter(function(m) { return m.key !== 'wr' && m.key !== 'pnl'; }).length === 1) {
-      var solo = movers.filter(function(m) { return m.key !== 'wr' && m.key !== 'pnl'; })[0];
-      branchTexts.push(
-        'One metric is shifting while the rest hold steady: ' + labels[solo.key] +
-        ' has moved ' + solo.move.dir + ' by ' + Math.round(solo.move.abs) + ' points.'
-      );
+    } else if (styleMovers.length >= 2) {
+      // Movers in different directions: name each so the card stays specific.
+      var mixedParts = styleMovers.map(function(m) {
+        return labels[m.key] + ' has moved from ' + metricFromTo(m.key);
+      });
+      branchTexts.push('Your ' + joinList(mixedParts) + ' over recent hands.');
     }
 
     if (wrMove.dir === 'up') {
-      branchTexts.push('Your win rate is climbing, up ' + Math.round(wrMove.abs) + ' points from where you started.');
+      branchTexts.push('Your win rate has climbed from ' + metricFromTo('wr') + '.');
     } else if (wrMove.dir === 'down') {
-      branchTexts.push('Your win rate is dropping, down ' + Math.round(wrMove.abs) + ' points from where you started.');
+      branchTexts.push('Your win rate has dropped from ' + metricFromTo('wr') + '.');
     } else if (movers.length === 0) {
       return null;
-    } else {
-      branchTexts.push('Your win rate has held steady, even with the changes underneath.');
+    } else if (styleMovers.length) {
+      branchTexts.push('Your win rate has held at ' + Math.round(dR.core.wr || 0) + '% even with those changes underneath.');
     }
 
     var severity;
@@ -136,8 +147,8 @@
         soWhatText = 'Look at within-session and across-session play next. The cause is somewhere in how you are running sessions.';
       }
     } else if (severity === 'a' && driftDir) {
-      impactText = 'Multiple parts of your game are drifting ' + driftDir + ' without your results moving yet. The win rate has not followed but the early warning is there.';
-      soWhatText = 'Pull back the metric that is drifting most before the win rate catches up. ' + labels[movers[0].key] + ' is the one to watch.';
+      impactText = 'Your style metrics are drifting ' + driftDir + ' while your win rate has not moved yet. The result has not followed, but that is the early warning.';
+      soWhatText = 'Pull the biggest drifter back before the win rate catches up. Your ' + labels[styleMovers[0].key] + ' is the one to watch.';
     } else if (severity === 'g' && direction === 'up') {
       impactText = 'Your game is moving in the right direction. Results are following the changes.';
       soWhatText = 'Whatever you are doing differently is working. Keep playing the same way and resist the urge to mix it up while you are in a winning rhythm.';
@@ -166,6 +177,16 @@
           label: 'Recent winning hands',
           hands: recentWins,
           coachingNote: 'Winning hands from your improving stretch. Whatever you are doing now is paying off. Keep doing it.'
+        });
+      }
+    } else if (severity === 'a' && driftDir) {
+      var recentDrift = pickHands(recent, function(h) { return heroPlayed(h); }, 12);
+      if (recentDrift.length) {
+        examples.push({
+          id: 'trend-recent-drift',
+          label: 'Recent hands you played',
+          hands: recentDrift,
+          coachingNote: 'Hands from your recent stretch where your style is drifting ' + driftDir + '. The win rate has not moved yet, but these are the hands to compare against how you played earlier to spot what changed.'
         });
       }
     }
@@ -378,6 +399,23 @@
         if (longLeakSev !== 'g') {
           var avgShort = shortSess.reduce(function(a, b) { return a + b.len; }, 0) / shortSess.length;
           var avgLong = longSess.reduce(function(a, b) { return a + b.len; }, 0) / longSess.length;
+          var longLeakExamples = null;
+          var longLeakHands = [];
+          for (var lli = 0; lli < longSess.length && longLeakHands.length < 12; lli++) {
+            var lsHands = longSess[lli].hands || [];
+            var lsMid = Math.floor(lsHands.length / 2);
+            for (var lj = lsMid; lj < lsHands.length && longLeakHands.length < 12; lj++) {
+              if (lsHands[lj]) longLeakHands.push(lsHands[lj]);
+            }
+          }
+          if (longLeakHands.length) {
+            longLeakExamples = {
+              id: 'sw-long-session-leak',
+              label: 'Hands from the back half of long sessions',
+              hands: longLeakHands,
+              coachingNote: 'Hands from the second half of your longer sessions. The per-hand return drops the longer you sit, so look here for the looser calls and tired decisions that cost the chips your short sessions earned.'
+            };
+          }
           pillars.push({
             id: 'long-session-leak',
             severity: longLeakSev,
@@ -385,7 +423,7 @@
             branchText: 'Short sessions (around ' + Math.round(avgShort) + ' hands) run at ' +
               fmtPnl(sAgg.perHand) + ' per hand. Long sessions (around ' + Math.round(avgLong) +
               ' hands) run at ' + fmtPnl(lAgg.perHand) + ' per hand. The longer you play, the worse it gets.',
-            examples: null
+            examples: longLeakExamples
           });
         }
       }

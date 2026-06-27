@@ -81,7 +81,7 @@ function renderMyGame(container, d, hands) {
         })
       : [];
 
-    html += '<div class="eyebrow c-dim mb-8 mt-20">Work On Next</div>';
+    html += '<div class="section-head">Work On Next</div>';
     var workOn = null;
     var _workAggFloor = _afBandMG ? _afBandMG.tight - 3 : 15;
     var _workLimpCeil = _domSeatsMG && _domSeatsMG <= 2 ? 70 : _domSeatsMG && _domSeatsMG <= 3 ? 45 : 22;
@@ -152,7 +152,7 @@ function _vsRow(label, actualPct, actualDenom, targetText) {
 // Targets must come from matrixTarget so the user's style offset (TAG/LAG/Nit/etc)
 // is applied — reading SEAT_MATRIX / FLOP_MATRIX directly would skip the offset.
 function renderTableDynamicsReference(hands, d) {
-  var h = '<div class="eyebrow c-dim mb-8 mt-20">Table Dynamics: You vs Target</div>';
+  var h = '<div class="section-head">Table Dynamics: You vs Target</div>';
   h += '<div class="text-body mb-16">Your actual play at each table size and flop multiplicity, compared to the recommended benchmarks for your target style. <span class="c-pos">Green = on target</span>, <span class="c-warn">amber = too low / too tight</span>, <span class="c-neg">red = too high / too loose</span>.</div>';
 
   var styleKey = (typeof getUserStyle === 'function') ? getUserStyle() : 'TAG';
@@ -171,7 +171,7 @@ function renderTableDynamicsReference(hands, d) {
     9: 'Full-ring 9-max. Very disciplined early position: JJ+, AKs/AKo, AQs only from UTG. Exploit weak limps and small opens from the blinds when folded to.'
   };
 
-  h += '<div class="eyebrow c-dim mb-8 mt-12">By Table Size</div>';
+  h += '<div class="section-head">By Table Size</div>';
   h += '<div class="cols-auto gap-16 dynamics-cards">';
   for (var si = 0; si < seatKeys.length; si++) {
     var seats = seatKeys[si];
@@ -210,7 +210,7 @@ function renderTableDynamicsReference(hands, d) {
   }
   h += '</div>';
 
-  h += '<div class="eyebrow c-dim mb-8 mt-20">By Flop Players</div>';
+  h += '<div class="section-head">By Flop Players</div>';
   h += '<div class="cols-auto gap-16 dynamics-cards">';
   var flopKeys = ['HU', '3-way', 'multiway'];
   var flopLabels = { HU: 'Heads-up flop', '3-way': '3-way flop', multiway: 'Multiway flop (4+)' };
@@ -307,7 +307,7 @@ function renderStyleMap(container, d, hands) {
   var html = '';
   html += '<div class="text-body mb-16">' + titleSentence + '</div>';
 
-  html += '<div class="col gap-14">';
+  html += '<div class="col gap-12">';
   html += '<div class="style-map-canvas-wrap"><canvas id="style-map-chart"></canvas></div>';
 
   html += '<div class="text-meta row wrap gap-16">';

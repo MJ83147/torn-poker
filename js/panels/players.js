@@ -181,7 +181,8 @@ function renderPlayers(container, d, hands) {
       var page = playerHands.slice(start, end);
       var totalPages = Math.ceil(playerHands.length / PH_SIZE);
       var wr = pct(opp.won, opp.won + opp.lost);
-      var ph = '<div class="row between mb-16">';
+      var ph = '<div class="col gap-24 player-detail">';
+      ph += '<div class="row between center wrap gap-12 player-detail-head">';
       ph += '<div class="row center gap-12"><button class="btn btn-ghost" id="players-back">&laquo; All Players</button>';
       ph += '<span class="c-gold fw-semibold">' + playerName + '</span></div>';
       ph += '<div class="text-meta">' + opp.hands + ' hands · ' + (wr !== null ? wr + '% win' : '-') + ' · ' + fmtPnl(opp.profit) + '</div></div>';
@@ -207,18 +208,21 @@ function renderPlayers(container, d, hands) {
           { l: tipWrap('WSD'),          v: wsd !== null ? wsd + '%' : '-',       c: sev(wsd, 35, 999, 35, 60) },
         ];
 
-        ph += '<div class="eyebrow c-dim mb-8 mt-0">Tendencies</div>';
+        ph += '<div class="player-detail-section">';
+        ph += '<div class="section-head">Tendencies</div>';
         ph += renderMiniRow(minis);
 
         var exploitIns = generateExploitInsights(oppStats, playerName, hands);
         if (exploitIns.length) {
-          ph += '<div class="cols-auto gap-16 mb-16">' + exploitIns.join('') + '</div>';
+          ph += '<div class="cols-auto gap-16 mt-16">' + exploitIns.join('') + '</div>';
         }
+        ph += '</div>';
       } else {
         ph += '<div class="box lead">Need ' + Math.max(0, 5 - oppStats.hands) + ' more shared hands to show tendency stats (' + oppStats.hands + '/5 hands).</div>';
       }
 
-      ph += '<div class="eyebrow c-dim mb-8">Shared Hands</div>';
+      ph += '<div class="player-detail-section">';
+      ph += '<div class="section-head">Shared Hands</div>';
       if (totalPages > 1) {
         ph += '<div class="row center gap-6 mb-8 end">' +
           renderPagination(phPage, playerHands.length, PH_SIZE, 'ph-prev', 'ph-next') + '</div>';
@@ -227,6 +231,8 @@ function renderPlayers(container, d, hands) {
       ph += page.map(function(h, pi) {
         return renderHandRow(h, start + pi, null).replace('data-hand-idx', 'data-ph-idx');
       }).join('') + '</tbody></table></div>';
+      ph += '</div>';
+      ph += '</div>';
       container.innerHTML = ph;
       document.getElementById('players-back').onclick = function() { renderPlayerList(); };
       container.querySelectorAll('.hrow[data-ph-idx]').forEach(function(row) {
@@ -421,7 +427,7 @@ function renderCompare(container, d, hands) {
       }
     }
 
-    var h2hHtml = '<div class="mt-16"><div class="eyebrow c-dim mb-8">Head-to-Head Record</div>';
+    var h2hHtml = '<div class="mt-16"><div class="section-head">Head-to-Head Record</div>';
     if (sharedHands.length === 0) {
       h2hHtml += '<div class="text-body">No shared hands found between these players.</div>';
     } else {
@@ -485,7 +491,7 @@ function renderCompare(container, d, hands) {
 
     var exploitHtml = '';
     if (exploits.length > 0) {
-      exploitHtml = '<div class="mt-16"><div class="eyebrow c-dim mb-8">Exploit Tips</div><div class="col gap-8">';
+      exploitHtml = '<div class="mt-16"><div class="section-head">Exploit Tips</div><div class="col gap-8">';
       for (var i = 0; i < exploits.length; i++) {
         exploitHtml += '<div class="card card-s2 text-meta">' + exploits[i] + '</div>';
       }

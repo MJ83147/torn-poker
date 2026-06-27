@@ -807,7 +807,7 @@
     var freq = (d.delayCbetDone / opps) * 100;
     if (!isFinite(freq)) return null;
 
-    var openingText = 'When you check back the flop as PFR, you delay c-bet the turn ' + Math.round(freq) + '% of the time, across ' + opps + ' spots.';
+    var openingText = 'You raised before the flop, then checked the flop back. On the turn after that you bet ' + Math.round(freq) + '% of the time, over ' + opps + ' such hands.';
     var branchTexts = [];
 
     var posReads = perPositionFrequency(d, 'delayCbetDone', 'delayCbetOpps', null, MIN_OPP);
@@ -817,7 +817,7 @@
       var lbl = joinList(heavy.slice(0, 3).map(function(r) {
         return r.position + ' (' + Math.round(r.freq) + '%)';
       }));
-      branchTexts.push('Delay c-bet rate is heaviest from ' + lbl + '.');
+      branchTexts.push('You bet the turn most often from ' + lbl + '.');
     }
 
     var pnlDelay = sumHandPnl(hands, function(h) { return heroDelayCbet(h); });
@@ -826,9 +826,9 @@
       return c && c.pfrIsHero === true && c.heroFirstFlop === 'check' && c.turnReached && c.heroFirstTurn === 'check';
     });
     if (pnlDelay.count >= MIN_CL || pnlGiveUp.count >= MIN_CL) {
-      var line = 'Delay c-bet lines return ' + fmtPnl(pnlDelay.pnl) + ' across ' + pnlDelay.count;
+      var line = 'When you bet that turn, you are at ' + fmtPnl(pnlDelay.pnl) + ' over ' + pnlDelay.count + ' hands';
       if (pnlGiveUp.count >= MIN_CL) {
-        line += '; double-check lines return ' + fmtPnl(pnlGiveUp.pnl) + ' across ' + pnlGiveUp.count + '.';
+        line += '. When you checked the turn again instead, you are at ' + fmtPnl(pnlGiveUp.pnl) + ' over ' + pnlGiveUp.count + ' hands.';
       } else {
         line += '.';
       }
@@ -845,15 +845,15 @@
     var soWhatText = null;
     if (severity === 'a' || severity === 'r') {
       if (freq < 20) {
-        impactText = 'Almost never firing the turn after checking back the flop hands opponents free showdowns when their range is capped.';
-        soWhatText = 'Take the delay c-bet more often when the turn improves your range or scares the caller. Picking up the pot uncontested is the entire reason to check back the flop.';
+        impactText = 'Rarely betting the turn after checking the flop back gives opponents a free card and a cheap showdown, exactly when their range is weak.';
+        soWhatText = 'Bet the turn more often when the card improves your range or scares the caller. Taking the pot uncontested is the whole point of checking the flop back.';
       } else {
-        impactText = 'Delay c-betting most turns burns chips when opponents have already paired or floated. The check-back gave them the chance to define their range; they did.';
-        soWhatText = 'Pick the turns that genuinely scare the caller. Static turns that fix nothing usually play better as a double-check.';
+        impactText = 'Betting most turns after checking the flop back loses chips when the caller has paired up or floated. The flop check let them keep weak hands in, and now they continue.';
+        soWhatText = 'Only bet the turns that genuinely scare the caller. On cards that change nothing, checking again is usually better.';
       }
     } else if (severity === 'g') {
-      impactText = 'Delay c-bets are landing in profitable spots. The check-flop-then-bet-turn pattern picks up pots where the caller cannot continue.';
-      soWhatText = 'Keep the line. Watch for opponents float-calling the turn lighter; the moment that starts, the delay c-bet stops printing.';
+      impactText = 'Betting the turn after checking the flop back is winning money for you. It picks up pots where the caller cannot keep going.';
+      soWhatText = 'Keep doing it. Watch for opponents starting to call the turn with weaker hands; once they do, the turn bet stops paying and you should check more of those spots back.';
     }
 
     if (!branchTexts.length && severity === 'n') return null;
@@ -885,9 +885,69 @@
     });
   }
 
+  function heroLimped(h) {
+    var a = (typeof classifyPreflopAction === 'function') ? classifyPreflopAction(h) : null;
+    return a === 'limp-open' || a === 'limp-behind';
+  }
+
+  // Limp ceiling: limping more than this share of the hands you play preflop
+  // gives up the initiative often enough to flag. A flat rate keeps it simple
+  // and matches the My Game idea that any meaningful limp rate is a leak.
+  var LIMP_CEIL = 15;
+
+  function buildLimp(d, extras, hands) {
+    if (!d || !d.n || d.n < MIN_AGG) return null;
+    if (!d.core) return null;
+    var limp = d.core.limpPct;
+    if (limp == null || !isFinite(limp)) return null;
+    if (limp < LIMP_CEIL) return null;
+
+    var openingText = 'You limp into the pot ' + Math.round(limp) + '% of the hands you play preflop, raising or folding the rest.';
+    var branchTexts = [];
+
+    var pnlLimp = sumHandPnl(hands, function(h) { return heroLimped(h); });
+    if (pnlLimp.count >= MIN_CL) {
+      branchTexts.push('Across ' + pnlLimp.count + ' hands where you limped, your net result is ' + fmtPnl(pnlLimp.pnl) + '.');
+    }
+
+    branchTexts.push('Limping in caps your hand at a flat call, so you cannot win the pot before the flop and you arrive without the betting lead.');
+
+    var severity = limp >= LIMP_CEIL * 2 ? 'r' : 'a';
+
+    var impactText = 'Limping this often hands away the initiative. You see flops out of position with no fold equity, and stronger players raise over the top to isolate you and take control of the pot.';
+    var soWhatText = 'For the next stretch, drop the limp entirely: raise the hands worth playing and fold the rest. If a hand is not good enough to open with a raise, it is not good enough to limp.';
+
+    var examples = [];
+    if (hands) {
+      var limpHands = pickHands(hands, function(h) { return heroLimped(h); }, 12);
+      if (limpHands.length) {
+        examples.push({
+          id: 'streets-limp',
+          label: 'Hands where you limped in',
+          hands: limpHands,
+          coachingNote: 'Hands you limped preflop instead of raising or folding. Look at what you held: most of these are either strong enough to open with a raise or weak enough to fold. The limp is the worst option for both.'
+        });
+      }
+    }
+
+    return F({
+      id: 'streets-limp',
+      name: 'Limping Preflop',
+      severity: severity,
+      magnitude: 0,
+      openingText: openingText,
+      branchTexts: branchTexts,
+      impactText: impactText,
+      soWhatText: soWhatText,
+      examples: examples,
+      meta: { limpPct: limp, pnlLimp: pnlLimp }
+    });
+  }
+
   // Which street each story belongs to, so the Street panel can group the
   // cards under Preflop / Flop / Turn / River headings.
   var STREET_BY_ID = {
+    'streets-limp': 'Preflop',
     'streets-three-bet': 'Preflop',
     'streets-fold-to-three-bet': 'Preflop',
     'streets-cbet': 'Flop',
@@ -903,6 +963,7 @@
     run: function(d, extras, hands) {
       var out = [];
       var s;
+      s = buildLimp(d, extras, hands);            if (s) out.push(s);
       s = buildCbet(d, extras, hands);            if (s) out.push(s);
       s = buildFoldToCbet(d, extras, hands);      if (s) out.push(s);
       s = buildThreeBet(d, extras, hands);        if (s) out.push(s);

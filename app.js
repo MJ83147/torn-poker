@@ -281,32 +281,11 @@ function _renderStyleDisplay(d) {
   host.style.display = 'none';
 }
 
-function _maybeShowStyleWelcome(d, hands, meta) {
-  var existing = null;
-  try { existing = localStorage.getItem('tc_user_style'); } catch (_) {}
-  if (existing) return false;
-
-  var welcomeHost = document.getElementById('style-welcome-host');
-  if (!welcomeHost) {
-    welcomeHost = document.createElement('div');
-    welcomeHost.id = 'style-welcome-host';
-    document.body.appendChild(welcomeHost);
-  }
-  welcomeHost.style.display = 'block';
-
-  document.getElementById('paste-wrap').classList.add('hidden');
-  document.getElementById('upload-wrap').classList.add('hidden');
-  document.getElementById('dash').classList.remove('on');
-
-  if (typeof renderStyleWelcome === 'function') {
-    renderStyleWelcome(welcomeHost, d, hands, meta, function(/* picked */) {
-      welcomeHost.style.display = 'none';
-      welcomeHost.innerHTML = '';
-      _bootDashboard(meta);
-      renderActivePanel();
-    });
-  }
-  return true;
+function _maybeShowStyleWelcome(/* d, hands, meta */) {
+  // The first-run "Set your target" style picker was removed. The target style
+  // still defaults to TAG via getUserStyle(); boot proceeds straight to the
+  // dashboard. Kept as a no-op so the boot path caller stays unchanged.
+  return false;
 }
 
 var _PANELS_NEED_D = { mygame:1, cards:1, position:1, street:1, actions:1, range:1, players:1, trends:1, showdown:1, allin:1 };

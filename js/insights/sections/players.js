@@ -107,24 +107,24 @@
       shortPlural: 'sharks',
       shortSingle: 'a shark',
       losingImpact: 'Sharks pick spots well and apply heavy pressure when they do get involved. Marginal hands are dominated against their range.',
-      losingSoWhat: 'Avoid hero calls against sharks. Pick your battles, fold dominated hands, and only put chips in with strong value or clear bluff-catchers.',
-      winningSoWhat: 'Stay disciplined against sharks. Avoid fancy lines, stick to value, and pick off only the spots where the board clearly favours you.'
+      losingSoWhat: 'Three-bet or fold preflop against sharks rather than flat-calling out of position. Postflop, fold marginal hands to their aggression and only stack off with strong value or a clear bluff-catcher you have a read on.',
+      winningSoWhat: 'Stick to a tight value game against sharks. Skip thin bluffs, bet your strong hands for value, and only call them down where the board clearly favours your range.'
     },
     TAG: {
       name: 'vs Tight-Aggressive opponents',
       shortPlural: 'TAGs',
       shortSingle: 'a TAG',
       losingImpact: 'TAGs only get involved with strong holdings and apply pressure when they do. Calling wide against them pays off their value range.',
-      losingSoWhat: 'Tighten up the calls against TAG raises. Fold dominated hands and three-bet the spots where you do continue.',
-      winningSoWhat: 'Keep doing what works against TAGs. Stay disciplined on calls and pick off their thin barrels when the board favours your range.'
+      losingSoWhat: 'Fold dominated hands to TAG opens instead of flat-calling, and three-bet the hands you do continue with to deny them position. When they fire a second barrel, believe it unless the board favours you.',
+      winningSoWhat: 'Keep folding the weak calls against TAG raises and three-betting your continues. Pick off only their thin river barrels on boards that hit your range, not theirs.'
     },
     Rock: {
       name: 'vs Rocks',
       shortPlural: 'rocks',
       shortSingle: 'a rock',
       losingImpact: 'Rocks only continue with value, but you may be paying off their rare aggression too often.',
-      losingSoWhat: 'When a rock bets or raises, fold marginal hands. Use their tightness against them by stealing pots when they show weakness.',
-      winningSoWhat: 'Keep attacking when a rock checks or limps. They give up easily, so apply pressure on safe boards.'
+      losingSoWhat: 'When a rock bets or raises, fold top pair and worse: that line is value almost every time. Win it back by raising their limps and betting whenever they check, since they fold everything but premiums.',
+      winningSoWhat: 'Keep stealing from rocks when they check or limp, and keep folding to their raises. Bet most flops they check to you on safe boards; they only continue with a made hand.'
     },
     Cannon: {
       name: 'vs Cannons',
@@ -201,7 +201,11 @@
     }
 
     var winRate = safePct(totalWon, totalContested);
-    var avgPerHand = totalHands > 0 ? totalPnl / totalHands : 0;
+    // unionIdxs dedupes hands that contained more than one opponent of this
+    // type, so it is the honest count of distinct hands. totalHands sums each
+    // opponent's hand count and double-counts any hand shared by two of them.
+    var distinctHands = unionIdxs.length;
+    var avgPerHand = distinctHands > 0 ? totalPnl / distinctHands : 0;
     var perHandThreshold = 2;
 
     var severity;
@@ -209,10 +213,10 @@
     else if (avgPerHand < 0) severity = 'a';
     else severity = 'g';
 
-    var openingText = 'You have played ' + totalHands + ' hands against ' + matching.length + ' ' +
-      meta.shortPlural + ' (' + MIN_PROFILE_HANDS + '+ hands each). ' +
+    var openingText = 'You have faced a group of ' + matching.length + ' ' +
+      meta.shortPlural + ' (' + MIN_PROFILE_HANDS + '+ hands each) across ' + distinctHands + ' hands. ' +
       (totalPnl < 0 ? 'You are down ' : 'You are up ') + fmt(Math.abs(totalPnl)) +
-      ' against them, about ' + fmt(Math.abs(avgPerHand)) + ' a hand.';
+      ' against them overall, about ' + fmt(Math.abs(avgPerHand)) + ' a hand.';
 
     var branchTexts = [];
 
@@ -298,6 +302,7 @@
         type: type,
         opponents: matching.length,
         totalHands: totalHands,
+        distinctHands: distinctHands,
         totalPnl: totalPnl,
         winRate: winRate,
         totalShowdown: totalShowdown,
@@ -394,14 +399,33 @@
     var severity;
     var impactText = null;
     var soWhatText = null;
+    var worstNames = joinList(top.slice(0, Math.min(3, top.length)).map(function(p) { return p.name; }));
+    // Where the money moves tells you what to change. Showdown-weighted losses
+    // mean you are paying off value; pre-showdown losses mean bluffs are not
+    // getting through or you are folding the best hand before the river. The
+    // comparison flips by sign: when winning, the bigger profit is the larger
+    // positive number; when losing, the bigger loss is the more negative number.
+    var showdownDominates = isProfitable
+      ? (topShowdownPnl > topNonShowdownPnl)
+      : (topShowdownPnl < topNonShowdownPnl);
     if (isProfitable) {
       severity = 'g';
-      impactText = 'These are the names paying your bills. The patterns that beat them are the ones to keep tightening.';
-      soWhatText = 'Open the hands vs the top names and write down the line that keeps working. Then look for the same setup against other opponents in the pool.';
+      if (showdownDominates) {
+        impactText = 'Most of the profit against ' + worstNames + ' comes at showdown: your value hands are getting paid.';
+        soWhatText = 'Keep betting your strong hands for value against ' + worstNames + ' rather than slowing down. They are paying you off, so make the bets bigger when they keep calling.';
+      } else {
+        impactText = 'Most of the profit against ' + worstNames + ' comes before showdown: your bets and raises are taking pots down.';
+        soWhatText = 'Keep applying pressure to ' + worstNames + '. They fold too much, so keep barrelling the spots where they give up rather than checking back.';
+      }
     } else {
       severity = totalPnl <= -20 ? 'r' : 'a';
-      impactText = 'A small number of opponents are responsible for an outsized share of the losses. Fixing the line against them is higher-leverage than reworking the rest of the game.';
-      soWhatText = 'Filter to the worst names and watch for the recurring spot: river call-downs, big-pot decisions, or barrel mistakes. That is the leak to fix first.';
+      if (showdownDominates) {
+        impactText = 'Most of the loss against ' + worstNames + ' lands at showdown: you are calling the river and paying off their value.';
+        soWhatText = 'Against ' + worstNames + ', fold more rivers when they bet big. Stop turning marginal pairs into bluff-catchers; their value range gets there too often for the call to be profitable.';
+      } else {
+        impactText = 'Most of the loss against ' + worstNames + ' lands before showdown: you are folding too much or firing bluffs that do not get through.';
+        soWhatText = 'Against ' + worstNames + ', tighten the spots where you give up to a bet and cut the bluffs they do not fold to. The leak is in the streets before the river, not at showdown.';
+      }
     }
 
     var examples = [];

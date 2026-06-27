@@ -33,8 +33,23 @@ function renderPosition(container, d, hands) {
           : '<span class="c-warn">' + delta + '%</span>');
       deltaCell = deltaStr + ' <span class="text-micro">(' + lo + '-' + hi + '%)</span>';
     }
-    return '<tr><td>' + tipWrap(p) + '</td><td>' + s.hands + '</td><td>' + (fp2 !== null ? fp2 + '%' : '-') + '</td><td>' + deltaCell + '</td><td class="' + pnlCls(s.pnl) + '">' + fmtPnl(s.pnl) + '</td><td>' + avgPotDisplay + '</td></tr>';
+    return '<tr class="link" data-pos-row="' + p + '"><td>' + tipWrap(p) +
+      '<span class="c-dim cards-row-cue"> &#8250;</span></td><td>' + s.hands + '</td><td>' + (fp2 !== null ? fp2 + '%' : '-') + '</td><td>' + deltaCell + '</td><td class="' + pnlCls(s.pnl) + '">' + fmtPnl(s.pnl) + '</td><td>' + avgPotDisplay + '</td></tr>';
   }).join(''));
+
+  container.querySelectorAll('[data-pos-row]').forEach(function(row) {
+    row.onclick = function() {
+      var p = row.getAttribute('data-pos-row');
+      var played = pickHands(hands, function(h) {
+        return (h.position || '?') === p && heroPlayed(h);
+      }, 15);
+      if (!played.length) return;
+      var s = d.posMap[p];
+      showExampleHandListModal('Hands played from ' + p, played,
+        'Hands you played from ' + p + '. Net P&L at this seat is ' + fmtPnl(s.pnl) +
+        ' across ' + s.hands + ' hands. Look for the postflop pattern that repeats at this position.');
+    };
+  });
 
   if (activePosOrder.length < 2) return;
 

@@ -62,18 +62,32 @@ function renderShowdown(container, hands, meta, overallData) {
   var sdWinRate = pct(sdWon, sdTotal);
   var nsdWinRate = pct(nsdWon, nsdTotal);
 
-  var statsHtml = '<div class="cols-2 gap-10">';
+  // The hands behind each box, most-recent first, so a click can replay them.
+  var sdHands = [];
+  var nsdHands = [];
+  for (var hi = cash.length - 1; hi >= 0; hi--) {
+    if (isShowdown(cash[hi])) sdHands.push(cash[hi]);
+    else nsdHands.push(cash[hi]);
+  }
+  var sdShow = sdHands.slice(0, 15);
+  var nsdShow = nsdHands.slice(0, 15);
 
-  statsHtml += '<div class="stat">';
+  var statsHtml = '<div class="cols-2 gap-8">';
+
+  statsHtml += '<div class="stat' + (sdShow.length ? ' stat-clickable' : '') + '"' +
+    (sdShow.length ? ' data-sd-box="sd"' : '') + '>';
   statsHtml += '<div class="stat-label row center gap-6">' +
-    '<span class="swatch swatch-dot" style="background:var(--gto-blue)"></span>Showdown</div>';
+    '<span class="swatch swatch-dot" style="background:var(--gto-blue)"></span>Showdown' +
+    (sdShow.length ? '<span class="c-dim cards-row-cue"> &middot; view hands &#8250;</span>' : '') + '</div>';
   statsHtml += '<div class="value ' + pnlValCls(cumSd) + '">' + fmtPnl(cumSd) + '</div>';
   statsHtml += '<div class="text-meta">' + sdTotal + ' hands · ' + (sdWinRate !== null ? sdWinRate + '% win rate' : 'no data') + '</div>';
   statsHtml += '</div>';
 
-  statsHtml += '<div class="stat">';
+  statsHtml += '<div class="stat' + (nsdShow.length ? ' stat-clickable' : '') + '"' +
+    (nsdShow.length ? ' data-sd-box="nsd"' : '') + '>';
   statsHtml += '<div class="stat-label row center gap-6">' +
-    '<span class="swatch swatch-dot bg-neg"></span>Non-Showdown</div>';
+    '<span class="swatch swatch-dot bg-neg"></span>Non-Showdown' +
+    (nsdShow.length ? '<span class="c-dim cards-row-cue"> &middot; view hands &#8250;</span>' : '') + '</div>';
   statsHtml += '<div class="value ' + pnlValCls(cumNsd) + '">' + fmtPnl(cumNsd) + '</div>';
   statsHtml += '<div class="text-meta">' + nsdTotal + ' hands · ' + (nsdWinRate !== null ? nsdWinRate + '% win rate' : 'no data') + '</div>';
   statsHtml += '</div>';
@@ -84,15 +98,29 @@ function renderShowdown(container, hands, meta, overallData) {
   var avgLossPot = (potSdLoss.length + potNsdLoss.length) > 0 ? avg(potSdLoss.concat(potNsdLoss)) : 0;
   var winLossRatio = avgLossPot > 0 ? (avgWinPot / avgLossPot).toFixed(2) : null;
 
-  var potStatsHtml = '<div class="cols-3 gap-10">';
-  potStatsHtml += '<div class="stat">';
-  potStatsHtml += '<div class="stat-label">Avg Pot Won</div>';
+  // Hands behind the pot-size boxes: every won / lost cash hand, recent first.
+  var wonHands = [];
+  var lostHands = [];
+  for (var pwi = cash.length - 1; pwi >= 0; pwi--) {
+    if (cash[pwi].outcome && cash[pwi].outcome.result === 'won') wonHands.push(cash[pwi]);
+    else if (cash[pwi].outcome) lostHands.push(cash[pwi]);
+  }
+  var wonShow = wonHands.slice(0, 15);
+  var lostShow = lostHands.slice(0, 15);
+
+  var potStatsHtml = '<div class="cols-3 gap-8">';
+  potStatsHtml += '<div class="stat' + (wonShow.length ? ' stat-clickable' : '') + '"' +
+    (wonShow.length ? ' data-sd-box="won"' : '') + '>';
+  potStatsHtml += '<div class="stat-label">Avg Pot Won' +
+    (wonShow.length ? '<span class="c-dim cards-row-cue"> &middot; view hands &#8250;</span>' : '') + '</div>';
   potStatsHtml += '<div class="value c-pos">' + fmt(avgWinPot) + '</div>';
   potStatsHtml += '<div class="text-meta">' + (potSdWin.length + potNsdWin.length) + ' hands</div>';
   potStatsHtml += '</div>';
 
-  potStatsHtml += '<div class="stat">';
-  potStatsHtml += '<div class="stat-label">Avg Pot Lost</div>';
+  potStatsHtml += '<div class="stat' + (lostShow.length ? ' stat-clickable' : '') + '"' +
+    (lostShow.length ? ' data-sd-box="lost"' : '') + '>';
+  potStatsHtml += '<div class="stat-label">Avg Pot Lost' +
+    (lostShow.length ? '<span class="c-dim cards-row-cue"> &middot; view hands &#8250;</span>' : '') + '</div>';
   potStatsHtml += '<div class="value c-neg">' + fmt(avgLossPot) + '</div>';
   potStatsHtml += '<div class="text-meta">' + (potSdLoss.length + potNsdLoss.length) + ' hands</div>';
   potStatsHtml += '</div>';
@@ -115,6 +143,23 @@ function renderShowdown(container, hands, meta, overallData) {
 
   setSlot(container, 'stats', statsHtml);
   setSlot(container, 'potStats', potStatsHtml);
+
+  var _sdBoxData = {
+    sd: { title: 'Showdown hands', hands: sdShow,
+      note: 'Hands you took to showdown. Look at the river action and your hand strength: are you arriving with hands strong enough to call the bets, or paying off value?' },
+    nsd: { title: 'Non-showdown hands', hands: nsdShow,
+      note: 'Hands won or lost without reaching showdown. These are pots decided by betting: your c-bets, barrels, and folds before the river.' },
+    won: { title: 'Hands you won', hands: wonShow,
+      note: 'The pots you won. Compare the average size here against the pots you lose. Winning players win bigger pots than they lose.' },
+    lost: { title: 'Hands you lost', hands: lostShow,
+      note: 'The pots you lost. If the average lost pot is larger than the average won pot, the leak is in how big the pots get when you are behind.' }
+  };
+  container.querySelectorAll('[data-sd-box]').forEach(function(box) {
+    box.onclick = function() {
+      var entry = _sdBoxData[box.getAttribute('data-sd-box')];
+      if (entry && entry.hands.length) showExampleHandListModal(entry.title, entry.hands, entry.note);
+    };
+  });
 
   var canvas = document.getElementById('showdown-chart');
   if (!canvas) return;

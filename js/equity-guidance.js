@@ -186,12 +186,19 @@ function generateGuidance(equity, streetInfo, texture, madeHand, villainProfile,
 
   var mwDesc = '';
   if (multiway) {
-    mwDesc = playersActive + '-way pot' + (callersBefore > 0 ? ' (' + callersBefore + ' caller' + (callersBefore > 1 ? 's' : '') + ' before you)' : '') + '. ';
+    mwDesc = playersActive + '-way pot, so ' + (playersActive - 1) + ' opponents to get through';
+    if (callersBefore > 0) {
+      mwDesc += ' and ' + callersBefore + ' already called in front of you';
+    }
+    mwDesc += '. ';
   }
 
+  // In a multiway pot, naming one villain misreads the spot: the read that
+  // matters is the field, not a single player. Only attribute a betting line
+  // to a named opponent when it is heads up.
   var vLineDesc = '';
-  if (villainBetCount >= 2 && vName) {
-    vLineDesc = vName + ' has bet ' + villainBetCount + ' street' + (villainBetCount > 1 ? 's' : '') + ' so far. ';
+  if (villainBetCount >= 2 && vName && !multiway) {
+    vLineDesc = vName + ' has bet ' + villainBetCount + ' street' + (villainBetCount > 1 ? 's' : '') + ' in a row. ';
   }
 
   if (act.type === 'sb' || act.type === 'bb') {
@@ -213,7 +220,7 @@ function generateGuidance(equity, streetInfo, texture, madeHand, villainProfile,
       text = facingDesc + vLineDesc + Math.round(eq) + '% equity but you checked. ' + vName + ' is passive. Take the lead.';
       quality = 'bad';
     } else if (eq > 65) {
-      text = facingDesc + vLineDesc + 'Strong hand (' + Math.round(eq) + '% equity) but you checked. Betting for value is usually correct.';
+      text = facingDesc + vLineDesc + 'You have ' + Math.round(eq) + '% equity and checked. A hand this far ahead wants money in the pot now: bet for value and let worse hands pay you, rather than giving a free card.';
       quality = 'bad';
     } else if (eq >= 40 && multiway) {
       text = mwDesc + vLineDesc + 'Decent equity (' + Math.round(eq) + '%) but checking multiway is reasonable: harder to get folds from multiple opponents.';
@@ -252,14 +259,14 @@ function generateGuidance(equity, streetInfo, texture, madeHand, villainProfile,
         text += 'A raise at some point would test whether villain actually has a hand.';
         quality = 'neutral';
       }
+    } else if (eq > potOdds + 10 && multiway) {
+      text += mwDesc + 'Your ' + Math.round(eq) + '% equity clears the ' + Math.round(potOdds) + '% the price demands, so calling is fine. With more players still live your hand has to beat the whole field, so be ready to let it go if the pot blows up behind you.';
+      quality = 'good';
     } else if (eq > potOdds + 10 && vFolds !== null && vFolds >= 60) {
       text += vLineDesc + Math.round(eq) + '% equity justified a call, but ' + vName + ' folds to raises ' + vFolds + '% (' + vHands + ' hands): raising wins the pot outright.';
       quality = 'neutral';
     } else if (eq > potOdds + 10 && vAgg) {
       text += vLineDesc + vName + ' is aggressive. Calling with ' + Math.round(eq) + '% equity is fine. Let them bluff into you.';
-      quality = 'good';
-    } else if (eq > potOdds + 10 && multiway && callersBefore > 0) {
-      text += mwDesc + vLineDesc + 'Good call with ' + Math.round(eq) + '% equity, but ' + callersBefore + ' caller' + (callersBefore > 1 ? 's' : '') + ' already in means someone likely has a real hand.';
       quality = 'good';
     } else if (eq > potOdds + 10) {
       text += vLineDesc + 'Good price. ' + Math.round(eq) + '% equity beats the ' + Math.round(potOdds) + '% needed.';

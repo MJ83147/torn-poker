@@ -116,7 +116,7 @@ function renderTrends(container, hands, meta, overallData) {
     var cfg = chartConfigs[ci];
     var vals = points.map(function(p) { return p[cfg.key]; }).filter(function(v) { return v !== null; });
     if (vals.length < 2) continue;
-    chartsHtml += '<div><div class="eyebrow c-dim mb-8">' + cfg.title + '</div>' +
+    chartsHtml += '<div><div class="section-head">' + cfg.title + '</div>' +
       '<div class="chart-full"><canvas id="' + cfg.id + '"></canvas></div></div>';
   }
   setSlot(container, 'charts', chartsHtml);
@@ -134,11 +134,36 @@ function renderTrends(container, hands, meta, overallData) {
   for (var pi = points.length - 1; pi >= 0; pi--) {
     var pt = points[pi];
     var wrCls2 = pt.sessionWr === null ? 'c-muted' : pnlCls(pt.sessionWr - 50);
-    rowsHtml += '<tr><td>' + pt.label + '</td><td>' + pt.hands + '</td>' +
+    rowsHtml += '<tr class="link" data-trend-idx="' + pi + '"><td>' + pt.label +
+      '<span class="c-dim cards-row-cue"> &#8250;</span></td><td>' + pt.hands + '</td>' +
       '<td class="' + wrCls2 + '">' + (pt.sessionWr !== null ? pt.sessionWr + '%' : '-') + '</td>' +
       '<td>' + (pt.wr !== null ? pt.wr + '%' : '-') + '</td></tr>';
   }
   setSlot(container, 'rows', rowsHtml);
+
+  container.querySelectorAll('[data-trend-idx]').forEach(function(row) {
+    row.onclick = function() {
+      var idx = parseInt(row.getAttribute('data-trend-idx'), 10);
+      var pt = points[idx];
+      if (!pt) return;
+      var day = pt.label;
+      var dayHands = dayMap[day];
+      if (!dayHands || !dayHands.length) return;
+      var recent = dayHands.slice().sort(function(a, b) {
+        return (b.timestamp || 0) - (a.timestamp || 0);
+      }).slice(0, 15);
+      var net = 0, withOutcome = 0, won = 0;
+      for (var di = 0; di < dayHands.length; di++) {
+        var h = dayHands[di];
+        net += getHandPnlValue(h) || 0;
+        if (h.outcome) { withOutcome++; if (h.outcome.result === 'won') won++; }
+      }
+      var wrStr = withOutcome > 0 ? Math.round(won / withOutcome * 100) + '% win rate' : 'no outcome data';
+      showExampleHandListModal('Hands on ' + day, recent,
+        'Hands played on ' + day + '. ' + dayHands.length + ' hands, ' + wrStr + ', net ' + fmtPnl(net) +
+        '. Look at how this day played out versus your usual game.');
+    };
+  });
 
   var labels = points.map(function(p) { return p.label; });
 

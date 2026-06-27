@@ -109,7 +109,7 @@ function renderBestWorstSessions(hands, overallData) {
     if (sessions[wi].pnl === worst.pnl && sessions[wi].hands.length > worst.hands.length) worst = sessions[wi];
   }
 
-  var html = '<div class="eyebrow c-dim mb-8 mt-20">Best &amp; Worst Sessions</div>';
+  var html = '<div class="eyebrow c-dim mb-8 mt-16">Best &amp; Worst Sessions</div>';
   html += '<div class="cols-2 gap-16">';
 
   var sessionPairs = [

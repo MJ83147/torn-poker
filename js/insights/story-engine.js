@@ -285,10 +285,10 @@
 
     var html = '<div class="' + classes + '" data-story-id="' + escapeHtml(storyId) + '">';
     html += '<div class="story-head">';
-    html += '<div class="insight-badge"><span class="dot ' + dotCls + '"></span><span class="' + wordCls + '">' + sevWord + '</span></div>';
+    html += '<div class="story-badge insight-badge"><span class="dot ' + dotCls + '"></span><span class="' + wordCls + '">' + sevWord + '</span></div>';
+    html += '<div class="story-chevron">&#9662;</div>';
     html += '<div class="insight-title">' + name + '</div>';
     if (teaser) html += '<div class="story-teaser">' + escapeHtml(teaser) + '</div>';
-    html += '<div class="story-chevron">&#9662;</div>';
     html += '</div>';
 
     html += '<div class="story-body">';
@@ -319,7 +319,7 @@
     if (!findings || !findings.length) return '';
     var parts = [];
     for (var i = 0; i < findings.length; i++) parts.push(renderStoryCard(findings[i]));
-    var html = '<div class="cols-2 gap-20" data-findings>' + parts.join('') + '</div>';
+    var html = '<div class="cols-2 gap-16" data-findings>' + parts.join('') + '</div>';
     setTimeout(function() {
       var nodes = document.querySelectorAll('[data-findings]');
       for (var i = 0; i < nodes.length; i++) {
@@ -339,11 +339,11 @@
     for (var g = 0; g < groups.length; g++) {
       var grp = groups[g];
       if (!grp) continue;
-      parts.push('<div class="eyebrow c-dim mb-8 mt-20">' + escapeHtml(grp.label) + '</div>');
+      parts.push('<div class="section-head">' + escapeHtml(grp.label) + '</div>');
       if (grp.findings && grp.findings.length) {
         var cards = [];
         for (var i = 0; i < grp.findings.length; i++) cards.push(renderStoryCard(grp.findings[i]));
-        parts.push('<div class="cols-2 gap-20" data-findings>' + cards.join('') + '</div>');
+        parts.push('<div class="cols-2 gap-16" data-findings>' + cards.join('') + '</div>');
       } else {
         parts.push('<div class="box lead">' + escapeHtml(grp.emptyNote || 'Nothing flagged here yet.') + '</div>');
       }
