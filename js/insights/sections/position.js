@@ -275,17 +275,24 @@
         impactText = 'Folding too often from ' + position + ' surrenders the positional advantage this seat is built to exploit.';
         soWhatText = 'Open wider from ' + position + '. Any pair, any suited ace, any broadway, suited connectors.';
       } else if (g === 'blind') {
-        impactText = 'Defending too rarely from ' + position + ' lets opponents steal cheap and barrel cheaply.';
+        impactText = 'Defending too rarely from ' + position + ' lets opponents steal the pot cheaply and barrel you off marginal holdings.';
         soWhatText = 'Widen the ' + position + ' continuing range, with more 3-bets in the mix.';
       } else {
-        impactText = 'Tight ' + position + ' play is fine in isolation but the seat returns more when the right hands are added.';
-        soWhatText = 'Widen ' + position + ' to include the late additions that fit a wider range here.';
+        impactText = 'Tight ' + position + ' play is safe, but this seat returns more when you add a few more playable hands.';
+        soWhatText = 'Widen ' + position + ' to include the next tier of suited and connected hands that play well from here.';
       }
     } else if (compFired) {
       impactText = 'The seats around ' + position + ' have learned what your range looks like. Weak hand types compound the positional disadvantage.';
       soWhatText = 'Remove the weakest hand types from your ' + position + ' opens and keep the rest.';
     } else if (pnlFired) {
-      impactText = position + ' is leaking chips at a rate higher than the rest of your game.';
+      var pnlOverallPerHand = pnl.value - pnl.gap;
+      if (pnl.severity === 'r' && pnlOverallPerHand > 0) {
+        impactText = position + ' loses chips while the rest of your game is in profit, so this one seat is dragging your results down.';
+      } else if (pnl.severity === 'r') {
+        impactText = position + ' loses chips faster than your other seats, so it is the heaviest drag on your results.';
+      } else {
+        impactText = position + ' runs at a loss, even if it is not your worst seat. The chips it gives back add up over time.';
+      }
       soWhatText = 'Filter the hand log to ' + position + ' and look for the postflop pattern that is unique to this seat.';
     }
 

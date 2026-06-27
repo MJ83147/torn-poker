@@ -240,10 +240,10 @@
     var soWhatText = null;
     if (sev.severity === 'r' || sev.severity === 'a') {
       if (sev.direction === 'high') {
-        impactText = 'Firing the flop every time you held the lead means opponents stop folding. Floats and raises turn what should be free pots into committed losers.';
+        impactText = 'Firing the flop every time you held the lead means opponents stop folding. They float and raise wider, and you end up putting chips in on boards that should have been a check.';
         soWhatText = 'Cut c-bets on boards that miss your opening range, especially multiway. Bet for value and protection, check when the board hits the caller harder.';
       } else {
-        impactText = 'Giving up too often hands free cards to weak holdings that would have folded. You are leaving the equity edge of being PFR on the table.';
+        impactText = 'Giving up too often hands free cards to weak holdings that would have folded. You hold the lead as the preflop raiser and you are not using it.';
         soWhatText = 'C-bet more on dry boards heads up. Range-bet small when in position and the texture connects with your opening range.';
       }
     } else if (pnlCbet.count >= MIN_CL && pnlCbet.pnl < 0) {
@@ -491,10 +491,10 @@
     var soWhatText = null;
     if (sev.severity === 'r' || sev.severity === 'a') {
       if (sev.direction === 'high') {
-        impactText = '3-betting too often bloats pots with hands that play poorly against tight 4-bet ranges. Opponents start calling wider and pulling you into hard postflop spots.';
+        impactText = '3-betting too often bloats pots with hands that play poorly against tight 4-bet ranges. Opponents start calling wider and dragging you into tough postflop spots out of position.';
         soWhatText = 'Tighten your 3-bet range against early-position opens. Reserve light 3-bets for late-position opens where the opener folds the most.';
       } else {
-        impactText = 'Flatting opens when you should be 3-betting hands oversea opponents who flat behind and lets blinds defend cheaply. Initiative is being surrendered.';
+        impactText = 'Flatting opens you should be 3-betting invites players behind to come along and lets the blinds defend cheaply. You give up the initiative and play bigger pots with no lead.';
         soWhatText = '3-bet more from the blinds and the button against late-position opens. Add suited blockers and a thicker value range.';
       }
     } else if (pnl3.count >= MIN_CL && pnl3.pnl < 0) {
@@ -658,7 +658,7 @@
       for (var pi = 0; pi < POSITION_ORDER.length; pi++) {
         var p = POSITION_ORDER[pi];
         var pd = d.byPosition[p];
-        if (!pd || pd.gated || !pd.ss || !pd.ss.Flop.seen || pd.ss.Flop.seen < MIN_OPP) continue;
+        if (!pd || pd.gated || !pd.ss || !pd.ss.Flop || !pd.ss.Flop.seen || pd.ss.Flop.seen < MIN_OPP) continue;
         var posCheckFold = 0;
         for (var hi = 0; hi < hands.length; hi++) {
           if ((hands[hi].position || '?') === p && heroCheckFoldedFlop(hands[hi])) posCheckFold++;
@@ -845,7 +845,7 @@
     var soWhatText = null;
     if (severity === 'a' || severity === 'r') {
       if (freq < 20) {
-        impactText = 'Rarely betting the turn after checking the flop back gives opponents a free card and a cheap showdown, exactly when their range is weak.';
+        impactText = 'Rarely betting the turn after checking the flop back lets opponents see the river for nothing and reach showdown cheaply, exactly when their range is weak.';
         soWhatText = 'Bet the turn more often when the card improves your range or scares the caller. Taking the pot uncontested is the whole point of checking the flop back.';
       } else {
         impactText = 'Betting most turns after checking the flop back loses chips when the caller has paired up or floated. The flop check let them keep weak hands in, and now they continue.';

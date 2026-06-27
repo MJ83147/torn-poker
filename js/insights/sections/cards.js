@@ -426,7 +426,7 @@
           id: 'cards-premium-passive-lost',
           label: 'Premium hands you played passively and did not win',
           hands: passiveLost,
-          coachingNote: 'These are sets, straights, flushes, or better where you only checked and called and the hand did not win. Either you missed a value bet that would have been called, or you let an opponent realise equity for free and they caught up. Bigger sizing on wet boards is the fix.'
+          coachingNote: 'Sets, straights, flushes, or better where you only checked and called and did not win the pot. Either a value bet got missed, or an opponent saw a free card and caught up. Bet bigger on wet boards.'
         });
       }
       var brokeEvenOrLost = pickHands(bucket.hands, function(h) {
@@ -438,8 +438,19 @@
           id: 'cards-premium-losing',
           label: 'Premium hands that lost or broke even',
           hands: brokeEvenOrLost,
-          coachingNote: 'Premium hands that did not finish in your favour. Look for the streets where money went the wrong direction: were you outdrawn, did you check a turn that the opponent then improved on, or did you fail to bet for value on the river?'
+          coachingNote: 'Premium hands that did not finish in your favour. Find the street where money went the wrong way: were you outdrawn, did you check a turn the opponent improved on, or did you miss a river value bet?'
         });
+      }
+      if (!examples.length) {
+        var anyPremium = pickHands(bucket.hands, function(h) { return true; }, 12);
+        if (anyPremium.length) {
+          examples.push({
+            id: 'cards-premium-all',
+            label: 'Premium made hands',
+            hands: anyPremium,
+            coachingNote: 'Every postflop hand where you held a set, straight, flush, or better. Check that each one built a pot worthy of the hand and that you bet for value on the river.'
+          });
+        }
       }
     }
 
@@ -545,7 +556,7 @@
         id: 'cards-strong-river-call-lost',
         label: 'Strong hands you called the river with and lost',
         hands: riverCallLosses,
-        coachingNote: 'Top pair, overpair, or two pair where you called a river bet and lost. The pattern is opponents value-betting a better one pair or two pair against your one pair. The fix is folding more rivers when the action says you are beat.'
+        coachingNote: 'Top pair, overpair, or two pair where you called a river bet and lost. Opponents are value-betting a better pair or two pair against your one pair. Fold more rivers when the action says you are beaten.'
       });
     }
     if (aggFired) {
@@ -557,7 +568,18 @@
           id: 'cards-strong-passive-lost',
           label: 'Strong hands you played passively and did not win',
           hands: passiveLost,
-          coachingNote: 'Top pair or overpair where you only checked and called, and the hand did not win. Most of these were spots to bet the flop or turn for value and protection.'
+          coachingNote: 'Top pair or overpair where you only checked and called, and did not win. Most of these were spots to bet the flop or turn for value and protection.'
+        });
+      }
+    }
+    if (!examples.length) {
+      var strongLost = pickHands(bucket.hands, heroLost, 15);
+      if (strongLost.length) {
+        examples.push({
+          id: 'cards-strong-lost',
+          label: 'Strong hands that lost',
+          hands: strongLost,
+          coachingNote: 'Top pair, overpair, or two pair that lost. Find the street where chips went the wrong way: a passive flop that gave a free card, or a river call against a line that beats one pair.'
         });
       }
     }
@@ -664,7 +686,7 @@
         id: 'cards-marginal-river-call-lost',
         label: 'Marginal hands you called the river with and lost',
         hands: riverCallLosses,
-        coachingNote: 'Second pair or worse where you called a river bet and lost. Bluff catching only works when the bettor is bluffing. The P&L here says they were value-betting.'
+        coachingNote: 'Second pair or worse where you called a river bet and lost. Bluff catching only pays when the bettor is bluffing. The P&L here says they were betting for value.'
       });
     } else {
       var anyLosses = pickHands(bucket.hands, heroLost, 15);
@@ -673,8 +695,18 @@
           id: 'cards-marginal-lost',
           label: 'Marginal hands that lost',
           hands: anyLosses,
-          coachingNote: 'Losing hands where you held second pair, bottom pair, or a pocket pair below the board. Look for the moment money went in: most leaks here are streets where a check-fold would have saved chips.'
+          coachingNote: 'Losing hands where you held second pair, bottom pair, or a pocket pair below the board. Find the moment money went in: most leaks here are streets where a check or fold would have saved chips.'
         });
+      } else {
+        var anyMarginal = pickHands(bucket.hands, function(h) { return true; }, 15);
+        if (anyMarginal.length) {
+          examples.push({
+            id: 'cards-marginal-all',
+            label: 'Marginal made hands',
+            hands: anyMarginal,
+            coachingNote: 'Every postflop hand where you held second pair, bottom pair, or a pocket pair below the board. These play best as small pots: check more, call cheaply, and fold when the price is wrong.'
+          });
+        }
       }
     }
     if (leadFired) {
@@ -695,7 +727,7 @@
       id: 'cards-marginal',
       name: 'Marginal Made Hands',
       severity: severity,
-      magnitude: goingSev ? goingSev.deltaUnits : 0,
+      magnitude: goingSev ? goingSev.deltaUnits : (leadSev ? leadSev.deltaUnits : 0),
       openingText: openingText,
       branchTexts: branchTexts,
       impactText: impactText,
@@ -775,8 +807,29 @@
         id: 'cards-air-called-lost',
         label: 'Air hands you called postflop and lost',
         hands: calledLost,
-        coachingNote: 'Hands with no pair and no draw where you called a bet and lost. There is no realistic story where these are profitable. Fold them on the flop, or pick the spot to bluff-raise instead.'
+        coachingNote: 'No pair and no draw, where you called a bet and lost. There is no story where these calls turn a profit. Fold on the flop, or pick the spot to bluff-raise instead.'
       });
+    }
+    if (!examples.length) {
+      var airLost = pickHands(bucket.hands, heroLost, 15);
+      if (airLost.length) {
+        examples.push({
+          id: 'cards-air-lost',
+          label: 'Air hands that lost',
+          hands: airLost,
+          coachingNote: 'Hands with no pair and no draw that lost chips. Each one is either a fold you missed or a bluff that did not get through. Pick fold or bluff before the flop bet, not after.'
+        });
+      } else {
+        var anyAir = pickHands(bucket.hands, function(h) { return true; }, 15);
+        if (anyAir.length) {
+          examples.push({
+            id: 'cards-air-all',
+            label: 'Air or overcard hands',
+            hands: anyAir,
+            coachingNote: 'Postflop spots where you reached a decision with no pair and no draw. The only profitable lines are folding when the price is bad and bluffing when fold equity is high.'
+          });
+        }
+      }
     }
 
     return F({
@@ -876,8 +929,29 @@
         id: 'cards-strong-draws-passive-lost',
         label: 'Strong draws you called with and lost',
         hands: passiveLosses,
-        coachingNote: 'These are flush draws or OESDs where you only called and the draw missed. Look for spots that could have been semi-bluff raises on the flop or turn instead.'
+        coachingNote: 'Flush draws or open-enders where you only called and the draw missed. Most of these were spots to raise as a semi-bluff on the flop or turn instead.'
       });
+    }
+    if (!examples.length) {
+      var drawLost = pickHands(bucket.hands, heroLost, 12);
+      if (drawLost.length) {
+        examples.push({
+          id: 'cards-strong-draws-lost',
+          label: 'Strong draws that lost',
+          hands: drawLost,
+          coachingNote: 'Flush draws and open-enders that lost. These hands carry the equity to raise; look for the streets where a semi-bluff would have won the pot before showdown.'
+        });
+      } else {
+        var anyDraw = pickHands(bucket.hands, function(h) { return true; }, 12);
+        if (anyDraw.length) {
+          examples.push({
+            id: 'cards-strong-draws-all',
+            label: 'Strong draws',
+            hands: anyDraw,
+            coachingNote: 'Postflop spots with a flush draw, open-ended straight draw, or combo. Raising these as a semi-bluff is the highest-value line on most boards.'
+          });
+        }
+      }
     }
 
     return F({
@@ -921,7 +995,7 @@
         branchTexts.push(
           'You called bets with weak draws on ' + Math.round(callPct) + '% of these hands. ' +
           'Those calls have lost ' + fmtPnl(bucket.calledPnl) + ' across ' + bucket.called +
-          ' hands. Gutshots need a 10 to 1 price plus implied odds to be profitable; most of these spots do not have that.'
+          ' hands. Gutshots need about 11 to 1 plus implied odds to call; most of these spots do not offer that.'
         );
         pillarSeverities.push('r');
       } else if (callPct >= 35 && bucket.calledPnl < 0) {
@@ -970,8 +1044,29 @@
         id: 'cards-weak-draws-called-lost',
         label: 'Weak draws you called with and lost',
         hands: calledLost,
-        coachingNote: 'Gutshot calls that did not connect. Look at the price you were getting; most of these are folds unless the stack-to-pot ratio is generous and position is yours.'
+        coachingNote: 'Gutshot calls that did not connect. Check the price you were getting; most of these are folds unless the stack-to-pot ratio is generous and position is yours.'
       });
+    }
+    if (!examples.length) {
+      var weakLost = pickHands(bucket.hands, heroLost, 12);
+      if (weakLost.length) {
+        examples.push({
+          id: 'cards-weak-draws-lost',
+          label: 'Weak draws that lost',
+          hands: weakLost,
+          coachingNote: 'Gutshots that lost chips. Find the street where you put money in: most of these needed a price you were not getting, so the play was to fold.'
+        });
+      } else {
+        var anyWeak = pickHands(bucket.hands, function(h) { return true; }, 12);
+        if (anyWeak.length) {
+          examples.push({
+            id: 'cards-weak-draws-all',
+            label: 'Weak draws',
+            hands: anyWeak,
+            coachingNote: 'Postflop spots holding a gutshot. Continue only with deep stacks, position, and a clean board; otherwise the price is wrong and the fold is the play.'
+          });
+        }
+      }
     }
 
     return F({

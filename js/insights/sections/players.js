@@ -130,41 +130,41 @@
       name: 'vs Cannons',
       shortPlural: 'cannons',
       shortSingle: 'a cannon',
-      losingImpact: 'Cannons play too many flops without enough follow-through. The losses come from getting outdrawn or paying off the rare big bet.',
-      losingSoWhat: 'Value-bet thinner against cannons. They will call light on flops and turns, so bet for value and avoid bluffing.',
-      winningSoWhat: 'Keep value-betting cannons. They pay off too often; size up when they keep calling.'
+      losingImpact: 'Cannons see too many flops and call too far without the hand to back it up. Your losses come from getting outdrawn in cheap pots or paying off the one time they actually have it.',
+      losingSoWhat: 'Bet top pair and better for three streets and cut the bluffs, since they rarely fold. Charge their draws by sizing up on wet boards, and when a cannon suddenly raises big, give them credit and let the marginal hands go.',
+      winningSoWhat: 'Keep value-betting cannons across all three streets and skip the bluffs. Push your sizing up while they keep calling, and still step off the gas the rare time they raise into you.'
     },
     LAG: {
       name: 'vs Loose-Aggressive opponents',
       shortPlural: 'LAGs',
       shortSingle: 'a LAG',
-      losingImpact: 'LAGs are pressuring you with wide ranges and you are folding or paying too often. The aggression is doing its job.',
-      losingSoWhat: 'Widen the calling and three-betting range against LAG aggression. Stop folding pairs and strong draws to one barrel.',
-      winningSoWhat: 'Keep playing back at LAG aggression. Their wide value range means you can stand your ground with mid-strength holdings.'
+      losingImpact: 'LAGs bet and raise with wide ranges, and you are either folding the best hand or paying off the spots where they happen to have it. Their pressure is working because your responses are too clean.',
+      losingSoWhat: 'Call down lighter and stop folding pairs and strong draws to a single barrel, since most of their bets are not value. Three-bet your good hands preflop to play bigger pots in position, and let them keep firing into your made hands instead of folding.',
+      winningSoWhat: 'Keep playing back at LAG aggression and calling down with mid-strength hands. Trap your strong holdings by letting them barrel, and three-bet the spots where they open too wide.'
     },
     Nit: {
       name: 'vs Nits',
       shortPlural: 'nits',
       shortSingle: 'a nit',
-      losingImpact: 'Nits only put chips in with premium holdings. Paying them off on the river is the most common leak.',
-      losingSoWhat: 'Fold more rivers when a nit suddenly bets or raises. They are not bluffing; that line is value, every time.',
-      winningSoWhat: 'Stay disciplined against nits. Pick spots to steal blinds and small pots; avoid hero calls when they wake up.'
+      losingImpact: 'Nits only put chips in with premium hands, so paying off their bets and raises is where the money goes.',
+      losingSoWhat: 'When a nit bets or raises, fold top pair and anything weaker, because that line is value almost every time. Win it back by stealing their blinds and betting whenever they check, since they fold everything but premiums.',
+      winningSoWhat: 'Keep stealing blinds and small pots from nits and keep folding to their raises. Bet the flops they check to you, and skip the hero calls when they finally wake up with a hand.'
     },
     Station: {
       name: 'vs Stations',
       shortPlural: 'stations',
       shortSingle: 'a station',
-      losingImpact: 'Stations call too wide. Bluffing them is expensive and the only path through is value.',
-      losingSoWhat: 'Drop the bluffs against stations and value-bet thinner. Bet for three streets with top pair or better.',
-      winningSoWhat: 'Keep value-betting stations. Cut any leftover bluffs and size up when they keep calling.'
+      losingImpact: 'Stations call far too wide and almost never fold, so every bluff you fire just hands them the pot. The losses come from betting hands that cannot get called by worse.',
+      losingSoWhat: 'Drop the bluffs entirely and bet top pair or better for three streets, since they will pay off with much weaker. Size up your value bets rather than checking, and stop trying to make them fold.',
+      winningSoWhat: 'Keep value-betting stations thin and across all three streets. Cut any leftover bluffs and push your sizing larger while they keep calling.'
     },
     Maniac: {
       name: 'vs Maniacs',
       shortPlural: 'maniacs',
       shortSingle: 'a maniac',
-      losingImpact: 'Maniacs are firing wide and you are folding too often or running into their occasional value. Variance compounds when calls are wrong-sized.',
-      losingSoWhat: 'Widen the call-down range against maniacs and pick the right spots to three-bet for value. Stop folding strong one-pair hands to one barrel.',
-      winningSoWhat: 'Keep calling down maniacs with showdown-strength hands. Let them bluff into your value range and avoid getting fancy.'
+      losingImpact: 'Maniacs bet and raise relentlessly with almost any two cards, so folding too much leaks chips while the rare big hand catches you out. Most of their barrels are air.',
+      losingSoWhat: 'Call down with any pair or strong draw and stop folding one-pair hands to a single barrel. Three-bet your premiums for value rather than slow-playing, and let them keep bluffing into your made hands instead of trying to outplay them.',
+      winningSoWhat: 'Keep calling maniacs down with showdown-strength hands and let them bluff off their chips. Three-bet your strongest holdings for value and avoid fancy plays; a straightforward call-down beats them.'
     }
   };
 
@@ -190,10 +190,16 @@
       totalContested += matching[i].heroContested;
     }
 
+    // unionIdxs dedupes hands that contained more than one opponent of this
+    // type, so it is the honest set of distinct hands. distinctPnl sums each
+    // distinct hand once; totalPnl (summed per opponent above) double-counts a
+    // hand shared by two of them, so the headline must use distinctPnl.
     var unionIdxs = combineHandIdxs(matching);
+    var distinctPnl = 0;
     for (var u = 0; u < unionIdxs.length; u++) {
       var h = hands[unionIdxs[u]];
       if (!h || !h.outcome) continue;
+      distinctPnl += getHandPnlValue(h);
       if (heroSawShowdown(h)) {
         totalShowdown++;
         if (h.outcome.result === 'won') totalShowdownWon++;
@@ -201,11 +207,8 @@
     }
 
     var winRate = safePct(totalWon, totalContested);
-    // unionIdxs dedupes hands that contained more than one opponent of this
-    // type, so it is the honest count of distinct hands. totalHands sums each
-    // opponent's hand count and double-counts any hand shared by two of them.
     var distinctHands = unionIdxs.length;
-    var avgPerHand = distinctHands > 0 ? totalPnl / distinctHands : 0;
+    var avgPerHand = distinctHands > 0 ? distinctPnl / distinctHands : 0;
     var perHandThreshold = 2;
 
     var severity;
@@ -215,15 +218,15 @@
 
     var openingText = 'You have faced a group of ' + matching.length + ' ' +
       meta.shortPlural + ' (' + MIN_PROFILE_HANDS + '+ hands each) across ' + distinctHands + ' hands. ' +
-      (totalPnl < 0 ? 'You are down ' : 'You are up ') + fmt(Math.abs(totalPnl)) +
+      (distinctPnl < 0 ? 'You are down ' : 'You are up ') + fmt(Math.abs(distinctPnl)) +
       ' against them overall, about ' + fmt(Math.abs(avgPerHand)) + ' a hand.';
 
     var branchTexts = [];
 
     if (winRate != null) {
-      if (winRate >= 50 && totalPnl < 0) {
+      if (winRate >= 50 && distinctPnl < 0) {
         branchTexts.push('You win ' + Math.round(winRate) + '% of the pots you contest with this group but still lose overall, so the pots you lose are bigger than the ones you win.');
-      } else if (winRate < 50 && totalPnl > 0) {
+      } else if (winRate < 50 && distinctPnl > 0) {
         branchTexts.push('You win only ' + Math.round(winRate) + '% of contested pots here yet still come out ahead, so your winning pots are the bigger ones.');
       } else {
         branchTexts.push('You win ' + Math.round(winRate) + '% of the pots you contest against this group.');
@@ -249,8 +252,10 @@
 
     if (totalShowdown >= 10) {
       var wsd = safePct(totalShowdownWon, totalShowdown);
-      branchTexts.push('You reached showdown ' + totalShowdown + ' times against this group and won ' +
-        (wsd != null ? Math.round(wsd) + '%' : '-') + ' of them.');
+      if (wsd != null) {
+        branchTexts.push('You reached showdown ' + totalShowdown + ' times against this group and won ' +
+          Math.round(wsd) + '% of them.');
+      }
     }
 
     var impactText = null;
@@ -258,7 +263,7 @@
     if (severity === 'r' || severity === 'a') {
       impactText = meta.losingImpact;
       soWhatText = meta.losingSoWhat;
-    } else if (totalPnl > 0) {
+    } else if (distinctPnl > 0) {
       impactText = null;
       soWhatText = meta.winningSoWhat;
     }
@@ -304,6 +309,7 @@
         totalHands: totalHands,
         distinctHands: distinctHands,
         totalPnl: totalPnl,
+        distinctPnl: distinctPnl,
         winRate: winRate,
         totalShowdown: totalShowdown,
         totalShowdownWon: totalShowdownWon
@@ -351,13 +357,14 @@
 
     var isProfitable = direction === 'profitable';
     var label = isProfitable ? 'profitable' : 'unprofitable';
-    var verbLine = isProfitable ? 'up against' : 'down against';
 
     var leadNames = top.slice(0, 3).map(function(p) {
-      return p.name + ' (' + fmtPnl(p.heroPnl) + ', ' + p.hands + ' hands)';
+      return p.name + ' (' + fmtPnl(p.heroPnl) + ' across ' + p.hands + ' hands)';
     });
-    var openingText = 'You are ' + verbLine + ' ' + matching.length + ' opponents with ' + MIN_NAMED_HANDS +
-      '+ hands. The leaders: ' + joinList(leadNames) + '.';
+    var openingText = (isProfitable
+        ? 'You are showing a profit against ' + matching.length + ' opponents'
+        : 'You are losing to ' + matching.length + ' opponents') +
+      ' with ' + MIN_NAMED_HANDS + '+ hands each. The biggest swings: ' + joinList(leadNames) + '.';
 
     var branchTexts = [];
 
@@ -399,32 +406,44 @@
     var severity;
     var impactText = null;
     var soWhatText = null;
-    var worstNames = joinList(top.slice(0, Math.min(3, top.length)).map(function(p) { return p.name; }));
-    // Where the money moves tells you what to change. Showdown-weighted losses
-    // mean you are paying off value; pre-showdown losses mean bluffs are not
-    // getting through or you are folding the best hand before the river. The
-    // comparison flips by sign: when winning, the bigger profit is the larger
-    // positive number; when losing, the bigger loss is the more negative number.
-    var showdownDominates = isProfitable
-      ? (topShowdownPnl > topNonShowdownPnl)
-      : (topShowdownPnl < topNonShowdownPnl);
+    var topNames = joinList(top.slice(0, Math.min(3, top.length)).map(function(p) { return p.name; }));
+    // Only name a channel (showdown vs before showdown) when that channel
+    // genuinely carries the result for the top names. The dominant channel must
+    // have the right sign: a profit channel is the larger positive number, a
+    // loss channel is the more negative number. When both channels point the
+    // same way (e.g. the loss sits with opponents outside the top few), stay
+    // neutral rather than claim the money landed somewhere it did not.
+    var channel = 'neither';
+    if (isProfitable) {
+      if (topShowdownPnl > 0 && topShowdownPnl > topNonShowdownPnl) channel = 'showdown';
+      else if (topNonShowdownPnl > 0 && topNonShowdownPnl > topShowdownPnl) channel = 'preshowdown';
+    } else {
+      if (topShowdownPnl < 0 && topShowdownPnl < topNonShowdownPnl) channel = 'showdown';
+      else if (topNonShowdownPnl < 0 && topNonShowdownPnl < topShowdownPnl) channel = 'preshowdown';
+    }
     if (isProfitable) {
       severity = 'g';
-      if (showdownDominates) {
-        impactText = 'Most of the profit against ' + worstNames + ' comes at showdown: your value hands are getting paid.';
-        soWhatText = 'Keep betting your strong hands for value against ' + worstNames + ' rather than slowing down. They are paying you off, so make the bets bigger when they keep calling.';
+      if (channel === 'showdown') {
+        impactText = 'Most of the profit against ' + topNames + ' comes at showdown: your value hands are getting paid.';
+        soWhatText = 'Keep betting your strong hands for value against ' + topNames + ' rather than slowing down. They are paying you off, so make the bets bigger when they keep calling.';
+      } else if (channel === 'preshowdown') {
+        impactText = 'Most of the profit against ' + topNames + ' comes before showdown: your bets and raises are taking pots down.';
+        soWhatText = 'Keep applying pressure to ' + topNames + '. They fold too much, so keep barrelling the spots where they give up rather than checking back.';
       } else {
-        impactText = 'Most of the profit against ' + worstNames + ' comes before showdown: your bets and raises are taking pots down.';
-        soWhatText = 'Keep applying pressure to ' + worstNames + '. They fold too much, so keep barrelling the spots where they give up rather than checking back.';
+        impactText = 'You are showing a clear profit against ' + topNames + ', at showdown and before it.';
+        soWhatText = 'Keep doing what works against ' + topNames + ': bet your strong hands for value and keep pressuring the spots where they fold.';
       }
     } else {
       severity = totalPnl <= -20 ? 'r' : 'a';
-      if (showdownDominates) {
-        impactText = 'Most of the loss against ' + worstNames + ' lands at showdown: you are calling the river and paying off their value.';
-        soWhatText = 'Against ' + worstNames + ', fold more rivers when they bet big. Stop turning marginal pairs into bluff-catchers; their value range gets there too often for the call to be profitable.';
+      if (channel === 'showdown') {
+        impactText = 'Most of the loss against ' + topNames + ' lands at showdown: you are calling the river and paying off their value.';
+        soWhatText = 'Against ' + topNames + ', fold more rivers when they bet big. Stop turning marginal pairs into bluff-catchers; their value range gets there too often for the call to be profitable.';
+      } else if (channel === 'preshowdown') {
+        impactText = 'Most of the loss against ' + topNames + ' lands before showdown: you are folding too much or firing bluffs that do not get through.';
+        soWhatText = 'Against ' + topNames + ', tighten the spots where you give up to a bet and cut the bluffs they do not fold to. The leak is in the streets before the river, not at showdown.';
       } else {
-        impactText = 'Most of the loss against ' + worstNames + ' lands before showdown: you are folding too much or firing bluffs that do not get through.';
-        soWhatText = 'Against ' + worstNames + ', tighten the spots where you give up to a bet and cut the bluffs they do not fold to. The leak is in the streets before the river, not at showdown.';
+        impactText = 'The losses against ' + topNames + ' are split fairly evenly between showdown and the streets before it.';
+        soWhatText = 'Against ' + topNames + ', work both ends: fold more rivers when they bet big, and cut the earlier bluffs they will not fold to.';
       }
     }
 

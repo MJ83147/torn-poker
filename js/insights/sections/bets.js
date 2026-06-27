@@ -141,7 +141,7 @@
     if (!streetReads.length) return null;
 
     var overallAvg = mean(overallFracs);
-    var openingText = 'Across ' + heroBets.length + ' bets, your average sizing is ' +
+    var openingText = 'Across ' + overallFracs.length + ' post-flop bets, your average sizing is ' +
       Math.round(overallAvg * 100) + '% of pot.';
 
     var branchTexts = [];
@@ -208,7 +208,7 @@
       soWhatText = 'Pick a default size per street that fits the typical spot. Vary only when board texture forces it, not when your hand changes.';
     } else if (singleSizeStreets.length >= 2) {
       impactText = 'Using one default size everywhere keeps you simple but the same bet has to extract value, protect against draws, and bluff. It does none of those jobs as well as a fitted size would.';
-      soWhatText = 'Once you have a default, start widening it: bigger on wet boards and against multiway, smaller heads-up on dry boards.';
+      soWhatText = 'Once you have a default, start varying it by board: bigger on wet boards and against several players, smaller heads-up on dry boards.';
     } else {
       impactText = 'Sizing shape reads sensibly across streets. The defaults are doing strategic work.';
       soWhatText = 'Keep building data on by-position and by-texture splits as the sample grows.';
@@ -368,8 +368,27 @@
         id: 'bets-value-vs-bluff-losses',
         label: 'Big-bet showdown losses',
         hands: bigBetLosses,
-        coachingNote: 'Hands you sized up on and lost at showdown. The pattern to look for: were you betting strength, or were you betting because the hand "felt big"? Big sizing should track the cards, not the story.'
+        coachingNote: 'Hands you sized up on and lost at showdown. The pattern to look for: were you betting strength, or were you betting because the hand felt big? Big sizing should track the cards, not the story.'
       });
+    }
+    if (!examples.length) {
+      var anyShowdownBets = pickHands(hands, function(h) {
+        if (!h || !h.outcome) return false;
+        if (!isShowdown(h)) return false;
+        var w = walkHandForSizing(h);
+        for (var b = 0; b < w.heroBets.length; b++) {
+          if (w.heroBets[b].street !== 'Preflop') return true;
+        }
+        return false;
+      }, 12);
+      if (anyShowdownBets.length) {
+        examples.push({
+          id: 'bets-value-vs-bluff-showdowns',
+          label: 'Showdowns where you bet post-flop',
+          hands: anyShowdownBets,
+          coachingNote: 'Hands you took to showdown after betting post-flop. Check whether the bigger bets line up with the stronger holdings.'
+        });
+      }
     }
 
     return F({
@@ -435,11 +454,11 @@
     if (!rows.length) return null;
 
     var openingParts = rows.map(function(r) {
-      return 'against ' + BAND_LABELS[r.key] + ' you fold ' + Math.round(r.foldPct) +
-        '%, call ' + Math.round(r.callPct) + '%, raise ' + Math.round(r.raisePct) +
-        '% across ' + r.n + ' spots';
+      return 'Against ' + BAND_LABELS[r.key] + ', across ' + r.n + ' spots, you fold ' +
+        Math.round(r.foldPct) + '%, call ' + Math.round(r.callPct) + '%, and raise ' +
+        Math.round(r.raisePct) + '%.';
     });
-    var openingText = 'When facing bets, ' + openingParts.join('; ') + '.';
+    var openingText = 'Here is how you respond to each bet size. ' + openingParts.join(' ');
 
     var branchTexts = [];
     var leaks = [];
@@ -463,7 +482,7 @@
     }
     if (overbetRow && overbetRow.callPct >= 50) {
       leaks.push('calls-overbet');
-      branchTexts.push('You call ' + Math.round(overbetRow.callPct) + '% against overbets across ' + overbetRow.n + ' spots. Overbets are almost always polarised; calling that often pays off value.');
+      branchTexts.push('You call ' + Math.round(overbetRow.callPct) + '% against overbets across ' + overbetRow.n + ' spots. Overbets are nearly always either a strong hand or a pure bluff, with little in between, so calling this often means paying off the strong hands.');
     }
 
     if (rows.length >= 3) {
@@ -505,10 +524,10 @@
       impactText = 'Calling too often against big bets pays off value. Big bets at this level are rarely bluffs; the calling range needs to be narrower than it is.';
       soWhatText = 'Trim hero calls against large sizings. Save the chip-ups for hands that beat value, not hands that only beat bluffs.';
     } else if (leaks.indexOf('sizing-blind') !== -1) {
-      impactText = 'A flat response across sizing bands is exploitable. Opponents can size up with value and size down to bluff cheaply, and either way gets the same answer from you.';
+      impactText = 'A flat response across sizing bands is exploitable. Opponents can size up with value and size down to bluff cheaply, and either way they get the same answer from you.';
       soWhatText = 'Build the habit of widening defence against smaller bets and tightening against larger ones. The size in front of you should change the decision.';
     } else {
-      impactText = 'Response scales sensibly with the size of bets you face. The defence is sorted by price.';
+      impactText = 'Your response scales sensibly with the size of bets you face. You fold more to bigger bets and call more against smaller ones, which is the right shape.';
       soWhatText = 'Hold the shape. Track call frequency against overbets specifically as the sample grows.';
     }
 
@@ -558,7 +577,7 @@
         id: 'bets-response-faced',
         label: 'Hands where you faced a bet',
         hands: anyFaced,
-        coachingNote: 'Browse these and check whether your response shifted with the size of the bet. If your fold rate is identical against small probes and overbets, opponents can size for free information.'
+        coachingNote: 'Browse these and check whether your response shifted with the size of the bet. If your fold rate is identical against small probes and overbets, opponents learn nothing from how you react and can pick any size for free.'
       });
     }
 

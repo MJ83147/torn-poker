@@ -48,7 +48,7 @@
 
     if (winPct != null && calls >= 5 && winPct < WIN_FLOOR) {
       firedWeakCall = true;
-      branchTexts.push('When you do call shoves you win only ' + Math.round(winPct) + '%. The calling range is too wide for the spots you are in.');
+      branchTexts.push('When you call shoves you win ' + Math.round(winPct) + '% of the time, across ' + calls + ' calls. Some of that is variance, but a number this low usually means the calling range is too wide for the spots you are in.');
     }
 
     var severity = 'g';
@@ -69,14 +69,14 @@
     var impactText = null;
     var soWhatText = null;
     if (firedLow && firedWeakCall) {
-      impactText = 'Calling light against a shove pays the opponent. Most all-in shoves are value at most stakes, and a wide calling range eats your stack at the exact moment you can least afford it.';
-      soWhatText = 'Tighten the calling range. Pairs of pocket nines and up, AK, AQ suited, and the occasional read-driven hero call. Everything else folds.';
+      impactText = 'Calling light against a shove pays the opponent. At most stakes a shove is a value hand more often than a bluff, so a wide calling range costs you your stack at the worst possible moment.';
+      soWhatText = 'Tighten the calling range. Pocket nines and up, AK, and AQ suited, plus the occasional call when you have a read. Everything else folds.';
     } else if (firedHigh) {
       impactText = 'Folding to most all-ins lets opponents shove a wider range than they should. Their bluffs work because they expect you to give up the chips you have already put in.';
-      soWhatText = 'Call shoves you are getting the right price for. The math is simple: pot odds versus equity against a sensible shoving range.';
+      soWhatText = 'Call the shoves you are getting the right price for. Compare your pot odds against your equity versus a sensible shoving range, and call when the equity is there.';
     } else if (firedWeakCall) {
-      impactText = 'Your call frequency is in range but your win rate when called says the hands themselves are too thin.';
-      soWhatText = 'Drop the bottom of your calling range. Pocket pairs below TT and offsuit broadway hands are usually the cuts.';
+      impactText = 'Your call frequency is reasonable, but how often you win when you call suggests the hands themselves are too thin.';
+      soWhatText = 'Drop the bottom of your calling range. Pocket pairs below tens and offsuit broadway hands are usually the first to cut.';
     }
 
     var examples = [];
@@ -86,17 +86,28 @@
         id: 'allin-losing',
         label: 'All-in spots you lost',
         hands: lostCalls,
-        coachingNote: 'These are the all-in spots where the chips went the wrong way. Look at what you held and whether the calling threshold should be tighter.'
+        coachingNote: 'These are the all-in spots where the chips went the wrong way. Look at what you held and whether you should be calling lighter or tighter.'
       });
     }
     var allAllIn = pickHands(hands, handHadAllIn, 20);
     if (allAllIn.length) {
       examples.push({
         id: 'allin-all',
-        label: 'All all-in spots',
+        label: 'Every all-in spot',
         hands: allAllIn,
-        coachingNote: 'Every hand where an all-in pressure point came up. Use this set to spot the patterns in your shove/call decisions.'
+        coachingNote: 'Every hand where an all-in came up. Use this set to spot the patterns in your shove and call decisions.'
       });
+    }
+    if (!examples.length) {
+      var anyPlayed = pickHands(hands, heroPlayed, 20);
+      if (anyPlayed.length) {
+        examples.push({
+          id: 'allin-played',
+          label: 'Hands you played',
+          hands: anyPlayed,
+          coachingNote: 'A sample of hands you played. Watch how you handle the spots where the stacks get deep and a shove is on the table.'
+        });
+      }
     }
 
     return F({

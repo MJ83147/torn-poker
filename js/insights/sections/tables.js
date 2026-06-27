@@ -132,13 +132,13 @@
       deltaUnits = Math.max(deltaUnits, (loseShare - 0.5) * 4);
       primaryPattern = 'volume-losing';
       branchTexts.push(
-        Math.round(loseShare * 100) + '% of your hands are at tables where you are down on the count. ' +
-        'The bulk of your volume sits at losing tables.'
+        Math.round(loseShare * 100) + '% of your hands are at tables where you are losing money. ' +
+        'Most of your volume sits at losing tables.'
       );
     } else if (winners.length && winShare >= 0.6) {
       branchTexts.push(
-        Math.round(winShare * 100) + '% of your hands are at tables where you are up on the count. ' +
-        'Volume is going where you win.'
+        Math.round(winShare * 100) + '% of your hands are at tables where you are winning money. ' +
+        'Your volume is going where you win.'
       );
     }
 
@@ -177,9 +177,7 @@
     }
 
     if (!fired) {
-      var pnlRange = Math.abs(best.pnl - worst.pnl);
-      var perHandRange = totalHands > 0 ? pnlRange / totalHands : 0;
-      branchTexts.push('P&L is spread evenly across the tables you play. No single environment is making or breaking your results.');
+      branchTexts.push('P&L is spread evenly across the tables you play. No single table is making or breaking your results.');
       primaryPattern = 'even';
       severity = 'g';
     }
@@ -233,6 +231,17 @@
             'These are the wins at this table. Whatever is working here is the model. Look for similar games and put more volume into them.'
         });
       }
+    }
+    if (!examples.length && worst && worst.hands && worst.hands.length) {
+      var worstPlayed = pickHands(worst.hands, heroPlayed, 15);
+      if (!worstPlayed.length) worstPlayed = worst.hands.slice(0, 15);
+      examples.push({
+        id: 'tbl-worst-all-' + String(worst.key),
+        label: 'Hands at ' + worst.label,
+        hands: worstPlayed,
+        coachingNote: 'Your worst table by P&L: ' + fmtPnl(worst.pnl) + ' over ' + worst.n + ' hands. ' +
+          'Go through how you played here and decide whether the table is worth keeping.'
+      });
     }
 
     return F({
@@ -348,7 +357,7 @@
         pattern = 'long-leak';
         branchTexts.push(
           'Your long-session win rate is ' + Math.round(wrGap) +
-          ' points below your short-session win rate. Stamina or focus drops the longer you sit.'
+          ' points below your short-session win rate. That gap usually points to focus or stamina fading the longer you sit.'
         );
       } else if (wrGap >= 4) {
         fired = true;
@@ -388,8 +397,8 @@
     var impactText = null;
     var soWhatText = null;
     if (pattern === 'long-leak') {
-      impactText = 'Sitting longer is making your game worse, not better. Fatigue and tilt show up in the second half of the sessions you stay in.';
-      soWhatText = 'Set a session length cap and stick to it. The data says the marginal hand at the end of a long session is a losing hand on average.';
+      impactText = 'Sitting longer is not helping your game. The drop in win rate over long sessions is the kind of pattern fatigue and tilt tend to produce.';
+      soWhatText = 'Set a session length cap and stick to it. In your data, the hands late in a long session return less than the ones early on.';
     } else if (pattern === 'long-soft') {
       impactText = 'The longer you play, the lower the return on each hand. It is not yet a leak but it is a trend.';
       soWhatText = 'Watch how you feel through the second half of long sessions. The slip is small but consistent.';
@@ -416,6 +425,25 @@
           hands: longLosingHands,
           coachingNote: 'These are hands from the second half of your longer losing sessions. ' +
             'Look for forced calls, tired bluffs, and sticky river decisions. The pattern that hurts long sessions usually shows up here.'
+        });
+      }
+    }
+    if (!examples.length) {
+      var longBackHalf = [];
+      for (var bi = 0; bi < longBucket.length && longBackHalf.length < 12; bi++) {
+        var bs = longBucket[bi];
+        var mid = Math.floor(bs.hands.length / 2);
+        for (var bh = mid; bh < bs.hands.length && longBackHalf.length < 12; bh++) {
+          longBackHalf.push(bs.hands[bh]);
+        }
+      }
+      if (longBackHalf.length) {
+        examples.push({
+          id: 'time-long-backhalf',
+          label: 'Hands from the back half of your long sessions',
+          hands: longBackHalf,
+          coachingNote: 'Hands from the second half of your longer sessions. ' +
+            'Check whether your decisions hold up as late as they do early, even when the session is going fine.'
         });
       }
     }

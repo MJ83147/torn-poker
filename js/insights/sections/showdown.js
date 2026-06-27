@@ -34,8 +34,11 @@
       }
     }
 
-    var openingText = 'You see ' + Math.round(wtsd) + '% of flops go to showdown across ' +
-      d.sawFlop + ' flopped hands. Net P&L across ' + sdCount + ' showdowns is ' + fmtPnl(sdPnl) + '.';
+    var openingText = 'Your WTSD is ' + Math.round(wtsd) + '%: that share of your ' +
+      d.sawFlop + ' flopped hands reached showdown.';
+    if (sdCount > 0) {
+      openingText += ' Net P&L across those ' + sdCount + ' showdowns is ' + fmtPnl(sdPnl) + '.';
+    }
 
     var branchTexts = [];
 
@@ -93,23 +96,23 @@
     if (sev.severity === 'r' || sev.severity === 'a') {
       if (sev.direction === 'high') {
         if (sdPerHand < nsdPerHand) {
-          impactText = 'You reach showdown more often than the band, and the hands you take there return less per hand than the hands you fold earlier. You are paying to see hands that the math says fold.';
-          soWhatText = 'Fold more rivers and turns with marginal holdings. Tighten the continuation criteria when the bet sizing says you are beat.';
+          impactText = 'WTSD of ' + Math.round(wtsd) + '% is above the ' + Sections.fmtBand(SHOWDOWN_BAND) + ' target, and the hands you take to showdown return less per hand than the hands you fold earlier. You are paying to see rivers you should be folding.';
+          soWhatText = 'Fold more turns and rivers with marginal holdings. Give up the hands where the bet sizing says you are beat.';
         } else {
-          impactText = 'You reach showdown more often than the band, but the showdowns themselves hold up. Worth watching as sample grows; the cost has not landed yet.';
-          soWhatText = 'Keep an eye on river call-downs. If WSD stays healthy this is a non-issue, but the volume above target is the warning flag.';
+          impactText = 'WTSD of ' + Math.round(wtsd) + '% is above the ' + Sections.fmtBand(SHOWDOWN_BAND) + ' target, but the showdowns are still profitable per hand. The high frequency is the thing to watch: if the win rate at showdown slips, this volume starts costing money.';
+          soWhatText = 'Keep an eye on your river call-downs. The showdowns pay for now, but reaching them this often leaves little room if the hands get weaker.';
         }
       } else {
         if (sdPerHand > 0 && sdPerHand > nsdPerHand) {
-          impactText = 'You reach showdown less often than the band, and the showdowns you do reach are profitable. You are folding rivers that would have won.';
-          soWhatText = 'Call more rivers in the spots you are currently folding. The showdowns you reach already profit, which means more would too.';
+          impactText = 'WTSD of ' + Math.round(wtsd) + '% is below the ' + Sections.fmtBand(SHOWDOWN_BAND) + ' target, and the showdowns you do reach are profitable. You are folding rivers that would have won.';
+          soWhatText = 'Call more rivers in the spots you currently fold. The showdowns you reach already profit, so more of them would too.';
         } else {
-          impactText = 'You are folding before showdown often. The discipline reads tight but the resulting non-showdown line is not picking up the slack.';
-          soWhatText = 'Review the river folds against the action that preceded them. Some are probably winning hands you let go.';
+          impactText = 'WTSD of ' + Math.round(wtsd) + '% is below the ' + Sections.fmtBand(SHOWDOWN_BAND) + ' target. The folding reads disciplined, but the hands you win without showdown are not making up for it.';
+          soWhatText = 'Review your river folds against the action that came before them. Some are probably winning hands you let go.';
         }
       }
     } else if (sdPerHand < 0 && sdCount >= 25) {
-      impactText = 'Your showdown frequency is in band but the showdowns themselves are losing. The selection is right; the hands you arrive with are wrong.';
+      impactText = 'WTSD of ' + Math.round(wtsd) + '% sits in the ' + Sections.fmtBand(SHOWDOWN_BAND) + ' target, but the showdowns themselves are losing. How often you show down is right; the hands you arrive with are not.';
       soWhatText = 'Tighten the range you take to showdown. The frequency is fine; the hand strength at the river needs to improve.';
     }
 
@@ -121,7 +124,18 @@
           id: 'showdown-going-sd',
           label: 'Hands you took to showdown',
           hands: sdHands,
-          coachingNote: 'Showdowns you have reached recently. Look at the turn and river action: are you arriving with hands strong enough to call the bets being made, or are you paying off value?'
+          coachingNote: 'Showdowns you reached recently. Look at the turn and river action: are you arriving with hands strong enough to call the bets being made, or are you paying off value?'
+        });
+      }
+      var foldedHands = pickHands(hands, function(h) {
+        return h && !handIsShowdown(h) && heroLost(h);
+      }, 12);
+      if (foldedHands.length) {
+        examples.push({
+          id: 'showdown-going-folded',
+          label: 'Hands you folded before showdown',
+          hands: foldedHands,
+          coachingNote: 'Hands you gave up before the river. Check whether any of these were ahead when you folded.'
         });
       }
     }
@@ -179,7 +193,7 @@
     var sev = Sections.classify(wsd, WSD_BAND, null);
     if (!sev) return null;
 
-    var openingText = 'When you reach showdown you win ' + Math.round(wsd) + '% of the time. ' +
+    var openingText = 'Your W$SD is ' + Math.round(wsd) + '%: you win that share of the showdowns you reach. ' +
       'Across ' + sdCount + ' showdowns, net showdown P&L is ' + fmtPnl(sdPnl) + '.';
 
     var branchTexts = [];
@@ -187,7 +201,7 @@
     if (sev.severity === 'r' || sev.severity === 'a') {
       var dirWord = sev.direction === 'high' ? 'above' : 'below';
       branchTexts.push(
-        'WSD is ' + Math.round(wsd) + '%, ' + dirWord + ' the ' +
+        'W$SD is ' + Math.round(wsd) + '%, ' + dirWord + ' the ' +
         Sections.fmtBand(WSD_BAND) + ' target.'
       );
     }
@@ -215,20 +229,20 @@
     var soWhatText = null;
     if (sev.severity === 'r' || sev.severity === 'a') {
       if (sev.direction === 'low') {
-        impactText = 'WSD below the band means you are arriving at the river with second-best hands more often than not. The river-calling range is too wide for the bets being made.';
-        soWhatText = 'Cut marginal hands from your river-calling range. Second pair gets there only when opponents are bluffing; for now they are mostly value-betting.';
+        impactText = 'W$SD of ' + Math.round(wsd) + '% is below the ' + Sections.fmtBand(WSD_BAND) + ' target, which means you arrive at the river with the second-best hand more often than not. Your river-calling range is too wide for the bets being made.';
+        soWhatText = 'Cut marginal hands from your river-calling range. Second pair only wins when opponents are bluffing, and right now they are mostly value-betting.';
       } else {
-        impactText = 'WSD above the band sounds great, but combined with a thin WTSD it usually means you only get to showdown with the nuts and fold every borderline river. Some of those river folds were winners.';
-        soWhatText = 'Widen the river continuation in spots you currently fold. You are showing down only monsters; lower the threshold and the WSD will normalise without giving up profit.';
+        impactText = 'W$SD of ' + Math.round(wsd) + '% is above the ' + Sections.fmtBand(WSD_BAND) + ' target. Winning most showdowns sounds good, but a number this high usually means you only show down very strong hands and fold every borderline river. Some of those river folds were winners.';
+        soWhatText = 'Call more rivers in the spots you currently fold. You are showing down only your strongest hands; widen the calling range and W$SD settles into the target without giving up profit.';
       }
     } else if (sdPnl < 0 && sdCount >= 25) {
-      impactText = 'WSD reads in-band but the showdowns are net negative. The pots you lose at showdown are bigger than the ones you win.';
-      soWhatText = 'Review the largest losing showdowns. The pattern is usually paying off value on the river with one-pair hands you should have folded.';
+      impactText = 'W$SD of ' + Math.round(wsd) + '% sits in the ' + Sections.fmtBand(WSD_BAND) + ' target, but the showdowns are net negative at ' + fmtPnl(sdPnl) + '. The pots you lose at showdown are bigger than the ones you win.';
+      soWhatText = 'Review your largest losing showdowns. The pattern is usually paying off value on the river with one-pair hands you should have folded.';
     }
 
     var examples = [];
     var sdLost = pickHands(hands, function(h) {
-      return handIsShowdown(h) && !wonShowdown(h);
+      return handIsShowdown(h) && heroLost(h);
     }, 15);
     if (sdLost.length) {
       examples.push({
@@ -236,6 +250,17 @@
         label: 'Showdowns you lost',
         hands: sdLost,
         coachingNote: 'Showdowns that did not go your way. Check the river bet sizing and your hand strength at the river. Most leaks here are calls with second pair or worse against value-betting ranges.'
+      });
+    }
+    var sdWonHands = pickHands(hands, function(h) {
+      return handIsShowdown(h) && wonShowdown(h);
+    }, 12);
+    if (sdWonHands.length) {
+      examples.push({
+        id: 'showdown-winning-won',
+        label: 'Showdowns you won',
+        hands: sdWonHands,
+        coachingNote: 'Showdowns you took down. Note the hand strength you needed to win, then compare it against the showdowns you lost.'
       });
     }
 
@@ -276,8 +301,8 @@
     if (sdCount + nsdCount < MIN_AGG) return null;
 
     var totalPnl = sdPnl + nsdPnl;
-    var openingText = 'Your winnings split: ' + fmtPnl(sdPnl) + ' from hands that reached showdown, ' +
-      fmtPnl(nsdPnl) + ' from hands won without showdown. Total: ' + fmtPnl(totalPnl) + '.';
+    var openingText = 'Your P&L splits two ways: ' + fmtPnl(sdPnl) + ' from hands that reached showdown across ' + sdCount + ' showdowns, and ' +
+      fmtPnl(nsdPnl) + ' from hands that ended without showdown across ' + nsdCount + ' hands. Total: ' + fmtPnl(totalPnl) + '.';
 
     var branchTexts = [];
     var severity = 'g';
@@ -296,17 +321,17 @@
       soWhatText = 'Keep playing. Watch for either line drifting negative as the sample grows.';
     } else if (sdNeg && nsdNeg) {
       severity = 'r';
-      branchTexts.push('Both lines are losing. Showdowns down ' + fmtPnl(sdPnl) + ', non-showdowns down ' + fmtPnl(nsdPnl) + '.');
+      branchTexts.push('Both lines are losing. Showdowns are at ' + fmtPnl(sdPnl) + ', non-showdowns at ' + fmtPnl(nsdPnl) + '.');
       impactText = 'The leak is not in one area, it is across the game. Both the bets that should fold opponents and the showdowns you call down are net negative.';
       soWhatText = 'Use the position, range, and cards sections to find which combinations of seat and street are doing the damage. The diagnosis here is not specific enough on its own.';
     } else if (sdNeg && nsdPos) {
       severity = 'r';
-      branchTexts.push('Your showdown line loses ' + fmtPnl(sdPnl) + '. Your non-showdown winnings of ' + fmtPnl(nsdPnl) + ' are carrying the result.');
-      impactText = 'You make money when opponents fold but lose money when they do not. The bluffs work; the value hands do not extract, or the river call-downs are too wide.';
-      soWhatText = 'Tighten what you take to showdown when you are not the aggressor. Hero-calls are leaking; bluff-catching frequency is wider than opponents are bluffing.';
+      branchTexts.push('Your showdown line is at ' + fmtPnl(sdPnl) + '. Your non-showdown line of ' + fmtPnl(nsdPnl) + ' is carrying the result.');
+      impactText = 'You make money when opponents fold but lose money when they do not. Either the value hands do not extract, or the river call-downs are too wide.';
+      soWhatText = 'Tighten what you take to showdown when you are not the aggressor. You are calling rivers more often than opponents are bluffing.';
     } else if (nsdNeg && sdPos) {
       severity = 'r';
-      branchTexts.push('Your non-showdown line loses ' + fmtPnl(nsdPnl) + '. Your showdown winnings of ' + fmtPnl(sdPnl) + ' are carrying the result.');
+      branchTexts.push('Your non-showdown line is at ' + fmtPnl(nsdPnl) + '. Your showdown line of ' + fmtPnl(sdPnl) + ' is carrying the result.');
       impactText = 'Hands you do not get to showdown on are costing money. You are betting and being called or raised off pots without seeing the river.';
       soWhatText = 'Fewer c-bets and barrels in spots where opponents are calling. Pick bluff spots where folds are likely: dry boards, heads up, in position.';
     } else {
@@ -317,7 +342,7 @@
     var examples = [];
     if (sdNeg) {
       var sdLosses = pickHands(hands, function(h) {
-        return handIsShowdown(h) && !wonShowdown(h);
+        return handIsShowdown(h) && heroLost(h);
       }, 12);
       if (sdLosses.length) {
         examples.push({
@@ -330,7 +355,7 @@
     }
     if (nsdNeg) {
       var nsdLosses = pickHands(hands, function(h) {
-        return !handIsShowdown(h) && h && h.outcome && h.outcome.result !== 'won';
+        return h && !handIsShowdown(h) && heroLost(h);
       }, 12);
       if (nsdLosses.length) {
         examples.push({
@@ -338,6 +363,28 @@
           label: 'Non-showdown losses',
           hands: nsdLosses,
           coachingNote: 'Hands you lost without reaching showdown. Look for the pattern: are these c-bets that got called, barrels that got raised, or hands where you invested then folded the river?'
+        });
+      }
+    }
+    if (!examples.length) {
+      var splitHands = pickHands(hands, function(h) { return handIsShowdown(h); }, 12);
+      if (splitHands.length) {
+        examples.push({
+          id: 'showdown-split-sd',
+          label: 'Hands you took to showdown',
+          hands: splitHands,
+          coachingNote: 'A recent sample of the showdowns behind your showdown P&L.'
+        });
+      }
+      var splitNsdWins = pickHands(hands, function(h) {
+        return h && !handIsShowdown(h) && wonShowdown(h);
+      }, 12);
+      if (splitNsdWins.length) {
+        examples.push({
+          id: 'showdown-split-nsd-wins',
+          label: 'Pots won without showdown',
+          hands: splitNsdWins,
+          coachingNote: 'A recent sample of the pots you took down without a showdown.'
         });
       }
     }

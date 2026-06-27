@@ -111,12 +111,16 @@
         var lows  = offPositions.filter(function(r) { return r.sev.direction === 'low'; })
           .sort(function(a, b) { return b.sev.deltaUnits - a.sev.deltaUnits; });
         if (highs.length >= 2) {
-          var lbl = joinList(highs.map(function(r) { return r.position + ' (' + Math.round(r.vpip) + '%)'; }));
-          branchTexts.push('You play wide from ' + lbl + ', above the ' + Sections.fmtBand(highs[0].band) + ' target for those spots.');
+          var lbl = joinList(highs.map(function(r) {
+            return r.position + ' at ' + Math.round(r.vpip) + '% against a ' + Sections.fmtBand(r.band) + ' target';
+          }));
+          branchTexts.push('You play too wide from ' + lbl + '.');
         }
         if (lows.length >= 2) {
-          var lblL = joinList(lows.map(function(r) { return r.position + ' (' + Math.round(r.vpip) + '%)'; }));
-          branchTexts.push('You play tight from ' + lblL + ', below the ' + Sections.fmtBand(lows[0].band) + ' target for those spots.');
+          var lblL = joinList(lows.map(function(r) {
+            return r.position + ' at ' + Math.round(r.vpip) + '% against a ' + Sections.fmtBand(r.band) + ' target';
+          }));
+          branchTexts.push('You play too tight from ' + lblL + '.');
         }
         if (worst) {
           aggregateBand = worst.band;
@@ -193,6 +197,18 @@
             });
           }
         }
+      }
+    }
+
+    if (!examples.length && hands && hands.length) {
+      var played = pickHands(hands, function(h) { return heroPlayed(h); }, 12);
+      if (played.length) {
+        examples.push({
+          id: 'width-played-sample',
+          label: 'Hands you played preflop',
+          hands: played,
+          coachingNote: 'A sample of the hands you took past preflop. Use it to sense-check whether your range is the right width for each seat.'
+        });
       }
     }
 
@@ -345,6 +361,17 @@
           label: 'Hands with ' + bestKey,
           hands: bestHands,
           coachingNote: 'Your most profitable combo so far. Keep playing it confidently; watch the sample size before reading too much into the number.'
+        });
+      }
+    }
+    if (!examples.length && hands && hands.length) {
+      var anyPlayed = pickHands(hands, function(h) { return heroPlayed(h); }, 12);
+      if (anyPlayed.length) {
+        examples.push({
+          id: 'wh-played-sample',
+          label: 'Hands you played',
+          hands: anyPlayed,
+          coachingNote: 'A sample of the hands you took past preflop, so you can see which combos are carrying your results.'
         });
       }
     }

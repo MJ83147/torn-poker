@@ -56,12 +56,11 @@
     var recentPerHand = perHandPnl(dR);
     moves.pnl = moveOf(earlyPerHand, recentPerHand, 2);
 
-    var openingText = 'Comparing your earliest tracked hands with your most recent: VPIP ' +
-      Math.round(dE.core.vpipPct || 0) + '% then, ' +
-      Math.round(dR.core.vpipPct || 0) + '% now' +
-      (dE.core.wr != null && dR.core.wr != null
-        ? ', win rate ' + Math.round(dE.core.wr) + '% then, ' + Math.round(dR.core.wr) + '% now.'
-        : '.');
+    var openingText = 'Comparing your earliest tracked hands with your most recent. VPIP runs ' +
+      Math.round(dE.core.vpipPct || 0) + '% then versus ' +
+      Math.round(dR.core.vpipPct || 0) + '% now, with PFR at ' +
+      Math.round(dE.core.pfrPct || 0) + '% then versus ' +
+      Math.round(dR.core.pfrPct || 0) + '% now.';
 
     var branchTexts = [];
     var movers = [];
@@ -124,7 +123,10 @@
     } else if (movers.length === 0) {
       return null;
     } else if (styleMovers.length) {
-      branchTexts.push('Your win rate has held at ' + Math.round(dR.core.wr || 0) + '% even with those changes underneath.');
+      branchTexts.push('Your win rate has held at ' + Math.round(dR.core.wr || 0) + '%, steady through those style changes.');
+    } else if (pnlMove.dir !== 'flat') {
+      branchTexts.push('Your win rate has held at ' + Math.round(dR.core.wr || 0) +
+        '%, while your per-hand return has moved from ' + metricFromTo('pnl') + '.');
     }
 
     var severity;
@@ -142,7 +144,7 @@
     if (severity === 'r' || (severity === 'a' && wrMove.dir === 'down')) {
       impactText = 'Your results are getting worse across your tracked history. Something is moving against you, even if you cannot feel it session to session.';
       if (driftDir) {
-        soWhatText = 'Several metrics are drifting at once. Identify what changed in your approach and pull it back to where you were when the results were better.';
+        soWhatText = 'Your ' + labels[styleMovers[0].key] + ' has moved the most. Pull it back toward where it sat when your results were better, and check the rest follow.';
       } else {
         soWhatText = 'Look at within-session and across-session play next. The cause is somewhere in how you are running sessions.';
       }
@@ -187,6 +189,19 @@
           label: 'Recent hands you played',
           hands: recentDrift,
           coachingNote: 'Hands from your recent stretch where your style is drifting ' + driftDir + '. The win rate has not moved yet, but these are the hands to compare against how you played earlier to spot what changed.'
+        });
+      }
+    }
+
+    // Steady win rate with movement underneath still warrants example hands to compare.
+    if (!examples.length) {
+      var recentPlayed = pickHands(recent, function(h) { return heroPlayed(h); }, 12);
+      if (recentPlayed.length) {
+        examples.push({
+          id: 'trend-recent-played',
+          label: 'Recent hands you played',
+          hands: recentPlayed,
+          coachingNote: 'Hands from your most recent stretch. Your win rate has held steady, so use these to confirm your recent play still matches the game that has been working.'
         });
       }
     }
@@ -246,8 +261,8 @@
 
     var openingText = 'You have ' + sessions.length + ' sessions tracked. ' +
       (bestSession && worstSession && bestSession !== worstSession
-        ? 'Best session: ' + fmtPnl(bestSession.pnl) + ' across ' + bestSession.len + ' hands. ' +
-          'Worst: ' + fmtPnl(worstSession.pnl) + ' across ' + worstSession.len + ' hands.'
+        ? 'Best session: ' + fmtPnl(bestSession.pnl) + ' across ' + bestSession.cashHands + ' cash hands. ' +
+          'Worst: ' + fmtPnl(worstSession.pnl) + ' across ' + worstSession.cashHands + ' cash hands.'
         : 'Not enough variation between sessions to compare yet.');
 
     var branchTexts = [];
@@ -287,7 +302,7 @@
               id: 'within-session',
               severity: declineSev,
               deltaUnits: Math.max(wrDrop, aggDrop) / 10,
-              branchText: 'Across the second half of your sessions, ' + pieces.join(' and ') + '. Your game shifts the longer you sit.',
+              branchText: 'Across the second half of your sessions, ' + joinList(pieces) + '. Your game shifts the longer you sit.',
               examples: null
             };
             var lateHands = halves.secondHalf.slice(-12);
@@ -296,7 +311,7 @@
                 id: 'sw-late-session',
                 label: 'Hands from late in sessions',
                 hands: lateHands,
-                coachingNote: 'These are hands you played in the second half of long sessions. Look for the patterns that are different from how you played earlier: looser opens, weaker calls, missed value.'
+                coachingNote: 'Hands from the second half of your sessions. Look for what is different from your earlier play: looser opens, weaker calls, missed value.'
               };
             }
             pillars.push(decline);
@@ -332,13 +347,26 @@
           if ((vpipGap >= 8 && aggGap >= 8) || vpipGap >= 12) swingSev = 'r';
 
           if (swingSev !== 'g') {
-            var direction;
-            if (vpipGap >= 5) direction = 'looser';
-            else if (vpipGap <= -5) direction = 'tighter';
-            else direction = aggGap >= 5 ? 'more aggressive' : 'more passive';
-
-            var swingBranch = 'In losing sessions you play ' + Math.round(vpipLose) + '% of hands, against ' +
-              Math.round(vpipWin) + '% in winning sessions. You play ' + direction + ' when you are down.';
+            // Lead with the metric that actually drives the gap so the figures match the claim.
+            var swingBranch;
+            var swingDir;
+            if (vpipGap >= 5) {
+              swingDir = 'looser';
+              swingBranch = 'In losing sessions you play ' + Math.round(vpipLose) + '% of hands, against ' +
+                Math.round(vpipWin) + '% in winning sessions. You loosen up when you are down.';
+            } else if (vpipGap <= -5) {
+              swingDir = 'tighter';
+              swingBranch = 'In losing sessions you play ' + Math.round(vpipLose) + '% of hands, against ' +
+                Math.round(vpipWin) + '% in winning sessions. You tighten up when you are down.';
+            } else if (aggGap >= 5) {
+              swingDir = 'aggressive';
+              swingBranch = 'In losing sessions your aggression runs ' + Math.round(aggLose) + '%, against ' +
+                Math.round(aggWin) + '% in winning sessions. You force the action more when you are down.';
+            } else {
+              swingDir = 'passive';
+              swingBranch = 'In losing sessions your aggression runs ' + Math.round(aggLose) + '%, against ' +
+                Math.round(aggWin) + '% in winning sessions. You play more passively when you are down.';
+            }
 
             var swingExamples = null;
             var lostPlayed = pickHands(losingHands, function(h) {
@@ -352,17 +380,28 @@
               return false;
             }, 12);
             if (lostPlayed.length) {
+              var swingNote;
+              if (swingDir === 'looser') {
+                swingNote = 'Hands you played during losing sessions. Look for the marginal hands you would have passed on in a winning session. The gap between the two ranges is the leak.';
+              } else if (swingDir === 'tighter') {
+                swingNote = 'Hands you played during losing sessions. You contract your range when you are down, so check whether you are passing up profitable spots out of caution.';
+              } else if (swingDir === 'aggressive') {
+                swingNote = 'Hands you played during losing sessions. You push harder when you are down, so look for the bets and raises that were chasing rather than value.';
+              } else {
+                swingNote = 'Hands you played during losing sessions. You ease off when you are down, so look for the value bets and pressure you left on the table.';
+              }
               swingExamples = {
                 id: 'sw-losing-sessions',
                 label: 'Hands played in losing sessions',
                 hands: lostPlayed,
-                coachingNote: 'Hands you played during losing sessions. Look for the marginal combos you would have folded in a winning session. The gap between the two ranges is the leak.'
+                coachingNote: swingNote
               };
             }
 
             pillars.push({
               id: 'loose-losing',
               severity: swingSev,
+              swingDir: swingDir,
               deltaUnits: Math.abs(vpipGap) / 15,
               branchText: swingBranch,
               examples: swingExamples
@@ -439,7 +478,15 @@
 
     var hasDecline = pillars.some(function(p) { return p.id === 'within-session' && (p.severity === 'r' || p.severity === 'a'); });
     var hasLongLeak = pillars.some(function(p) { return p.id === 'long-session-leak' && (p.severity === 'r' || p.severity === 'a'); });
-    var hasLooseLosing = pillars.some(function(p) { return p.id === 'loose-losing' && (p.severity === 'r' || p.severity === 'a'); });
+    var losingPillar = null;
+    for (var lp = 0; lp < pillars.length; lp++) {
+      if (pillars[lp].id === 'loose-losing' && (pillars[lp].severity === 'r' || pillars[lp].severity === 'a')) {
+        losingPillar = pillars[lp];
+        break;
+      }
+    }
+    var hasLooseLosing = !!losingPillar;
+    var swingDir = losingPillar ? losingPillar.swingDir : null;
     if (hasDecline && hasLongLeak) severity = 'r';
 
     var impactText = null;
@@ -448,14 +495,25 @@
       impactText = 'Your play degrades within sessions and long sessions cost you more per hand than short ones. Session length is the leak.';
       soWhatText = 'Cap your sessions where the curve turns. Take real breaks before the second half starts costing you what the first half earned.';
     } else if (hasLooseLosing && hasDecline) {
-      impactText = 'You loosen up when you are down and your game slips later in sessions. The two compound: a losing session widens your range and stretches longer.';
+      impactText = 'Your play shifts when you are down and your game slips later in sessions. The two compound: a losing session changes how you play and tends to run longer.';
       soWhatText = 'When you notice you are down and have been sitting a while, leave. The fix is at the table exit, not in the technical adjustments.';
     } else if (hasDecline) {
       impactText = 'Your game does not hold up across the length of a session. Concentration, discipline, or both are dropping later on.';
       soWhatText = 'Shorter sessions or scheduled breaks will recover more value than any technical fix.';
     } else if (hasLooseLosing) {
-      impactText = 'Your range is shifting with your stack. The hands you add when you are losing are not the hands that win pots.';
-      soWhatText = 'Recognise the pattern in the moment. When you are down, hold the starting range you opened with, do not widen to chase.';
+      if (swingDir === 'looser') {
+        impactText = 'Your range widens when you are losing. The extra hands you add are not the ones that win pots.';
+        soWhatText = 'Recognise the pattern in the moment. When you are down, hold the starting range you opened with, do not widen to chase.';
+      } else if (swingDir === 'tighter') {
+        impactText = 'Your range narrows when you are losing. Playing scared gives back the edge you hold in winning sessions.';
+        soWhatText = 'When you are down, keep opening the same range you trust when you are winning. Do not let the scoreboard shrink your game.';
+      } else if (swingDir === 'aggressive') {
+        impactText = 'You push harder when you are losing. The extra bets and raises are chasing the deficit rather than betting for value.';
+        soWhatText = 'When you are down, bet for the same reasons you do when you are winning. Stop forcing the action to get even.';
+      } else {
+        impactText = 'You ease off when you are losing. Playing passively leaves value and pressure on the table.';
+        soWhatText = 'When you are down, keep applying the pressure you use in winning sessions. Do not retreat into check-call poker.';
+      }
     } else if (hasLongLeak) {
       impactText = 'Long sessions perform worse than short ones. The chips you earn early are being given back later.';
       soWhatText = 'Cap session length to roughly the volume of your short sessions. The curve is telling you where to stop.';
