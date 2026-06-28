@@ -11,13 +11,8 @@ function isStrongShowdownHand(strength) {
 
 function getInvested(h) {
   if (!h) return 0;
-  if (h._investedCached) return h._invested;
-  // Structured (v2) hands always carry a numeric `invested` (0 is valid for a
-  // fold). Only fall back to the text parser when it's genuinely absent.
-  var v = (typeof h.invested === 'number') ? h.invested : calcInvestmentFromActions(h.actions || []);
-  h._invested = v;
-  h._investedCached = true;
-  return v;
+  // Structured (v2) hands always carry a numeric `invested` (0 is valid for a fold).
+  return (typeof h.invested === 'number') ? h.invested : 0;
 }
 
 function getHeroActions(h) {
@@ -71,18 +66,9 @@ function inferTable(hand) {
     const players = new Set();
     for (let i = 0; i < hand.actions.length; i++) {
       const line = hand.actions[i];
-      if (typeof line === 'string') {
-        const bbMatch = line.match(/posted big blind \$([0-9,]+)/);
-        if (bbMatch) bb = parseAmount(bbMatch[1]);
-        const authorMatch = line.match(/^\s*(?:>> )?([A-Za-z0-9_ -]+?):\s/);
-        if (authorMatch && !authorMatch[1].startsWith('The ')) {
-          players.add(authorMatch[1]);
-        }
-      } else if (line && typeof line === 'object') {
-        // structured (v2) action
-        if (line.type === 'bb' && line.amount) bb = line.amount;
-        if (line.author) players.add(line.author);
-      }
+      if (!line || typeof line !== 'object') continue;
+      if (line.type === 'bb' && line.amount) bb = line.amount;
+      if (line.author) players.add(line.author);
     }
     if (bb && BB_TO_TABLES[bb]) {
       const candidates = BB_TO_TABLES[bb];
@@ -216,22 +202,8 @@ function detectPlayerFromActions(hands) {
     for (let j = 0; j < actions.length; j++) {
       const line = actions[j];
       // Structured (v2) actions are objects: the hero is the `isMe` author.
-      if (line && typeof line === 'object') {
-        if (line.isMe && line.author) {
-          nameCounts[line.author] = (nameCounts[line.author] || 0) + 1;
-        }
-        continue;
-      }
-      // Legacy (v1) text lines: the hero is prefixed with `>>`.
-      const str = line || '';
-      const isMe = str.indexOf('>>') === 0 || str.indexOf('&gt;&gt;') === 0;
-      if (isMe) {
-        const clean = str.replace(/^(>>|&gt;&gt;)\s*/, '').trim();
-        const ci = clean.indexOf(': ');
-        if (ci > 0) {
-          const name = clean.slice(0, ci);
-          nameCounts[name] = (nameCounts[name] || 0) + 1;
-        }
+      if (line && typeof line === 'object' && line.isMe && line.author) {
+        nameCounts[line.author] = (nameCounts[line.author] || 0) + 1;
       }
     }
   }
@@ -248,29 +220,13 @@ function detectPlayerFromActions(hands) {
 
 
 /* ===== merged from migration.js ===== */
-// Some TC Poker exports omit board/pot/outcome structured fields even though the
-// full hand history is present in the actions array.
+// Structured (v2) hands ship board/pot/outcome/showdown already populated, so
+// there is nothing to mine from the actions. Normalise the card strings and
+// attach the per-hand dynamics tags.
 function backfillHandData(hands) {
-  var CARD_RE = /(\d{1,2}|[AKQJT])([a-z]+|[\u2665\u2666\u2663\u2660])/gi;
-
-  function parseCardsFromStreet(line) {
-    var cards = [];
-    var m;
-    while ((m = CARD_RE.exec(line)) !== null) {
-      var rank = m[1];
-      if (rank === '10') rank = 'T';
-      var suitRaw = m[2] || '';
-      var suit = SUIT_TO_CODE[suitRaw] ? suitRaw : SUIT_WORD[suitRaw.toLowerCase()];
-      if (suit) cards.push(rank + suit);
-    }
-    CARD_RE.lastIndex = 0;
-    return cards;
-  }
-
   for (var i = 0; i < hands.length; i++) {
     var h = hands[i];
-    // Already processed (e.g. restored from storage). Normalisation, dedup and
-    // board/pot/outcome fill are idempotent, so re-running them is pure waste.
+    // Normalisation is idempotent, so skip hands already processed this session.
     if (h._bf) continue;
     h._bf = true;
 
@@ -278,104 +234,7 @@ function backfillHandData(hands) {
       for (var n = 0; n < h.hole.length; n++) h.hole[n] = normCard(h.hole[n]);
     }
     if (h.board && h.board.length) {
-      for (var n = 0; n < h.board.length; n++) h.board[n] = normCard(h.board[n]);
-    }
-
-    var actions = h.actions || [];
-    if (!actions.length) continue;
-
-    // Structured hands (schemaVersion 2): actions are objects, not text. There
-    // is nothing to mine - board/pot/outcome/showdown are already populated by
-    // the source. Skip the text line-dedup and all board/pot/outcome text
-    // mining (calling .replace on an action object would throw). The cheap card
-    // normalisation above still ran, and annotateHandDynamics is still called
-    // below for every hand.
-    var structured = typeof actions[0] === 'object' && actions[0] !== null;
-    if (structured) {
-      continue;
-    }
-
-    // TM script sometimes logs identical lines twice in a row.
-    var deduped = [actions[0]];
-    for (var d = 1; d < actions.length; d++) {
-      if (actions[d].replace(/\s+/g, ' ').trim() !== actions[d - 1].replace(/\s+/g, ' ').trim()) {
-        deduped.push(actions[d]);
-      }
-    }
-    h.actions = deduped;
-    actions = deduped;
-
-    var needBoard = !h.board || !h.board.length;
-    var needPot = !h.pot;
-    var needOutcome = !h.outcome;
-
-    // Must extract board cards BEFORE normalizing action strings,
-    // because parseCardsFromStreet expects alphabetic suit names.
-    var board = [];
-    if (needBoard) {
-      for (var j = 0; j < actions.length; j++) {
-        var raw = (actions[j] || '').replace(/&gt;/g, '>').replace(/&lt;/g, '<').replace(/&amp;/g, '&');
-        var line = raw.replace(/^>>\s*/, '').replace(/^\s+/, '').trim();
-        if (line.indexOf('The flop') === 0 || line.indexOf('The turn') === 0 || line.indexOf('The river') === 0) {
-          var streetCards = parseCardsFromStreet(line);
-          for (var k = 0; k < streetCards.length; k++) board.push(streetCards[k]);
-        }
-      }
-    }
-
-    for (var a = 0; a < actions.length; a++) {
-      actions[a] = actions[a].replace(/(\d{1,2}|[AKQJT])([a-z]{4,8})/gi, function(_, r, s) {
-        var rank = (r === '10') ? 'T' : r;
-        var suit = SUIT_WORD[s.toLowerCase()];
-        return suit ? rank + suit : r + s;
-      });
-    }
-
-    if (!needBoard && !needPot && !needOutcome) continue;
-
-    var totalPot = 0;
-    var wonAmount = 0;
-    var heroWon = false;
-    var heroFolded = false;
-    var heroLost = false;
-
-    for (var j = 0; j < actions.length; j++) {
-      var raw = (actions[j] || '').replace(/&gt;/g, '>').replace(/&lt;/g, '<').replace(/&amp;/g, '&');
-      var isMe = raw.indexOf('>>') === 0;
-      var line = raw.replace(/^>>\s*/, '').replace(/^\s+/, '').trim();
-
-      if (needPot) {
-        var wonMatch = line.match(/won \$([0-9,]+)/);
-        if (wonMatch) {
-          var amt = parseAmount(wonMatch[1]);
-          if (amt > totalPot) totalPot = amt;
-          if (isMe) { heroWon = true; wonAmount = amt; }
-        }
-      }
-
-      if (needOutcome && isMe) {
-        if (line.indexOf('folded') !== -1) heroFolded = true;
-        if (line.match(/won \$([0-9,]+)/)) { heroWon = true; wonAmount = parseAmount(line.match(/\$([0-9,]+)/)[1]); }
-        if (line.indexOf('lost') !== -1) heroLost = true;
-      }
-    }
-
-    if (needBoard && board.length) {
-      h.board = board;
-    }
-
-    if (needPot && totalPot > 0) {
-      h.pot = totalPot;
-    }
-
-    if (needOutcome && (heroWon || heroFolded || heroLost)) {
-      if (heroWon) {
-        h.outcome = { result: 'won', amount: wonAmount };
-      } else if (heroFolded) {
-        h.outcome = { result: 'folded' };
-      } else if (heroLost) {
-        h.outcome = { result: 'lost' };
-      }
+      for (var b = 0; b < h.board.length; b++) h.board[b] = normCard(h.board[b]);
     }
   }
 

@@ -127,73 +127,18 @@ function classifyBoardTexture(boardCards) {
 
 
 /* ===== merged from hand-parsing.js ===== */
-function parseAmount(str) {
-  return parseInt(String(str || '').replace(/,/g, ''), 10);
-}
-
 function parseActions(actions) {
-  if (actions && actions._parsed) return actions._parsed;
-  // Structured fast-path: a schemaVersion 2 payload already ships action
-  // objects (not text strings). Pass them through verbatim - no text parsing.
-  if (Array.isArray(actions) && actions.length && typeof actions[0] === 'object' && actions[0] !== null) {
-    actions._parsed = actions;
-    return actions;
-  }
-  const out = [];
-  let street = 'Preflop';
-  for (const raw of (actions || [])) {
-    const isMe = raw.indexOf('>>') === 0;
-    const line = raw.replace(/^>>\s*/, '').replace(/^\s+/, '').trim();
-    if (line.startsWith('The flop')) {
-      street = 'Flop';
-      continue;
-    }
-    if (line.startsWith('The turn')) {
-      street = 'Turn';
-      continue;
-    }
-    if (line.startsWith('The river')) {
-      street = 'River';
-      continue;
-    }
-    if (line.startsWith('The preflop')) {
-      street = 'Preflop';
-      continue;
-    }
-    const ci = line.indexOf(': ');
-    if (ci === -1) continue;
-    const author = line.slice(0, ci);
-    const msg = line.slice(ci + 2);
-    const am = msg.match(/\$([0-9,]+)/);
-    const amount = am ? parseAmount(am[1]) : 0;
-    let type = null;
-    if (msg.startsWith('folded')) type = 'fold';
-    else if (msg.startsWith('checked')) type = 'check';
-    else if (msg.startsWith('called')) type = 'call';
-    else if (msg.startsWith('raised')) type = 'raise';
-    else if (msg.startsWith('bet')) type = 'bet';
-    else if (msg.startsWith('posted small blind')) type = 'sb';
-    else if (msg.startsWith('posted big blind')) type = 'bb';
-    else if (msg.includes('won')) type = 'won';
-    if (type) {
-      out.push({ author, isMe, street, type, amount, msg });
-    }
-  }
-  if (actions) actions._parsed = out;
-  return out;
+  // Hands are schemaVersion 2: actions already ship as structured objects
+  // ({ author, isMe, street, type, amount, raiseTo, allIn }). Pass them through
+  // verbatim. An empty or otherwise unstructured array yields no actions.
+  if (!Array.isArray(actions) || !actions.length) return [];
+  return (typeof actions[0] === 'object' && actions[0] !== null) ? actions : [];
 }
 
-// Only raises without " to " indicate shoves (e.g. "raised $5,000,000" vs "raised $2,500,000 to $5,000,000").
-// Regular bets ("bet $X") are never detectable as all-in from the log format alone.
+// Structured hands carry an explicit allIn boolean; absent means not all-in.
 function isAllInAction(acts, idx) {
   var a = acts[idx];
-  if (!a) return false;
-  // Structured hands carry an explicit allIn boolean - trust it.
-  if (typeof a.allIn === 'boolean') return a.allIn;
-  // Legacy text fallback: only raises without " to " indicate shoves. TODO(v2): remove once all hands are structured.
-  if (a.type !== 'raise' || !a.msg) return false;
-  if (a.msg.indexOf(' to ') !== -1) return false;
-  return true;
+  return !!(a && a.allIn);
 }
 
 function parseHoleKey(hole) {
@@ -327,15 +272,6 @@ function estimateEffStackBB(hand) {
       if (!committed[a.author] || totalR > committed[a.author]) committed[a.author] = totalR;
       continue;
     }
-    // Legacy text fallback: regex the "to $X" total out of the message. TODO(v2): remove once all hands are structured.
-    if (a.type === 'raise' && a.msg && a.msg.indexOf(' to ') !== -1) {
-      var m = a.msg.match(/to \$?([0-9,]+)/);
-      if (m) {
-        var total = parseAmount(m[1]);
-        if (!committed[a.author] || total > committed[a.author]) committed[a.author] = total;
-        continue;
-      }
-    }
     if (a.amount > 0) {
       committed[a.author] = (committed[a.author] || 0) + a.amount;
     }
@@ -361,39 +297,9 @@ function estimateEffStackBB(hand) {
   return Math.round((effFloor / bb) * 10) / 10;
 }
 
-function calcInvestmentFromActions(actions) {
-  let total = 0;
-  for (let i = 0; i < actions.length; i++) {
-    if (typeof actions[i] !== 'string') continue; // structured (v2) hands carry their own `invested`
-    let line = actions[i].replace(/&gt;/g, '>').replace(/&lt;/g, '<').replace(/&amp;/g, '&');
-    if (line.indexOf('>>') !== 0) continue;
-    if (line.indexOf(' won ') !== -1) continue;
-    if (line.indexOf(' reveals ') !== -1) continue;
-    if (line.indexOf('folded') !== -1) continue;
-    if (line.indexOf('checked') !== -1) continue;
-    const dm = line.match(/\$([0-9,]+)/);
-    if (dm) total += parseAmount(dm[1]);
-  }
-  return total;
-}
-
 function isShowdown(hand) {
-  // Structured hands carry an explicit showdown boolean - trust it.
-  if (typeof hand.showdown === 'boolean') return hand.showdown;
-  if (!hand.outcome) return false;
-  if (hand._showdownDone) return hand._showdown;
-  var result = false;
-  if (hand.outcome.result === 'lost') {
-    result = true;
-  } else if (hand.outcome.result === 'won') {
-    var actions = hand.actions || [];
-    for (var i = 0; i < actions.length; i++) {
-      if (actions[i].indexOf(' reveals ') !== -1) { result = true; break; }
-    }
-  }
-  hand._showdown = result;
-  hand._showdownDone = true;
-  return result;
+  // Structured hands carry an explicit showdown boolean.
+  return typeof hand.showdown === 'boolean' ? hand.showdown : false;
 }
 
 

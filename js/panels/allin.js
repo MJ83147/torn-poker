@@ -5,45 +5,6 @@ var _allinHands = null;
 var _allinCandidatesFor = null;
 var _allinCandidates = null;
 
-function parseReveals(actions) {
-  var results = [];
-  var CARD_RE = /(\d{1,2}|[AKQJTakqjt])([♠♥♦♣]|[a-z]+)/g;
-
-  for (var i = 0; i < (actions || []).length; i++) {
-    var raw = (actions[i] || '').replace(/&gt;/g, '>').replace(/&lt;/g, '<').replace(/&amp;/g, '&');
-    if (raw.indexOf('>>') === 0) continue;
-    var line = raw.replace(/^\s+/, '').trim();
-    var revealMatch = line.match(/^(.+?):\s+(reveals|won .+ with)\s+\[([^\]]+)\]/);
-    if (!revealMatch) continue;
-
-    var playerName = revealMatch[1].trim();
-    var cardsStr = revealMatch[3];
-    var cards = [];
-    var m;
-    while ((m = CARD_RE.exec(cardsStr)) !== null) {
-      var rank = m[1];
-      var suitPart = m[2];
-      if (rank === '10') rank = 'T';
-      if (suitPart.length === 1 && '♠♥♦♣'.indexOf(suitPart) !== -1) {
-        cards.push(rank + suitPart);
-      } else {
-        var suit = SUIT_WORD[suitPart.toLowerCase()];
-        if (suit) cards.push(rank + suit);
-      }
-    }
-    CARD_RE.lastIndex = 0;
-
-    if (cards.length === 2) {
-      var alreadyHave = false;
-      for (var j = 0; j < results.length; j++) {
-        if (results[j].name === playerName) { alreadyHave = true; break; }
-      }
-      if (!alreadyHave) results.push({ name: playerName, hole: cards.map(normCardCode) });
-    }
-  }
-  return results;
-}
-
 function detectAllInCandidates(hands) {
   var results = [];
 
@@ -81,21 +42,18 @@ function detectAllInCandidates(hands) {
     if (!allInFound || !allInCalled || !heroInAllIn) continue;
     if (allInStreet === 'River') continue;
 
-    var reveals = parseReveals(h.actions);
+    // Structured (v2) hands carry showdown reveals natively as
+    // { author, isMe, hole }. Take every non-hero revealed hand.
+    var reveals = h.reveals || [];
     if (!reveals.length) continue;
 
     var heroHole = [normCardCode(h.hole[0]), normCardCode(h.hole[1])];
 
-    var heroName = null;
-    for (var ni = 0; ni < acts.length; ni++) {
-      if (acts[ni].isMe) { heroName = acts[ni].author; break; }
-    }
-
     var opponentHoles = [];
     for (var ri = 0; ri < reveals.length; ri++) {
-      if (reveals[ri].name !== heroName) {
-        opponentHoles.push(reveals[ri].hole);
-      }
+      var rv = reveals[ri];
+      if (rv.isMe || !rv.hole || rv.hole.length !== 2) continue;
+      opponentHoles.push([normCardCode(rv.hole[0]), normCardCode(rv.hole[1])]);
     }
     if (!opponentHoles.length) continue;
 

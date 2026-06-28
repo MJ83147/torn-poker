@@ -438,12 +438,7 @@ function heroHighCardCheckText(eq, madeHand, boardIsDoublePaired, vName, vFolds,
 function generateHandSummary(results, hand, villainProfile) {
   if (!results || results.length < 2) return null;
 
-  var invested = 0;
-  if (typeof getInvested === 'function') {
-    invested = getInvested(hand);
-  } else if (typeof calcInvestmentFromActions === 'function') {
-    invested = calcInvestmentFromActions(hand.actions);
-  }
+  var invested = (typeof getInvested === 'function') ? getInvested(hand) : 0;
 
   var outcome = hand.outcome || {};
   var won = outcome.result === 'won';
