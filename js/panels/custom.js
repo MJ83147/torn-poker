@@ -781,15 +781,15 @@ function _crOpenAddClausePopover(targetEl, segLabel) {
   var hand = available.filter(function(c) { return c.kind === 'hand'; });
   var decision = available.filter(function(c) { return c.kind === 'decision'; });
 
-  var html = '<div class="c-gold fw-semibold cr-pop-title">Add a clause</div>';
+  var html = '<div class="c-gold fw-semibold mb-8">Add a clause</div>';
   if (hand.length) {
-    html += '<div class="cr-pop-section eyebrow c-dim">Hand-level</div>';
+    html += '<div class="cr-pop-section eyebrow">Hand-level</div>';
     html += hand.map(function(c) {
       return '<button class="text-meta cr-pop-opt" data-add-clause="' + c.id + '">' + c.label + '</button>';
     }).join('');
   }
   if (decision.length) {
-    html += '<div class="cr-pop-section eyebrow c-dim">Decision-level</div>';
+    html += '<div class="cr-pop-section eyebrow">Decision-level</div>';
     html += decision.map(function(c) {
       return '<button class="text-meta cr-pop-opt" data-add-clause="' + c.id + '">' + c.label + '</button>';
     }).join('');
@@ -823,7 +823,7 @@ function _crOpenClausePopover(targetEl, segLabel, clauseId) {
   var segment = _crState[segLabel];
   var current = segment.values[clauseId];
 
-  var html = '<div class="c-gold fw-semibold cr-pop-title">' + def.label + '</div>';
+  var html = '<div class="c-gold fw-semibold mb-8">' + def.label + '</div>';
   if (!def.options.length) {
     html += '<div class="text-body">No options available. None of your hands match this clause yet.</div>';
   } else if (def.multi) {
@@ -904,19 +904,19 @@ function _crRenderHeadline(result, compareResult) {
   var dim = result.sampleSize < CR_SAMPLE_MIN;
 
   function tile(label, val, cls) {
-    return '<div class="box ' + (dim ? ' -dim' : '') + '">' +
-      '<div class="mb-6 eyebrow c-dim">' + label + '</div>' +
+    return '<div class="box col gap-6' + (dim ? ' -dim' : '') + '">' +
+      '<div class="eyebrow">' + label + '</div>' +
       '<div class="-value value ' + cls + '">' + val + '</div>' +
       '</div>';
   }
 
   function tileCompare(label, valA, valB, clsA, clsB, delta, deltaCls) {
-    return '<div class="box -compare">' +
-      '<div class="mb-6 eyebrow c-dim">' + label + '</div>' +
+    return '<div class="box -compare col gap-6">' +
+      '<div class="eyebrow">' + label + '</div>' +
       '<div class="-trio">' +
-      '<div><div class="eyebrow c-dim -mini-label">A</div><div class="value ' + clsA + '">' + valA + '</div></div>' +
-      '<div><div class="eyebrow c-dim -mini-label">Δ</div><div class="value ' + deltaCls + '">' + delta + '</div></div>' +
-      '<div><div class="eyebrow c-dim -mini-label">B</div><div class="value ' + clsB + '">' + valB + '</div></div>' +
+      '<div class="col gap-2"><div class="eyebrow">A</div><div class="value ' + clsA + '">' + valA + '</div></div>' +
+      '<div class="col gap-2"><div class="eyebrow">Δ</div><div class="value ' + deltaCls + '">' + delta + '</div></div>' +
+      '<div class="col gap-2"><div class="eyebrow">B</div><div class="value ' + clsB + '">' + valB + '</div></div>' +
       '</div></div>';
   }
 
@@ -1145,7 +1145,7 @@ function _crRenderCharts(resultA, resultB) {
       },
     }));
   } else if (trendCanvas) {
-    trendCanvas.parentNode.parentNode.innerHTML = '<div class="eyebrow c-dim mb-8 mt-0">bb/100 over time</div><div class="text-body">Need at least 2 sessions of cash hands in this report.</div>';
+    trendCanvas.parentNode.parentNode.innerHTML = '<div class="eyebrow">bb/100 over time</div><div class="text-body">Need at least 2 sessions of cash hands in this report.</div>';
   }
 
   var posCanvas = document.getElementById('cr-position');
@@ -1177,7 +1177,7 @@ function _crRenderCharts(resultA, resultB) {
         scales: { x: chartXScale(colors), y: chartYScaleZeroLine(colors, { tickCallback: function(v) { return v + ''; } }) },
       }));
     } else {
-      posCanvas.parentNode.parentNode.innerHTML = '<div class="eyebrow c-dim mb-8 mt-0">bb/100 by position</div><div class="text-body">Need at least two positions with cash data in this report.</div>';
+      posCanvas.parentNode.parentNode.innerHTML = '<div class="eyebrow">bb/100 by position</div><div class="text-body">Need at least two positions with cash data in this report.</div>';
     }
   }
 
@@ -1212,7 +1212,7 @@ function _crRenderCharts(resultA, resultB) {
         scales: { x: chartXScale(colors), y: chartYScale(colors, { max: 100, tickCallback: function(v) { return v + '%'; } }) },
       }));
     } else {
-      cardsCanvas.parentNode.parentNode.innerHTML = '<div class="eyebrow c-dim mb-8 mt-0">Win rate by hand class</div><div class="text-body">Need at least two hand classes in this report.</div>';
+      cardsCanvas.parentNode.parentNode.innerHTML = '<div class="eyebrow">Win rate by hand class</div><div class="text-body">Need at least two hand classes in this report.</div>';
     }
   }
 
@@ -1244,7 +1244,7 @@ function _crRenderCharts(resultA, resultB) {
         },
       }));
     } else {
-      actCanvas.parentNode.parentNode.innerHTML = '<div class="eyebrow c-dim mb-8 mt-0">Action breakdown</div><div class="text-body">No action data in this report.</div>';
+      actCanvas.parentNode.parentNode.innerHTML = '<div class="eyebrow">Action breakdown</div><div class="text-body">No action data in this report.</div>';
     }
   }
 }

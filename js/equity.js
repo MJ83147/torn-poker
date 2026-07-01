@@ -118,7 +118,7 @@ function renderEquityResults(container, simResult) {
   }
 
   var html = '<div class="card card-s1 eq-sim">';
-  html += '<div class="row between eq-sim-header"><span class="eyebrow c-gold eq-sim-title">Equity Simulation</span><span class="text-meta eq-sim-note">' + headerNote + '</span></div>';
+  html += '<div class="row between eq-sim-header"><span class="eyebrow c-gold fw-medium">Equity Simulation</span><span class="text-meta eq-sim-note">' + headerNote + '</span></div>';
 
   var curvePoints = [];
 
@@ -194,9 +194,9 @@ function renderEquityResults(container, simResult) {
 
   if (summary && summary.text) {
     var sumClass = summary.quality === 'good' ? 'val-pos' : summary.quality === 'bad' ? 'val-neg' : 'text-gold';
-    html += '<div class="box eq-summary">';
-    html += '<div class="eyebrow c-gold eq-summary-label">Hand Summary</div>';
-    html += '<div class="text-meta eq-summary-text ' + sumClass + '">' + summary.text + '</div>';
+    html += '<div class="box eq-summary col gap-6">';
+    html += '<div class="eyebrow c-gold fw-semibold">Hand Summary</div>';
+    html += '<div class="text-body eq-summary-text ' + sumClass + '">' + summary.text + '</div>';
     html += '</div>';
   }
 

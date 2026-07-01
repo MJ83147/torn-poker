@@ -51,16 +51,16 @@ function renderWelcome(container, d, hands, meta) {
     'Use the <strong>table filter</strong> in the header to isolate stats to one table.',
   ];
   var welcomeHtml = '<div class="welcome-wrap">' +
-    '<div class="row between center welcome-intro">' +
-    '<div class="welcome-intro-text">' +
-    '<div class="title title-xl c-gold welcome-intro-heading">Welcome back, ' + meta.player + '</div>' +
+    '<div class="row between center gap-16 mb-24">' +
+    '<div class="min-w-0">' +
+    '<div class="title title-xl c-gold">Welcome back, ' + meta.player + '</div>' +
     '<div class="text-body">' + d.n + ' hands loaded. Here\'s what each tab shows.</div>' +
     '</div>' +
     '<button class="btn btn-primary" onclick="startWelcomeTour()">Take a Tour</button>' +
     '</div>' +
     '<div class="cols-2 gap-16 welcome-body">' +
     '<div class="col welcome-toc">' +
-    '<div class="eyebrow c-dim mb-12">The tabs</div>' +
+    '<div class="section-head">The tabs</div>' +
     tabDescs.map(function(t) {
       return '<div class="card card-s1 card-link welcome-toc-row" data-goto="' + t.tab + '">' +
         '<div class="c-gold fw-semibold">' + t.name + '</div>' +
@@ -70,7 +70,7 @@ function renderWelcome(container, d, hands, meta) {
     '</div>' +
     '<div class="welcome-aside">' +
     '<div class="text-body welcome-tips">' +
-    '<div class="eyebrow c-dim mb-12">Tips</div>' +
+    '<div class="section-head">Tips</div>' +
     '<div class="carousel row center gap-8">' +
     '<button class="carousel-arrow row center middle" id="tip-prev">&#8249;</button>' +
     '<div class="carousel-track">' +
@@ -87,14 +87,20 @@ function renderWelcome(container, d, hands, meta) {
     '</div>' +
     '</div>' +
     '<div class="col gap-12">' +
-      '<div class="eyebrow c-dim welcome-whatsnew-label">What\'s new</div>' +
-      '<button type="button" class="card card-hero card-link whatsnew-card" data-goto="custom">' +
+      '<div class="section-head">What\'s new</div>' +
+      '<button type="button" class="card card-hero card-link col gap-8 start text-left w-full p-16" data-goto="custom">' +
         '<div class="badge badge-gold">New</div>' +
         '<div class="title title-lg c-gold">Custom Report</div>' +
         '<div class="text-body">Build your own report by clicking together clauses like a sentence. Twelve filters across table, position, opponent, stake, time window, pot type and more, with a trend chart, breakdowns and a side-by-side compare mode.</div>' +
         '<div class="c-gold fw-semibold">Open the Custom Report &rarr;</div>' +
       '</button>' +
-      '<div class="card card-s1 whatsnew-card">' +
+      '<div class="card card-s1 col gap-8 start text-left w-full p-16">' +
+        '<div class="badge badge-gold">New</div>' +
+        '<div class="title title-lg c-gold">Stack tracking</div>' +
+        '<div class="text-body">The tracker now records every player’s starting and ending stack on each hand — the foundation for effective-stack depth, spotting who was short, and stack-aware insights to come.</div>' +
+        '<div class="text-body">Applies to hands tracked from now on. Hands already in your history stay exactly as they are — they won’t carry stack data, and any stack-based stats simply skip them rather than counting them as zero.</div>' +
+      '</div>' +
+      '<div class="card card-s1 col gap-8 start text-left w-full p-16">' +
         '<div class="badge badge-gold">Improved</div>' +
         '<div class="title title-lg c-gold">Detailed insights</div>' +
         '<div class="text-body">Every analysis tab now ships story cards that flag strengths, leaks and patterns in your data, each with a real example hand from your session.</div>' +
@@ -110,7 +116,7 @@ function renderWelcome(container, d, hands, meta) {
       switchTab(this.getAttribute('data-goto'));
     };
   });
-  container.querySelectorAll('.whatsnew-card[data-goto]').forEach(function(card) {
+  container.querySelectorAll('.card-hero[data-goto]').forEach(function(card) {
     card.onclick = function() {
       switchTab(this.getAttribute('data-goto'));
     };

@@ -196,7 +196,7 @@ function showAllInResults(container) {
   var actualWinRate = pct(actualWins, allInHands.length);
 
   var html = '<div class="title title-lg c-gold">All-In EV</div>';
-  html += '<div class="text-body mt-4">Compares actual results vs expected value at all-in showdowns to measure variance.</div>';
+  html += '<div class="text-body">Compares actual results vs expected value at all-in showdowns to measure variance.</div>';
 
   html += renderMiniRow([
     { l: 'All-In Hands', v: allInHands.length, c: 'text' },

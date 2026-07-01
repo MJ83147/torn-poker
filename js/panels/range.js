@@ -267,45 +267,6 @@ function buildGtoGridHtml(chart, tallies) {
   return html;
 }
 
-// Overall tab: a clean play/win summary per hand group (like the Cards panel),
-// in place of the 13x13 colour grid. Each row is clickable to replay that
-// group's hands. Returns '' when there's no hand-type data yet.
-function buildHandTypeSummaryHtml(htMap) {
-  var groups = CARD_HT_ORDER.filter(function(ht) { return htMap && htMap[ht] && htMap[ht].dealt; });
-  if (!groups.length) {
-    return '<div class="text-meta">No hands on record yet. Play some to see your range by hand type.</div>';
-  }
-  var maxDealt = Math.max.apply(null, groups.map(function(ht) { return htMap[ht].dealt; }));
-  var rows = groups.map(function(ht) {
-    var s = htMap[ht];
-    var outerPct = pct(s.dealt, maxDealt) || 0;
-    var wonPct = pct(s.won, s.dealt) || 0;
-    var playedNotWonPct = pct(s.played - s.won, s.dealt) || 0;
-    var unplayedPct = 100 - wonPct - playedNotWonPct;
-    var wrPct = s.played > 0 ? pct(s.won, s.played) : null;
-    var wrCls = wrPct === null ? 'c-dim' : wrPct >= 55 ? 'c-pos' : wrPct <= 38 ? 'c-neg' : 'c-warn';
-    return '<div class="col gap-6 cards-bar-row" data-htgroup="' + ht + '">' +
-      '<div class="row between">' +
-        '<span class="text-meta">' + ht +
-          '<span class="c-dim cards-row-cue"> · view hands &#8250;</span></span>' +
-        '<span class="text-meta">' + s.dealt + ' dealt · ' + s.played + ' played · ' +
-          '<span class="' + wrCls + '">' + (wrPct !== null ? wrPct + '% win' : '-') + '</span></span>' +
-      '</div>' +
-      '<div class="bar-stack" style="width:' + outerPct + '%">' +
-        '<div class="bar-seg bg-pos" style="width:' + wonPct + '%"></div>' +
-        '<div class="bar-seg bg-warn" style="width:' + playedNotWonPct + '%"></div>' +
-        '<div class="bar-seg bg-muted" style="width:' + unplayedPct + '%"></div>' +
-      '</div>' +
-    '</div>';
-  }).join('');
-  return '<div class="legend mt-8 mb-16">' +
-      '<div class="legend-item"><div class="swatch bg-pos"></div>Won</div>' +
-      '<div class="legend-item"><div class="swatch bg-warn"></div>Played, not won</div>' +
-      '<div class="legend-item"><div class="swatch bg-muted"></div>Dealt, not played</div>' +
-    '</div>' +
-    '<div class="col gap-16">' + rows + '</div>';
-}
-
 // Maps a GTO chart colour to the action it recommends. Anything not in the
 // raise/call ranges (white, grey, or absent) is a fold.
 function gtoTargetAction(color) {
@@ -499,9 +460,9 @@ function heroComboBreakdown(filtered, scenarioType) {
   return byKey;
 }
 
-// Right grid: green = you took the GTO-recommended action most of the time,
-// red = you mostly deviated. Judging needs a GTO chart for the spot; without
-// one, every dealt combo is shown neutral.
+// Right grid: each combo you were dealt in this spot is coloured by the action
+// you took (same palette as the GTO chart), so the two grids read in the same
+// colour language. Combos you were never dealt here stay empty.
 function buildHeroGridHtml(byKey, colors, hasChart) {
   var html = '<div class="range-grid-sm">';
   for (var r = 0; r < 13; r++) {
@@ -510,19 +471,13 @@ function buildHeroGridHtml(byKey, colors, hasChart) {
       var rec = byKey[key];
       var target = hasChart ? gtoTargetAction(colors[key]) : null;
       var attr = 'data-hero="none"';
-      var mark = '';
       if (rec && rec.dealt > 0) {
-        // Cell colour follows YOUR action (same palette as the GTO chart);
-        // a ✓/✗ shows whether that action matched the GTO target.
+        // Cell colour follows YOUR action, using the same palette as the GTO
+        // chart. No right/wrong marking — the colour is the whole story.
         attr = 'data-act="' + spotHeroAction(rec) + '"';
-        if (target) {
-          var on = rec[target].n;
-          var ok = on >= (rec.dealt - on);
-          mark = '<i class="rc-mark ' + (ok ? 'ok' : 'bad') + '">' + (ok ? '✓' : '✗') + '</i>';
-        }
       }
       var tip = heroTipForCombo(key, rec, target);
-      html += '<div class="rc rc-hero" ' + attr + ' data-key="' + key + '" data-tip="' + tip + '"><span>' + key + '</span>' + mark + '</div>';
+      html += '<div class="rc rc-hero" ' + attr + ' data-key="' + key + '" data-tip="' + tip + '"><span>' + key + '</span></div>';
     }
   }
   html += '</div>';
@@ -584,14 +539,18 @@ function twoGridHtml(chart, filtered, scenarioType, tallies, dealtCount) {
   return '<div class="cols-2 gap-24">' +
     '<div>' +
       '<div class="section-head">What GTO does</div>' +
-      '<div class="text-meta mb-8">Reference chart for this spot. The whole range is coloured, this is not your data.</div>' +
+      '<div class="col gap-8">' +
+      '<div class="text-meta">Reference chart for this spot. The whole range is coloured, this is not your data.</div>' +
       buildGtoGridHtml(chart, tallies) +
+      '</div>' +
       '<div class="mt-8">' + gtoLegendHtml() + '</div>' +
     '</div>' +
     '<div>' +
       '<div class="section-head">What you did</div>' +
-      '<div class="text-meta mb-8">Only the ' + countLabel + ' are marked. Everything else is a hand you were never dealt in this spot.</div>' +
+      '<div class="col gap-8">' +
+      '<div class="text-meta">Only the ' + countLabel + ' are marked. Everything else is a hand you were never dealt in this spot.</div>' +
       buildHeroGridHtml(byKey, colors, hasChart) +
+      '</div>' +
       '<div class="mt-8">' + heroLegendHtml() + '</div>' +
     '</div>' +
   '</div>';
@@ -609,9 +568,9 @@ function gtoLegendHtml() {
 
 function heroLegendHtml() {
   return '<div class="legend">' +
-    '<div class="legend-item">Cells use the same action colours. Then:</div>' +
-    '<div class="legend-item"><span class="rc-mark-key ok">&#10003;</span>Matched GTO</div>' +
-    '<div class="legend-item"><span class="rc-mark-key bad">&#10007;</span>Off GTO</div>' +
+    '<div class="legend-item"><span class="swatch" style="background:var(--gto-red)"></span>You raised</div>' +
+    '<div class="legend-item"><span class="swatch" style="background:var(--green)"></span>You called</div>' +
+    '<div class="legend-item"><span class="swatch" style="background:var(--gto-grey)"></span>You folded</div>' +
     '<div class="legend-item"><span class="swatch" style="background:var(--gto-empty-bg);border:var(--bw) solid var(--border)"></span>Not dealt</div>' +
     '</div>';
 }
@@ -665,40 +624,11 @@ function renderRange(container, d, hands) {
 
   function renderOverall(body) {
     body.innerHTML =
-      '<div class="section-head">Your range by hand type</div>' +
-      '<div class="text-meta mb-12">How often you play each group of starting hands, and how often you win when you do. The 13x13 chart lives under By Spot.</div>' +
-      buildHandTypeSummaryHtml(d.htMap) +
-      storiesHtml(Sections.findingsForPanel(Sections.evaluateSections(d, {}, hands), 'Range'), 'Range data is still building.');
-    bindHandTypeClicks(body);
-  }
-
-  // Replay support for the Overall hand-type rows: collect the recent hands
-  // behind a group and open them in the shared example-hand list modal.
-  function handsOfType(ht) {
-    var out = [];
-    for (var i = hands.length - 1; i >= 0 && out.length < 60; i--) {
-      var h = hands[i];
-      if (!h || !h.hole) continue;
-      var key = parseHoleKey(h.hole);
-      if (key && classifyKey(key) === ht) out.push(h);
-    }
-    return out;
-  }
-
-  function bindHandTypeClicks(scope) {
-    var rows = scope.querySelectorAll('.cards-bar-row[data-htgroup]');
-    rows.forEach(function(row) {
-      row.onclick = function() {
-        var ht = row.getAttribute('data-htgroup');
-        var ex = handsOfType(ht);
-        if (!ex.length) return;
-        var s = d.htMap[ht] || { dealt: 0, played: 0, won: 0 };
-        var wrPct = s.played > 0 ? pct(s.won, s.played) : null;
-        var note = ht + ': dealt ' + s.dealt + ', played ' + s.played +
-          (wrPct !== null ? ', ' + wrPct + '% win rate when played' : '') + '.';
-        showExampleHandListModal(ht + ' hands', ex, note);
-      };
-    });
+      '<div class="section-head">Your range</div>' +
+      '<div class="col gap-12">' +
+      '<div class="text-meta">How wide you play and which combos carry your results. The 13x13 chart, position by position, lives under By Spot.</div>' +
+      storiesHtml(Sections.findingsForPanel(Sections.evaluateSections(d, {}, hands), 'Range'), 'Range data is still building.') +
+      '</div>';
   }
 
   function renderSpot(body, data) {
@@ -729,11 +659,11 @@ function renderRange(container, d, hands) {
       if (parseHoleKey(filtered[fi].hole)) dealtCount++;
     }
     var headerStats = renderHeaderStats(dealtCount, state.hero + ' · ' + label);
-    var note = chart ? '' : '<div class="text-meta mt-8">No GTO reference for ' + state.hero + ' ' + label + ' yet.</div>';
+    var note = chart ? '' : '<div class="mt-8"><div class="text-meta">No GTO reference for ' + state.hero + ' ' + label + ' yet.</div></div>';
     body.innerHTML =
       '<div class="row wrap center gap-12 mb-12">' +
-        '<div class="row center gap-6"><label class="eyebrow c-dim">Position</label>' + heroSelectorHtml + '</div>' +
-        '<div class="row center gap-6"><label class="eyebrow c-dim">Scenario</label>' + scenarioSelectorHtml + '</div>' +
+        '<div class="row center gap-6"><label class="eyebrow">Position</label>' + heroSelectorHtml + '</div>' +
+        '<div class="row center gap-6"><label class="eyebrow">Scenario</label>' + scenarioSelectorHtml + '</div>' +
       '</div>' +
       headerStats +
       note +
@@ -765,9 +695,9 @@ function renderRange(container, d, hands) {
 
   function renderHeaderStats(count, label) {
     if (!count) {
-      return '<div class="text-meta mb-12">No ' + label + ' hands on record yet.</div>';
+      return '<div class="mb-12"><div class="text-meta">No ' + label + ' hands on record yet.</div></div>';
     }
-    return '<div class="lead mb-12">' + count + ' ' + label + ' hand' + (count === 1 ? '' : 's') + ' on record</div>';
+    return '<div class="mb-12"><div class="lead">' + count + ' ' + label + ' hand' + (count === 1 ? '' : 's') + ' on record</div></div>';
   }
 
   function bindCellClicks(scope, scopedHands) {
@@ -823,7 +753,7 @@ function openHandModal(key, matched) {
   overlay.onclick = function(ev) { if (ev.target === overlay) closeModal(); };
   var box = document.createElement('div');
   box.className = 'modal';
-  var summary = '<div class="title c-gold mb-4">' + key + '</div>' +
+  var summary = '<div class="title c-gold">' + key + '</div>' +
     '<div class="mb-16">' + matched.length + ' hands</div>';
   var rows = matched.map(function(h, idx) {
     var myActs = getActsSummary(h);
@@ -831,7 +761,7 @@ function openHandModal(key, matched) {
     return '<div class="range-hand-row" data-ridx="' + idx + '">' +
       '<div class="row between">' +
       '<div class="row center gap-12">' +
-      '<span class="eyebrow c-dim range-hand-row-pos">' + (h.position || '?') + '</span>' +
+      '<span class="eyebrow range-hand-row-pos">' + (h.position || '?') + '</span>' +
       '<span class="range-hand-row-hole">' + (h.hole ? h.hole.join(' ') : '??') + '</span>' +
       '<span class="text-meta range-hand-row-board">' + (h.board && h.board.length ? h.board.join(' ') : '-') + '</span>' +
       '</div>' +

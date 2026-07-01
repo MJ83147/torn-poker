@@ -30,19 +30,23 @@ function renderMyGame(container, d, hands) {
   }
 
   html += '<div class="profile-row row wrap">';
+  html += '<div class="col gap-12">';
+  html += '<div class="eyebrow">MY GAME</div>';
   html += '<div>';
-  html += '<div class="eyebrow c-dim mb-12">MY GAME</div>';
   html += '<div class="profile-name">' + playerName + '</div>';
   html += '<div class="text-body profile-meta">';
   if (exportDate) html += exportDate + ' &middot; ';
   html += d.n + ' hands';
   html += '</div>';
   html += '</div>';
+  html += '</div>';
   if (typeLabel) {
-    html += '<div class="profile-type-block">';
-    html += '<div class="eyebrow c-dim mb-12">PLAYER TYPE</div>';
+    html += '<div class="profile-type-block col gap-12">';
+    html += '<div class="eyebrow">PLAYER TYPE</div>';
+    html += '<div>';
     html += '<div class="profile-type-name">' + typeLabel + '</div>';
     html += '<div class="text-body profile-type-desc">' + typeDesc + '</div>';
+    html += '</div>';
     html += '</div>';
   }
   html += '</div>';
@@ -50,7 +54,7 @@ function renderMyGame(container, d, hands) {
   var _ftrBandMG = ctx.band('foldToRaise');
   var _cbetBandMG = ctx.band('cbet');
   if (smallSample) {
-    html += '<div class="text-meta mt-8 mb-12">Stats from ' + d.n + ' hands. These become reliable around 100+ hands.</div>';
+    html += '<div class="mt-8 mb-12"><div class="text-meta">Stats from ' + d.n + ' hands. These become reliable around 100+ hands.</div></div>';
   }
 
   if (!smallSample) {
@@ -104,13 +108,15 @@ function renderMyGame(container, d, hands) {
 
     if (workOn) {
       html += '<div class="box work-on-' + workOn.sev + '">';
-      html += '<div class="work-on-title">' + workOn.label + '</div>';
-      if (workOn.desc) html += '<div class="text-body mb-8">' + workOn.desc + '</div>';
+      html += '<div class="lead work-on-title">' + workOn.label + '</div>';
+      html += '<div class="col gap-8">';
+      if (workOn.desc) html += '<div class="text-body">' + workOn.desc + '</div>';
       html += '<div class="text-body">' + workOn.action + '</div>';
+      html += '</div>';
       html += '</div>';
     } else {
       html += '<div class="box work-on-g">';
-      html += '<div class="work-on-title">Solid game</div>';
+      html += '<div class="lead work-on-title">Solid game</div>';
       html += '<div class="text-body">No major leaks detected from ' + d.n + ' hands. Keep playing to refine the picture.</div>';
       html += '</div>';
     }
@@ -140,7 +146,7 @@ function _vsRow(label, actualPct, actualDenom, targetText) {
   var actualStr = (actualPct == null) ? '-' : actualPct + '%';
   var sampleStr = actualDenom != null ? ' <span class="c-dim">(' + actualDenom + ' spots)</span>' : '';
   var v = rng ? bandVerdict(actualPct, rng[0], rng[1]) : { cls: 'v-na', label: '' };
-  var labelHtml = label ? '<div class="dynamics-vs-stat eyebrow c-dim">' + label + '</div>' : '';
+  var labelHtml = label ? '<div class="dynamics-vs-stat eyebrow">' + label + '</div>' : '';
   return '<div class="dynamics-vs ' + v.cls + '">' +
     labelHtml +
     '<div class="row between text-meta dynamics-vs-top"><span>You: <strong>' + actualStr + '</strong>' + sampleStr + '</span>' +
@@ -153,7 +159,7 @@ function _vsRow(label, actualPct, actualDenom, targetText) {
 // is applied — reading SEAT_MATRIX / FLOP_MATRIX directly would skip the offset.
 function renderTableDynamicsReference(hands, d) {
   var h = '<div class="section-head">Table Dynamics: You vs Target</div>';
-  h += '<div class="text-body mb-16">Your actual play at each table size and flop multiplicity, compared to the recommended benchmarks for your target style. <span class="c-pos">Green = on target</span>, <span class="c-warn">amber = too low / too tight</span>, <span class="c-neg">red = too high / too loose</span>.</div>';
+  h += '<div class="mb-16"><div class="text-body">Your actual play at each table size and flop multiplicity, compared to the recommended benchmarks for your target style. <span class="c-pos">Green = on target</span>, <span class="c-warn">amber = too low / too tight</span>, <span class="c-neg">red = too high / too loose</span>.</div></div>';
 
   var styleKey = (typeof getUserStyle === 'function') ? getUserStyle() : 'TAG';
   var seatKeys = Object.keys(SEAT_MATRIX).map(Number).sort(function(a, b) { return a - b; });
@@ -182,14 +188,15 @@ function renderTableDynamicsReference(hands, d) {
     var nHands = subD ? subD.n : 0;
 
     h += '<div class="card dynamics-card">';
-    h += '<div class="c-gold fw-semibold dynamics-card-head">' + seats + '-handed <span class="c-dim">(' + nHands + ' hands)</span></div>';
-    if (!nHands) {
-      h += '<div class="dynamics-card-note c-dim">No hands at this table size yet.</div>';
+    h += '<div class="c-gold fw-bold mb-6">' + seats + '-handed <span class="c-dim">(' + nHands + ' hands)</span></div>';
+    if (!nHands || !subD.posMap) {
+      h += '<div class="text-body dynamics-card-note c-dim">' + (nHands ? 'Not enough hands at this table size yet.' : 'No hands at this table size yet.') + '</div>';
       h += '</div>';
       continue;
     }
 
-    h += '<div class="eyebrow c-gold dynamics-zone-head">Your play: VPIP by position</div>';
+    h += '<div class="col gap-6">';
+    h += '<div class="eyebrow c-gold">Your play: VPIP by position</div>';
     h += '<table class="table dynamics-pos-tbl"><thead><tr><th>Pos</th><th>Your VPIP</th><th>Target</th><th>Hands</th></tr></thead><tbody>';
     for (var pi = 0; pi < entry.positions.length; pi++) {
       var p = entry.positions[pi];
@@ -201,10 +208,13 @@ function renderTableDynamicsReference(hands, d) {
       h += '<tr class="' + cls + '"><td>' + p + '</td><td>' + (actPct != null ? actPct + '%' : '-') + '</td><td class="c-dim">' + fmtBandRange(band) + '</td><td class="c-dim">' + (pm ? pm.hands : 0) + '</td></tr>';
     }
     h += '</tbody></table>';
+    h += '</div>';
 
     if (seatCoaching[seats]) {
-      h += '<div class="eyebrow c-gold dynamics-zone-head dynamics-coaching-head">Coaching</div>';
+      h += '<div class="mt-12 pt-8 border-top">';
+      h += '<div class="eyebrow c-warn">Coaching</div>';
       h += '<div class="text-body dynamics-coaching">' + seatCoaching[seats] + '</div>';
+      h += '</div>';
     }
     h += '</div>';
   }
@@ -225,14 +235,13 @@ function renderTableDynamicsReference(hands, d) {
     var nF = subF ? subF.n : 0;
 
     h += '<div class="card dynamics-card">';
-    h += '<div class="c-gold fw-semibold dynamics-card-head">' + flopLabels[bk] + ' <span class="c-dim">(' + nF + ' hands)</span></div>';
+    h += '<div class="c-gold fw-bold mb-6">' + flopLabels[bk] + ' <span class="c-dim">(' + nF + ' hands)</span></div>';
     if (!nF) {
-      h += '<div class="dynamics-card-note c-dim">No flops with this many players yet.</div>';
+      h += '<div class="text-body dynamics-card-note c-dim">No flops with this many players yet.</div>';
       h += '</div>';
       continue;
     }
 
-    h += '<div class="eyebrow c-gold dynamics-zone-head">Your play</div>';
     var cbetActual = subF.cbetOpps > 0 ? pct(subF.cbetDone, subF.cbetOpps) : null;
     var cbetSeatBand = matrixTarget('cbet', domPos, domSeats, styleKey);
     var cbetMod = flopCbetMod[bk] || 0;
@@ -241,12 +250,17 @@ function renderTableDynamicsReference(hands, d) {
       ideal: Math.max(0, cbetSeatBand.ideal + cbetMod),
       loose: Math.max(0, cbetSeatBand.loose + cbetMod)
     } : null;
+    h += '<div class="col gap-6">';
+    h += '<div class="eyebrow c-gold">Your play</div>';
     h += _vsRow('C-bet', cbetActual, subF.cbetOpps, fmtBandRange(cbetBand));
+    h += '</div>';
 
-    h += '<div class="eyebrow c-gold dynamics-zone-head dynamics-coaching-head">Coaching</div>';
+    h += '<div class="mt-12 pt-8 border-top">';
+    h += '<div class="eyebrow c-warn">Coaching</div>';
     h += '<div class="text-body dynamics-coaching">' + fe.notes + '</div>';
-    h += '<div class="text-meta dynamics-card-kv row between"><span>Bet sizing</span><span>' + fe.cbetSizing + '</span></div>';
-    h += '<div class="text-meta dynamics-card-kv row between"><span>Continue with</span><span>' + fe.continueRange + '</span></div>';
+    h += '<div class="text-meta dynamics-card-kv row between"><span class="eyebrow">Bet sizing</span><span>' + fe.cbetSizing + '</span></div>';
+    h += '<div class="text-meta dynamics-card-kv row between"><span class="eyebrow">Continue with</span><span>' + fe.continueRange + '</span></div>';
+    h += '</div>';
     h += '</div>';
   }
   h += '</div>';
@@ -305,7 +319,7 @@ function renderStyleMap(container, d, hands) {
   }
 
   var html = '';
-  html += '<div class="text-body mb-16">' + titleSentence + '</div>';
+  html += '<div class="mb-16"><div class="text-body">' + titleSentence + '</div></div>';
 
   html += '<div class="col gap-12">';
   html += '<div class="style-map-canvas-wrap"><canvas id="style-map-chart"></canvas></div>';

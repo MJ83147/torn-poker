@@ -4,12 +4,14 @@
 </div>
 <div data-slot="watchedSection" hidden>
   <div class="section-head">Watched Players</div>
-  <div class="text-micro mb-8">Click star to unwatch · click row to view hands</div>
+  <div class="col gap-8">
+  <div class="text-micro">Click star to unwatch · click row to view hands</div>
   <div class="overflow-x">
     <table class="table">
       <thead data-slot="watchedHead"></thead>
       <tbody data-slot="watchedRows"></tbody>
     </table>
+  </div>
   </div>
 </div>
 <div>
@@ -17,11 +19,13 @@
     <div class="section-head">All Opponents</div>
     <input type="text" id="player-search" placeholder="Search players…">
   </div>
-  <div class="text-micro mb-8" data-slot="allMeta"></div>
+  <div class="col gap-8">
+  <div class="text-micro" data-slot="allMeta"></div>
   <div class="">
     <table class="table">
       <thead data-slot="allHead"></thead>
       <tbody data-slot="allRows"></tbody>
     </table>
+  </div>
   </div>
 </div>

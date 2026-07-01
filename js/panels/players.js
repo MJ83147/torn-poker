@@ -182,7 +182,7 @@ function renderPlayers(container, d, hands) {
       var totalPages = Math.ceil(playerHands.length / PH_SIZE);
       var wr = pct(opp.won, opp.won + opp.lost);
       var ph = '<div class="col gap-24 player-detail">';
-      ph += '<div class="row between center wrap gap-12 player-detail-head">';
+      ph += '<div class="row between center wrap gap-12 pb-16 border-bottom">';
       ph += '<div class="row center gap-12"><button class="btn btn-ghost" id="players-back">&laquo; All Players</button>';
       ph += '<span class="c-gold fw-semibold">' + playerName + '</span></div>';
       ph += '<div class="text-meta">' + opp.hands + ' hands · ' + (wr !== null ? wr + '% win' : '-') + ' · ' + fmtPnl(opp.profit) + '</div></div>';
@@ -272,8 +272,10 @@ function renderCompare(container, d, hands) {
   if (playerNames.length < 2) {
     container.innerHTML =
       '<div class="title title-lg c-gold">Head to Head</div>' +
-      '<div class="text-body mt-4 mb-16">Compare two players side by side.</div>' +
-      '<div class="text-body">Need at least two players in the data to compare.</div>';
+      '<div class="col gap-16">' +
+      '<div class="text-body">Compare two players side by side.</div>' +
+      '<div class="text-body">Need at least two players in the data to compare.</div>' +
+      '</div>';
     return;
   }
 
@@ -289,7 +291,7 @@ function renderCompare(container, d, hands) {
 
   container.innerHTML =
     '<div class="title title-lg c-gold">Head to Head</div>' +
-    '<div class="text-body mt-4 mb-16">Compare two players side by side.</div>' +
+    '<div class="mb-16"><div class="text-body">Compare two players side by side.</div></div>' +
     '<div class="row center gap-12 wrap mb-16">' +
     '<select id="compare-p1">' + buildOptions(p1Default) + '</select>' +
     '<span class="text-body fw-semibold">vs</span>' +
@@ -396,7 +398,7 @@ function renderCompare(container, d, hands) {
                     (sr.key === 'limp' && v1 !== null && v2 !== null && v1 < v2);
       var better2 = !better1 && v1 !== null && v2 !== null && v1 !== v2;
       tableHtml += '<tr>' +
-        '<td class="eyebrow c-dim">' + tipWrap(sr.label) + '</td>' +
+        '<td class="eyebrow">' + tipWrap(sr.label) + '</td>' +
         '<td class="' + (better1 ? 'c-pos fw-medium' : '') + '">' + fmtStat(v1, sr.suffix) + (better1 && Math.abs(v1 - v2) >= 3 ? ' &#9664;' : '') + '</td>' +
         '<td class="' + (better2 ? 'c-pos fw-medium' : '') + '">' + fmtStat(v2, sr.suffix) + (better2 && Math.abs(v1 - v2) >= 3 ? ' &#9664;' : '') + '</td>' +
         '<td class="text-meta">' + edge + '</td>' +
@@ -432,10 +434,10 @@ function renderCompare(container, d, hands) {
       h2hHtml += '<div class="text-body">No shared hands found between these players.</div>';
     } else {
       var p1WinPct = Math.round(p1Wins / sharedHands.length * 100);
-      h2hHtml += '<div class="text-meta col gap-4 mb-12">' +
+      h2hHtml += '<div class="mb-12"><div class="text-meta col gap-4">' +
         '<span>' + sharedHands.length + ' shared hands</span>' +
         '<span>' + p1Name + ' won ' + p1Wins + ' (' + p1WinPct + '%) · ' + p2Name + ' won ' + p2Wins + '</span>' +
-        '</div>';
+        '</div></div>';
       h2hHtml += '<button class="btn btn-ghost example-hand-btn" id="compare-shared-btn">View ' + sharedHands.length + ' shared hands</button>';
     }
     h2hHtml += '</div>';

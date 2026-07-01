@@ -73,8 +73,8 @@ function bootSession(hands, meta) {
   var num = document.getElementById('lnum');
   var prog = document.getElementById('lprog');
   var app = document.getElementById('app');
-  var cs = document.querySelectorAll('.lc');
-  var clabel = document.querySelector('.l-clabel');
+  var cs = document.querySelectorAll('#loader .card-face');
+  var clabel = document.getElementById('lclabel');
 
   // No loader DOM (defensive): do the work synchronously and render.
   if (!loader || !num || !prog || !app) {
@@ -395,13 +395,13 @@ function _renderHeaderStrip() {
     ? '<div class="sample-warning">⚠ Small sample: ' + d.n + ' hands. The more hands you play and track, the more accurate these stats become. Aim for 100+ hands for reliable patterns.</div>'
     : '';
   document.getElementById('hero-strip').innerHTML = [
-    { l: 'Hands', v: d.n, c: 'o' },
-    { l: 'Win Rate', v: c.wr !== null ? c.wr + '%' : '-', c: c.wr >= 50 ? 'g' : 'r' },
-    { l: 'Net P&L', v: fmtPnl(c.netPnl), c: c.netPnl >= 0 ? 'g' : 'r' },
-    { l: 'VPIP', v: c.vpipPct !== null ? c.vpipPct + '%' : '-', c: c.vpipPct > 55 ? 'a' : 'w' },
-    { l: 'Aggression', v: c.agg !== null ? c.agg + '%' : '-', c: c.agg > 25 ? 'g' : 'a' },
-    { l: 'vs All-in', v: c.allinFold !== null ? c.allinFold + '% fold' : '-', c: 'w' },
-  ].map(function (h) { return '<div class="hs"><div class="hs-l label">' + tipWrap(h.l) + '</div><div class="hs-v value ' + h.c + '">' + h.v + '</div></div>'; }).join('');
+    { l: 'Hands', v: d.n, c: 'c-gold' },
+    { l: 'Win Rate', v: c.wr !== null ? c.wr + '%' : '-', c: c.wr >= 50 ? 'c-pos' : 'c-neg' },
+    { l: 'Net P&L', v: fmtPnl(c.netPnl), c: c.netPnl >= 0 ? 'c-pos' : 'c-neg' },
+    { l: 'VPIP', v: c.vpipPct !== null ? c.vpipPct + '%' : '-', c: c.vpipPct > 55 ? 'c-warn' : '' },
+    { l: 'Aggression', v: c.agg !== null ? c.agg + '%' : '-', c: c.agg > 25 ? 'c-pos' : 'c-warn' },
+    { l: 'vs All-in', v: c.allinFold !== null ? c.allinFold + '% fold' : '-', c: '' },
+  ].map(function (h) { return '<div class="hs"><div class="hs-l eyebrow">' + tipWrap(h.l) + '</div><div class="hs-v value ' + h.c + '">' + h.v + '</div></div>'; }).join('');
   var noteEl = document.getElementById('sample-note');
   if (noteEl) noteEl.innerHTML = sampleNote;
 }
@@ -674,7 +674,7 @@ function finishUpload(results) {
   listEl.innerHTML = html;
 
   if (_uploadedHands.length > 0) {
-    var total = '<div class="text-body mt-12"><strong class="text-strong">' + _uploadedHands.length + '</strong> total hands across ' + results.filter(function (r) { return r.count > 0; }).length + ' file(s)</div>';
+    var total = '<div class="mt-12"><div class="text-body"><strong class="text-strong">' + _uploadedHands.length + '</strong> total hands across ' + results.filter(function (r) { return r.count > 0; }).length + ' file(s)</div></div>';
     listEl.innerHTML += total;
     analyseBtn.classList.remove('hidden');
   } else {

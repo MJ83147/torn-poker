@@ -109,7 +109,8 @@ function renderBestWorstSessions(hands, overallData) {
     if (sessions[wi].pnl === worst.pnl && sessions[wi].hands.length > worst.hands.length) worst = sessions[wi];
   }
 
-  var html = '<div class="eyebrow c-dim mb-8 mt-16">Best &amp; Worst Sessions</div>';
+  var html = '<div class="col gap-8 mt-16">';
+  html += '<div class="eyebrow">Best &amp; Worst Sessions</div>';
   html += '<div class="cols-2 gap-16">';
 
   var sessionPairs = [
@@ -130,8 +131,9 @@ function renderBestWorstSessions(hands, overallData) {
     var sessEnd = (lastHand && lastHand.timestamp) ? new Date(lastHand.timestamp).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
     var dateLabel = sessStart ? (sessStart === sessEnd ? sessStart : sessStart + ' - ' + sessEnd) : '';
 
-    html += '<div class="card">';
-    html += '<div class="eyebrow c-dim mb-12">' + sess.label + '</div>';
+    html += '<div class="card col gap-12">';
+    html += '<div class="eyebrow">' + sess.label + '</div>';
+    html += '<div class="col">';
     if (dateLabel) html += '<div class="text-body">' + dateLabel + '</div>';
     html += '<div class="text-body">' + tableName + ' &middot; ' + s.hands.length + ' hands &middot; <span class="value ' + pnlCellCls + '">' + pnlDisplay + '</span></div>';
 
@@ -161,7 +163,9 @@ function renderBestWorstSessions(hands, overallData) {
     })(seeHandsBtnId, sessTitle, s.hands), 50);
 
     html += '</div>';
+    html += '</div>';
   }
+  html += '</div>';
   html += '</div>';
   return html;
 }

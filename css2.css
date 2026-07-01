@@ -1,7 +1,18 @@
 /* ==========================================================================
-   css2 — rebuilt from the component blueprint (COMPONENTS_PER_PANEL.md)
-   Order: 1 tokens · 2 base/reset · 3 utilities · 4 components · 5 features · 6 responsive
-   Sections 4-5 are built out against the checklist in CSS2-BUILD.md.
+   css2.css — single stylesheet for the poker app
+   --------------------------------------------------------------------------
+   §1  TOKENS ............ colours · font sizes · spacing · radii — the ONLY
+                          place raw values are defined
+   §2  BASE / RESET ...... element defaults + the text ROLE classes
+   §3  UTILITIES ......... layout + spacing helpers (flex, gap, margin, pad)
+   §4  COMPONENTS ........ shared blocks: card, box, button, table, story, bar
+   §5  FEATURES .......... range grid, equity viz, charts, carousel, sentence
+   §6  RESPONSIVE ........ breakpoint overrides
+   §7  PANEL-SPECIFIC .... genuinely-unique blocks (My Game, saved hands, style)
+   --------------------------------------------------------------------------
+   RULE: after §1, nothing sets font-size / line-height / letter-spacing except
+   the role classes in §2 (.title · .eyebrow · .section-head · .text-* · .lead
+   · .value). Everything else composes those roles + colour/spacing utilities.
    ========================================================================== */
 
 /* ==========================================================================
@@ -59,7 +70,6 @@
   /* one scale, one job per step, real gaps: 12 / 14 / 16 / 20 / 26 / 32.
      no off-scale 15/17/18/28px values anywhere. */
   --fs-xs: 12px;   /* labels, eyebrows, badges (uppercase) */
-  --fs-sm: 14px;   /* alias of body; kept so existing refs hold */
   --fs-md: 14px;   /* body, table cells, insight text */
   --fs-lg: 16px;   /* lead callout (verdict box), inline value */
   --fs-xl: 20px;   /* stat number */
@@ -120,8 +130,8 @@ body {
   background: var(--bg);
   color: var(--text);
   font-family: var(--mono);
-  font-size: var(--fs-md);
-  line-height: var(--lh-normal);
+  font-size: var(--fs-md); /* good reason: base document font size — the inherited default every text role builds on */
+  line-height: var(--lh-normal); /* good reason: base document line-height inherited by all text */
   min-height: 100vh;
 }
 
@@ -140,7 +150,7 @@ select {
   background: var(--s2);
   border: var(--bw) solid var(--border);
   color: var(--text);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-md); /* good reason: form-field primitive base — inputs don't inherit font-size, so the field size is set once here for all controls */
   padding: var(--sp-6) var(--sp-8);
   border-radius: var(--r-sm);
   outline: none;
@@ -200,12 +210,16 @@ a {
 
 /* row/col alignment modifiers */
 .center { align-items: center; }        /* cross-axis */
+.start { align-items: flex-start; }     /* cross-axis */
 .middle { justify-content: center; }    /* main-axis */
 .between { justify-content: space-between; }
 .end { justify-content: flex-end; }
 .wrap { flex-wrap: wrap; }
 .grow { flex: 1; }
 .inline { display: inline-flex; }
+.w-full { width: 100%; }
+.min-w-0 { min-width: 0; }
+.text-left { text-align: left; }
 
 /* --- gap scale --- */
 .gap-2 { gap: var(--sp-2); }
@@ -225,12 +239,18 @@ a {
 .mt-16 { margin-top: var(--sp-16); }
 .mt-32 { margin-top: var(--sp-32); }
 .mb-0 { margin-bottom: 0; }
+.mb-2 { margin-bottom: var(--sp-2); }
 .mb-4 { margin-bottom: var(--sp-4); }
 .mb-6 { margin-bottom: var(--sp-6); }
 .mb-8 { margin-bottom: var(--sp-8); }
 .mb-12 { margin-bottom: var(--sp-12); }
 .mb-16 { margin-bottom: var(--sp-16); }
 .mb-24 { margin-bottom: var(--sp-24); }
+
+/* --- padding scale --- */
+.p-16 { padding: var(--sp-16); }
+.pt-8 { padding-top: var(--sp-8); }
+.pb-16 { padding-bottom: var(--sp-16); }
 
 /* --- borders --- */
 .border-top { border-top: var(--bw) solid var(--border); }
@@ -241,6 +261,7 @@ a {
   font-family: var(--serif);
   font-weight: var(--fw-bold);
   line-height: var(--lh-tight);
+  margin-bottom: var(--sp-4);
 }
 .title-xl { font-size: var(--fs-3xl); }
 .title-lg { font-size: var(--fs-2xl); }
@@ -257,7 +278,7 @@ a {
    heading (serif, larger than body), distinct from the tiny .eyebrow label. */
 .section-head {
   font-family: var(--serif);
-  font-size: var(--fs-lg);
+  font-size: var(--fs-xl);
   font-weight: var(--fw-semibold);
   line-height: var(--lh-tight);
   color: var(--text);
@@ -267,8 +288,21 @@ a {
 
 .text-body { font-size: var(--fs-md); color: var(--dim); line-height: var(--lh-body); }
 .lead { font-size: var(--fs-lg); color: var(--text); line-height: var(--lh-normal); }
-.text-meta { font-size: var(--fs-sm); color: var(--dim); }
+.text-meta { font-size: var(--fs-md); color: var(--dim); }
 .text-micro { font-size: var(--fs-xs); color: var(--muted); }
+/* Stack before -> after: compact hero flow under a table cell, and the
+   per-player stacks block in the hand-replay modal. */
+.stack-flow { margin-top: var(--sp-2); white-space: nowrap; }
+.player-stacks { margin-top: var(--sp-12); }
+.player-stacks .stack-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: var(--sp-8);
+  align-items: baseline;
+  padding: var(--sp-4) 0;
+  border-bottom: var(--bw) solid var(--border);
+}
+.player-stacks .stack-row:last-child { border-bottom: none; }
 .text-strong { color: var(--text); }
 .value {
   font-family: var(--serif);
@@ -299,6 +333,7 @@ a {
 /* --- weight / transform helpers --- */
 .fw-medium { font-weight: var(--fw-medium); }
 .fw-semibold { font-weight: var(--fw-semibold); }
+.fw-bold { font-weight: var(--fw-bold); }
 .uppercase { text-transform: uppercase; }
 .text-right { text-align: right; }
 .text-center { text-align: center; }
@@ -356,8 +391,8 @@ a {
 }
 
 .table th {
-  font-size: var(--fs-xs);
-  letter-spacing: var(--sp-2);
+  font-size: var(--fs-xs); /* good reason: table-header cell primitive (eyebrow-style label baked into every <th>, no per-cell wrapper to carry a role) */
+  letter-spacing: var(--sp-2); /* good reason: table-header tracking, paired with the size above */
   text-transform: uppercase;
   font-weight: var(--fw-regular);
   color: var(--dim);
@@ -367,7 +402,7 @@ a {
 }
 
 .table td {
-  font-size: var(--fs-md);
+  font-size: var(--fs-md); /* good reason: table body-cell primitive — body size baked into every <td>, no per-cell wrapper to carry a role */
   padding: var(--sp-16) var(--sp-16);
   padding-left: 0;
   border-bottom: var(--bw) solid var(--border);
@@ -391,9 +426,28 @@ a {
 .table tr.link { cursor: pointer; }
 .table tbody tr.link:hover { background: var(--s1); }
 
+/* Shared data-list rows. These are all <tr> inside .table (player list,
+   all-in list, hand log) and inherit the per-row border-bottom divider from
+   .table td above. Named here as shared hooks so the separation is consistent
+   and the classes are not orphaned. */
+.player-row td,
+.allin-row td,
+.hrow td {
+  border-bottom: var(--bw) solid var(--border);
+}
+.table tr.player-row:last-child td,
+.table tr.allin-row:last-child td,
+.table tr.hrow:last-child td {
+  border-bottom: none;
+}
+
+/* save/star toggle in a hand-log row (.icon-btn base; gold when saved) */
+.hrow-star { color: var(--dim); }
+.hrow-star.starred { color: var(--gold); }
+
 /* table extras: dimmed (excluded) row, small cell, inline spark bar */
 .table tr.excluded { opacity: 0.35; }
-.cell-sm { font-size: var(--fs-xs); }
+.cell-sm { font-size: var(--fs-xs); } /* good reason: table-cell size modifier — shrinks a <td> to the small step; a cell-level utility, not free text */
 .spark {
   display: inline-block;
   height: 10px;
@@ -471,29 +525,16 @@ a {
    .dot.bg-* and the badge word is .c-* (no per-severity classes here). */
 .insight { position: relative; }
 
+/* type (12px uppercase tracking) comes from .eyebrow in markup; this owns the row layout */
 .insight-badge {
-  position: absolute;
-  top: var(--sp-16);
-  right: var(--sp-16);
   display: flex;
   align-items: center;
   gap: var(--sp-6);
-  font-size: var(--fs-xs);
-  letter-spacing: var(--sp-2);
+  margin-bottom: var(--sp-8);
   text-transform: uppercase;
 }
 
-.insight-title {
-  font-size: var(--fs-lg);
-  font-weight: var(--fw-semibold);
-  margin-bottom: var(--sp-4);
-  padding-right: 80px;
-}
-
-.insight-body {
-  color: var(--dim);
-  line-height: var(--lh-body);
-}
+/* body text owns size + line-height via .text-body in markup */
 
 .insight-chips,
 .insight-coaching {
@@ -506,14 +547,6 @@ a {
   display: flex;
   flex-wrap: wrap;
   gap: var(--sp-4) var(--sp-12);
-}
-
-.insight-coaching-head {
-  font-size: var(--fs-xs);
-  letter-spacing: .06em;
-  text-transform: uppercase;
-  color: var(--dim);
-  margin-bottom: var(--sp-4);
 }
 
 /* --- Story card: an expandable insight (head + collapsible body) ---
@@ -532,18 +565,6 @@ a {
   transition: background .15s;
 }
 
-/* The severity badge sits inline at the top-left of the story head so the
-   top-right chevron never covers the severity word. Overrides the absolute
-   positioning inherited from .insight-badge. */
-.story-badge {
-  position: static;
-  margin-bottom: var(--sp-8);
-  padding-right: var(--sp-32);
-}
-
-/* The chevron owns the top-right corner; the title clears it. */
-.story-head .insight-title { padding-right: var(--sp-32); }
-
 .story:hover .story-head { background: var(--s1); }
 
 .story-chevron {
@@ -556,17 +577,17 @@ a {
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background: var(--s2);
-  border: var(--bw) solid var(--border);
+  background: color-mix(in srgb, var(--gold) 10%, transparent);
+  border: var(--bw) solid var(--gold2);
   color: var(--gold);
-  font-size: var(--fs-sm);
-  line-height: 1;
+  font-size: var(--fs-md); /* good reason: sizes the round chevron glyph in the story-card toggle, not text */
+  line-height: 1; /* good reason: centres the chevron glyph in its 24px circle */
   transition: transform .15s, background .15s, border-color .15s;
 }
 
 .story:hover .story-chevron {
-  background: var(--s1);
-  border-color: var(--gold2);
+  background: color-mix(in srgb, var(--gold) 20%, transparent);
+  border-color: var(--gold);
 }
 
 .story.open .story-chevron {
@@ -580,15 +601,16 @@ a {
 [data-findings] { align-items: start; }
 .cols-2 > .story.open { grid-column: 1 / -1; }
 
-.story-body { display: none; padding: 0 var(--sp-16) var(--sp-16); }
+/* Body content shares the head's inset so title and body read as one aligned
+   column. Left matches .story-head's --sp-16. Right matches the title's content
+   edge: the head's --sp-16 plus the title's extra --sp-32 (which clears the
+   chevron), so title and body stop at the same right inset. */
+.story-body { display: none; padding: 0 calc(var(--sp-16) + var(--sp-32)) var(--sp-16) var(--sp-16); }
 
 .story.open .story-body { display: block; }
 
-.story-teaser {
-  margin-top: var(--sp-8);
-  padding-right: var(--sp-24);
-  color: var(--dim);
-}
+/* layout hook only — type/colour come from .text-body in markup; hidden when open */
+.story-teaser { padding-right: var(--sp-24); }
 
 .story.open .story-teaser { display: none; }
 
@@ -602,7 +624,6 @@ a {
 
 .story-impact,
 .story-sowhat {
-  line-height: var(--lh-body);
   padding-top: var(--sp-12);
   margin-top: var(--sp-12);
   border-top: var(--bw) solid var(--border);
@@ -610,8 +631,8 @@ a {
 
 .story-tag {
   display: inline-block;
-  font-size: var(--fs-xs);
-  letter-spacing: .08em;
+  font-size: var(--fs-xs); /* good reason: gold bold uppercase tag label — matches eyebrow size but keeps its own bolder weight + wider tracking */
+  letter-spacing: .08em; /* good reason: wider tag tracking than the eyebrow token, paired with the size above */
   text-transform: uppercase;
   color: var(--gold);
   font-weight: var(--fw-bold);
@@ -632,7 +653,7 @@ a {
   display: inline-block;
   padding: var(--sp-2) var(--sp-8);
   border-radius: var(--r-sm);
-  font-size: var(--fs-xs);
+  font-size: var(--fs-xs); /* good reason: badge marker primitive — pill size is intrinsic to the component, not free text */
   font-weight: var(--fw-medium);
 }
 
@@ -653,13 +674,13 @@ a {
 
 /* .chip = inline text token (colour via .c-*); .tag = bordered pill. */
 .chip {
-  font-size: var(--fs-sm);
+  font-size: var(--fs-md); /* good reason: inline chip token primitive — size is intrinsic to the marker component */
   font-weight: var(--fw-semibold);
   color: var(--dim);
 }
 
 .tag {
-  font-size: var(--fs-xs);
+  font-size: var(--fs-xs); /* good reason: bordered pill tag primitive — size is intrinsic to the marker component */
   font-weight: var(--fw-semibold);
   padding: var(--sp-2) var(--sp-6);
   border-radius: var(--r-sm);
@@ -697,8 +718,8 @@ a {
   border-color: var(--gold);
   color: var(--bg);
   font-family: var(--serif);
-  font-size: var(--fs-lg);
-  letter-spacing: .05em;
+  font-size: var(--fs-lg); /* good reason: serif button-label sizing — intrinsic to the primary button control, not free text */
+  letter-spacing: .05em; /* good reason: serif button-label tracking, paired with the size above */
   padding: var(--sp-8);
 }
 
@@ -711,8 +732,8 @@ a {
   border-color: var(--gold2);
   color: var(--gold2);
   font-family: var(--serif);
-  font-size: var(--fs-lg);
-  letter-spacing: .05em;
+  font-size: var(--fs-lg); /* good reason: serif button-label sizing — intrinsic to the secondary button control, not free text */
+  letter-spacing: .05em; /* good reason: serif button-label tracking, paired with the size above */
   padding: var(--sp-8);
 }
 
@@ -725,7 +746,7 @@ a {
   border-color: var(--border);
   color: var(--dim);
   padding: var(--sp-4) var(--sp-8);
-  font-size: var(--fs-xs);
+  font-size: var(--fs-xs); /* good reason: compact ghost-button label sizing — intrinsic to the button control */
 }
 
 .btn-ghost:hover:not([disabled]) {
@@ -755,7 +776,7 @@ a {
   background: none;
   border: none;
   cursor: pointer;
-  line-height: var(--lh-none);
+  line-height: var(--lh-none); /* good reason: collapses line-box around a single glyph so the icon button sits flush */
   transition: color .15s, transform .15s;
 }
 
@@ -781,7 +802,7 @@ a {
   overflow: hidden;
   cursor: pointer;
   font-weight: var(--fw-semibold);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-md); /* good reason: segmented $/BB toggle control — label size intrinsic to the switch */
 }
 
 .bb-opt {
@@ -821,8 +842,8 @@ a {
 
 .subtab {
   padding: var(--sp-8) var(--sp-16);
-  font-size: var(--fs-xs);
-  letter-spacing: var(--bw);
+  font-size: var(--fs-xs); /* good reason: subtab control label — uppercase tab chrome, intrinsic to the control */
+  letter-spacing: var(--bw); /* good reason: subtab label tracking, paired with the size above */
   text-transform: uppercase;
   color: var(--dim);
   cursor: pointer;
@@ -852,9 +873,8 @@ a {
   gap: var(--sp-4);
 }
 
+/* size + tracking come from .eyebrow in markup; kept for the shared colour/transform hook */
 .stat-label {
-  font-size: var(--fs-xs);
-  letter-spacing: var(--bw);
   text-transform: uppercase;
   color: var(--dim);
 }
@@ -870,6 +890,22 @@ a {
   border-bottom: var(--bw) solid var(--border);
 }
 
+/* .mini-row = a stat-grid rendered by renderMiniRow (Action Totals / Showdown /
+   Summary / player Tendencies). Give the cells a shared divider so adjacent
+   mini stats read as distinct entries, matching the app's border language. */
+.mini-row {
+  border-top: var(--bw) solid var(--border);
+  border-bottom: var(--bw) solid var(--border);
+}
+.mini-row .stat {
+  padding: var(--sp-12) var(--sp-16);
+  border-left: var(--bw) solid var(--border);
+}
+.mini-row .stat:first-child {
+  border-left: none;
+  padding-left: 0;
+}
+
 /* --- Legend: swatch + label --- */
 .legend {
   display: flex;
@@ -881,7 +917,7 @@ a {
   display: flex;
   align-items: center;
   gap: var(--sp-6);
-  font-size: var(--fs-xs);
+  font-size: var(--fs-xs); /* good reason: legend swatch+label row primitive — small label at full --text colour (text-micro is muted) */
   color: var(--text);
 }
 
@@ -929,35 +965,37 @@ a {
   background: none;
   border: none;
   color: var(--dim);
-  font-size: var(--fs-lg);
+  font-size: var(--fs-lg); /* good reason: sizes the modal close "×" glyph, not text */
   cursor: pointer;
 }
 
 .modal-close:hover { color: var(--text); }
 
-/* modal content (hand replay popup) */
-.modal-title { color: var(--gold); margin-bottom: var(--sp-4); }
+/* modal content (hand replay popup). Modal titles reuse the shared heading:
+   markup composes `title title-md c-gold mb-4` (serif 20px bold gold) so both
+   the hand-replay and hand-list modals share one heading style. */
 .modal-hand-meta { margin-bottom: var(--sp-16); }
 .modal-hand-meta strong { color: var(--gold); }
 .modal-action-line { padding: var(--sp-4) 0; border-bottom: var(--bw) solid color-mix(in srgb, var(--border) 50%, transparent); }
 .modal-action-line.me { color: var(--gold); }
-.modal-action-line.street-label { color: var(--dim); font-size: var(--fs-xs); letter-spacing: var(--bw); text-transform: uppercase; font-weight: var(--fw-medium); padding: var(--sp-8) 0 var(--sp-4); border-bottom: none; }
-.modal-coaching { margin-top: var(--sp-16); padding: var(--sp-12); line-height: var(--lh-body); }
-.modal-coaching-head { color: var(--amber); text-transform: uppercase; font-size: var(--fs-xs); letter-spacing: var(--bw); margin-bottom: var(--sp-6); }
+.modal-coaching { margin-top: var(--sp-16); padding: var(--sp-12); } /* line-height owned by .text-body in markup */
+/* Amber coaching-label heads reuse the shared eyebrow (uppercase 12px) + the
+   .c-warn amber colour util, composed in markup as `eyebrow c-warn mb-6`. */
 .modal-notes { display: none; margin-top: var(--sp-16); }
 .modal-notes.show { display: block; }
 .modal-notes-header { margin-bottom: var(--sp-6); }
 .modal-notes-status { transition: color .3s; }
-.modal-star-btn { position: absolute; top: var(--sp-8); right: 52px; font-size: var(--fs-xl); color: var(--dim); padding: var(--sp-6) var(--sp-8); }
+.modal-star-btn { position: absolute; top: var(--sp-8); right: 52px; font-size: var(--fs-xl); color: var(--dim); padding: var(--sp-6) var(--sp-8); } /* good reason: sizes the save "★" glyph button, not text */
 .modal-star-btn.starred { color: var(--gold); }
 
 /* hand-list rows (in the hand-list popup; also used by range) */
-.range-hand-row { padding: var(--sp-8) var(--sp-8); border-radius: var(--r-sm); cursor: pointer; }
+.range-hand-row { padding: var(--sp-8) var(--sp-8); border-radius: var(--r-sm); cursor: pointer; border-bottom: var(--bw) solid var(--border); }
+.range-hand-row:last-child { border-bottom: none; }
 .range-hand-row:hover { background: var(--s2); }
 .range-hand-row-pos { min-width: 28px; }
-.range-hand-row-hole { font-family: var(--serif); font-size: var(--fs-lg); font-weight: var(--fw-bold); line-height: var(--lh-none); color: var(--text); min-width: 52px; }
-.range-hand-row-board { letter-spacing: .5px; }
-.range-hand-row-actions { line-height: var(--lh-snug); padding-left: 40px; }
+.range-hand-row-hole { font-family: var(--serif); font-size: var(--fs-lg); font-weight: var(--fw-bold); line-height: var(--lh-none); color: var(--text); min-width: 52px; } /* good reason: serif hole-card glyph display in a hand-row — no text role sets serif at fs-lg */
+.range-hand-row-board { letter-spacing: .5px; } /* good reason: hairline glyph separation between board cards (e.g. "Ah Kd 7s"), not a text label — no tracking token this small */
+.range-hand-row-actions { line-height: var(--lh-snug); padding-left: 40px; } /* good reason: tightens leading on the multi-line action list (text-meta owns the size); no role sets snug leading */
 
 .popover {
   position: absolute;
@@ -990,8 +1028,8 @@ a {
   border: var(--bw) solid var(--border);
   border-radius: var(--r-sm);
   color: var(--text);
-  font-size: var(--fs-sm);
-  line-height: var(--lh-normal);
+  font-size: var(--fs-md); /* good reason: tooltip popover primitive — body text at full --text colour (text roles are dim), injected as raw strings with no wrapper to carry a role */
+  line-height: var(--lh-normal); /* good reason: tooltip popover primitive leading, paired with its size above */
   text-align: left;
   white-space: normal;
   pointer-events: none;
@@ -1036,8 +1074,8 @@ a {
 }
 
 .pager-info {
-  font-size: var(--fs-xs);
-  letter-spacing: var(--bw);
+  font-size: var(--fs-xs); /* good reason: pagination status label ("1 / 12") — compact control-chrome meta, rendered inside the pager component */
+  letter-spacing: var(--bw); /* good reason: pager label tracking, paired with the size above */
   color: var(--dim);
 }
 
@@ -1046,8 +1084,8 @@ a {
   padding: var(--sp-8) var(--sp-16);
   border-radius: var(--r-sm);
   border: var(--bw) solid transparent;
-  font-size: var(--fs-xs);
-  letter-spacing: var(--bw);
+  font-size: var(--fs-xs); /* good reason: notice/banner primitive — compact banner text size intrinsic to the component */
+  letter-spacing: var(--bw); /* good reason: notice tracking, paired with the size above */
 }
 
 .notice-info {
@@ -1103,8 +1141,8 @@ a {
 }
 
 .rc span {
-  font-size: var(--fs-xs);
-  line-height: var(--lh-none);
+  font-size: var(--fs-xs); /* good reason: glyph size for the 13×13 range-matrix cell label (scales with the cell, not free text) */
+  line-height: var(--lh-none); /* good reason: centres the glyph in the square cell */
   font-weight: var(--fw-semibold);
   text-align: center;
   color: var(--white);
@@ -1146,7 +1184,7 @@ a {
 .rc[data-hero="none"] span { color: var(--gto-empty-fg); }
 
 /* "Your range" cells coloured by the action YOU took, same palette as the
-   GTO chart, with a ✓/✗ overlay for whether it matched GTO. */
+   GTO chart. The colour is the whole story — no right/wrong overlay. */
 .rc[data-act="raise"] { background: var(--gto-red); }
 .rc[data-act="call"] { background: var(--green); }
 .rc[data-act="fold"] { background: var(--gto-grey); }
@@ -1154,29 +1192,6 @@ a {
 
 /* Cells you were actually dealt in this spot open the hands behind them. */
 .rc[data-act] { cursor: pointer; }
-
-.rc-mark {
-  position: absolute;
-  top: 0;
-  right: var(--sp-2);
-  font-size: var(--fs-xs);
-  line-height: 1;
-  font-weight: var(--fw-semibold);
-  font-style: normal;
-  pointer-events: none;
-  text-shadow: 0 0 2px #000, 0 0 2px #000;
-}
-.rc-mark.ok { color: #daffdc; }
-.rc-mark.bad { color: #ffd4d4; }
-
-.rc-mark-key {
-  display: inline-block;
-  width: 14px;
-  text-align: center;
-  font-weight: var(--fw-semibold);
-}
-.rc-mark-key.ok { color: var(--green); }
-.rc-mark-key.bad { color: var(--gto-red); }
 
 .rc.rc-played[data-freq="low"] { background: var(--freq-low); }
 .rc.rc-played[data-freq="med"] { background: var(--freq-med); }
@@ -1227,8 +1242,8 @@ a {
   border: var(--bw) solid var(--border);
   background: none;
   color: var(--dim);
-  font-size: var(--fs-xl);
-  line-height: var(--lh-none);
+  font-size: var(--fs-xl); /* good reason: sizes the carousel arrow "‹ ›" glyph, not text */
+  line-height: var(--lh-none); /* good reason: centres the arrow glyph in its 28px circle */
   cursor: pointer;
   transition: border-color .2s, color .2s;
 }
@@ -1256,8 +1271,8 @@ a {
 /* --- Sentence builder: serif stem with clickable clause tokens --- */
 .sentence {
   font-family: var(--serif);
-  font-size: var(--fs-xl);
-  line-height: var(--lh-body);
+  font-size: var(--fs-xl); /* good reason: serif sentence-builder display stem — a bespoke large serif reading surface, no matching serif text role */
+  line-height: var(--lh-body); /* good reason: leading for the serif sentence stem, paired with its size above */
   color: var(--text);
 }
 
@@ -1285,7 +1300,7 @@ a {
   border: var(--bw) dashed var(--border);
   border-radius: var(--r-sm);
   color: var(--dim);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-md); /* good reason: "add clause" button control resets to body size from its serif fs-xl .sentence parent */
   cursor: pointer;
   vertical-align: middle;
 }
@@ -1295,8 +1310,8 @@ a {
 .sentence-seg-tag {
   display: inline-block;
   margin-right: var(--sp-8);
-  font-size: var(--fs-xs);
-  letter-spacing: var(--sp-2);
+  font-size: var(--fs-xs); /* good reason: gold bold segment tag resets to label size from the serif fs-xl .sentence parent (eyebrow can't be composed onto this generated inline span without also inheriting dim colour) */
+  letter-spacing: var(--sp-2); /* good reason: tag tracking, paired with the size above */
   text-transform: uppercase;
   color: var(--gold);
   font-weight: var(--fw-bold);
@@ -1311,8 +1326,8 @@ a {
   gap: var(--sp-12);
   margin: var(--sp-16) 0;
   text-transform: uppercase;
-  letter-spacing: var(--sp-4);
-  font-size: var(--fs-xs);
+  letter-spacing: var(--sp-4); /* good reason: wide divider tracking for the centred "vs" rule, resets from the serif fs-xl .sentence parent */
+  font-size: var(--fs-xs); /* good reason: "vs" divider label size, resets from the serif fs-xl .sentence parent */
   color: var(--dim);
 }
 
@@ -1342,13 +1357,10 @@ a {
 
 /* --- Card-deal animation (loader / maintenance) ---
    Cards start offset + transparent; adding .show deals each one in. */
-.deal {
-  display: flex;
-  gap: var(--sp-8);
-  justify-content: center;
-}
 
-.deal-card {
+/* Shared playing-card face (loader deal / hero splash / maintenance).
+   .card-face-sm is the smaller maintenance-screen variant. */
+.card-face {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1358,16 +1370,25 @@ a {
   background: var(--s2);
   border: var(--bw) solid var(--border);
   font-family: var(--serif);
-  font-size: var(--fs-xl);
+  font-size: var(--fs-xl); /* good reason: serif rank/suit glyph on the dealt playing-card face (loader/splash), not text */
   font-weight: var(--fw-semibold);
   opacity: 0;
   transform: translateY(18px) scale(.92);
   transition: opacity .38s ease, transform .38s ease;
 }
 
-.deal-card.show { opacity: 1; transform: none; }
-.deal-card.red { color: var(--red); }
-.deal-card.black { color: var(--text); }
+.card-face-sm {
+  width: 44px;
+  height: 60px;
+  font-size: var(--fs-2xl); /* good reason: larger card-face glyph for the maintenance splash variant, not text */
+  background: color-mix(in srgb, var(--white) 2%, transparent);
+  /* Maintenance cards are static (no deal-in), so keep them visible. */
+  opacity: 1;
+  transform: none;
+  transition: none;
+}
+
+.card-face.show { opacity: 1; transform: none; }
 
 /* --- Screen show/hide states --- */
 #loader { display: none; position: fixed; inset: 0; z-index: 1000; flex-direction: column; align-items: center; justify-content: center; background: var(--bg); transition: opacity .8s; }
@@ -1384,49 +1405,36 @@ body.maintenance #loader, body.maintenance #app { display: none !important; }
 body.maintenance #maintenance { display: flex; flex-direction: column; align-items: center; justify-content: center; }
 
 /* small uppercase dim label (used by the loader/maintenance/header eyebrows) */
-.label { font-size: var(--fs-xs); letter-spacing: var(--sp-2); text-transform: uppercase; color: var(--dim); }
 
 /* --- Dashboard header + hero stat strip --- */
 .dash-header { position: sticky; top: 0; z-index: 50; background: var(--bg-translucent); backdrop-filter: blur(8px); border-bottom: var(--bw) solid var(--border); padding: 0 var(--sp-32); }
 .header-inner { padding: var(--sp-12) 0; }
-.header-title { font-size: var(--fs-xl); color: var(--gold); }
 .header-controls { display: flex; align-items: center; gap: var(--sp-16); flex-wrap: wrap; }
 .hero-strip { display: flex; gap: var(--bw); background: var(--border); border-bottom: var(--bw) solid var(--border); }
 .hs { flex: 1; min-width: 0; background: var(--s1); padding: var(--sp-12) var(--sp-16); }
-.hs-l { letter-spacing: 3px; margin-bottom: 5px; white-space: nowrap; }
+.hs-l { margin-bottom: 5px; white-space: nowrap; }
 .hs-v { white-space: nowrap; }
-.hs-v.g { color: var(--green); }
-.hs-v.r { color: var(--red); }
-.hs-v.a { color: var(--amber); }
-.hs-v.o { color: var(--gold); }
-.hs-v.w { color: var(--text); }
 
 /* --- Tab nav (grouped dropdown menus) --- */
 .tab-nav { display: flex; position: relative; z-index: 1001; border-bottom: var(--bw) solid var(--border); background: var(--menu-bg); }
 .tab-menu { flex: 1; position: relative; }
 .tab-menu + .tab-menu { border-left: var(--bw) solid var(--border); }
-.tab-menu-btn { width: 100%; padding: var(--sp-12) var(--sp-16); font-size: var(--fs-xs); letter-spacing: 1.5px; text-transform: uppercase; color: var(--dim); background: none; border: none; cursor: pointer; text-align: left; transition: color .2s, background .2s; }
+.tab-menu-btn { width: 100%; padding: var(--sp-12) var(--sp-16); font-size: var(--fs-xs); letter-spacing: 1.5px; text-transform: uppercase; color: var(--dim); background: none; border: none; cursor: pointer; text-align: left; transition: color .2s, background .2s; } /* good reason: top-level tab-menu control label — uppercase nav chrome with its own wide tracking */
 .tab-menu-btn:hover { color: var(--text); background: var(--tint-light); }
 .tab-menu-btn.active { color: var(--gold); }
-.tab-arrow { font-size: var(--fs-xs); opacity: .5; margin-left: var(--sp-4); }
+.tab-arrow { font-size: var(--fs-xs); opacity: .5; margin-left: var(--sp-4); } /* good reason: sizes the dropdown caret glyph in the tab-menu button, not text */
 .tab-menu-btn.active .tab-arrow { opacity: 1; }
 .tab-menu-items { display: none; position: absolute; top: 100%; left: 0; min-width: 100%; background: var(--menu-bg); border: var(--bw) solid var(--tint-light-2); border-top: none; z-index: 1001; box-shadow: 0 8px 32px var(--bg-overlay); border-radius: 0 0 var(--r-lg) var(--r-lg); }
 .tab-menu.open .tab-menu-items { display: block; }
-.tab-item { display: block; width: 100%; padding: var(--sp-8) var(--sp-16); font-size: var(--fs-xs); letter-spacing: var(--bw); text-transform: uppercase; color: var(--text); background: none; border: none; cursor: pointer; text-align: left; transition: color .15s, background .15s; }
+.tab-item { display: block; width: 100%; padding: var(--sp-8) var(--sp-16); font-size: var(--fs-xs); letter-spacing: var(--bw); text-transform: uppercase; color: var(--text); background: none; border: none; cursor: pointer; text-align: left; transition: color .15s, background .15s; } /* good reason: tab-menu dropdown item control — uppercase nav chrome intrinsic to the menu */
 .tab-item:hover { color: var(--white); background: var(--tint-light-2); }
 .tab-item.active { color: var(--gold); }
 
 /* --- Loader screen (cards deal in, progress sweeps) --- */
-.l-eyebrow { letter-spacing: var(--sp-6); margin-bottom: var(--sp-12); }
-.l-title { font-size: var(--fs-hero); color: var(--gold); margin-bottom: var(--sp-4); }
-.l-sub { letter-spacing: 5px; margin-bottom: var(--sp-32); }
+.l-title { font-size: var(--fs-hero); color: var(--gold); margin-bottom: var(--sp-4); } /* good reason: loader splash hero display size (--fs-hero), outside the content type scale */
+.l-sub { letter-spacing: 5px; margin-bottom: var(--sp-32); } /* good reason: loader splash — wide display tracking beyond the eyebrow's token; preserves the loader's letter-spread */
 .l-cards { display: flex; gap: var(--sp-12); margin-bottom: 44px; }
-.lc { width: 48px; height: 66px; display: flex; align-items: center; justify-content: center; border-radius: var(--r-lg); background: var(--s2); border: var(--bw) solid var(--border); font-family: var(--serif); font-size: var(--fs-xl); font-weight: var(--fw-semibold); opacity: 0; transform: translateY(18px) scale(.92); transition: opacity .38s ease, transform .38s ease; }
-.lc.show { opacity: 1; transform: none; }
-.lc.r { color: var(--red); }
-.lc.b { color: var(--text); }
-.l-clabel { font-size: var(--fs-xs); text-transform: uppercase; letter-spacing: var(--sp-4); color: var(--dim); text-align: center; margin-bottom: var(--sp-8); }
-.l-count { display: inline-block; min-width: 120px; font-size: var(--fs-hero); font-weight: var(--fw-regular); color: var(--gold); font-variant-numeric: tabular-nums; text-align: center; }
+.l-count { display: inline-block; min-width: 120px; font-size: var(--fs-hero); font-weight: var(--fw-regular); color: var(--gold); font-variant-numeric: tabular-nums; text-align: center; } /* good reason: loader hero counter — tabular hero display size (--fs-hero), outside the content type scale */
 .l-prog { position: relative; width: 190px; height: 1px; margin: var(--sp-12) auto 0; background: var(--muted); overflow: hidden; }
 .l-prog-fill { width: 0; height: 100%; background: var(--gold); transition: width .06s linear; }
 .l-prog::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, var(--gold), transparent); transform: translateX(-100%); animation: l-prog-sweep 1.1s linear infinite; }
@@ -1439,12 +1447,8 @@ body.maintenance #maintenance { display: flex; flex-direction: column; align-ite
 @keyframes eq-spin { to { transform: rotate(360deg); } }
 
 /* --- Maintenance screen --- */
-.m-eyebrow { letter-spacing: var(--sp-6); margin-bottom: var(--sp-12); }
-.m-title { font-size: var(--fs-hero-xl); line-height: var(--lh-none); color: var(--gold); margin-bottom: 18px; }
-.m-sub { font-size: var(--fs-lg); color: var(--text); max-width: 520px; line-height: var(--lh-normal); margin-bottom: 36px; }
-.mc { width: 44px; height: 60px; display: inline-flex; align-items: center; justify-content: center; border: var(--bw) solid var(--border); border-radius: var(--r-lg); font-family: var(--serif); font-size: var(--fs-2xl); background: color-mix(in srgb, var(--white) 2%, transparent); }
-.mc.b { color: var(--text); }
-.mc.r { color: var(--red); }
+.m-title { font-size: var(--fs-hero-xl); line-height: var(--lh-none); color: var(--gold); margin-bottom: 18px; } /* good reason: maintenance splash hero display size (--fs-hero-xl), outside the content type scale */
+.m-sub { font-size: var(--fs-lg); color: var(--text); max-width: 520px; line-height: var(--lh-normal); margin-bottom: 36px; } /* good reason: maintenance splash subtitle at full --text colour (text roles are dim), standalone splash markup with no wrapper role */
 
 /* --- Paste / import pages --- */
 #paste-wrap {
@@ -1463,21 +1467,14 @@ body.maintenance #maintenance { display: flex; flex-direction: column; align-ite
 
 .paste-suit {
   font-family: var(--serif);
-  font-size: var(--fs-3xl);
+  font-size: var(--fs-3xl); /* good reason: decorative serif suit glyph (♠/♣) on the paste page, not text */
   color: var(--gold2);
   opacity: .5;
   margin-bottom: var(--sp-16);
 }
 
-.paste-title {
-  font-family: var(--serif);
-  font-size: var(--fs-xl);
-  color: var(--text);
-  margin-bottom: var(--sp-8);
-}
-
+/* size comes from .text-meta in markup; this keeps the error colour + gap */
 .paste-error {
-  font-size: var(--fs-sm);
   color: var(--red);
   margin-bottom: var(--sp-8);
 }
@@ -1490,8 +1487,8 @@ body.maintenance #maintenance { display: flex; flex-direction: column; align-ite
 }
 
 .paste-nav-link {
-  font-size: var(--fs-xs);
-  letter-spacing: var(--bw);
+  font-size: var(--fs-xs); /* good reason: small nav link on the paste page — dim label at fs-xs (text-micro is muted, not dim) */
+  letter-spacing: var(--bw); /* good reason: nav-link tracking, paired with the size above */
   color: var(--dim);
   text-decoration: none;
   cursor: pointer;
@@ -1512,15 +1509,15 @@ textarea#jin { min-height: 50px; }
 .fw-600 { font-weight: var(--fw-semibold); }
 .link-gold { color: var(--gold); text-decoration: underline; }
 .style-display { padding: var(--sp-4) var(--sp-8); }
-.style-display .sd-you-label, .style-display .sd-target-label { color: var(--dim); font-size: var(--fs-xs); }
+.style-display .sd-you-label, .style-display .sd-target-label { color: var(--dim); font-size: var(--fs-xs); } /* good reason: compact inline labels in the header style-display strip, sized to fit the sticky header row */
 .style-display .sd-you-val { color: var(--text); font-weight: var(--fw-semibold); }
 .style-display .sd-arrow { color: var(--dim); margin: 0 var(--sp-2); }
-.style-display .sd-target-pick { background: transparent; color: var(--gold); border: var(--bw) solid var(--border); border-radius: var(--r-sm); padding: var(--sp-2) var(--sp-6); font-size: var(--fs-sm); font-weight: var(--fw-semibold); cursor: pointer; }
+.style-display .sd-target-pick { background: transparent; color: var(--gold); border: var(--bw) solid var(--border); border-radius: var(--r-sm); padding: var(--sp-2) var(--sp-6); font-size: var(--fs-md); font-weight: var(--fw-semibold); cursor: pointer; } /* good reason: target-style picker button control — label size intrinsic to the control */
 .style-display .sd-target-pick:hover { border-color: var(--gold); }
 
 /* --- How it works box --- */
 .hiw-step { display: grid; grid-template-columns: 32px 1fr; grid-template-rows: auto auto; column-gap: var(--sp-12); row-gap: var(--sp-4); }
-.hiw-num { grid-row: 1 / 3; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: var(--r-pill); border: var(--bw) solid var(--gold2); color: var(--gold); font-family: var(--serif); font-size: var(--fs-md); font-weight: var(--fw-bold); }
+.hiw-num { grid-row: 1 / 3; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: var(--r-pill); border: var(--bw) solid var(--gold2); color: var(--gold); font-family: var(--serif); font-size: var(--fs-md); font-weight: var(--fw-bold); } /* good reason: serif numeral inside a 28px step badge — glyph in a fixed circle, not text */
 .hiw-feat { display: grid; grid-template-columns: 110px 1fr; gap: var(--sp-12); padding: var(--sp-8) 0; border-bottom: var(--bw) solid var(--border); }
 .hiw-footer { margin-top: var(--sp-24); padding-top: var(--sp-16); border-top: var(--bw) solid var(--border); }
 
@@ -1543,7 +1540,7 @@ textarea#jin { min-height: 50px; }
 .saved-card-hole {
   font-family: var(--serif);
   font-weight: var(--fw-bold);
-  line-height: var(--lh-tight);
+  line-height: var(--lh-tight); /* good reason: serif hole-card glyph display (e.g. "A♠K♥") — no text role sets serif at fs-lg */
 }
 
 .style-card-name {
@@ -1570,8 +1567,8 @@ textarea#jin { min-height: 50px; }
   background: var(--dot-tag);
 }
 
+/* size + colour come from .lead in markup; this keeps the heading weight + gap */
 .work-on-title {
-  font-size: var(--fs-lg);
   font-weight: var(--fw-semibold);
   margin-bottom: var(--sp-8);
 }
@@ -1585,13 +1582,8 @@ textarea#jin { min-height: 50px; }
   background: color-mix(in srgb, var(--white) 2%, transparent);
 }
 
-.dynamics-card-head {
-  font-weight: var(--fw-bold);
-  margin-bottom: var(--sp-6);
-}
-
+/* note text owns its line-height via .text-body in markup */
 .dynamics-card-note {
-  line-height: 1.45;
   margin-bottom: var(--sp-8);
 }
 
@@ -1603,11 +1595,10 @@ textarea#jin { min-height: 50px; }
   border-top: var(--bw) solid color-mix(in srgb, var(--white) 4%, transparent);
 }
 
+/* label span composes .eyebrow in markup for its 12px uppercase tracking;
+   this rule only overrides the colour to muted. */
 .dynamics-card-kv span:first-child {
   color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  font-size: var(--fs-xs);
 }
 
 .dynamics-card-kv span:last-child {
@@ -1624,19 +1615,7 @@ textarea#jin { min-height: 50px; }
 }
 
 .dynamics-vs-stat {
-  letter-spacing: 0.04em;
   margin-bottom: var(--sp-4);
-}
-
-.dynamics-zone-head {
-  letter-spacing: 0.06em;
-  margin-bottom: var(--sp-6);
-}
-
-.dynamics-coaching-head {
-  margin-top: var(--sp-12);
-  padding-top: var(--sp-8);
-  border-top: var(--bw) solid var(--border);
 }
 
 .dynamics-coaching {
@@ -1650,7 +1629,6 @@ textarea#jin { min-height: 50px; }
 .dynamics-vs-verdict {
   margin-top: var(--sp-4);
   font-weight: var(--fw-bold);
-  letter-spacing: 0.06em;
 }
 
 .dynamics-vs.v-ok {
@@ -1684,7 +1662,7 @@ textarea#jin { min-height: 50px; }
 }
 
 .watch-star {
-  font-size: var(--fs-lg) !important;
+  font-size: var(--fs-lg) !important; /* good reason: sizes the watch "★" glyph button (overriding the table cell), not text */
   color: var(--gold2) !important;
   transition: color .15s, transform .15s;
 }
@@ -1709,11 +1687,6 @@ textarea#jin { min-height: 50px; }
 
 /* Player detail view: vertical rhythm between header, tendencies, and the
    shared-hands table so the sections read as distinct blocks. */
-.player-detail-head {
-  padding-bottom: var(--sp-16);
-  border-bottom: var(--bw) solid var(--border);
-}
-
 .player-detail-section .section-head:first-child { margin-top: 0; }
 
 .saved-section-divider {
@@ -1739,9 +1712,9 @@ textarea#jin { min-height: 50px; }
 }
 
 .profile-type-name {
-  font-size: var(--fs-3xl);
+  font-size: var(--fs-3xl); /* good reason: mono display heading — the title roles force serif, this is the mono archetype name at page-title size with lh-none */
   color: var(--gold);
-  line-height: var(--lh-none);
+  line-height: var(--lh-none); /* good reason: tight display leading for the archetype-name heading, paired with its size above */
 }
 
 .profile-type-desc {
@@ -1753,7 +1726,7 @@ textarea#jin { min-height: 50px; }
 }
 
 .profile-name {
-  font-size: var(--fs-3xl);
+  font-size: var(--fs-3xl); /* good reason: mono display heading (player name) at page-title size — title roles force serif */
   color: var(--gold);
 }
 
@@ -1763,12 +1736,12 @@ textarea#jin { min-height: 50px; }
   padding: var(--sp-8) 0;
 }
 
-.saved-toggle:hover .label {
+.saved-toggle:hover .eyebrow {
   color: var(--text);
 }
 
 .saved-toggle-arrow {
-  font-size: var(--fs-xs);
+  font-size: var(--fs-xs); /* good reason: sizes the collapse/expand chevron glyph, not a text label */
   color: var(--dim);
   transition: transform .2s;
 }
@@ -1793,7 +1766,7 @@ textarea#jin { min-height: 50px; }
 }
 
 .saved-card-hole {
-  font-size: var(--fs-lg);
+  font-size: var(--fs-lg); /* good reason: serif hole-card glyph display size (paired with the serif rule above) */
   color: var(--gold);
 }
 
@@ -1803,7 +1776,7 @@ textarea#jin { min-height: 50px; }
 }
 
 .saved-unsave {
-  font-size: var(--fs-lg);
+  font-size: var(--fs-lg); /* good reason: icon-button glyph size (unsave ×), not text */
   color: var(--gold);
   padding: 0 0 0 var(--sp-8);
 }
@@ -1829,7 +1802,7 @@ textarea#jin { min-height: 50px; }
 }
 
 .saved-note-preview {
-  line-height: var(--lh-normal);
+  line-height: var(--lh-normal); /* good reason: fixes leading so the 3-line -webkit-line-clamp truncation is predictable (size owned by .text-micro) */
   display: -webkit-box;
   -webkit-line-clamp: 3;
   line-clamp: 3;
@@ -1862,38 +1835,6 @@ textarea#jin { min-height: 50px; }
   flex-direction: column;
   gap: var(--sp-24);
   min-width: 0;
-}
-
-/* What's New cards stack a badge, title and blurb. Lay them out as a left-
-   aligned column with internal spacing (the hero card is a <button>, which
-   would otherwise centre its text). */
-.whatsnew-card {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--sp-8);
-  text-align: left;
-  width: 100%;
-  padding: var(--sp-16);
-}
-
-.welcome-intro {
-  gap: var(--sp-16);
-  margin-bottom: var(--sp-24);
-}
-
-.welcome-intro-text {
-  min-width: 0;
-}
-
-.welcome-whatsnew-label {
-  letter-spacing: 0.08em;
-  margin-bottom: var(--sp-4);
-}
-
-.welcome-intro-heading {
-  font-size: var(--fs-3xl);
-  color: var(--gold);
 }
 
 .welcome-toc {
@@ -1929,8 +1870,7 @@ textarea#jin { min-height: 50px; }
 }
 
 .allin-cards {
-  font-size: var(--fs-sm);
-  letter-spacing: 0.3px;
+  letter-spacing: 0.3px; /* good reason: hairline separation between card glyphs in a table cell (size inherited from .table td) */
 }
 
 .allin-card.r {
@@ -1961,11 +1901,6 @@ textarea#jin { min-height: 50px; }
   text-align: center;
 }
 
-.style-welcome-headline {
-  font-size: var(--fs-3xl);
-  color: var(--text);
-}
-
 .style-welcome-cards {
   --col-min: 180px;
 }
@@ -1976,14 +1911,9 @@ textarea#jin { min-height: 50px; }
   color: var(--text);
 }
 
-.style-card-name {
-  font-size: var(--fs-2xl);
-  color: var(--gold);
-}
+/* size + colour come from `title title-lg c-gold` in markup */
 
-.style-card-desc {
-  line-height: 1.55;
-}
+/* description text owns its line-height via .text-body in markup */
 
 .style-map-canvas-wrap {
   position: relative;
@@ -2018,14 +1948,8 @@ textarea#jin { min-height: 50px; }
   box-shadow: 0 var(--sp-8) 24px rgba(0, 0, 0, 0.4);
 }
 
-.cr-pop-title {
-  margin-bottom: var(--sp-8);
-  letter-spacing: var(--bw);
-}
-
 .cr-pop-section {
   margin: var(--sp-8) 0 var(--sp-4);
-  letter-spacing: var(--bw);
 }
 
 .cr-pop-opt {
@@ -2062,7 +1986,7 @@ textarea#jin { min-height: 50px; }
   background: transparent;
   border: var(--bw) solid var(--border);
   color: var(--red);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-md); /* good reason: "remove clause" button control in the clause popover — label size intrinsic to the control */
   border-radius: var(--r-sm);
   cursor: pointer;
 }
@@ -2085,8 +2009,8 @@ textarea#jin { min-height: 50px; }
 }
 
 .cr-tile-value {
-  font-size: var(--fs-3xl);
-  line-height: 1.1;
+  font-size: var(--fs-3xl); /* good reason: large tabular number display (clause-report headline tile) — no role sets a mono number at this size */
+  line-height: 1.1; /* good reason: tight display leading for the large number tile, paired with its size above */
 }
 
 .cr-tile-compare .cr-tile-trio {
@@ -2096,14 +2020,6 @@ textarea#jin { min-height: 50px; }
   align-items: end;
 }
 
-.cr-tile-compare .value {
-  font-size: var(--fs-xl);
-}
-
-.cr-tile-mini-label {
-  letter-spacing: var(--bw);
-  margin-bottom: var(--sp-2);
-}
 
 .cr-charts {
   --col-min: 340px;
@@ -2143,22 +2059,14 @@ textarea#jin { min-height: 50px; }
     gap: var(--sp-16);
   }
 
-  .welcome-intro-heading {
-    font-size: var(--fs-xl);
-  }
-
   .welcome-toc-row {
     grid-template-columns: 1fr;
     gap: var(--sp-2);
     padding: var(--sp-8) var(--sp-12);
   }
 
-  .welcome-toc .gold-heading {
-    font-size: var(--fs-sm);
-  }
-
   .welcome-toc .text-body {
-    font-size: var(--fs-xs);
+    font-size: var(--fs-xs); /* good reason: responsive step-down of the TOC body text at ≤560px so the two-column row fits the narrow viewport */
   }
 
   .saved-hands-list {
@@ -2177,11 +2085,21 @@ textarea#jin { min-height: 50px; }
 }
 
 
-/* "see example" / run-sim buttons (compose with .btn) */
+/* "see example" / run-sim buttons (compose with .btn) — a clear resting
+   button look (filled + gold outline) so they read as buttons, not hover-only. */
 .example-hand-btn {
   margin-top: var(--sp-8);
+  padding: var(--sp-6) var(--sp-12);
   text-transform: uppercase;
-  letter-spacing: var(--bw);
+  letter-spacing: var(--bw); /* good reason: uppercase button-label tracking on the "see example" button control (composes .btn for size) */
+  background: var(--s1);
+  border-color: var(--gold2);
+  color: var(--gold);
+}
+
+.example-hand-btn:hover:not([disabled]) {
+  background: var(--s2);
+  border-color: var(--gold);
 }
 
 /* Cards panel: each hand-type bar is a button into its example hands. */
@@ -2193,7 +2111,7 @@ textarea#jin { min-height: 50px; }
   transition: background .15s;
 }
 .cards-bar-row:hover { background: var(--s1); }
-.cards-row-cue { font-size: var(--fs-xs); }
+.cards-row-cue { font-size: var(--fs-xs); } /* good reason: sizes the "›" affordance glyph on a clickable row, not a text label */
 
 /* Stat cards that open the hands behind them. Like .cards-bar-row but without
    the negative margin, so they sit cleanly inside a stat grid. */
@@ -2216,10 +2134,6 @@ textarea#jin { min-height: 50px; }
   padding-bottom: var(--sp-8);
   border-bottom: var(--bw) solid var(--border);
 }
-.eq-sim-title {
-  font-weight: var(--fw-medium);
-  letter-spacing: var(--bw);
-}
 .eq-row {
   padding: var(--sp-8) 0;
   border-bottom: var(--bw) solid var(--border);
@@ -2237,7 +2151,7 @@ textarea#jin { min-height: 50px; }
 }
 .eq-pct {
   color: var(--text);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-md); /* good reason: right-aligned tabular equity-percentage value in the sim row, sized to align in its 48px column */
   font-weight: var(--fw-semibold);
   text-align: right;
   min-width: 48px;
@@ -2257,7 +2171,7 @@ textarea#jin { min-height: 50px; }
   transition: width .3s;
 }
 .eq-detail {
-  line-height: var(--lh-normal);
+  line-height: var(--lh-normal); /* good reason: readable leading on the multi-line detail line (size owned by .text-micro); no role sets this leading on micro text */
   margin-top: var(--sp-4);
 }
 .eq-curve {
@@ -2271,19 +2185,12 @@ textarea#jin { min-height: 50px; }
   padding: var(--sp-8) var(--sp-12);
   border-left: 3px solid var(--gold);
 }
-.eq-summary-label {
-  font-weight: var(--fw-semibold);
-  letter-spacing: 0.5px;
-  margin-bottom: var(--sp-6);
-}
-.eq-summary-text {
-  line-height: var(--lh-body);
-}
+/* .eq-summary-text: line-height owned by .text-body in markup */
 .eq-caveats {
   margin-top: var(--sp-8);
   padding-top: var(--sp-8);
   border-top: var(--bw) solid var(--border);
-  line-height: var(--lh-normal);
+  line-height: var(--lh-normal); /* good reason: readable leading on the multi-line caveats text (size owned by .text-micro); no role sets this leading on micro text */
 }
 .eq-spinner {
   display: flex;

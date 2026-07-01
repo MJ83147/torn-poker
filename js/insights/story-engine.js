@@ -285,15 +285,15 @@
 
     var html = '<div class="' + classes + '" data-story-id="' + escapeHtml(storyId) + '">';
     html += '<div class="story-head">';
-    html += '<div class="story-badge insight-badge"><span class="dot ' + dotCls + '"></span><span class="' + wordCls + '">' + sevWord + '</span></div>';
+    html += '<div class="eyebrow insight-badge"><span class="dot ' + dotCls + '"></span><span class="' + wordCls + '">' + sevWord + '</span></div>';
     html += '<div class="story-chevron">&#9662;</div>';
-    html += '<div class="insight-title">' + name + '</div>';
-    if (teaser) html += '<div class="story-teaser">' + escapeHtml(teaser) + '</div>';
+    html += '<div class="title title-md">' + name + '</div>';
+    if (teaser) html += '<div class="story-teaser text-body">' + escapeHtml(teaser) + '</div>';
     html += '</div>';
 
     html += '<div class="story-body">';
     if (finding.openingText) {
-      html += '<div class="insight-body">' + escapeHtml(finding.openingText) + '</div>';
+      html += '<div class="text-body insight-body">' + escapeHtml(finding.openingText) + '</div>';
     }
     if (finding.branchTexts && finding.branchTexts.length) {
       html += '<ul class="story-branches c-dim">';

@@ -76,7 +76,7 @@ function renderShowdown(container, hands, meta, overallData) {
 
   statsHtml += '<div class="stat' + (sdShow.length ? ' stat-clickable' : '') + '"' +
     (sdShow.length ? ' data-sd-box="sd"' : '') + '>';
-  statsHtml += '<div class="stat-label row center gap-6">' +
+  statsHtml += '<div class="eyebrow stat-label row center gap-6">' +
     '<span class="swatch swatch-dot" style="background:var(--gto-blue)"></span>Showdown' +
     (sdShow.length ? '<span class="c-dim cards-row-cue"> &middot; view hands &#8250;</span>' : '') + '</div>';
   statsHtml += '<div class="value ' + pnlValCls(cumSd) + '">' + fmtPnl(cumSd) + '</div>';
@@ -85,7 +85,7 @@ function renderShowdown(container, hands, meta, overallData) {
 
   statsHtml += '<div class="stat' + (nsdShow.length ? ' stat-clickable' : '') + '"' +
     (nsdShow.length ? ' data-sd-box="nsd"' : '') + '>';
-  statsHtml += '<div class="stat-label row center gap-6">' +
+  statsHtml += '<div class="eyebrow stat-label row center gap-6">' +
     '<span class="swatch swatch-dot bg-neg"></span>Non-Showdown' +
     (nsdShow.length ? '<span class="c-dim cards-row-cue"> &middot; view hands &#8250;</span>' : '') + '</div>';
   statsHtml += '<div class="value ' + pnlValCls(cumNsd) + '">' + fmtPnl(cumNsd) + '</div>';
@@ -111,7 +111,7 @@ function renderShowdown(container, hands, meta, overallData) {
   var potStatsHtml = '<div class="cols-3 gap-8">';
   potStatsHtml += '<div class="stat' + (wonShow.length ? ' stat-clickable' : '') + '"' +
     (wonShow.length ? ' data-sd-box="won"' : '') + '>';
-  potStatsHtml += '<div class="stat-label">Avg Pot Won' +
+  potStatsHtml += '<div class="eyebrow stat-label">Avg Pot Won' +
     (wonShow.length ? '<span class="c-dim cards-row-cue"> &middot; view hands &#8250;</span>' : '') + '</div>';
   potStatsHtml += '<div class="value c-pos">' + fmt(avgWinPot) + '</div>';
   potStatsHtml += '<div class="text-meta">' + (potSdWin.length + potNsdWin.length) + ' hands</div>';
@@ -119,14 +119,14 @@ function renderShowdown(container, hands, meta, overallData) {
 
   potStatsHtml += '<div class="stat' + (lostShow.length ? ' stat-clickable' : '') + '"' +
     (lostShow.length ? ' data-sd-box="lost"' : '') + '>';
-  potStatsHtml += '<div class="stat-label">Avg Pot Lost' +
+  potStatsHtml += '<div class="eyebrow stat-label">Avg Pot Lost' +
     (lostShow.length ? '<span class="c-dim cards-row-cue"> &middot; view hands &#8250;</span>' : '') + '</div>';
   potStatsHtml += '<div class="value c-neg">' + fmt(avgLossPot) + '</div>';
   potStatsHtml += '<div class="text-meta">' + (potSdLoss.length + potNsdLoss.length) + ' hands</div>';
   potStatsHtml += '</div>';
 
   potStatsHtml += '<div class="stat">';
-  potStatsHtml += '<div class="stat-label">Win/Loss Pot Ratio</div>';
+  potStatsHtml += '<div class="eyebrow stat-label">Win/Loss Pot Ratio</div>';
   potStatsHtml += '<div class="value ' + (winLossRatio !== null ? pnlValCls(winLossRatio - 1) : 'c-neg') + '">' + (winLossRatio !== null ? winLossRatio + 'x' : '-') + '</div>';
   potStatsHtml += '<div class="text-meta">Target: above 1.0x</div>';
   potStatsHtml += '</div>';
