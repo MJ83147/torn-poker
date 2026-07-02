@@ -1,0 +1,21 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Build",
+      "type": "shell",
+      "command": "npm run build",
+      "group": { "kind": "build", "isDefault": true },
+      "problemMatcher": [],
+      "detail": "Bundle app.min.js from source (no deploy)."
+    },
+    {
+      "label": "Build & Deploy",
+      "type": "shell",
+      "command": "npm run deploy",
+      "group": "build",
+      "problemMatcher": [],
+      "detail": "Build, bump cache-buster, commit, and push to GitHub Pages."
+    }
+  ]
+}
