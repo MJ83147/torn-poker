@@ -59,8 +59,7 @@ function renderPlayers(container, d, hands) {
   function renderPlayerList() {
     if (!filtered.length) {
       mountPanel(container, 'players', { title: 'Players', desc: 'Opponent records, head-to-head stats, and watch list.' });
-      var body = container.querySelector('.col.gap-32') || container;
-      body.innerHTML = '<div class="box lead">Not enough shared hands to show opponent stats. Keep playing to build data.</div>';
+      container.innerHTML = '<div class="box lead">Not enough shared hands to show opponent stats. Keep playing to build data.</div>';
       return;
     }
     var watched = getWatchedPlayers();
@@ -210,21 +209,21 @@ function renderPlayers(container, d, hands) {
           { l: tipWrap('WSD'),          v: wsd !== null ? wsd + '%' : '-',       c: sev(wsd, 35, 999, 35, 60) },
         ];
 
+        ph += '<div class="section"><div class="section-head">Tendencies</div>';
         ph += '<div class="row"><div class="container player-detail-section">';
-        ph += '<div class="section-head">Tendencies</div>';
         ph += renderMiniRow(minis);
 
         var exploitIns = generateExploitInsights(oppStats, playerName, hands);
         if (exploitIns.length) {
           ph += '<div class="cols-auto gap-16 mt-16">' + exploitIns.join('') + '</div>';
         }
-        ph += '</div></div>';
+        ph += '</div></div></div>';
       } else {
         ph += '<div class="row"><div class="container"><div class="box lead">Need ' + Math.max(0, 5 - oppStats.hands) + ' more shared hands to show tendency stats (' + oppStats.hands + '/5 hands).</div></div></div>';
       }
 
+      ph += '<div class="section"><div class="section-head">Shared Hands</div>';
       ph += '<div class="row"><div class="container player-detail-section">';
-      ph += '<div class="section-head">Shared Hands</div>';
       if (totalPages > 1) {
         ph += '<div class="row center gap-6 mb-8 end">' +
           renderPagination(phPage, playerHands.length, PH_SIZE, 'ph-prev', 'ph-next') + '</div>';
@@ -233,7 +232,7 @@ function renderPlayers(container, d, hands) {
       ph += page.map(function(h, pi) {
         return renderHandRow(h, start + pi, null).replace('data-hand-idx', 'data-ph-idx');
       }).join('') + '</tbody></table></div>';
-      ph += '</div></div>';
+      ph += '</div></div></div>';
       ph += '</div>';
       container.innerHTML = ph;
       document.getElementById('players-back').onclick = function() { renderPlayerList(); };

@@ -116,8 +116,10 @@ function renderTrends(container, hands, meta, overallData) {
     var cfg = chartConfigs[ci];
     var vals = points.map(function(p) { return p[cfg.key]; }).filter(function(v) { return v !== null; });
     if (vals.length < 2) continue;
-    chartsHtml += '<div class="container"><div class="section-head">' + cfg.title + '</div>' +
-      '<canvas id="' + cfg.id + '"></canvas></div>';
+    chartsHtml += '<div class="section">' +
+      '<div class="section-head">' + cfg.title + '</div>' +
+      '<div class="row"><div class="container">' +
+      '<canvas id="' + cfg.id + '"></canvas></div></div></div>';
   }
   setSlot(container, 'charts', chartsHtml);
 

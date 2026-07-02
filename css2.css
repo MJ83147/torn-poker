@@ -291,9 +291,7 @@ a {
   font-weight: var(--fw-semibold);
   line-height: var(--lh-tight);
   color: var(--text);
-  margin: var(--sp-24) 0 var(--sp-12);
 }
-.section-head:first-child { margin-top: 0; }
 
 .text-body { font-size: var(--fs-md); color: var(--dim); line-height: var(--lh-body); }
 .lead { font-size: var(--fs-lg); color: var(--text); line-height: var(--lh-normal); }
@@ -1408,11 +1406,15 @@ a {
 #dash.on { display: block; }
 /* panel = a view: stacks its header + rows down the page. */
 .panel { display: none; max-width: 1600px; margin: 0 auto; padding: var(--sp-32); }
-.panel.on { display: flex; flex-direction: column; gap: var(--sp-24); min-height: 60vh; }
+.panel.on { display: flex; flex-direction: column; gap: var(--sp-32); min-height: 60vh; }
 
 /* panel-header = the panel's title block; title + description sit tight together,
    and the panel's own gap gives the space below it before the content. */
 .panel-header { display: flex; flex-direction: column; gap: var(--sp-4); }
+
+/* section = one section-header (if needed) + its rows, grouped tight together;
+   the panel's own gap separates one section from the next. */
+.section { display: flex; flex-direction: column; gap: var(--sp-12); }
 .panels-wrap.blurred { filter: blur(3px); pointer-events: none; }
 #maintenance { display: none; position: fixed; inset: 0; z-index: 99999; background: var(--bg); color: var(--text); text-align: center; padding: 48px var(--sp-24); }
 body.maintenance #loader, body.maintenance #app { display: none !important; }

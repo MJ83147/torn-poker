@@ -1,16 +1,20 @@
-<div class="row">
-  <div class="container">
-    <div class="overflow-x">
-      <table class="table">
-        <thead data-slot="head"></thead>
-        <tbody data-slot="rows"></tbody>
-      </table>
+<div class="section">
+  <div class="row">
+    <div class="container">
+      <div class="overflow-x">
+        <table class="table">
+          <thead data-slot="head"></thead>
+          <tbody data-slot="rows"></tbody>
+        </table>
+      </div>
     </div>
   </div>
 </div>
-<div class="row" data-slot="chartSection" hidden>
-  <div class="container">
-    <div class="section-head">Net P&L by Position</div>
-    <canvas id="position-chart"></canvas>
+<div class="section" data-slot="chartSection" hidden>
+  <div class="section-head">Net P&L by Position</div>
+  <div class="row">
+    <div class="container">
+      <canvas id="position-chart"></canvas>
+    </div>
   </div>
 </div>

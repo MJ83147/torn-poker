@@ -206,10 +206,10 @@ function showAllInResults(container) {
   ]);
 
   if (cashAllIns.length >= 2) {
+    html += '<div class="section"><div class="section-head">Cumulative All-In Results vs Expected Value (Cash Hands)</div>';
     html += '<div class="row"><div class="container">';
-    html += '<div class="section-head">Cumulative All-In Results vs Expected Value (Cash Hands)</div>';
     html += '<canvas id="allin-ev-chart"></canvas>';
-    html += '</div></div>';
+    html += '</div></div></div>';
   }
 
   var _aiN = allInHands.length;
@@ -225,8 +225,8 @@ function showAllInResults(container) {
     html += '<div class="box lead">' + variance + '</div>';
   }
 
+  html += '<div class="section"><div class="section-head">All-In Hand Details</div>';
   html += '<div class="row"><div class="container">';
-  html += '<div class="section-head">All-In Hand Details</div>';
   if (cashAllIns.length < allInHands.length) {
     html += '<div class="card text-micro allin-caveat">Side pots are approximated using total pot. Tournament hands are included in the table but excluded from the cumulative graph.</div>';
   }
@@ -249,7 +249,7 @@ function showAllInResults(container) {
       '<td class="' + evCls + '">' + (ah.evDiff >= 0 ? '+' : '') + fmt(Math.round(ah.evDiff)) + '</td>' +
       '</tr>';
   }
-  html += '</tbody></table></div></div></div>';
+  html += '</tbody></table></div></div></div></div>';
 
   container.innerHTML = html;
 

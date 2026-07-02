@@ -29,7 +29,7 @@ function renderMyGame(container, d, hands) {
     typeDesc = (typeof styleDescription === 'function') ? styleDescription(typeLabel) : '';
   }
 
-  html += '<div class="row"><div class="container">';
+  html += '<div class="section"><div class="row"><div class="container">';
   html += '<div class="profile-row row wrap">';
   html += '<div class="col gap-12">';
   html += '<div class="eyebrow">MY GAME</div>';
@@ -51,14 +51,14 @@ function renderMyGame(container, d, hands) {
     html += '</div>';
   }
   html += '</div>';
-  html += '</div></div>';
+  html += '</div></div></div>';
 
   var _ftrBandMG = ctx.band('foldToRaise');
   var _cbetBandMG = ctx.band('cbet');
   if (smallSample) {
-    html += '<div class="row"><div class="container">';
+    html += '<div class="section"><div class="row"><div class="container">';
     html += '<div class="text-meta">Stats from ' + d.n + ' hands. These become reliable around 100+ hands.</div>';
-    html += '</div></div>';
+    html += '</div></div></div>';
   }
 
   if (!smallSample) {
@@ -89,8 +89,9 @@ function renderMyGame(container, d, hands) {
         })
       : [];
 
-    html += '<div class="row"><div class="container">';
+    html += '<div class="section">';
     html += '<div class="section-head">Work On Next</div>';
+    html += '<div class="row"><div class="container">';
     var workOn = null;
     var _workAggFloor = _afBandMG ? _afBandMG.tight - 3 : 15;
     var _workLimpCeil = _domSeatsMG && _domSeatsMG <= 2 ? 70 : _domSeatsMG && _domSeatsMG <= 3 ? 45 : 22;
@@ -125,7 +126,7 @@ function renderMyGame(container, d, hands) {
       html += '<div class="text-body">No major leaks detected from ' + d.n + ' hands. Keep playing to refine the picture.</div>';
       html += '</div>';
     }
-    html += '</div></div>';
+    html += '</div></div></div>';
 
   }
 
@@ -164,9 +165,11 @@ function _vsRow(label, actualPct, actualDenom, targetText) {
 // Targets must come from matrixTarget so the user's style offset (TAG/LAG/Nit/etc)
 // is applied — reading SEAT_MATRIX / FLOP_MATRIX directly would skip the offset.
 function renderTableDynamicsReference(hands, d) {
-  var h = '<div class="row"><div class="container">';
+  var h = '<div class="section">';
   h += '<div class="section-head">Table Dynamics: You vs Target</div>';
-  h += '<div class="mb-16"><div class="text-body">Your actual play at each table size and flop multiplicity, compared to the recommended benchmarks for your target style. <span class="c-pos">Green = on target</span>, <span class="c-warn">amber = too low / too tight</span>, <span class="c-neg">red = too high / too loose</span>.</div></div>';
+  h += '<div class="row"><div class="container">';
+  h += '<div class="text-body">Your actual play at each table size and flop multiplicity, compared to the recommended benchmarks for your target style. <span class="c-pos">Green = on target</span>, <span class="c-warn">amber = too low / too tight</span>, <span class="c-neg">red = too high / too loose</span>.</div>';
+  h += '</div></div></div>';
 
   var styleKey = (typeof getUserStyle === 'function') ? getUserStyle() : 'TAG';
   var seatKeys = Object.keys(SEAT_MATRIX).map(Number).sort(function(a, b) { return a - b; });
@@ -184,7 +187,9 @@ function renderTableDynamicsReference(hands, d) {
     9: 'Full-ring 9-max. Very disciplined early position: JJ+, AKs/AKo, AQs only from UTG. Exploit weak limps and small opens from the blinds when folded to.'
   };
 
+  h += '<div class="section">';
   h += '<div class="section-head">By Table Size</div>';
+  h += '<div class="row"><div class="container">';
   h += '<div class="cols-auto gap-16 dynamics-cards">';
   for (var si = 0; si < seatKeys.length; si++) {
     var seats = seatKeys[si];
@@ -226,8 +231,11 @@ function renderTableDynamicsReference(hands, d) {
     h += '</div>';
   }
   h += '</div>';
+  h += '</div></div></div>';
 
+  h += '<div class="section">';
   h += '<div class="section-head">By Flop Players</div>';
+  h += '<div class="row"><div class="container">';
   h += '<div class="cols-auto gap-16 dynamics-cards">';
   var flopKeys = ['HU', '3-way', 'multiway'];
   var flopLabels = { HU: 'Heads-up flop', '3-way': '3-way flop', multiway: 'Multiway flop (4+)' };
@@ -271,8 +279,7 @@ function renderTableDynamicsReference(hands, d) {
     h += '</div>';
   }
   h += '</div>';
-
-  h += '</div></div>';
+  h += '</div></div></div>';
 
   return h;
 }
