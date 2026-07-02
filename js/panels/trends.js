@@ -116,8 +116,8 @@ function renderTrends(container, hands, meta, overallData) {
     var cfg = chartConfigs[ci];
     var vals = points.map(function(p) { return p[cfg.key]; }).filter(function(v) { return v !== null; });
     if (vals.length < 2) continue;
-    chartsHtml += '<div><div class="section-head">' + cfg.title + '</div>' +
-      '<div class="chart-full"><canvas id="' + cfg.id + '"></canvas></div></div>';
+    chartsHtml += '<div class="container"><div class="section-head">' + cfg.title + '</div>' +
+      '<canvas id="' + cfg.id + '"></canvas></div>';
   }
   setSlot(container, 'charts', chartsHtml);
 

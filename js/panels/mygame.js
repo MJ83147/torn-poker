@@ -29,6 +29,7 @@ function renderMyGame(container, d, hands) {
     typeDesc = (typeof styleDescription === 'function') ? styleDescription(typeLabel) : '';
   }
 
+  html += '<div class="row"><div class="container">';
   html += '<div class="profile-row row wrap">';
   html += '<div class="col gap-12">';
   html += '<div class="eyebrow">MY GAME</div>';
@@ -50,11 +51,14 @@ function renderMyGame(container, d, hands) {
     html += '</div>';
   }
   html += '</div>';
+  html += '</div></div>';
 
   var _ftrBandMG = ctx.band('foldToRaise');
   var _cbetBandMG = ctx.band('cbet');
   if (smallSample) {
-    html += '<div class="mt-8 mb-12"><div class="text-meta">Stats from ' + d.n + ' hands. These become reliable around 100+ hands.</div></div>';
+    html += '<div class="row"><div class="container">';
+    html += '<div class="text-meta">Stats from ' + d.n + ' hands. These become reliable around 100+ hands.</div>';
+    html += '</div></div>';
   }
 
   if (!smallSample) {
@@ -85,6 +89,7 @@ function renderMyGame(container, d, hands) {
         })
       : [];
 
+    html += '<div class="row"><div class="container">';
     html += '<div class="section-head">Work On Next</div>';
     var workOn = null;
     var _workAggFloor = _afBandMG ? _afBandMG.tight - 3 : 15;
@@ -120,6 +125,7 @@ function renderMyGame(container, d, hands) {
       html += '<div class="text-body">No major leaks detected from ' + d.n + ' hands. Keep playing to refine the picture.</div>';
       html += '</div>';
     }
+    html += '</div></div>';
 
   }
 
@@ -158,7 +164,8 @@ function _vsRow(label, actualPct, actualDenom, targetText) {
 // Targets must come from matrixTarget so the user's style offset (TAG/LAG/Nit/etc)
 // is applied — reading SEAT_MATRIX / FLOP_MATRIX directly would skip the offset.
 function renderTableDynamicsReference(hands, d) {
-  var h = '<div class="section-head">Table Dynamics: You vs Target</div>';
+  var h = '<div class="row"><div class="container">';
+  h += '<div class="section-head">Table Dynamics: You vs Target</div>';
   h += '<div class="mb-16"><div class="text-body">Your actual play at each table size and flop multiplicity, compared to the recommended benchmarks for your target style. <span class="c-pos">Green = on target</span>, <span class="c-warn">amber = too low / too tight</span>, <span class="c-neg">red = too high / too loose</span>.</div></div>';
 
   var styleKey = (typeof getUserStyle === 'function') ? getUserStyle() : 'TAG';
@@ -264,6 +271,8 @@ function renderTableDynamicsReference(hands, d) {
     h += '</div>';
   }
   h += '</div>';
+
+  h += '</div></div>';
 
   return h;
 }

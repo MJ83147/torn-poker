@@ -181,11 +181,13 @@ function renderPlayers(container, d, hands) {
       var page = playerHands.slice(start, end);
       var totalPages = Math.ceil(playerHands.length / PH_SIZE);
       var wr = pct(opp.won, opp.won + opp.lost);
-      var ph = '<div class="col gap-24 player-detail">';
+      var ph = '<div class="player-detail">';
+      ph += '<div class="row"><div class="container">';
       ph += '<div class="row between center wrap gap-12 pb-16 border-bottom">';
       ph += '<div class="row center gap-12"><button class="btn btn-ghost" id="players-back">&laquo; All Players</button>';
       ph += '<span class="c-gold fw-semibold">' + playerName + '</span></div>';
       ph += '<div class="text-meta">' + opp.hands + ' hands · ' + (wr !== null ? wr + '% win' : '-') + ' · ' + fmtPnl(opp.profit) + '</div></div>';
+      ph += '</div></div>';
 
       var vpip = pct(oppStats.vpipHands, oppStats.hands);
       var pfr = pct(oppStats.pfrHands, oppStats.hands);
@@ -208,7 +210,7 @@ function renderPlayers(container, d, hands) {
           { l: tipWrap('WSD'),          v: wsd !== null ? wsd + '%' : '-',       c: sev(wsd, 35, 999, 35, 60) },
         ];
 
-        ph += '<div class="player-detail-section">';
+        ph += '<div class="row"><div class="container player-detail-section">';
         ph += '<div class="section-head">Tendencies</div>';
         ph += renderMiniRow(minis);
 
@@ -216,12 +218,12 @@ function renderPlayers(container, d, hands) {
         if (exploitIns.length) {
           ph += '<div class="cols-auto gap-16 mt-16">' + exploitIns.join('') + '</div>';
         }
-        ph += '</div>';
+        ph += '</div></div>';
       } else {
-        ph += '<div class="box lead">Need ' + Math.max(0, 5 - oppStats.hands) + ' more shared hands to show tendency stats (' + oppStats.hands + '/5 hands).</div>';
+        ph += '<div class="row"><div class="container"><div class="box lead">Need ' + Math.max(0, 5 - oppStats.hands) + ' more shared hands to show tendency stats (' + oppStats.hands + '/5 hands).</div></div></div>';
       }
 
-      ph += '<div class="player-detail-section">';
+      ph += '<div class="row"><div class="container player-detail-section">';
       ph += '<div class="section-head">Shared Hands</div>';
       if (totalPages > 1) {
         ph += '<div class="row center gap-6 mb-8 end">' +
@@ -231,7 +233,7 @@ function renderPlayers(container, d, hands) {
       ph += page.map(function(h, pi) {
         return renderHandRow(h, start + pi, null).replace('data-hand-idx', 'data-ph-idx');
       }).join('') + '</tbody></table></div>';
-      ph += '</div>';
+      ph += '</div></div>';
       ph += '</div>';
       container.innerHTML = ph;
       document.getElementById('players-back').onclick = function() { renderPlayerList(); };
@@ -292,12 +294,14 @@ function renderCompare(container, d, hands) {
   container.innerHTML =
     '<div class="title title-lg c-gold">Head to Head</div>' +
     '<div class="mb-16"><div class="text-body">Compare two players side by side.</div></div>' +
+    '<div class="row"><div class="container">' +
     '<div class="row center gap-12 wrap mb-16">' +
     '<select id="compare-p1">' + buildOptions(p1Default) + '</select>' +
     '<span class="text-body fw-semibold">vs</span>' +
     '<select id="compare-p2">' + buildOptions(p2Default) + '</select>' +
     '</div>' +
-    '<div id="compare-body"></div>';
+    '<div id="compare-body"></div>' +
+    '</div></div>';
 
   function getHeroStats() {
     var c = d.core || {};

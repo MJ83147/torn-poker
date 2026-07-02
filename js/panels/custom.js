@@ -1145,7 +1145,7 @@ function _crRenderCharts(resultA, resultB) {
       },
     }));
   } else if (trendCanvas) {
-    trendCanvas.parentNode.parentNode.innerHTML = '<div class="eyebrow">bb/100 over time</div><div class="text-body">Need at least 2 sessions of cash hands in this report.</div>';
+    trendCanvas.parentNode.innerHTML = '<div class="eyebrow">bb/100 over time</div><div class="text-body">Need at least 2 sessions of cash hands in this report.</div>';
   }
 
   var posCanvas = document.getElementById('cr-position');
@@ -1177,7 +1177,7 @@ function _crRenderCharts(resultA, resultB) {
         scales: { x: chartXScale(colors), y: chartYScaleZeroLine(colors, { tickCallback: function(v) { return v + ''; } }) },
       }));
     } else {
-      posCanvas.parentNode.parentNode.innerHTML = '<div class="eyebrow">bb/100 by position</div><div class="text-body">Need at least two positions with cash data in this report.</div>';
+      posCanvas.parentNode.innerHTML = '<div class="eyebrow">bb/100 by position</div><div class="text-body">Need at least two positions with cash data in this report.</div>';
     }
   }
 
@@ -1212,7 +1212,7 @@ function _crRenderCharts(resultA, resultB) {
         scales: { x: chartXScale(colors), y: chartYScale(colors, { max: 100, tickCallback: function(v) { return v + '%'; } }) },
       }));
     } else {
-      cardsCanvas.parentNode.parentNode.innerHTML = '<div class="eyebrow">Win rate by hand class</div><div class="text-body">Need at least two hand classes in this report.</div>';
+      cardsCanvas.parentNode.innerHTML = '<div class="eyebrow">Win rate by hand class</div><div class="text-body">Need at least two hand classes in this report.</div>';
     }
   }
 
@@ -1244,7 +1244,7 @@ function _crRenderCharts(resultA, resultB) {
         },
       }));
     } else {
-      actCanvas.parentNode.parentNode.innerHTML = '<div class="eyebrow">Action breakdown</div><div class="text-body">No action data in this report.</div>';
+      actCanvas.parentNode.innerHTML = '<div class="eyebrow">Action breakdown</div><div class="text-body">No action data in this report.</div>';
     }
   }
 }

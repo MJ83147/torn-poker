@@ -324,15 +324,13 @@ function mountPanel(container, name, opts) {
   var title = opts.title || '';
   var desc = opts.desc || '';
   container.innerHTML =
-    '<div class="col gap-32">' +
-      '<div>' +
-        '<div class="title title-lg c-gold">' + title + '</div>' +
-        (desc ? '<div class="text-body">' + desc + '</div>' : '') +
-      '</div>' +
-      '<div data-slot="verdict"></div>' +
-      '<div data-slot="findings" hidden></div>' +
-      body +
-    '</div>';
+    '<div class="panel-header">' +
+      '<div class="title title-lg c-gold">' + title + '</div>' +
+      (desc ? '<div class="text-body">' + desc + '</div>' : '') +
+    '</div>' +
+    '<div data-slot="verdict"></div>' +
+    '<div data-slot="findings" hidden></div>' +
+    body;
 }
 
 function bind(root, data) {

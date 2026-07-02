@@ -109,9 +109,9 @@ function renderBestWorstSessions(hands, overallData) {
     if (sessions[wi].pnl === worst.pnl && sessions[wi].hands.length > worst.hands.length) worst = sessions[wi];
   }
 
-  var html = '<div class="col gap-8 mt-16">';
-  html += '<div class="eyebrow">Best &amp; Worst Sessions</div>';
-  html += '<div class="cols-2 gap-16">';
+  var html = '<div class="container">';
+  html += '<div class="section-head">Best &amp; Worst Sessions</div>';
+  html += '<div class="row">';
 
   var sessionPairs = [
     { session: best, label: 'Best Session', frame: 'right' },
@@ -131,8 +131,8 @@ function renderBestWorstSessions(hands, overallData) {
     var sessEnd = (lastHand && lastHand.timestamp) ? new Date(lastHand.timestamp).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
     var dateLabel = sessStart ? (sessStart === sessEnd ? sessStart : sessStart + ' - ' + sessEnd) : '';
 
-    html += '<div class="card col gap-12">';
-    html += '<div class="eyebrow">' + sess.label + '</div>';
+    html += '<div class="container">';
+    html += '<div class="section-head">' + sess.label + '</div>';
     html += '<div class="col">';
     if (dateLabel) html += '<div class="text-body">' + dateLabel + '</div>';
     html += '<div class="text-body">' + tableName + ' &middot; ' + s.hands.length + ' hands &middot; <span class="value ' + pnlCellCls + '">' + pnlDisplay + '</span></div>';

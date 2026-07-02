@@ -1,18 +1,24 @@
-<div class="row between wrap gap-16 mb-16">
-  <label class="check text-meta">
-    <input type="checkbox" id="cr-compare-toggle">
-    <span>Compare two reports</span>
-  </label>
-  <button class="btn btn-ghost" id="cr-reset-btn">Reset filters</button>
+<div class="row">
+  <div class="container">
+    <div class="row between wrap gap-16">
+      <label class="check text-meta">
+        <input type="checkbox" id="cr-compare-toggle">
+        <span>Compare two reports</span>
+      </label>
+      <button class="btn btn-ghost" id="cr-reset-btn">Reset filters</button>
+    </div>
+    <div class="box" data-slot="sentence"></div>
+    <div data-slot="headline"></div>
+    <div data-slot="cards"></div>
+  </div>
 </div>
-<div class="box mb-24" data-slot="sentence"></div>
-<div data-slot="headline"></div>
-<div data-slot="cards"></div>
 <div data-slot="chartSection" hidden>
-  <div class="cols-auto cr-charts gap-24">
-    <div class="box col gap-8"><div class="eyebrow">bb/100 over time</div><div class="chart-full"><canvas id="cr-trend"></canvas></div></div>
-    <div class="box col gap-8"><div class="eyebrow">bb/100 by position</div><div class="chart-full"><canvas id="cr-position"></canvas></div></div>
-    <div class="box col gap-8"><div class="eyebrow">Win rate by hand class</div><div class="chart-full"><canvas id="cr-cards"></canvas></div></div>
-    <div class="box col gap-8"><div class="eyebrow">Action breakdown</div><div class="chart-full"><canvas id="cr-actions"></canvas></div></div>
+  <div class="row">
+    <div class="container"><div class="eyebrow">bb/100 over time</div><canvas id="cr-trend"></canvas></div>
+    <div class="container"><div class="eyebrow">bb/100 by position</div><canvas id="cr-position"></canvas></div>
+  </div>
+  <div class="row">
+    <div class="container"><div class="eyebrow">Win rate by hand class</div><canvas id="cr-cards"></canvas></div>
+    <div class="container"><div class="eyebrow">Action breakdown</div><canvas id="cr-actions"></canvas></div>
   </div>
 </div>

@@ -196,10 +196,19 @@ a {
   white-space: nowrap;
 }
 
-/* --- layout: rows, columns, grids ---
-   .row = horizontal, .col = vertical stack, .cols-* = grids.
-   Spacing is always set with a gap-* class so it's explicit and on one scale. */
-.row { display: flex; }
+/* --- structure ---
+   row       = puts its containers side by side and splits the width between them.
+   container = fills its share of the row, holds content, owns its padding + gap.
+   Spacing is baked in here, never added in markup. */
+.row { display: flex; flex-wrap: wrap; gap: var(--sp-16); }
+.container {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-12);
+  padding: var(--sp-16);
+}
 .col { display: flex; flex-direction: column; }
 .cols-2 { display: grid; grid-template-columns: 1fr 1fr; }
 .cols-3 { display: grid; grid-template-columns: repeat(3, 1fr); }
@@ -1397,8 +1406,13 @@ a {
 #app.on { display: block; }
 #dash { display: none; }
 #dash.on { display: block; }
-.panel { display: none; padding: 36px 40px; max-width: 1600px; margin: 0 auto; }
-.panel.on { display: block; min-height: 60vh; }
+/* panel = a view: stacks its header + rows down the page. */
+.panel { display: none; max-width: 1600px; margin: 0 auto; padding: var(--sp-32); }
+.panel.on { display: flex; flex-direction: column; gap: var(--sp-24); min-height: 60vh; }
+
+/* panel-header = the panel's title block; title + description sit tight together,
+   and the panel's own gap gives the space below it before the content. */
+.panel-header { display: flex; flex-direction: column; gap: var(--sp-4); }
 .panels-wrap.blurred { filter: blur(3px); pointer-events: none; }
 #maintenance { display: none; position: fixed; inset: 0; z-index: 99999; background: var(--bg); color: var(--text); text-align: center; padding: 48px var(--sp-24); }
 body.maintenance #loader, body.maintenance #app { display: none !important; }

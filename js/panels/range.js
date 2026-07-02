@@ -536,8 +536,8 @@ function twoGridHtml(chart, filtered, scenarioType, tallies, dealtCount) {
   var byKey = heroComboBreakdown(filtered, scenarioType);
   var hasChart = !!(chart && chart.length);
   var countLabel = dealtCount === 1 ? '1 hand you were dealt here' : dealtCount + ' hands you were dealt here';
-  return '<div class="cols-2 gap-24">' +
-    '<div>' +
+  return '<div class="row">' +
+    '<div class="container">' +
       '<div class="section-head">What GTO does</div>' +
       '<div class="col gap-8">' +
       '<div class="text-meta">Reference chart for this spot. The whole range is coloured, this is not your data.</div>' +
@@ -545,7 +545,7 @@ function twoGridHtml(chart, filtered, scenarioType, tallies, dealtCount) {
       '</div>' +
       '<div class="mt-8">' + gtoLegendHtml() + '</div>' +
     '</div>' +
-    '<div>' +
+    '<div class="container">' +
       '<div class="section-head">What you did</div>' +
       '<div class="col gap-8">' +
       '<div class="text-meta">Only the ' + countLabel + ' are marked. Everything else is a hand you were never dealt in this spot.</div>' +
@@ -624,10 +624,14 @@ function renderRange(container, d, hands) {
 
   function renderOverall(body) {
     body.innerHTML =
+      '<div class="row">' +
+      '<div class="container">' +
       '<div class="section-head">Your range</div>' +
       '<div class="col gap-12">' +
       '<div class="text-meta">How wide you play and which combos carry your results. The 13x13 chart, position by position, lives under By Spot.</div>' +
       storiesHtml(Sections.findingsForPanel(Sections.evaluateSections(d, {}, hands), 'Range'), 'Range data is still building.') +
+      '</div>' +
+      '</div>' +
       '</div>';
   }
 
@@ -661,12 +665,16 @@ function renderRange(container, d, hands) {
     var headerStats = renderHeaderStats(dealtCount, state.hero + ' · ' + label);
     var note = chart ? '' : '<div class="mt-8"><div class="text-meta">No GTO reference for ' + state.hero + ' ' + label + ' yet.</div></div>';
     body.innerHTML =
-      '<div class="row wrap center gap-12 mb-12">' +
-        '<div class="row center gap-6"><label class="eyebrow">Position</label>' + heroSelectorHtml + '</div>' +
-        '<div class="row center gap-6"><label class="eyebrow">Scenario</label>' + scenarioSelectorHtml + '</div>' +
+      '<div class="row">' +
+      '<div class="container">' +
+        '<div class="row wrap center gap-12">' +
+          '<div class="row center gap-6"><label class="eyebrow">Position</label>' + heroSelectorHtml + '</div>' +
+          '<div class="row center gap-6"><label class="eyebrow">Scenario</label>' + scenarioSelectorHtml + '</div>' +
+        '</div>' +
+        headerStats +
+        note +
       '</div>' +
-      headerStats +
-      note +
+      '</div>' +
       twoGridHtml(chart, filtered, scenarioType, tallies, dealtCount) +
       storiesHtml(
         buildSpotFindings(

@@ -1,18 +1,22 @@
-<div class="cols-2 gap-32">
-  <div>
+<div class="row">
+  <div class="container">
     <div class="section-head">Hands reaching street</div>
     <div class="col gap-12" data-slot="seenBars"></div>
   </div>
-  <div>
+  <div class="container">
     <div class="section-head">Your fold % by street</div>
     <div class="col gap-12" data-slot="foldBars"></div>
   </div>
 </div>
-<div data-slot="avgBetSection" hidden>
-  <div class="section-head">Average bet size by street</div>
-  <div class="col gap-12" data-slot="avgBetBars"></div>
+<div class="row" data-slot="avgBetSection" hidden>
+  <div class="container">
+    <div class="section-head">Average bet size by street</div>
+    <div class="col gap-12" data-slot="avgBetBars"></div>
+  </div>
 </div>
-<div>
-  <div class="section-head">Action Breakdown by Street</div>
-  <div class="chart-full"><canvas id="street-action-chart"></canvas></div>
+<div class="row">
+  <div class="container">
+    <div class="section-head">Action Breakdown by Street</div>
+    <canvas id="street-action-chart"></canvas>
+  </div>
 </div>
