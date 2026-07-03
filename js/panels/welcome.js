@@ -69,20 +69,20 @@ function renderWelcome(container, d, hands, meta) {
     }).join('') +
     '</div>' +
     '<div class="welcome-aside">' +
-    '<div class="text-body welcome-tips">' +
+    '<div class="section">' +
     '<div class="section-head">Tips</div>' +
     '<div class="carousel">' +
     '<button class="btn btn-icon" id="tip-prev">&#8249;</button>' +
     '<div class="carousel-track">' +
     tips.map(function(t, i) {
-      return '<div class="carousel-slide text-body welcome-tip' + (i === 0 ? ' active' : '') + '">' + t + '</div>';
+      return '<div class="carousel-slide text-body' + (i === 0 ? ' active' : '') + '">' + t + '</div>';
     }).join('') +
     '</div>' +
     '<button class="btn btn-icon" id="tip-next">&#8250;</button>' +
     '</div>' +
     '<div class="carousel-dots">' +
     tips.map(function(_, i) {
-      return '<span class="carousel-dot tips-dot' + (i === 0 ? ' active' : '') + '" data-tip="' + i + '"></span>';
+      return '<span class="carousel-dot' + (i === 0 ? ' active' : '') + '" data-tip="' + i + '"></span>';
     }).join('') +
     '</div>' +
     '</div>' +
@@ -122,8 +122,8 @@ function renderWelcome(container, d, hands, meta) {
     };
   });
 
-  var tipSlides = container.querySelectorAll('.welcome-tip');
-  var tipDots = container.querySelectorAll('.tips-dot');
+  var tipSlides = container.querySelectorAll('.carousel-slide');
+  var tipDots = container.querySelectorAll('.carousel-dot');
   var tipIdx = 0;
   function showTip(i) {
     tipIdx = (i + tips.length) % tips.length;

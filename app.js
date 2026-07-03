@@ -290,7 +290,7 @@ function _maybeShowStyleWelcome(/* d, hands, meta */) {
 
 var _PANELS_NEED_D = { mygame:1, cards:1, position:1, street:1, actions:1, range:1, players:1, trends:1, showdown:1, allin:1 };
 
-var _PANELS_HAVE_BANNER = { welcome:1, mygame:1, cards:1, position:1, street:1, actions:1, range:1, trends:1, showdown:1, log:1, allin:1, players:1 };
+var _PANELS_HAVE_BANNER = { welcome:1, mygame:1, cards:1, position:1, street:1, actions:1, range:1, trends:1, sessions:1, showdown:1, log:1, allin:1, players:1 };
 
 function _filterBannerHtml() {
   var filterEl = document.getElementById('table-filter');
@@ -334,6 +334,7 @@ function _drawPanel(tabId, meta) {
       break;
     case 'tables':   renderTables(container, filtered, State.allHands, State.excludedTables, renderAll); break;
     case 'trends':   renderTrends(container, filtered, meta, d); break;
+    case 'sessions': renderSessions(container, filtered, meta, d); break;
     case 'showdown': renderShowdown(container, filtered, meta, d); break;
     case 'log':      renderLog(container, filtered); break;
     case 'allin':    renderAllIn(container, d, filtered); break;

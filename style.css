@@ -57,9 +57,6 @@
   --gto-grey: #6a7068;
   --gto-white: #d0d4cf;
   --range-folded-opacity: 0.25;
-  --freq-low: #24422a;
-  --freq-med: #2e5835;
-  --freq-high: #3a7a42;
   --gto-empty-bg: #0e1310;
   --gto-empty-fg: #2a3e2c;
   --gto-dark-fg: #1a1f1a;
@@ -203,16 +200,8 @@ a {
   display: block;
 }
 
-.w-100 {
-  width: 100%;
-}
-
 .overflow-x {
   overflow-x: auto;
-}
-
-.relative {
-  position: relative;
 }
 
 .truncate {
@@ -346,14 +335,6 @@ a {
   flex: 1;
 }
 
-.inline {
-  display: inline-flex;
-}
-
-.w-full {
-  width: 100%;
-}
-
 .min-w-0 {
   min-width: 0;
 }
@@ -367,14 +348,6 @@ a {
    purpose — do not reintroduce them. */
 
 /* --- borders --- */
-.border-top {
-  border-top: var(--bw) solid var(--border);
-}
-
-.border-bottom {
-  border-bottom: var(--bw) solid var(--border);
-}
-
 /* --- text roles --- */
 .title {
   font-family: var(--serif);
@@ -453,7 +426,7 @@ a {
   grid-template-columns: 1fr auto auto;
   gap: var(--sp-8);
   align-items: baseline;
-  padding: var(--sp-4) 0;
+  padding: var(--sp-8) 0;
   border-bottom: var(--bw) solid var(--border);
 }
 
@@ -522,18 +495,6 @@ a {
   background: var(--dim);
 }
 
-.bg-freq-low {
-  background: var(--freq-low);
-}
-
-.bg-freq-med {
-  background: var(--freq-med);
-}
-
-.bg-freq-high {
-  background: var(--freq-high);
-}
-
 /* --- weight / transform helpers --- */
 .fw-medium {
   font-weight: var(--fw-medium);
@@ -541,14 +502,6 @@ a {
 
 .fw-semibold {
   font-weight: var(--fw-semibold);
-}
-
-.fw-bold {
-  font-weight: var(--fw-bold);
-}
-
-.uppercase {
-  text-transform: uppercase;
 }
 
 .text-right {
@@ -566,8 +519,7 @@ a {
 /* --- Card & box: padded, rounded containers ---
    .card  = outlined (border). Add .card-s1/.card-s2 for a surface fill.
    .box   = filled callout, no border (verdict, work-on, insight).
-   .card-link = clickable, lifts on hover (works on either).
-   .radius-sm shrinks the corner. */
+   .card-link = clickable, lifts on hover (works on either). */
 .card {
   border: var(--bw) solid var(--border);
   border-radius: var(--r-lg);
@@ -586,10 +538,6 @@ a {
   background: var(--s2);
   border-radius: var(--r-lg);
   padding: var(--sp-16) var(--sp-16);
-}
-
-.radius-sm {
-  border-radius: var(--r-sm);
 }
 
 .card-link {
@@ -1001,6 +949,7 @@ a {
 }
 
 .btn-secondary {
+  background: color-mix(in srgb, var(--gold) 8%, transparent);
   border-color: var(--gold2);
   color: var(--gold2);
   font-family: var(--serif);
@@ -1017,6 +966,7 @@ a {
 }
 
 .btn-ghost {
+  background: var(--tint-light);
   border-color: var(--border);
   color: var(--dim);
   padding: var(--sp-4) var(--sp-8);
@@ -1033,6 +983,7 @@ a {
   width: 28px;
   height: 28px;
   border-radius: var(--r-pill);
+  background: var(--tint-light);
   border-color: var(--border);
   color: var(--dim);
   font-family: var(--serif);
@@ -1148,30 +1099,17 @@ a {
 }
 
 /* --- Stat block: label + value. Reuse .value for the number ---
-   .stat-grid = plain auto-fit grid (mini stat rows). Add .stat-strip for
-   the bordered header version (the top stat tiles). */
+   .stat-grid = plain auto-fit grid (mini stat rows). */
 .stat {
   display: flex;
   flex-direction: column;
   gap: var(--sp-4);
 }
 
-/* size + tracking come from .eyebrow in markup; kept for the shared colour/transform hook */
-.stat-label {
-  text-transform: uppercase;
-  color: var(--dim);
-}
-
 .stat-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
   gap: var(--sp-8);
-}
-
-.stat-strip .stat {
-  padding: var(--sp-12) var(--sp-16);
-  border-right: var(--bw) solid var(--border);
-  border-bottom: var(--bw) solid var(--border);
 }
 
 /* .mini-row = a stat-grid rendered by renderMiniRow (Action Totals / Showdown /
@@ -1282,7 +1220,7 @@ a {
    markup composes `title title-lg c-gold` (serif 26px bold gold) so both
    the hand-replay and hand-list modals share one heading style. */
 .modal-action-line {
-  padding: var(--sp-4) 0;
+  padding: var(--sp-6) 0;
   border-bottom: var(--bw) solid color-mix(in srgb, var(--border) 50%, transparent);
 }
 
@@ -1427,22 +1365,6 @@ a {
 }
 
 /* --- Pagination (prev/next use .btn-ghost) --- */
-.pager {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--sp-12);
-  margin-top: var(--sp-16);
-}
-
-.pager-info {
-  font-size: var(--fs-xs);
-
-  letter-spacing: var(--bw);
-
-  color: var(--dim);
-}
-
 /* --- Notice / banner (info / warn / danger) --- */
 .notice {
   padding: var(--sp-8) var(--sp-16);
@@ -1454,24 +1376,6 @@ a {
 
 }
 
-.notice-info {
-  color: var(--gold);
-  background: color-mix(in srgb, var(--gold) 6%, transparent);
-  border-color: color-mix(in srgb, var(--gold) 15%, transparent);
-}
-
-.notice-warn {
-  color: var(--amber);
-  background: color-mix(in srgb, var(--amber) 8%, transparent);
-  border-color: color-mix(in srgb, var(--amber) 25%, transparent);
-}
-
-.notice-danger {
-  color: var(--red);
-  background: color-mix(in srgb, var(--red) 8%, transparent);
-  border-color: color-mix(in srgb, var(--red) 25%, transparent);
-}
-
 /* ==========================================================================
    5. FEATURES   (built per CSS2-BUILD.md)
    ========================================================================== */
@@ -1481,12 +1385,6 @@ a {
    grids, so a cell carries data-gto OR data-hero, never both. That makes it
    safe to merge same-colour rules across the two. Cell text colour stays
    white except where the fill is light (white/grey/blue/empty). */
-.range-grid {
-  display: grid;
-  grid-template-columns: repeat(13, 1fr);
-  gap: var(--sp-2);
-}
-
 .range-grid-sm {
   display: grid;
   grid-template-columns: repeat(13, 1fr);
@@ -2231,11 +2129,6 @@ textarea#jin {
   background: var(--dot-tag);
 }
 
-/* size + colour come from .lead in markup; this keeps the heading weight only
-   (the .box .list gap owns the space to the body). */
-.work-on-title {
-  font-weight: var(--fw-semibold);
-}
 
 .dynamics-cards {
   gap: var(--sp-12);
@@ -2492,10 +2385,6 @@ textarea#jin {
   grid-template-columns: 100px 1fr;
   gap: var(--sp-16);
   padding: var(--sp-12) var(--sp-12);
-}
-
-.welcome-tips {
-  width: 100%;
 }
 
 .hiw-overlay {
@@ -2755,7 +2644,7 @@ textarea#jin {
 
 /* --- Equity simulator (hand-detail popup; the modal's gap spaces the block) --- */
 .eq-sim {
-  padding: var(--sp-12) var(--sp-12);
+  padding: var(--sp-16) var(--sp-16);
 }
 
 .eq-sim-header {
@@ -2766,7 +2655,7 @@ textarea#jin {
 }
 
 .eq-row {
-  padding: var(--sp-8) 0;
+  padding: var(--sp-12) 0;
   border-bottom: var(--bw) solid var(--border);
 }
 
@@ -2843,3 +2732,113 @@ textarea#jin {
   padding: var(--sp-12) 0;
 }
 /* .eq-spinner-ring is defined once in §5 (Panel loading placeholder). */
+/* ==========================================================================
+   SESSIONS PANEL
+   List of sittings → click through to a per-session read (charts, stats,
+   story cards, phase table). Classes are namespaced sess-* to avoid the
+   existing insight .story / .spark cards.
+   ========================================================================== */
+.sess-spark {
+  vertical-align: middle;
+}
+
+.sess-back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-6);
+  cursor: pointer;
+  color: var(--dim);
+  font-size: var(--fs-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: var(--sp-16);
+}
+.sess-back:hover { color: var(--gold); }
+
+.sess-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: var(--sp-12);
+}
+.sess-head-right { text-align: right; }
+.sess-head-res {
+  font-size: var(--fs-2xl);
+  font-weight: var(--fw-medium);
+  line-height: var(--lh-none);
+}
+
+.sess-stat-v {
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-medium);
+}
+.sess-stat-vs { font-size: var(--fs-xs); }
+
+.sess-story-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-12);
+}
+.sess-story {
+  display: flex;
+  flex-direction: column;
+  background: var(--s1);
+  border: var(--bw) solid var(--border);
+  border-radius: var(--r-lg);
+  padding: var(--sp-16);
+}
+.sess-story-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--sp-8);
+  margin-bottom: var(--sp-8);
+}
+.sess-lens {
+  font-size: var(--fs-xs);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.sess-flag {
+  font-size: 10px;
+  font-weight: var(--fw-medium);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 2px 9px;
+  border-radius: var(--r-pill);
+  white-space: nowrap;
+}
+.sess-flag.leak     { background: rgba(201, 64, 64, 0.14); color: var(--red); }
+.sess-flag.strength { background: rgba(63, 173, 100, 0.14); color: var(--green); }
+.sess-flag.watch    { background: rgba(212, 132, 42, 0.14); color: var(--amber); }
+
+.sess-story-title {
+  font-family: var(--serif);
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-tight);
+  margin-bottom: var(--sp-8);
+}
+.sess-prose {
+  font-family: var(--serif);
+  font-size: var(--fs-lg);
+  line-height: var(--lh-snug);
+  margin: 0 0 var(--sp-12);
+}
+.sess-prose em { font-style: italic; color: var(--gold); }
+.sess-prose em.pos { color: var(--green); }
+.sess-prose em.neg { color: var(--red); }
+
+.sess-link {
+  margin-top: auto;
+  font-size: var(--fs-xs);
+  color: var(--dim);
+  cursor: pointer;
+}
+.sess-link:hover { color: var(--gold); }
+
+@media (max-width: 720px) {
+  .sess-story-grid { grid-template-columns: 1fr; }
+}

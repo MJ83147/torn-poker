@@ -123,7 +123,7 @@ function renderMiniRow(items, opts) {
   return '<div class="mini-row stat-grid"' + rowAttrs + '>' + items.map(function(m) {
     var cc = CMAP[m.c] || (m.c && m.c !== 'text' ? 'c-' + m.c : '');
     var dot = m.dot ? '<span class="swatch-line ' + m.dot + '"></span> ' : '';
-    return '<div class="stat"><div class="eyebrow stat-label">' + dot + m.l + '</div><div class="value ' + cc + '">' + m.v + '</div></div>';
+    return '<div class="stat"><div class="eyebrow">' + dot + m.l + '</div><div class="value ' + cc + '">' + m.v + '</div></div>';
   }).join('') + '</div>';
 }
 

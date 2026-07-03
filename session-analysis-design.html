@@ -67,25 +67,23 @@
   .chart-holder{position:relative;height:200px;}
   .chart-holder.tall{height:230px;}
 
-  /* story cards — grid, no side border */
+  /* story cards — grid, quiet */
   .story-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
-  .story{background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:16px 18px;}
-  .story-top{display:flex;align-items:flex-start;gap:12px;margin-bottom:10px;}
+  .story{background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:16px 18px;display:flex;flex-direction:column;}
+  .story-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px;}
   .story-lens{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);}
-  .story-title{font-family:var(--serif);font-size:19px;font-weight:600;color:var(--text);line-height:1.15;margin-top:2px;}
-  .story-tag{margin-left:auto;font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;white-space:nowrap;}
-  .tag-good{background:rgba(63,173,100,.14);color:var(--green);}
-  .tag-warn{background:rgba(212,132,42,.14);color:var(--amber);}
-  .tag-bad{background:rgba(201,64,64,.14);color:var(--red);}
-  .prose{font-family:var(--serif);font-size:16px;line-height:1.5;color:var(--text);margin-bottom:12px;}
-  .prose em{color:var(--gold);font-style:italic;}
-  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;}
-  .chip{background:var(--s2);border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:11px;}
-  .chip b{font-weight:600;}
-  .hands-row{display:flex;flex-wrap:wrap;gap:8px;}
-  .hand-btn{background:transparent;border:1px solid var(--border);color:var(--dim);border-radius:6px;padding:6px 11px;font-family:var(--mono);font-size:12px;cursor:pointer;transition:.15s;}
-  .hand-btn:hover{border-color:var(--gold2);color:var(--text);}
-  .hand-btn .cd{color:var(--gold);}
+  .story-flag{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;padding:2px 9px;border-radius:20px;white-space:nowrap;}
+  .flag-good{background:rgba(63,173,100,.14);color:var(--green);}
+  .flag-bad{background:rgba(201,64,64,.14);color:var(--red);}
+  .flag-warn{background:rgba(212,132,42,.14);color:var(--amber);}
+  .story-title{font-family:var(--serif);font-size:19px;font-weight:600;color:var(--text);line-height:1.15;margin-bottom:8px;}
+  .prose{font-family:var(--serif);font-size:16px;line-height:1.5;color:var(--text);margin:0 0 14px;}
+  .prose em{font-style:italic;color:var(--gold);}
+  .prose em.pos{color:var(--green);}
+  .prose em.neg{color:var(--red);}
+  .story-link{margin-top:auto;font-size:12px;color:var(--dim);cursor:pointer;}
+  .story-link:hover{color:var(--gold);}
+  .story-link .cd{color:var(--gold);}
 
   table.phase{width:100%;border-collapse:collapse;font-size:13px;}
   table.phase th,table.phase td{text-align:right;padding:8px 10px;border-bottom:1px solid var(--border);}
@@ -174,124 +172,46 @@
       <div class="section-head">The stories in this session</div>
       <div class="story-grid">
 
-        <div class="story">
-          <div class="story-top">
-            <div>
-              <div class="story-lens">The arc</div>
-              <div class="story-title">Up to +180, then all the way down</div>
-            </div>
-            <span class="story-tag tag-warn">turning point: hand 46</span>
-          </div>
-          <div class="prose">Your stack climbed to <em>+180 BB</em> over the first 41 hands — a steady, low-risk build. Then <em>QQ ran into KK</em> at hand 46 for −96 BB, and from there the graph fell in a near-straight line for 70 hands, closing at −214.</div>
-          <div class="chips">
-            <span class="chip">Peak <b class="c-green">+180 BB</b> @ hand 41</span>
-            <span class="chip">Cooler <b class="c-red">−96 BB</b> @ hand 46</span>
-            <span class="chip">After peak <b class="c-red">−394 BB</b> / 77 hands</span>
-          </div>
-          <div class="hands-row">
-            <button class="hand-btn"><span class="cd">Q♠Q♦</span> vs K♣K♥ · hand 46</button>
-            <button class="hand-btn">The +180 climb</button>
-          </div>
+        <div class="story warn">
+          <div class="story-head"><span class="story-lens">The arc</span><span class="story-flag flag-warn">Turning point</span></div>
+          <div class="story-title">Up to +180, then all the way down</div>
+          <div class="prose">Your stack climbed to <em class="pos">+180 BB</em> over the first 41 hands, then QQ ran into KK at hand 46 and the graph fell in a near-straight line the rest of the way, closing at <em class="neg">−214</em>.</div>
+          <div class="story-link"><span class="cd">Q♠Q♦</span> vs K♣K♥, hand 46 ›</div>
         </div>
 
-        <div class="story">
-          <div class="story-top">
-            <div>
-              <div class="story-lens">Tilt / gear change</div>
-              <div class="story-title">You loosened up right after the hit</div>
-            </div>
-            <span class="story-tag tag-bad">VPIP 14% → 31%</span>
-          </div>
-          <div class="prose">Before the cooler you opened <em>14%</em> and folded the junk. After it, your VPIP jumped to <em>31%</em> — limping small pairs and calling three-bets out of position with hands you'd have passed an hour earlier. The timing points straight at hand 46.</div>
-          <div class="chips">
-            <span class="chip">Pre VPIP <b>14%</b></span>
-            <span class="chip">Post VPIP <b class="c-red">31%</b></span>
-            <span class="chip">OOP 3bet calls <b class="c-red">6</b> (was 0)</span>
-            <span class="chip">Limps <b class="c-red">9</b> (was 1)</span>
-          </div>
-          <div class="hands-row">
-            <button class="hand-btn"><span class="cd">7♦7♣</span> limp/call · h58</button>
-            <button class="hand-btn"><span class="cd">A♥8♥</span> OOP 3bet call · h63</button>
-          </div>
+        <div class="story bad">
+          <div class="story-head"><span class="story-lens">Tilt / gear change</span><span class="story-flag flag-bad">Leak</span></div>
+          <div class="story-title">You loosened up right after the hit</div>
+          <div class="prose">Before the cooler you opened <em class="pos">14%</em>. After it your VPIP jumped to <em class="neg">31%</em> — limping small pairs and calling 3-bets out of position with hands you'd have folded an hour earlier.</div>
+          <div class="story-link">6 loosened spots after hand 46 ›</div>
         </div>
 
-        <div class="story">
-          <div class="story-top">
-            <div>
-              <div class="story-lens">Fatigue / duration</div>
-              <div class="story-title">The last hour is where it got expensive</div>
-            </div>
-            <span class="story-tag tag-bad">−161 BB after 2h</span>
-          </div>
-          <div class="prose">You sat for 2h47m. Play held together until roughly the two-hour mark, then decayed: <em>five river calls with bottom pair or worse</em>, all losers, plus two shove-to-get-it-back spots. Three quarters of the session's losses came in its final third.</div>
-          <div class="chips">
-            <span class="chip">Length <b>2h 47m</b></span>
-            <span class="chip">Losing river calls after 2h <b class="c-red">5</b></span>
-            <span class="chip">Recovery shoves <b class="c-red">2</b></span>
-            <span class="chip">Final third <b class="c-red">−161 BB</b></span>
-          </div>
-          <div class="hands-row">
-            <button class="hand-btn"><span class="cd">J♦9♦</span> river call · h104</button>
-            <button class="hand-btn"><span class="cd">A♣5♣</span> spew shove · h111</button>
-          </div>
+        <div class="story bad">
+          <div class="story-head"><span class="story-lens">Fatigue / duration</span><span class="story-flag flag-bad">Leak</span></div>
+          <div class="story-title">The last hour is where it got expensive</div>
+          <div class="prose">Play held together for two hours, then decayed. Three quarters of the losses came in the final third — <em class="neg">five losing river calls</em> and two shove-to-get-it-back spots.</div>
+          <div class="story-link">5 late river calls ›</div>
         </div>
 
-        <div class="story">
-          <div class="story-top">
-            <div>
-              <div class="story-lens">What went right</div>
-              <div class="story-title">The first hour was your A-game</div>
-            </div>
-            <span class="story-tag tag-good">+180 BB, clean</span>
-          </div>
-          <div class="prose">The opening hour was disciplined and profitable: tight opens, three-betting only strong hands, c-betting your equity, and <em>winning 78% of the showdowns you reached</em>. Nothing in the early play caused the loss — the gear change did.</div>
-          <div class="chips">
-            <span class="chip">Early VPIP <b class="c-green">14%</b></span>
-            <span class="chip">Early SD won <b class="c-green">78%</b></span>
-            <span class="chip">Early P&amp;L <b class="c-green">+180 BB</b></span>
-          </div>
-          <div class="hands-row">
-            <button class="hand-btn"><span class="cd">A♠K♠</span> 3bet pot won · h22</button>
-            <button class="hand-btn">The disciplined stretch</button>
-          </div>
+        <div class="story good">
+          <div class="story-head"><span class="story-lens">What went right</span><span class="story-flag flag-good">Strength</span></div>
+          <div class="story-title">The first hour was your A-game</div>
+          <div class="prose">The opening hour was disciplined and profitable — tight, aggressive with equity, <em class="pos">winning 78% of showdowns</em>. Nothing in the early play caused the loss; the gear change did.</div>
+          <div class="story-link">The disciplined stretch ›</div>
         </div>
 
-        <div class="story">
-          <div class="story-top">
-            <div>
-              <div class="story-lens">Showdown</div>
-              <div class="story-title">You paid off too often once loose</div>
-            </div>
-            <span class="story-tag tag-warn">WTSD 38% · won 41%</span>
-          </div>
-          <div class="prose">Late on you went to showdown far more than usual (<em>38% vs your 27%</em>) and won fewer of them (<em>41% vs 54%</em>). You were calling down light and getting shown better — the loose-passive leak that appears when discipline slips.</div>
-          <div class="chips">
-            <span class="chip">WTSD <b class="c-red">38%</b> (base 27%)</span>
-            <span class="chip">Won at SD <b class="c-red">41%</b> (base 54%)</span>
-            <span class="chip">River calls lost <b class="c-red">−88 BB</b></span>
-          </div>
-          <div class="hands-row">
-            <button class="hand-btn">All losing showdowns</button>
-          </div>
+        <div class="story bad">
+          <div class="story-head"><span class="story-lens">Showdown</span><span class="story-flag flag-bad">Leak</span></div>
+          <div class="story-title">You paid off too often once loose</div>
+          <div class="prose">Late on you reached showdown far more than usual (<em class="neg">38% vs 27%</em>) and won fewer (<em class="neg">41% vs 54%</em>) — calling down light and getting shown better.</div>
+          <div class="story-link">All losing showdowns ›</div>
         </div>
 
-        <div class="story">
-          <div class="story-top">
-            <div>
-              <div class="story-lens">Position</div>
-              <div class="story-title">Out of position is where you bled</div>
-            </div>
-            <span class="story-tag tag-bad">OOP −190 BB</span>
-          </div>
-          <div class="prose">Almost all the damage came when you were <em>out of position</em>: −190 BB from the blinds and early seats, against −24 BB in position. The loosened calls late were disproportionately from the big blind, defending too wide and then paying off.</div>
-          <div class="chips">
-            <span class="chip">In position <b class="c-amber">−24 BB</b></span>
-            <span class="chip">Out of position <b class="c-red">−190 BB</b></span>
-            <span class="chip">BB defend <b class="c-red">44%</b> (base 31%)</span>
-          </div>
-          <div class="hands-row">
-            <button class="hand-btn">All OOP losses</button>
-          </div>
+        <div class="story bad">
+          <div class="story-head"><span class="story-lens">Position</span><span class="story-flag flag-bad">Leak</span></div>
+          <div class="story-title">Out of position is where you bled</div>
+          <div class="prose">Nearly all the damage came out of position: <em class="neg">−190 BB</em> from the blinds against −24 in position, mostly the big blind defending too wide and then paying off.</div>
+          <div class="story-link">All OOP losses ›</div>
         </div>
 
       </div>

@@ -112,7 +112,7 @@ function renderMyGame(container, d, hands) {
 
     if (workOn) {
       html += '<div class="box list work-on-' + workOn.sev + '">';
-      html += '<div class="lead work-on-title">' + workOn.label + '</div>';
+      html += '<div class="lead fw-semibold">' + workOn.label + '</div>';
       html += '<div class="list">';
       if (workOn.desc) html += '<div class="text-body">' + workOn.desc + '</div>';
       html += '<div class="text-body">' + workOn.action + '</div>';
@@ -120,7 +120,7 @@ function renderMyGame(container, d, hands) {
       html += '</div>';
     } else {
       html += '<div class="box list work-on-g">';
-      html += '<div class="lead work-on-title">Solid game</div>';
+      html += '<div class="lead fw-semibold">Solid game</div>';
       html += '<div class="text-body">No major leaks detected from ' + d.n + ' hands. Keep playing to refine the picture.</div>';
       html += '</div>';
     }
