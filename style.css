@@ -2282,12 +2282,6 @@ textarea#jin {
   min-width: 220px;
 }
 
-.profile-type-name {
-  font-size: var(--fs-3xl);
-
-  color: var(--gold);
-  line-height: var(--lh-none);
-}
 
 .profile-type-desc {
   margin-top: var(--sp-6);
@@ -2297,10 +2291,6 @@ textarea#jin {
   width: 80px;
 }
 
-.profile-name {
-  font-size: var(--fs-3xl);
-  color: var(--gold);
-}
 
 .saved-toggle {
   cursor: pointer;

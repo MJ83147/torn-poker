@@ -32,7 +32,7 @@ function renderMyGame(container, d, hands) {
   html += '<div class="stat">';
   html += '<div class="eyebrow">MY GAME</div>';
   html += '<div>';
-  html += '<div class="profile-name">' + playerName + '</div>';
+  html += '<div class="value value-lg c-gold">' + playerName + '</div>';
   html += '<div class="text-body profile-meta">';
   if (exportDate) html += exportDate + ' &middot; ';
   html += d.n + ' hands';
@@ -43,7 +43,7 @@ function renderMyGame(container, d, hands) {
     html += '<div class="profile-type-block stat">';
     html += '<div class="eyebrow">PLAYER TYPE</div>';
     html += '<div>';
-    html += '<div class="profile-type-name">' + typeLabel + '</div>';
+    html += '<div class="value value-lg c-gold">' + typeLabel + '</div>';
     html += '<div class="text-body profile-type-desc">' + typeDesc + '</div>';
     html += '</div>';
     html += '</div>';
