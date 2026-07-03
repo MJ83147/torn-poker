@@ -170,7 +170,7 @@
   }
 
   var SEV_WORDS = { g: 'Good', r: 'Leak', a: 'Warning', n: 'Note', o: 'Info' };
-  // severity -> css2 colour utilities (text class for the word, bg class for the dot)
+  // severity -> style.css colour utilities (text class for the word, bg class for the dot)
   var SEV_C = { g: 'c-pos', r: 'c-neg', a: 'c-warn', n: 'c-dim', o: 'c-gold' };
   var SEV_BG = { g: 'bg-pos', r: 'bg-neg', a: 'bg-warn', n: 'bg-dim', o: 'bg-gold' };
 

@@ -62,14 +62,14 @@ Also merge the DUPLICATE small-label classes — `.eyebrow`, `.label`, `.chart-l
 ---
 
 ## Key facts about the codebase (verified 2026-07-01)
-- **One stylesheet only: `css2.css`** (~2300 lines). `styles.css` was deleted (the "css2 cutover").
-  `index.html` loads only `css2.css`.
+- **One stylesheet only: `style.css`** (~2300 lines). `styles.css` was deleted (the "css2 cutover").
+  `index.html` loads only `style.css`.
 - Deleting `styles.css` **orphaned classes still used in markup** — they now have no CSS rule:
   `mini-row`, `player-row`, `player-detail`, `allin-row`, `hrow`, `hrow-star`, `rc-hero`,
   `draw-outs`, `board-texture-badge`, `badge-neutral`, `eq-sim-note`, `welcome-tip`,
   `saved-section`, `-compare`, `-mini-label`, `-value`, `-trio`, and others. Several
   "looks weird / no separation" bugs (items 5, 6) are these MISSING styles — restore them
-  as shared classes in css2.css, don't invent per-panel styles.
+  as shared classes in style.css, don't invent per-panel styles.
 - Story/insight cards: classes are `.story` / `.story-head` / `.insight-title` / `.insight-body`
   (story-engine.js renderFindings). Item 3 = `.insight-title` (padding-right) vs `.insight-body`.
 - Stacks data (`hand.stacks[]`, hero `startStack`/`endStack`) is ALREADY imported+stored
@@ -128,7 +128,7 @@ Excess in the loader/maintenance/header/tab CSS. Merge duplicates, keep structur
   .dash-header, .tab-* dropdown mechanics, .l-prog*, .eq-spinner-*, .hiw-* grids.
 
 ### 14. Strip dead range-grid colour CSS — TODO
-Confirmed nothing in JS emits these — pure dead weight in css2.css (~13 selectors):
+Confirmed nothing in JS emits these — pure dead weight in style.css (~13 selectors):
 - Frequency heatmap: `.rc.rc-played[data-freq=...]`, `.freq-low`, `.freq-med` (old "how often played" mode).
 - Right/wrong overlay: `.rc[data-hero="ontarget"|"wrong"|"unjudged"]` (only `data-hero="none"` is emitted now).
 - Likely also `.rc.rc-folded` / `.rc.rc-undealt` (not emitted — verify before deleting).

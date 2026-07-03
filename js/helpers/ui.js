@@ -150,7 +150,7 @@ function tipWrap(label) {
   return '<span class="tooltip">' + label + ' <span class="text-micro">?</span><span class="tooltip-box">' + def + '</span></span>';
 }
 
-// severity -> css2 colour utilities (shared with story-engine vocabulary)
+// severity -> style.css colour utilities (shared with story-engine vocabulary)
 var INS_WORDS = { g: 'Good', r: 'Leak', a: 'Warning', n: 'Note', o: 'Info' };
 var INS_C = { g: 'c-pos', r: 'c-neg', a: 'c-warn', n: 'c-dim', o: 'c-gold' };
 var INS_BG = { g: 'bg-pos', r: 'bg-neg', a: 'bg-warn', n: 'bg-dim', o: 'bg-gold' };
@@ -308,7 +308,7 @@ function mountTemplate(container, name) {
   container.innerHTML = html;
 }
 
-// css2 panel shell. The whole panel is one .col.gap-32 of sections:
+// style.css panel shell. The whole panel is one .col.gap-32 of sections:
 //   header (title + subtitle), verdict slot, findings slot, then the body.
 // The panel's __TPL[name] template holds ONLY the body markup (its own
 // sections). title/desc are passed as data, not baked into every template.

@@ -8,10 +8,10 @@ cd "$(dirname "$0")"
 echo "▸ Building…"
 npm run build
 
-# Bust the browser cache: stamp css2.css + app.min.js with a fresh version
+# Bust the browser cache: stamp style.css + app.min.js with a fresh version
 # so returning visitors always get the new files.
 V=$(date +%s)
-sed -i '' -E "s#css2\.css\?v=[0-9]+#css2.css?v=$V#; s#app\.min\.js\?v=[0-9]+#app.min.js?v=$V#" index.html
+sed -i '' -E "s#style\.css\?v=[0-9]+#style.css?v=$V#; s#app\.min\.js\?v=[0-9]+#app.min.js?v=$V#" index.html
 echo "▸ Cache-buster bumped to v=$V"
 
 MSG="${1:-Deploy $(date '+%Y-%m-%d %H:%M')}"
