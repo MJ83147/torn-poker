@@ -41,26 +41,20 @@
     if (!boardSlice || boardSlice.length < 3) return false;
     if (!made) return false;
 
-    var holeRanks = hole.map(function(c) { return c.slice(0, -1); });
-    var holeSuits = hole.map(function(c) { return c.slice(-1); });
-    var boardRanks = boardSlice.map(function(c) { return c.slice(0, -1); });
-    var boardSuits = boardSlice.map(function(c) { return c.slice(-1); });
+    var holeRanks = hole.map(cardRank);
+    var holeSuits = hole.map(cardSuit);
+    var boardRanks = boardSlice.map(cardRank);
+    var boardSuits = boardSlice.map(cardSuit);
 
     if (made.tier === 3 && made.label === 'Trips') {
-      var boardCounts = {};
-      for (var i = 0; i < boardRanks.length; i++) {
-        boardCounts[boardRanks[i]] = (boardCounts[boardRanks[i]] || 0) + 1;
-      }
+      var boardCounts = freqMap(boardRanks);
       for (var rk in boardCounts) {
         if (boardCounts[rk] >= 3 && holeRanks.indexOf(rk) === -1) return true;
       }
     }
 
     if (made.tier === 6) {
-      var bc6 = {};
-      for (var j = 0; j < boardRanks.length; j++) {
-        bc6[boardRanks[j]] = (bc6[boardRanks[j]] || 0) + 1;
-      }
+      var bc6 = freqMap(boardRanks);
       var trips = null, pair = null;
       for (var rk6 in bc6) {
         if (bc6[rk6] >= 3) trips = rk6;
@@ -70,7 +64,7 @@
     }
 
     if (made.tier === 4 && boardRanks.length >= 5) {
-      var bIdx = boardRanks.map(function(r) { return RANKS.indexOf(r); });
+      var bIdx = boardSlice.map(cardRankIndex);
       var uniq = [];
       for (var u = 0; u < bIdx.length; u++) {
         if (uniq.indexOf(bIdx[u]) === -1) uniq.push(bIdx[u]);
@@ -89,20 +83,14 @@
     }
 
     if (made.tier === 5) {
-      var suitCount = {};
-      for (var s = 0; s < boardSuits.length; s++) {
-        suitCount[boardSuits[s]] = (suitCount[boardSuits[s]] || 0) + 1;
-      }
+      var suitCount = freqMap(boardSuits);
       for (var ssuit in suitCount) {
         if (suitCount[ssuit] >= 5 && holeSuits.indexOf(ssuit) === -1) return true;
       }
     }
 
     if (made.tier === 2) {
-      var bc2 = {};
-      for (var k = 0; k < boardRanks.length; k++) {
-        bc2[boardRanks[k]] = (bc2[boardRanks[k]] || 0) + 1;
-      }
+      var bc2 = freqMap(boardRanks);
       var pairs = [];
       for (var rk2 in bc2) if (bc2[rk2] >= 2) pairs.push(rk2);
       if (pairs.length >= 2 &&
@@ -141,13 +129,13 @@
     // When the board does the work, treat as air. Exception: a pocket pair
     // is never air; route it to overpair/marginal instead.
     if (heroPlaysBoard(hole, boardSlice, made)) {
-      var hr0 = hole[0].slice(0, -1);
-      var hr1 = hole[1].slice(0, -1);
+      var hr0 = cardRank(hole[0]);
+      var hr1 = cardRank(hole[1]);
       if (hr0 === hr1) {
         var pairIdx = RANKS.indexOf(hr0);
         var topBoardIdx = -1;
         for (var bi = 0; bi < boardSlice.length; bi++) {
-          var bIdx = RANKS.indexOf(boardSlice[bi].slice(0, -1));
+          var bIdx = cardRankIndex(boardSlice[bi]);
           if (bIdx > topBoardIdx) topBoardIdx = bIdx;
         }
         madeBucket = (pairIdx > topBoardIdx) ? 'strong' : 'marginal';

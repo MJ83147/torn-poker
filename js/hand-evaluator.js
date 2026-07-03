@@ -10,21 +10,12 @@ function buildDeck() {
   return deck;
 }
 
-function rankIndex(card) {
-  var r = card.slice(0, -1);
-  return RANKS.indexOf(r);
-}
-
-function suitOf(card) {
-  return card.slice(-1);
-}
-
 function evaluate5(cards) {
   var ranks = [];
   var suits = [];
   for (var i = 0; i < 5; i++) {
-    ranks.push(rankIndex(cards[i]));
-    suits.push(suitOf(cards[i]));
+    ranks.push(cardRankIndex(cards[i]));
+    suits.push(cardSuit(cards[i]));
   }
   ranks.sort(function (a, b) { return b - a; });
 
@@ -43,10 +34,7 @@ function evaluate5(cards) {
     straightHigh = 3;
   }
 
-  var freq = {};
-  for (var j = 0; j < 5; j++) {
-    freq[ranks[j]] = (freq[ranks[j]] || 0) + 1;
-  }
+  var freq = freqMap(ranks);
   var groups = [];
   for (var rk in freq) {
     groups.push({ rank: Number(rk), count: freq[rk] });
@@ -129,12 +117,9 @@ function classifyMadeHand(holeCards, boardCards) {
     'Flush', 'Full House', 'Four of a Kind', 'Straight Flush'];
   var label = labels[tier] || 'High Card';
 
-  var heroRanks = hero.map(function (c) { return RANKS.indexOf(c.slice(0, -1)); });
-  var boardRanks = board.map(function (c) { return RANKS.indexOf(c.slice(0, -1)); });
-  var boardRankCounts = {};
-  for (var bi = 0; bi < boardRanks.length; bi++) {
-    boardRankCounts[boardRanks[bi]] = (boardRankCounts[boardRanks[bi]] || 0) + 1;
-  }
+  var heroRanks = hero.map(cardRankIndex);
+  var boardRanks = board.map(cardRankIndex);
+  var boardRankCounts = freqMap(boardRanks);
 
   var _rankNames = {
     '2': 'Deuce', '3': 'Three', '4': 'Four', '5': 'Five', '6': 'Six', '7': 'Seven',
@@ -192,17 +177,14 @@ function classifyMadeHand(holeCards, boardCards) {
   }
 
   var draws = [];
-  var allRanks = all.map(function (c) { return RANKS.indexOf(c.slice(0, -1)); });
-  var allSuits = all.map(function (c) { return c.slice(-1); });
+  var allRanks = all.map(cardRankIndex);
+  var allSuits = all.map(cardSuit);
 
   if (tier < 5) {
-    var suitCounts = {};
-    for (var si = 0; si < allSuits.length; si++) {
-      suitCounts[allSuits[si]] = (suitCounts[allSuits[si]] || 0) + 1;
-    }
+    var suitCounts = freqMap(allSuits);
     for (var suit in suitCounts) {
       if (suitCounts[suit] === 4) {
-        var heroHasSuit = hero.some(function (c) { return c.slice(-1) === suit; });
+        var heroHasSuit = hero.some(function (c) { return cardSuit(c) === suit; });
         if (heroHasSuit) draws.push('Flush draw (9 outs)');
       }
     }

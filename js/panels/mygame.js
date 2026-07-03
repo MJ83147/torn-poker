@@ -1,8 +1,6 @@
 function renderMyGame(container, d, hands) {
   var playerName = State.meta.player || detectPlayerFromActions(hands) || 'Unknown';
-  var exportDate = State.meta.exportedAt
-    ? new Date(State.meta.exportedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
-    : '';
+  var exportDate = fmtDate(State.meta.exportedAt);
 
   var html = '';
 
@@ -113,7 +111,7 @@ function renderMyGame(container, d, hands) {
     if (!workOn && allLeaks.length) workOn = { sev: allLeaks[0].severity, label: allLeaks[0].name, desc: '', action: 'Focus on this pattern in your next session and track whether the stat improves.' };
 
     if (workOn) {
-      html += '<div class="box work-on-' + workOn.sev + '">';
+      html += '<div class="box list work-on-' + workOn.sev + '">';
       html += '<div class="lead work-on-title">' + workOn.label + '</div>';
       html += '<div class="list">';
       if (workOn.desc) html += '<div class="text-body">' + workOn.desc + '</div>';
@@ -121,7 +119,7 @@ function renderMyGame(container, d, hands) {
       html += '</div>';
       html += '</div>';
     } else {
-      html += '<div class="box work-on-g">';
+      html += '<div class="box list work-on-g">';
       html += '<div class="lead work-on-title">Solid game</div>';
       html += '<div class="text-body">No major leaks detected from ' + d.n + ' hands. Keep playing to refine the picture.</div>';
       html += '</div>';
@@ -273,8 +271,8 @@ function renderTableDynamicsReference(hands, d) {
     h += '<div class="insight-coaching">';
     h += '<div class="eyebrow c-warn">Coaching</div>';
     h += '<div class="text-body dynamics-coaching">' + fe.notes + '</div>';
-    h += '<div class="text-meta dynamics-card-kv row between"><span class="eyebrow">Bet sizing</span><span>' + fe.cbetSizing + '</span></div>';
-    h += '<div class="text-meta dynamics-card-kv row between"><span class="eyebrow">Continue with</span><span>' + fe.continueRange + '</span></div>';
+    h += '<div class="text-meta dynamics-card-kv row between"><span class="eyebrow c-muted">Bet sizing</span><span>' + fe.cbetSizing + '</span></div>';
+    h += '<div class="text-meta dynamics-card-kv row between"><span class="eyebrow c-muted">Continue with</span><span>' + fe.continueRange + '</span></div>';
     h += '</div>';
     h += '</div>';
   }

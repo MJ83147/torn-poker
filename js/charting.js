@@ -10,6 +10,11 @@ function getChartColors() {
   };
 }
 
+// Single source of truth for chart typography (matches the app's mono font).
+function chartFont(size) {
+  return { family: 'IBM Plex Mono', size: size || 10 };
+}
+
 function chartTooltip(colors, callbacks) {
   return {
     backgroundColor: 'rgba(20,20,28,0.95)',
@@ -17,8 +22,8 @@ function chartTooltip(colors, callbacks) {
     bodyColor: '#eee',
     borderColor: colors.border,
     borderWidth: 1,
-    titleFont: { family: 'IBM Plex Mono', size: 11 },
-    bodyFont:  { family: 'IBM Plex Mono', size: 11 },
+    titleFont: chartFont(11),
+    bodyFont:  chartFont(11),
     padding: 10,
     callbacks: callbacks || {},
   };
@@ -32,7 +37,7 @@ function chartLegend(colors, show) {
     align: 'start',
     labels: {
       color: colors.dim,
-      font: { family: 'IBM Plex Mono', size: 11 },
+      font: chartFont(11),
       boxWidth: 14,
       boxHeight: 2,
       padding: 16,
@@ -45,7 +50,7 @@ function chartXScale(colors, opts) {
   var scale = {
     ticks: {
       color: colors.dim,
-      font: { family: 'IBM Plex Mono', size: opts.tickSize || 10 },
+      font: chartFont(opts.tickSize),
     },
     grid: { color: 'transparent' },
     border: { color: colors.border },
@@ -59,7 +64,7 @@ function chartXScale(colors, opts) {
       display: true,
       text: opts.title,
       color: colors.dim,
-      font: { family: 'IBM Plex Mono', size: 10 },
+      font: chartFont(10),
     };
   }
   return scale;
@@ -70,7 +75,7 @@ function chartYScale(colors, opts) {
   var scale = {
     ticks: {
       color: colors.dim,
-      font: { family: 'IBM Plex Mono', size: opts.tickSize || 10 },
+      font: chartFont(opts.tickSize),
     },
     grid: { color: opts.gridColor || 'rgba(255,255,255,0.04)' },
     border: { display: false },
@@ -87,7 +92,7 @@ function chartYScaleZeroLine(colors, opts) {
   return {
     ticks: {
       color: colors.dim,
-      font: { family: 'IBM Plex Mono', size: opts.tickSize || 10 },
+      font: chartFont(opts.tickSize),
       callback: opts.tickCallback,
     },
     grid: {

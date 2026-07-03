@@ -175,7 +175,7 @@ function insWithExample(sev, label, text, chips, exampleHands, coachingNote, coa
   var handsList = !exampleHands ? [] : Array.isArray(exampleHands) ? exampleHands : [exampleHands];
   if (!handsList.length) return base;
   const btnId = 'ex-' + Math.random().toString(36).slice(2, 8);
-  const btn = '<button class="btn btn-ghost example-hand-btn" id="' + btnId + '">See example hands</button>';
+  const btn = '<button class="btn btn-ghost" id="' + btnId + '">See example hands</button>';
   const insertPoint = base.lastIndexOf('</div>');
   const result = base.slice(0, insertPoint) + btn + base.slice(insertPoint);
   setTimeout(function() {
@@ -247,16 +247,16 @@ function renderPagination(page, totalItems, pageSize, prevId, nextId) {
     '<button class="btn btn-ghost" id="' + nextId + '" ' + (page >= totalPages - 1 ? 'disabled' : '') + '>Next &raquo;</button>';
 }
 
-// Maps the old severity letter (g/r/a/o) to a css2 background-fill utility.
-var BAR_BG = { g: 'bg-pos', r: 'bg-neg', a: 'bg-warn', o: 'bg-gold' };
 function barRow(label, val, max, cls, valStr, val2Str) {
   const w = max > 0 ? clamp(Math.round(val / max * 100), 0, 100) : 0;
-  var fill = BAR_BG[cls] || (cls || 'bg-gold');
+  // cls is a severity letter (g/r/a/n/o) mapped via INS_BG, or a literal
+  // bg-* utility class passed straight through.
+  var fill = INS_BG[cls] || (cls || 'bg-gold');
   return '<div class="bar ' + (val2Str ? 'bar-3' : '') + '">' +
     '<div class="c-gold fw-semibold">' + label + '</div>' +
     '<div class="bar-track"><div class="bar-fill ' + fill + '" style="width:' + w + '%"></div></div>' +
-    '<div class="bar-value text-meta">' + valStr + '</div>' +
-    (val2Str ? '<div class="bar-value text-micro">' + val2Str + '</div>' : '') +
+    '<div class="bar-value text-meta text-right">' + valStr + '</div>' +
+    (val2Str ? '<div class="bar-value text-micro text-right">' + val2Str + '</div>' : '') +
     '</div>';
 }
 

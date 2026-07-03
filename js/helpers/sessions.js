@@ -126,9 +126,9 @@ function renderBestWorstSessions(hands, overallData) {
     var pnlDisplay = isTourney ? 'Tournament' : fmtPnl(s.pnl);
     var pnlCellCls = isTourney ? '' : (typeof pnlValCls === 'function' ? pnlValCls(s.pnl) : '');
 
-    var sessStart = s.startTs ? new Date(s.startTs).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+    var sessStart = fmtDate(s.startTs);
     var lastHand = s.hands[s.hands.length - 1];
-    var sessEnd = (lastHand && lastHand.timestamp) ? new Date(lastHand.timestamp).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+    var sessEnd = fmtDate(lastHand && lastHand.timestamp);
     var dateLabel = sessStart ? (sessStart === sessEnd ? sessStart : sessStart + ' - ' + sessEnd) : '';
 
     html += '<div class="container">';
@@ -154,7 +154,7 @@ function renderBestWorstSessions(hands, overallData) {
 
     var seeHandsBtnId = 'see-sess-' + Math.random().toString(36).slice(2, 8);
     var sessTitle = sess.label + ' Hands';
-    html += '<button class="btn btn-ghost example-hand-btn" id="' + seeHandsBtnId + '">Show hands played</button>';
+    html += '<button class="btn btn-ghost" id="' + seeHandsBtnId + '">Show hands played</button>';
     setTimeout((function(id, title, h2) {
       return function() {
         var el = document.getElementById(id);

@@ -308,8 +308,7 @@ a {
 .ins-grid,
 .dynamics-cards,
 .saved-hands-list,
-.cr-headline,
-.style-welcome-cards {
+.cr-headline {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(var(--col-min, 280px), 1fr));
   gap: var(--sp-16);
@@ -676,15 +675,6 @@ a {
   border-bottom: none;
 }
 
-/* save/star toggle in a hand-log row (.icon-btn base; gold when saved) */
-.hrow-star {
-  color: var(--dim);
-}
-
-.hrow-star.starred {
-  color: var(--gold);
-}
-
 /* table extras: dimmed (excluded) row, small cell, inline spark bar */
 .table tr.excluded {
   opacity: 0.35;
@@ -743,10 +733,6 @@ a {
   transition: width .9s cubic-bezier(.4, 0, .2, 1);
 }
 
-.bar-value {
-  text-align: right;
-}
-
 /* Segmented / stacked bar: a flex track of .bar-seg pieces (widths inline). */
 .bar-stack {
   display: flex;
@@ -758,17 +744,6 @@ a {
 .bar-seg {
   height: 100%;
   transition: width .8s ease;
-}
-
-/* --- Chart wrapper: positioned canvas container --- */
-.chart {
-  position: relative;
-  width: 100%;
-  max-width: 720px;
-}
-
-.chart-full {
-  max-width: 900px;
 }
 
 /* --- Insight card: built on .box ---
@@ -789,17 +764,15 @@ a {
 
 /* body text owns size + line-height via .text-body in markup */
 
-.insight-chips,
-.insight-coaching {
-  margin-top: var(--sp-12);
-  padding-top: var(--sp-8);
-  border-top: var(--bw) solid var(--border);
-}
-
+/* Both sit below the insight body, separated by a top-border divider. The
+   margin-top is the divider gap (insight body has no structure gap). */
 .insight-chips {
   display: flex;
   flex-wrap: wrap;
   gap: var(--sp-4) var(--sp-12);
+  margin-top: var(--sp-12);
+  padding-top: var(--sp-8);
+  border-top: var(--bw) solid var(--border);
 }
 
 /* eyebrow + note stack tight; also hosts the dynamics coaching blocks */
@@ -807,6 +780,9 @@ a {
   display: flex;
   flex-direction: column;
   gap: var(--sp-4);
+  margin-top: var(--sp-12);
+  padding-top: var(--sp-8);
+  border-top: var(--bw) solid var(--border);
 }
 
 /* --- Story card: an expandable insight (head + collapsible body) ---
@@ -838,12 +814,12 @@ a {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
+  border-radius: var(--r-pill);
   background: color-mix(in srgb, var(--gold) 10%, transparent);
   border: var(--bw) solid var(--gold2);
   color: var(--gold);
   font-size: var(--fs-md);
-  line-height: 1;
+  line-height: var(--lh-none);
   transition: transform .15s, background .15s, border-color .15s;
 }
 
@@ -954,11 +930,6 @@ a {
 .badge-warn {
   background: color-mix(in srgb, var(--amber) 12%, transparent);
   color: var(--amber);
-}
-
-.badge-soft {
-  background: var(--tint-light-2);
-  color: var(--text);
 }
 
 .badge-gold {
@@ -1075,18 +1046,17 @@ a {
   background: color-mix(in srgb, var(--gold) 8%, transparent);
 }
 
-/* tiny inline icon button (stars, unsave) — no chrome, just the glyph */
-.icon-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  line-height: var(--lh-none);
-
-  transition: color .15s, transform .15s;
+/* star toggles (hand-log row, saved list, modal) go gold when active */
+.btn-icon.starred {
+  color: var(--gold);
+  border-color: var(--gold2);
 }
 
-.icon-btn:hover {
-  transform: scale(1.15);
+/* modal star sits in the header corner — position only, look from .btn-icon */
+.modal-star-btn {
+  position: absolute;
+  top: var(--sp-8);
+  right: 52px;
 }
 
 /* --- Form controls (field base lives in the reset) ---
@@ -1330,30 +1300,15 @@ a {
   display: none;
 }
 
+/* shown as a gapped column so the header + textarea space via the gap */
 .modal-notes.show {
-  display: block;
-}
-
-.modal-notes-header {
-  margin-bottom: var(--sp-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
 }
 
 .modal-notes-status {
   transition: color .3s;
-}
-
-.modal-star-btn {
-  position: absolute;
-  top: var(--sp-8);
-  right: 52px;
-  font-size: var(--fs-xl);
-  color: var(--dim);
-  padding: var(--sp-6) var(--sp-8);
-}
-
-
-.modal-star-btn.starred {
-  color: var(--gold);
 }
 
 /* hand-list rows (in the hand-list popup; also used by range) */
@@ -1565,16 +1520,12 @@ a {
   z-index: 20;
 }
 
-/* colour states (green is shared by gto/hero/high-freq) */
-.rc[data-gto="green"],
-.rc[data-hero="ontarget"],
-.rc.rc-played[data-freq="high"],
-.rc.rc-played[data-freq="med-high"] {
+/* colour states */
+.rc[data-gto="green"] {
   background: var(--green);
 }
 
-.rc[data-gto="red"],
-.rc[data-hero="wrong"] {
+.rc[data-gto="red"] {
   background: var(--gto-red);
 }
 
@@ -1586,13 +1537,11 @@ a {
   background: var(--gto-grey);
 }
 
-.rc[data-gto="white"],
-.rc[data-hero="unjudged"] {
+.rc[data-gto="white"] {
   background: var(--gto-white);
 }
 
-.rc[data-gto="white"] span,
-.rc[data-hero="unjudged"] span {
+.rc[data-gto="white"] span {
   color: var(--gto-dark-fg);
 }
 
@@ -1635,45 +1584,6 @@ a {
   cursor: pointer;
 }
 
-.rc.rc-played[data-freq="low"] {
-  background: var(--freq-low);
-}
-
-.rc.rc-played[data-freq="med"] {
-  background: var(--freq-med);
-}
-
-/* cell state modifiers */
-.rc.rc-played {
-  outline: var(--sp-2) solid var(--gold);
-  outline-offset: -2px;
-  box-shadow: 0 0 0 var(--bw) rgba(0, 0, 0, 0.35) inset;
-}
-
-.rc.rc-folded {
-  opacity: var(--range-folded-opacity);
-}
-
-.rc.rc-undealt {
-  opacity: 0.85;
-}
-
-/* --- Equity viz ---
-   The equity bar reuses .bar / .bar-track / .bar-fill.bg-pos. These add the
-   gold summary callout and the centred SVG-curve container. */
-.equity-summary {
-  margin-top: var(--sp-12);
-  padding: var(--sp-8) var(--sp-12);
-  border-left: 3px solid var(--gold);
-}
-
-.equity-curve {
-  margin-top: var(--sp-8);
-  padding-top: var(--sp-8);
-  border-top: var(--bw) solid var(--border);
-  text-align: center;
-}
-
 /* --- Carousel: track of slides + arrows + dots --- */
 .carousel {
   position: relative;
@@ -1694,27 +1604,6 @@ a {
 
 .carousel-slide.active {
   display: block;
-}
-
-.carousel-arrow {
-  flex-shrink: 0;
-  width: 28px;
-  height: 28px;
-  border-radius: var(--r-pill);
-  border: var(--bw) solid var(--border);
-  background: none;
-  color: var(--dim);
-  font-size: var(--fs-xl);
-
-  line-height: var(--lh-none);
-
-  cursor: pointer;
-  transition: border-color .2s, color .2s;
-}
-
-.carousel-arrow:hover {
-  border-color: var(--gold2);
-  color: var(--gold);
 }
 
 .carousel-dots {
@@ -1745,11 +1634,6 @@ a {
   line-height: var(--lh-body);
 
   color: var(--text);
-}
-
-.sentence-stem,
-.sentence-join {
-  color: var(--dim);
 }
 
 .sentence-token {
@@ -1824,34 +1708,6 @@ a {
   flex: 1;
   height: var(--bw);
   background: var(--border);
-}
-
-/* --- Expandable section: header + chevron + collapsible body ---
-   Generic version of the story-card pattern; toggle .open on the root. */
-.expand-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--sp-12) 0;
-  cursor: pointer;
-}
-
-.expand-chevron {
-  color: var(--dim);
-  transition: transform .15s;
-}
-
-.expand.open .expand-chevron {
-  transform: rotate(180deg);
-}
-
-.expand-body {
-  display: none;
-  padding-bottom: var(--sp-12);
-}
-
-.expand.open .expand-body {
-  display: block;
 }
 
 /* --- Card-deal animation (loader / maintenance) ---
@@ -1996,7 +1852,7 @@ body.maintenance #maintenance {
 }
 
 .hs-l {
-  margin-bottom: 5px;
+  margin-bottom: var(--sp-4);
   white-space: nowrap;
 }
 
@@ -2181,10 +2037,6 @@ body.maintenance #maintenance {
   animation: eq-spin .8s linear infinite;
 }
 
-.eq-spinner-text {
-  color: var(--dim);
-}
-
 @keyframes eq-spin {
   to {
     transform: rotate(360deg);
@@ -2211,84 +2063,49 @@ body.maintenance #maintenance {
 
 
 /* --- Paste / import pages --- */
+/* structural wrap: centres the hero card + caps its width (no role/util covers
+   a max-width column) */
 #paste-wrap {
   max-width: 800px;
   margin: 0 auto;
-  padding: 40px var(--sp-24);
+  padding: var(--sp-32) var(--sp-24);
 }
 
+/* card+card-s1+section own border/radius/bg/stacking in markup; this keeps
+   only the hero card's generous centred padding (card's own padding is tighter) */
 .paste-box {
-  padding: 44px var(--sp-24);
+  padding: var(--sp-32) var(--sp-24);
   text-align: center;
-  background: var(--s1);
-  border: var(--bw) solid var(--border);
-  border-radius: var(--r-lg);
 }
 
+/* decorative serif glyph (like card-glyph): its font-size is intentional */
 .paste-suit {
   font-family: var(--serif);
   font-size: var(--fs-3xl);
-
   color: var(--gold2);
   opacity: .5;
-  margin-bottom: var(--sp-16);
 }
 
-/* size comes from .text-meta in markup; this keeps the error colour + gap */
-.paste-error {
-  color: var(--red);
-  margin-bottom: var(--sp-8);
-}
-
+/* justify-end + top padding; row supplies display/gap/wrap in markup */
 .paste-nav {
-  display: flex;
   justify-content: flex-end;
-  gap: var(--sp-24);
   padding: var(--sp-12) var(--sp-24) 0;
 }
 
-.paste-nav-link {
-  font-size: var(--fs-xs);
-
-  letter-spacing: var(--bw);
-
-  color: var(--dim);
-  text-decoration: none;
-  cursor: pointer;
-}
-
-.paste-nav-link:hover {
-  color: var(--gold);
+/* hero-card buttons sit narrow and centred; section gap owns vertical spacing */
+.paste-box .btn {
+  width: 60%;
+  align-self: center;
 }
 
 textarea#jin {
   min-height: 50px;
 }
 
-.paste-box .btn {
-  width: 60%;
-  margin-top: var(--sp-16);
-}
-
-.paste-box .btn-primary {
-  margin-bottom: var(--sp-24);
-}
-
+/* section stacks the divider block; this adds the rule + space above it */
 .paste-manual {
   border-top: var(--bw) solid var(--border);
   padding-top: var(--sp-24);
-  margin-top: var(--sp-8);
-}
-
-.restore-block {
-  display: none;
-  margin-top: var(--sp-24);
-  padding-top: var(--sp-24);
-  border-top: var(--bw) solid var(--border);
-}
-
-.restore-btn {
-  margin-top: 0;
 }
 
 /* --- Header style picker + page meta --- */
@@ -2305,10 +2122,6 @@ textarea#jin {
   color: var(--gold);
 }
 
-.fw-600 {
-  font-weight: var(--fw-semibold);
-}
-
 .link-gold {
   color: var(--gold);
   text-decoration: underline;
@@ -2319,39 +2132,6 @@ textarea#jin {
   align-items: center;
   gap: var(--sp-6);
   padding: var(--sp-4) var(--sp-8);
-}
-
-.style-display .sd-you-label,
-.style-display .sd-target-label {
-  color: var(--dim);
-  font-size: var(--fs-xs);
-}
-
-
-.style-display .sd-you-val {
-  color: var(--text);
-  font-weight: var(--fw-semibold);
-}
-
-.style-display .sd-arrow {
-  color: var(--dim);
-  margin: 0 var(--sp-2);
-}
-
-.style-display .sd-target-pick {
-  background: transparent;
-  color: var(--gold);
-  border: var(--bw) solid var(--border);
-  border-radius: var(--r-sm);
-  padding: var(--sp-2) var(--sp-6);
-  font-size: var(--fs-md);
-  font-weight: var(--fw-semibold);
-  cursor: pointer;
-}
-
-
-.style-display .sd-target-pick:hover {
-  border-color: var(--gold);
 }
 
 /* --- How it works box --- */
@@ -2422,15 +2202,13 @@ textarea#jin {
   color: var(--muted);
 }
 
+/* hole-card display: serif gold heading for the saved-hand cards (merged) */
 .saved-card-hole {
   font-family: var(--serif);
   font-weight: var(--fw-bold);
   line-height: var(--lh-tight);
-
-}
-
-.style-card-name {
-  margin-bottom: var(--sp-6);
+  font-size: var(--fs-lg);
+  color: var(--gold);
 }
 
 .dynamics-vs.v-ok .dynamics-vs-verdict {
@@ -2453,40 +2231,29 @@ textarea#jin {
   background: var(--dot-tag);
 }
 
-/* size + colour come from .lead in markup; this keeps the heading weight + gap */
+/* size + colour come from .lead in markup; this keeps the heading weight only
+   (the .box .list gap owns the space to the body). */
 .work-on-title {
   font-weight: var(--fw-semibold);
-  margin-bottom: var(--sp-8);
 }
 
 .dynamics-cards {
   gap: var(--sp-12);
-  margin-top: var(--sp-12);
 }
 
 .dynamics-card {
   background: color-mix(in srgb, var(--white) 2%, transparent);
 }
 
-/* note text owns its line-height via .text-body in markup */
-.dynamics-card-note {
-  margin-bottom: var(--sp-8);
-}
-
 .dynamics-card-kv {
   display: flex;
   justify-content: space-between;
   gap: var(--sp-8);
-  padding: 3px 0;
+  padding: var(--sp-4) 0;
   border-top: var(--bw) solid color-mix(in srgb, var(--white) 4%, transparent);
 }
 
-/* label span composes .eyebrow in markup for its 12px uppercase tracking;
-   this rule only overrides the colour to muted. */
-.dynamics-card-kv span:first-child {
-  color: var(--muted);
-}
-
+/* value span keeps its layout (right-align + width cap) */
 .dynamics-card-kv span:last-child {
   text-align: right;
   max-width: 65%;
@@ -2502,10 +2269,6 @@ textarea#jin {
 
 .dynamics-vs-stat {
   margin-bottom: var(--sp-4);
-}
-
-.dynamics-coaching {
-  margin-bottom: var(--sp-8);
 }
 
 .dynamics-vs-top {
@@ -2652,16 +2415,6 @@ textarea#jin {
   position: relative;
 }
 
-.saved-card-top {
-  margin-bottom: var(--sp-6);
-}
-
-.saved-card-hole {
-  font-size: var(--fs-lg);
-
-  color: var(--gold);
-}
-
 .saved-pos {
   color: var(--gold2);
   font-weight: var(--fw-medium);
@@ -2678,12 +2431,7 @@ textarea#jin {
   color: var(--red);
 }
 
-.saved-card-board {
-  margin-bottom: var(--sp-4);
-}
-
 .saved-card-acts {
-  margin-bottom: var(--sp-8);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -2691,7 +2439,6 @@ textarea#jin {
 
 .saved-card-note-wrap {
   padding: var(--sp-6) var(--sp-8);
-  margin-bottom: var(--sp-6);
 }
 
 .saved-note-preview {
@@ -2706,11 +2453,6 @@ textarea#jin {
 
 .saved-card-note-empty {
   font-style: italic;
-  margin-bottom: var(--sp-6);
-}
-
-.saved-card-date {
-  text-align: right;
 }
 
 .welcome-wrap {
@@ -2740,14 +2482,16 @@ textarea#jin {
   flex-direction: column;
   flex: 1;
   min-width: 0;
+  gap: var(--sp-4);
 }
 
+/* Two-column link row (tab name | description). Layout only — the parent's
+   gap owns the spacing between rows and the section head. */
 .welcome-toc-row {
   display: grid;
   grid-template-columns: 100px 1fr;
   gap: var(--sp-16);
   padding: var(--sp-12) var(--sp-12);
-  margin-bottom: var(--sp-4);
 }
 
 .welcome-tips {
@@ -2800,19 +2544,15 @@ textarea#jin {
   text-align: center;
 }
 
+/* Style-picker card grid: same fill-and-wrap auto-grid as the §3 card grids,
+   with a tighter --col-min. Kept self-contained here (not in the §3 shared
+   selector) so §3 UTILITIES holds no feature classes. */
 .style-welcome-cards {
   --col-min: 180px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(var(--col-min), 1fr));
+  gap: var(--sp-16);
 }
-
-.style-card {
-  padding: 22px 18px;
-  text-align: left;
-  color: var(--text);
-}
-
-/* size + colour come from `title title-lg c-gold` in markup */
-
-/* description text owns its line-height via .text-body in markup */
 
 .style-map-canvas-wrap {
   position: relative;
@@ -2922,11 +2662,6 @@ textarea#jin {
   align-items: end;
 }
 
-.cr-charts {
-  --col-min: 340px;
-  gap: var(--sp-24);
-}
-
 /* Tablet: collapse the welcome two-column body and TOC rows to one column.
    These were orphaned (the @media wrappers were lost in the css2 cutover),
    which forced the single-column layout onto every screen. */
@@ -2984,24 +2719,6 @@ textarea#jin {
     max-width: 96vw;
     padding: var(--sp-16);
   }
-}
-
-/* "see example" / run-sim buttons (compose with .btn) — a clear resting
-   button look (filled + gold outline) so they read as buttons, not hover-only. */
-.example-hand-btn {
-  margin-top: var(--sp-8);
-  padding: var(--sp-6) var(--sp-12);
-  text-transform: uppercase;
-  letter-spacing: var(--bw);
-
-  background: var(--s1);
-  border-color: var(--gold2);
-  color: var(--gold);
-}
-
-.example-hand-btn:hover:not([disabled]) {
-  background: var(--s2);
-  border-color: var(--gold);
 }
 
 /* Cards panel: each hand-type bar is a button into its example hands. */
@@ -3091,8 +2808,8 @@ textarea#jin {
   transition: width .3s;
 }
 
+/* margin-top divides it from the badges above (eq-row-bottom has no structure gap) */
 .eq-detail {
-  line-height: var(--lh-normal);
   margin-top: var(--sp-4);
 }
 
@@ -3103,18 +2820,20 @@ textarea#jin {
   text-align: center;
 }
 
+/* margin-top + gold accent bar divide the summary from the rows above (eq-sim
+   card has no structure gap). 3px = deliberate accent border, not a hairline. */
 .eq-summary {
   margin-top: var(--sp-12);
   padding: var(--sp-8) var(--sp-12);
   border-left: 3px solid var(--gold);
 }
 
-/* .eq-summary-text: line-height owned by .text-body in markup */
+/* margin-top + top-border divide it from the summary above; type owned by
+   .text-micro in markup. */
 .eq-caveats {
   margin-top: var(--sp-8);
   padding-top: var(--sp-8);
   border-top: var(--bw) solid var(--border);
-  line-height: var(--lh-normal);
 }
 
 .eq-spinner {
@@ -3123,12 +2842,4 @@ textarea#jin {
   gap: var(--sp-8);
   padding: var(--sp-12) 0;
 }
-
-.eq-spinner-ring {
-  width: 18px;
-  height: 18px;
-  border: var(--sp-2) solid var(--border);
-  border-top-color: var(--gold);
-  border-radius: var(--r-pill);
-  animation: eq-spin .8s linear infinite;
-}
+/* .eq-spinner-ring is defined once in §5 (Panel loading placeholder). */

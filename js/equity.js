@@ -126,7 +126,7 @@ function renderEquityResults(container, simResult) {
     var res = results[r];
     var eqPct = fmtPct(res.equity * 100);
     var barWidth = Math.round(res.equity * 100);
-    var qualClass = res.guidance.quality === 'good' ? 'val-pos' : res.guidance.quality === 'bad' ? 'val-neg' : 'text-gold';
+    var qualClass = res.guidance.quality === 'good' ? 'val-pos' : res.guidance.quality === 'bad' ? 'val-neg' : 'c-gold';
 
     curvePoints.push({ street: res.street, equity: res.equity });
 
@@ -193,7 +193,7 @@ function renderEquityResults(container, simResult) {
   }
 
   if (summary && summary.text) {
-    var sumClass = summary.quality === 'good' ? 'val-pos' : summary.quality === 'bad' ? 'val-neg' : 'text-gold';
+    var sumClass = summary.quality === 'good' ? 'val-pos' : summary.quality === 'bad' ? 'val-neg' : 'c-gold';
     html += '<div class="box eq-summary">';
     html += '<div class="card-title c-gold">Hand Summary</div>';
     html += '<div class="text-body eq-summary-text ' + sumClass + '">' + summary.text + '</div>';
@@ -243,7 +243,7 @@ function injectEquityButton(box, hand) {
   if (!hasBoard && !heroAllInPreflop) return;
 
   var btn = document.createElement('button');
-  btn.className = 'btn btn-secondary example-hand-btn';
+  btn.className = 'btn btn-secondary';
   btn.id = 'mc-sim-btn';
   btn.textContent = 'Run Equity Simulation';
   slot.appendChild(btn);

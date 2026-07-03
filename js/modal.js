@@ -149,7 +149,7 @@ function showExampleHandModal(hand, coachingNote) {
     : '';
 
   var starred = isHandStarred(hand);
-  var starBtn = '<button class="icon-btn modal-star-btn' + (starred ? ' starred' : '') + '" id="modal-star-btn" title="' + (starred ? 'Unsave hand' : 'Save hand') + '">' + (starred ? '&#9733;' : '&#9734;') + '</button>';
+  var starBtn = '<button class="btn btn-icon modal-star-btn' + (starred ? ' starred' : '') + '" id="modal-star-btn" title="' + (starred ? 'Unsave hand' : 'Save hand') + '">' + (starred ? '&#9733;' : '&#9734;') + '</button>';
 
   var noteVal = getHandNote(hand).replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   var notesSection = '<div class="modal-notes' + (starred ? ' show' : '') + '" id="modal-notes">' +
@@ -280,7 +280,7 @@ function showExampleHandListModal(title, handsList, coachingNote) {
     if (remaining > 0) {
       var btn = document.createElement('button');
       btn.id = 'load-more-btn';
-      btn.className = 'btn btn-ghost example-hand-btn';
+      btn.className = 'btn btn-ghost';
       btn.textContent = 'Load more (' + remaining + ' remaining)';
       btn.onclick = loadBatch;
       rowsContainer.parentNode.appendChild(btn);

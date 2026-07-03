@@ -9,6 +9,23 @@ var SUIT_LETTER  = { h: '\u2665', d: '\u2666', c: '\u2663', s: '\u2660' };
 var SUIT_TO_CODE = { '\u2665': 'h', '\u2666': 'd', '\u2663': 'c', '\u2660': 's' };
 var SUIT_CLASS   = { h: 'r', d: 'r', c: 'b', s: 'b' };
 
+// ---- Card primitives (shared by hand-evaluator, insights, panels) ----
+// Accessors on a "rank+suit" card string ("A\u2660", "Ts"): the last char is the
+// suit, everything before it is the rank.
+function cardRank(card) { return card.slice(0, -1); }
+function cardSuit(card) { return card.slice(-1); }
+function cardRankIndex(card) { return RANKS.indexOf(card.slice(0, -1)); }
+
+// Frequency map over an array of primitive values: [a,a,b] -> {a:2, b:1}.
+// Centralises the counts[k]=(counts[k]||0)+1 idiom used for rank/suit tallies.
+function freqMap(values) {
+  var counts = {};
+  for (var i = 0; i < values.length; i++) {
+    counts[values[i]] = (counts[values[i]] || 0) + 1;
+  }
+  return counts;
+}
+
 // Normalise to "rank+suit-symbol": "3hearts"→"3♥", "10spades"→"T♠", "Ts"→"Ts"
 function normCard(c) {
   if (!c || typeof c !== 'string') return c;
@@ -45,13 +62,10 @@ function displayCards(cards) {
 function classifyBoardTexture(boardCards) {
   if (!boardCards || boardCards.length < 3) return null;
   var cards = boardCards.map(normCard);
-  var ranks = cards.map(function(c) { return RANKS.indexOf(c.slice(0, -1)); });
-  var suits = cards.map(function(c) { return c.slice(-1); });
+  var ranks = cards.map(cardRankIndex);
+  var suits = cards.map(cardSuit);
 
-  var suitCounts = {};
-  for (var i = 0; i < suits.length; i++) {
-    suitCounts[suits[i]] = (suitCounts[suits[i]] || 0) + 1;
-  }
+  var suitCounts = freqMap(suits);
   var maxSuit = 0;
   for (var s in suitCounts) { if (suitCounts[s] > maxSuit) maxSuit = suitCounts[s]; }
 
@@ -83,10 +97,7 @@ function classifyBoardTexture(boardCards) {
 
   var highCard = RANKS[sorted[sorted.length - 1]];
 
-  var boardRankCounts = {};
-  for (var rc = 0; rc < ranks.length; rc++) {
-    boardRankCounts[ranks[rc]] = (boardRankCounts[ranks[rc]] || 0) + 1;
-  }
+  var boardRankCounts = freqMap(ranks);
 
   var score = 0;
   if (monotone) score += 3;

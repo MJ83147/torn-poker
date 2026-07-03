@@ -258,7 +258,7 @@ function checkSavedSession() {
         day: 'numeric', month: 'short', year: 'numeric',
       }) : '';
       rl.textContent = hands.length + ' hands from ' + playerName + (date ? ' · ' + date : '') + ' found in storage';
-      rb.style.display = 'block';
+      rb.classList.remove('hidden');
       document.getElementById('restore-btn').onclick = function () {
         var meta = {
           player: playerName,
@@ -372,7 +372,7 @@ function renderActivePanelDeferred(forceTabId) {
   if (_panelsRenderedFor[tabId] === filterKey) return;
   var container = document.getElementById('p-' + tabId);
   if (container) {
-    container.innerHTML = '<div class="panel-loading"><div class="eq-spinner-ring"></div><div class="eq-spinner-text">Crunching numbers…</div></div>';
+    container.innerHTML = '<div class="panel-loading"><div class="eq-spinner-ring"></div><div class="eq-spinner-text c-dim">Crunching numbers…</div></div>';
   }
   setTimeout(function () { renderActivePanel(tabId); }, 0);
 }
@@ -664,7 +664,7 @@ function finishUpload(results) {
     } else if (r.count === 0) {
       html += '<div class="text-body upload-row upload-row-empty">' + r.name + ' - no valid hands found</div>';
     } else {
-      html += '<div class="text-body upload-row"><strong class="text-gold">' + r.count + '</strong> hands from ' + r.name + '</div>';
+      html += '<div class="text-body upload-row"><strong class="c-gold">' + r.count + '</strong> hands from ' + r.name + '</div>';
       _uploadedHands = _uploadedHands.concat(r.hands);
       if (!(r.schemaVersion >= 2)) batchVersion = 1;
     }

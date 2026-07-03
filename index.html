@@ -68,12 +68,12 @@
   </div>
 
   <div id="app">
-    <div class="paste-nav">
-      <span id="how-it-works-btn" class="paste-nav-link">How it works</span>
-      <a href="https://greasyfork.org/en/scripts/569290-tc-poker-export" target="_blank" rel="noopener" class="paste-nav-link">Install Script</a>
+    <div class="paste-nav row">
+      <button id="how-it-works-btn" class="btn btn-ghost">How it works</button>
+      <a href="https://greasyfork.org/en/scripts/569290-tc-poker-export" target="_blank" rel="noopener" class="btn btn-ghost">Install Script</a>
     </div>
     <div id="paste-wrap">
-      <div class="paste-box">
+      <div class="paste-box card card-s1 section">
         <div class="paste-suit">♠</div>
         <div class="panel-header">
           <div class="title title-lg">Analyse your session</div>
@@ -81,25 +81,25 @@
         </div>
         <button class="btn btn-primary" id="paste-btn">Paste from Clipboard</button>
         <button class="btn btn-secondary" id="upload-nav-btn">Upload .json files instead</button>
-        <div id="paste-error" class="text-meta paste-error"></div>
-        <div class="paste-manual">
+        <div id="paste-error" class="text-meta c-neg"></div>
+        <div class="paste-manual section">
           <div class="list">
             <div class="eyebrow">Or paste manually:</div>
             <textarea id="jin" placeholder="Paste JSON here..."></textarea>
           </div>
           <button class="btn btn-secondary" id="go-btn">Analyse Session</button>
         </div>
-        <div id="restore-block" class="restore-block">
+        <div id="restore-block" class="paste-manual section hidden">
           <div class="list">
             <div class="text-body" id="restore-label"></div>
-            <button class="btn btn-secondary restore-btn" id="restore-btn">Restore Previous Session</button>
+            <button class="btn btn-secondary" id="restore-btn">Restore Previous Session</button>
           </div>
         </div>
       </div>
     </div>
 
     <div id="upload-wrap" class="hidden">
-      <div class="paste-box">
+      <div class="paste-box card card-s1 section">
         <div class="paste-suit">♣</div>
         <div class="panel-header">
           <div class="title title-lg">Upload hand files</div>
@@ -108,10 +108,10 @@
         <input type="file" id="upload-input" accept=".json" multiple class="hidden">
         <button class="btn btn-primary" id="upload-pick-btn">Choose .json files</button>
         <div id="upload-file-list" class="list"></div>
-        <div id="upload-error" class="text-meta paste-error"></div>
+        <div id="upload-error" class="text-meta c-neg"></div>
         <button class="btn btn-secondary hidden" id="upload-analyse-btn">Analyse merged hands</button>
         <div>
-          <span id="upload-back-btn" class="paste-nav-link">&larr; Back to paste</span>
+          <button id="upload-back-btn" class="btn btn-ghost">&larr; Back to paste</button>
         </div>
       </div>
     </div>
@@ -205,27 +205,27 @@
         <div class="list">
           <div class="hiw-step">
             <div class="hiw-num">1</div>
-            <div class="fw-600">Install Tampermonkey</div>
+            <div class="fw-semibold">Install Tampermonkey</div>
             <div class="text-body">You need the <a href="https://www.tampermonkey.net/" target="_blank" rel="noopener" class="link-gold">Tampermonkey</a> browser extension first. It's free and available for Chrome, Firefox, Edge, and Safari. This is what runs the tracking script.</div>
           </div>
           <div class="hiw-step">
             <div class="hiw-num">2</div>
-            <div class="fw-600">Install the TC Poker Export script</div>
+            <div class="fw-semibold">Install the TC Poker Export script</div>
             <div class="text-body">Install it from <a href="https://greasyfork.org/en/scripts/569290-tc-poker-export" target="_blank" rel="noopener" class="link-gold">Greasy Fork</a>. Once installed, a small tracker button appears next to the Poker header on Torn's poker page.</div>
           </div>
           <div class="hiw-step">
             <div class="hiw-num">3</div>
-            <div class="fw-600">Play poker on Torn</div>
+            <div class="fw-semibold">Play poker on Torn</div>
             <div class="text-body">Play as normal. The script silently captures every hand in the background and stores it in your browser's local storage. Nothing is sent anywhere.</div>
           </div>
           <div class="hiw-step">
             <div class="hiw-num">4</div>
-            <div class="fw-600">Export your session</div>
+            <div class="fw-semibold">Export your session</div>
             <div class="text-body">Click the TC Poker Tracker button on the poker page, then hit Analyse Session. Your hand data is copied to your clipboard.</div>
           </div>
           <div class="hiw-step">
             <div class="hiw-num">5</div>
-            <div class="fw-600">Paste and analyse</div>
+            <div class="fw-semibold">Paste and analyse</div>
             <div class="text-body">Come here and click Paste from Clipboard. Your full session is broken down instantly.</div>
           </div>
         </div>

@@ -69,15 +69,11 @@ function getHandKey(h) {
 }
 
 function getStarredHands() {
-  try { return JSON.parse(localStorage.getItem('tc_starred_hands') || '{}'); } catch(e) { return {}; }
+  return getJSON('tc_starred_hands', {});
 }
 
 function setStarredHands(map) {
-  try {
-    localStorage.setItem('tc_starred_hands', JSON.stringify(map));
-  } catch(e) {
-    console.warn('[starred] localStorage write failed:', e);
-  }
+  setJSON('tc_starred_hands', map);
 }
 
 function compactHand(h) {

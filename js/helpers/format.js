@@ -86,17 +86,23 @@ function fmtPct(v) {
   return (Math.round(v * 10) / 10) + '%';
 }
 
+// Single source of truth for the win/loss split used by all P&L styling.
+function pnlIsUp(val) {
+  return val >= 0;
+}
+
 function pnlCls(val) {
-  return val >= 0 ? 'c-pos' : 'c-neg';
+  return pnlIsUp(val) ? 'c-pos' : 'c-neg';
 }
 
 // Unscoped P&L color class for values outside .tbl (e.g. value blocks).
+// Same mapping as pnlCls; kept as a distinct name for call-site clarity.
 function pnlValCls(val) {
-  return val >= 0 ? 'c-pos' : 'c-neg';
+  return pnlIsUp(val) ? 'c-pos' : 'c-neg';
 }
 
 function pnlColor(val) {
-  return val >= 0 ? 'var(--green)' : 'var(--red)';
+  return pnlIsUp(val) ? 'var(--green)' : 'var(--red)';
 }
 
 function wrCls(wr) {
@@ -107,6 +113,19 @@ function wrCls(wr) {
 function fmtAvgAmount(chipArr, bbArr) {
   if (_displayBB && bbArr && bbArr.length) return avg(bbArr).toFixed(1) + ' BB';
   return fmt(Math.round(avg(chipArr)));
+}
+
+// Locale date formatting shared across sessions/trends/log/mygame/custom.
+// fmtDate -> "3 Jul 2026"; fmtDateShort -> "3 Jul". Accept a ms timestamp or
+// Date; return '' for falsy input.
+function fmtDate(ts) {
+  if (!ts) return '';
+  return new Date(ts).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function fmtDateShort(ts) {
+  if (!ts) return '';
+  return new Date(ts).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 }
 
 // Join a list as "A", "A and B", or "A, B, and C".

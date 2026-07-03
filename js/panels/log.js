@@ -31,7 +31,7 @@ function renderLog(container, hands) {
     setSlot(container, 'rows', pageHands.map(function(h, pi) {
       var globalIdx = start + pi;
       var starred = isHandStarred(h);
-      var starHtml = '<span class="icon-btn hrow-star' + (starred ? ' starred' : '') + '" data-star-idx="' + globalIdx + '" title="' + (starred ? 'Unsave' : 'Save') + ' hand">' + (starred ? '&#9733;' : '&#9734;') + '</span>';
+      var starHtml = '<span class="btn btn-icon hrow-star' + (starred ? ' starred' : '') + '" data-star-idx="' + globalIdx + '" title="' + (starred ? 'Unsave' : 'Save') + ' hand">' + (starred ? '&#9733;' : '&#9734;') + '</span>';
       return renderHandRow(h, globalIdx, { starHtml: starHtml });
     }).join(''));
 
@@ -110,21 +110,21 @@ function renderSavedSection() {
       ? '<div class="text-micro saved-note-preview">' + entry.note.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, ' ') + '</div>'
       : '';
 
-    var savedDate = entry.savedAt ? new Date(entry.savedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '';
+    var savedDate = fmtDateShort(entry.savedAt);
 
-    html += '<div class="card card-link saved-card" data-saved-key="' + keys[i].replace(/"/g, '&quot;') + '">' +
+    html += '<div class="card card-link list saved-card" data-saved-key="' + keys[i].replace(/"/g, '&quot;') + '">' +
       '<div class="row between saved-card-top">' +
         '<div class="saved-card-hole">' + (h.hole ? displayCards(h.hole.map(normCard)) : '??') + '</div>' +
         '<div class="text-meta row center">' +
           '<span class="saved-pos">' + (h.position || '?') + '</span>' +
           res +
         '</div>' +
-        '<button class="icon-btn saved-unsave" data-unsave-key="' + keys[i].replace(/"/g, '&quot;') + '" title="Remove from saved">&#9733;</button>' +
+        '<button class="btn btn-icon saved-unsave" data-unsave-key="' + keys[i].replace(/"/g, '&quot;') + '" title="Remove from saved">&#9733;</button>' +
       '</div>' +
       '<div class="text-meta saved-card-board">' + (h.board && h.board.length ? displayCards(h.board.map(normCard)) : 'No board') + '</div>' +
       '<div class="text-meta saved-card-acts">' + (myActs || 'No actions') + '</div>' +
       (notePreview ? '<div class="card card-s2 saved-card-note-wrap">' + notePreview + '</div>' : '<div class="text-micro saved-card-note-empty">No notes</div>') +
-      '<div class="text-micro saved-card-date">' + savedDate + '</div>' +
+      '<div class="text-micro text-right saved-card-date">' + savedDate + '</div>' +
       '</div>';
   }
   html += '</div></div></div>';

@@ -187,7 +187,7 @@
       var label = escapeHtml(ex.label || 'See example hands');
       var count = ex.hands.length;
       parts.push(
-        '<button class="btn btn-ghost example-hand-btn" data-ex="' + id + '">' +
+        '<button class="btn btn-ghost" data-ex="' + id + '">' +
           escapeHtml(label) + ' (' + count + ')' +
         '</button>'
       );

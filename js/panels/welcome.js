@@ -72,13 +72,13 @@ function renderWelcome(container, d, hands, meta) {
     '<div class="text-body welcome-tips">' +
     '<div class="section-head">Tips</div>' +
     '<div class="carousel">' +
-    '<button class="carousel-arrow row center middle" id="tip-prev">&#8249;</button>' +
+    '<button class="btn btn-icon" id="tip-prev">&#8249;</button>' +
     '<div class="carousel-track">' +
     tips.map(function(t, i) {
       return '<div class="carousel-slide text-body welcome-tip' + (i === 0 ? ' active' : '') + '">' + t + '</div>';
     }).join('') +
     '</div>' +
-    '<button class="carousel-arrow row center middle" id="tip-next">&#8250;</button>' +
+    '<button class="btn btn-icon" id="tip-next">&#8250;</button>' +
     '</div>' +
     '<div class="carousel-dots">' +
     tips.map(function(_, i) {

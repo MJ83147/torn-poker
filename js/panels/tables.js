@@ -84,7 +84,7 @@ function renderTables(container, hands, allHands, excludedTables, onRerender) {
       ? fmtBB(r.avgPot, TABLE_META[r.tid].bb)
       : fmt(r.avgPot);
     rowsHtml += '<td class="c-dim">' + (r.avgPot > 0 ? tblAvgPotDisp : '-') + '</td>';
-    rowsHtml += '<td><button class="btn btn-ghost exclude-btn exclude-table-btn" data-tid="' + r.tid + '">' + (isExcluded ? 'Include' : 'Exclude') + '</button></td></tr>';
+    rowsHtml += '<td><button class="btn btn-ghost exclude-table-btn" data-tid="' + r.tid + '">' + (isExcluded ? 'Include' : 'Exclude') + '</button></td></tr>';
   }
   setSlot(container, 'rows', rowsHtml);
 
