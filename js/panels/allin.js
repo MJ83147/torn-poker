@@ -130,9 +130,9 @@ function renderAllIn(container, d, hands) {
     var actCls = ah.actualResult >= 0 ? 'c-pos' : 'c-neg';
     previewHtml += '<tr class="allin-row link" data-allin-idx="' + ti + '">' +
       '<td>' + (ti + 1) + '</td>' +
-      '<td class="allin-cards">' + displayCards(ah.heroHole) + '</td>' +
-      '<td class="allin-cards">' + ah.opponents.map(function (opp) { return displayCards(opp); }).join('<br>') + '</td>' +
-      '<td class="allin-cards">' + (ah.fullBoard.length ? displayCards(ah.fullBoard) : '\u2014') + '</td>' +
+      '<td>' + displayCards(ah.heroHole) + '</td>' +
+      '<td>' + ah.opponents.map(function (opp) { return displayCards(opp); }).join('<br>') + '</td>' +
+      '<td>' + (ah.fullBoard.length ? displayCards(ah.fullBoard) : '\u2014') + '</td>' +
       '<td>' + ah.street + '</td>' +
       '<td>' + fmt(ah.potAtAllIn) + '</td>' +
       '<td class="' + actCls + '">' + fmtPnl(Math.round(ah.actualResult)) + '</td>' +
@@ -241,9 +241,9 @@ function showAllInResults(container) {
     var actCls = ah.actualResult >= 0 ? 'c-pos' : 'c-neg';
     html += '<tr class="allin-row link" data-allin-idx="' + ti + '">' +
       '<td>' + (ti + 1) + '</td>' +
-      '<td class="allin-cards">' + displayCards(ah.heroHole) + '</td>' +
-      '<td class="allin-cards">' + ah.opponents.map(function (opp) { return displayCards(opp); }).join('<br>') + '</td>' +
-      '<td class="allin-cards">' + (ah.fullBoard.length ? displayCards(ah.fullBoard) : '\u2014') + '</td>' +
+      '<td>' + displayCards(ah.heroHole) + '</td>' +
+      '<td>' + ah.opponents.map(function (opp) { return displayCards(opp); }).join('<br>') + '</td>' +
+      '<td>' + (ah.fullBoard.length ? displayCards(ah.fullBoard) : '\u2014') + '</td>' +
       '<td>' + ah.street + '</td>' +
       '<td>' + fmtPct(ah.equity * 100) + '</td>' +
       '<td>' + fmt(Math.round(ah.fairShare)) + '</td>' +

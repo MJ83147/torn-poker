@@ -2417,11 +2417,6 @@ textarea#jin {
   padding: var(--sp-32);
 }
 
-.allin-cards {
-  letter-spacing: 0.3px;
-
-}
-
 .card-glyph.r {
   color: var(--red);
 }
