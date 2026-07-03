@@ -35,7 +35,7 @@ function displayCard(c) {
   var rank = c.slice(0, -1);
   var suit = c.slice(-1);
   if (rank === 'T') rank = '10';
-  return '<span class="allin-card ' + (SUIT_CLASS[SUIT_TO_CODE[suit] || suit] || 'b') + '">' + rank + (SUIT_LETTER[SUIT_TO_CODE[suit] || suit] || suit) + '</span>';
+  return '<span class="card-glyph ' + (SUIT_CLASS[SUIT_TO_CODE[suit] || suit] || 'b') + '">' + rank + (SUIT_LETTER[SUIT_TO_CODE[suit] || suit] || suit) + '</span>';
 }
 
 function displayCards(cards) {

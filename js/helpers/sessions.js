@@ -133,7 +133,7 @@ function renderBestWorstSessions(hands, overallData) {
 
     html += '<div class="container">';
     html += '<div class="eyebrow">' + sess.label + '</div>';
-    html += '<div class="col">';
+    html += '<div class="list">';
     if (dateLabel) html += '<div class="text-body">' + dateLabel + '</div>';
     html += '<div class="text-body">' + tableName + ' &middot; ' + s.hands.length + ' hands &middot; <span class="value ' + pnlCellCls + '">' + pnlDisplay + '</span></div>';
 
@@ -154,7 +154,7 @@ function renderBestWorstSessions(hands, overallData) {
 
     var seeHandsBtnId = 'see-sess-' + Math.random().toString(36).slice(2, 8);
     var sessTitle = sess.label + ' Hands';
-    html += '<button class="btn btn-ghost example-hand-btn mt-8" id="' + seeHandsBtnId + '">Show hands played</button>';
+    html += '<button class="btn btn-ghost example-hand-btn" id="' + seeHandsBtnId + '">Show hands played</button>';
     setTimeout((function(id, title, h2) {
       return function() {
         var el = document.getElementById(id);

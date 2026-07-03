@@ -541,19 +541,19 @@ function twoGridHtml(chart, filtered, scenarioType, tallies, dealtCount) {
     '<div class="row">' +
     '<div class="container">' +
       '<div class="eyebrow">What GTO does</div>' +
-      '<div class="col gap-8">' +
+      '<div class="list">' +
       '<div class="text-meta">Reference chart for this spot. The whole range is coloured, this is not your data.</div>' +
       buildGtoGridHtml(chart, tallies) +
       '</div>' +
-      '<div class="mt-8">' + gtoLegendHtml() + '</div>' +
+      gtoLegendHtml() +
     '</div>' +
     '<div class="container">' +
       '<div class="eyebrow">What you did</div>' +
-      '<div class="col gap-8">' +
+      '<div class="list">' +
       '<div class="text-meta">Only the ' + countLabel + ' are marked. Everything else is a hand you were never dealt in this spot.</div>' +
       buildHeroGridHtml(byKey, colors, hasChart) +
       '</div>' +
-      '<div class="mt-8">' + heroLegendHtml() + '</div>' +
+      heroLegendHtml() +
     '</div>' +
     '</div>' +
   '</div>';
@@ -631,10 +631,8 @@ function renderRange(container, d, hands) {
       '<div class="section-head">Your range</div>' +
       '<div class="row">' +
       '<div class="container">' +
-      '<div class="col gap-12">' +
       '<div class="text-meta">How wide you play and which combos carry your results. The 13x13 chart, position by position, lives under By Spot.</div>' +
       storiesHtml(Sections.findingsForPanel(Sections.evaluateSections(d, {}, hands), 'Range'), 'Range data is still building.') +
-      '</div>' +
       '</div>' +
       '</div>' +
       '</div>';
@@ -668,14 +666,14 @@ function renderRange(container, d, hands) {
       if (parseHoleKey(filtered[fi].hole)) dealtCount++;
     }
     var headerStats = renderHeaderStats(dealtCount, state.hero + ' · ' + label);
-    var note = chart ? '' : '<div class="mt-8"><div class="text-meta">No GTO reference for ' + state.hero + ' ' + label + ' yet.</div></div>';
+    var note = chart ? '' : '<div class="text-meta">No GTO reference for ' + state.hero + ' ' + label + ' yet.</div>';
     body.innerHTML =
       '<div class="section">' +
       '<div class="row">' +
       '<div class="container">' +
-        '<div class="row wrap center gap-12">' +
-          '<div class="row center gap-6"><label class="eyebrow">Position</label>' + heroSelectorHtml + '</div>' +
-          '<div class="row center gap-6"><label class="eyebrow">Scenario</label>' + scenarioSelectorHtml + '</div>' +
+        '<div class="row wrap center">' +
+          '<div class="row center"><label class="eyebrow">Position</label>' + heroSelectorHtml + '</div>' +
+          '<div class="row center"><label class="eyebrow">Scenario</label>' + scenarioSelectorHtml + '</div>' +
         '</div>' +
         headerStats +
         note +
@@ -710,9 +708,9 @@ function renderRange(container, d, hands) {
 
   function renderHeaderStats(count, label) {
     if (!count) {
-      return '<div class="mb-12"><div class="text-meta">No ' + label + ' hands on record yet.</div></div>';
+      return '<div class="text-meta">No ' + label + ' hands on record yet.</div>';
     }
-    return '<div class="mb-12"><div class="lead">' + count + ' ' + label + ' hand' + (count === 1 ? '' : 's') + ' on record</div></div>';
+    return '<div class="lead">' + count + ' ' + label + ' hand' + (count === 1 ? '' : 's') + ' on record</div>';
   }
 
   function bindCellClicks(scope, scopedHands) {
@@ -768,24 +766,26 @@ function openHandModal(key, matched) {
   overlay.onclick = function(ev) { if (ev.target === overlay) closeModal(); };
   var box = document.createElement('div');
   box.className = 'modal';
-  var summary = '<div class="title c-gold">' + key + '</div>' +
-    '<div class="mb-16">' + matched.length + ' hands</div>';
+  var summary = '<div class="panel-header">' +
+    '<div class="title c-gold">' + key + '</div>' +
+    '<div class="text-meta">' + matched.length + ' hands</div>' +
+    '</div>';
   var rows = matched.map(function(h, idx) {
     var myActs = getActsSummary(h);
     var res = renderResult(h, 'span', 'saved-res');
     return '<div class="range-hand-row" data-ridx="' + idx + '">' +
       '<div class="row between">' +
-      '<div class="row center gap-12">' +
+      '<div class="row center">' +
       '<span class="eyebrow range-hand-row-pos">' + (h.position || '?') + '</span>' +
-      '<span class="range-hand-row-hole">' + (h.hole ? h.hole.join(' ') : '??') + '</span>' +
-      '<span class="text-meta range-hand-row-board">' + (h.board && h.board.length ? h.board.join(' ') : '-') + '</span>' +
+      '<span class="range-hand-row-hole">' + (h.hole ? displayCards(h.hole.map(normCard)) : '??') + '</span>' +
+      '<span class="text-meta range-hand-row-board">' + (h.board && h.board.length ? displayCards(h.board.map(normCard)) : '-') + '</span>' +
       '</div>' +
-      '<div class="row center gap-12">' +
+      '<div class="row center">' +
       '<span class="text-meta range-hand-row-actions">' + myActs + '</span>' +
       res + '</div></div></div>';
   }).join('');
   box.innerHTML = '<button class="modal-close" id="modal-close-btn">&times;</button>' +
-    summary + '<div class="mt-12">' + rows + '</div>';
+    summary + '<div class="list">' + rows + '</div>';
   overlay.appendChild(box);
   document.body.appendChild(overlay);
   requestAnimationFrame(function() { overlay.classList.add(CSS.SHOW); });

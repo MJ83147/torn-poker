@@ -161,6 +161,9 @@ function renderPlayers(container, d, hands) {
         overlay.onclick = function(e) { if (e.target === overlay) { overlay.classList.remove(CSS.SHOW); setTimeout(function() { overlay.remove(); }, 200); } };
         box.appendChild(closeBtn);
         var cmpContent = document.createElement('div');
+        // Bare slot host: display:contents, so the compare header/sections
+        // stack on the modal's own gap (same plumbing as panel slots).
+        cmpContent.setAttribute('data-slot', 'compare');
         renderCompare(cmpContent, d, hands);
         box.appendChild(cmpContent);
         overlay.appendChild(box);
@@ -187,8 +190,8 @@ function renderPlayers(container, d, hands) {
       var wr = pct(opp.won, opp.won + opp.lost);
       var ph = '<div class="player-detail">';
       ph += '<div class="row"><div class="container">';
-      ph += '<div class="row between center wrap gap-12 pb-16 border-bottom">';
-      ph += '<div class="row center gap-12"><button class="btn btn-ghost" id="players-back">&laquo; All Players</button>';
+      ph += '<div class="row between center wrap saved-section-divider">';
+      ph += '<div class="row center"><button class="btn btn-ghost" id="players-back">&laquo; All Players</button>';
       ph += '<span class="c-gold fw-semibold">' + playerName + '</span></div>';
       ph += '<div class="text-meta">' + opp.hands + ' hands · ' + (wr !== null ? wr + '% win' : '-') + ' · ' + fmtPnl(opp.profit) + '</div></div>';
       ph += '</div></div>';
@@ -220,7 +223,7 @@ function renderPlayers(container, d, hands) {
 
         var exploitIns = generateExploitInsights(oppStats, playerName, hands);
         if (exploitIns.length) {
-          ph += '<div class="cols-auto gap-16 mt-16">' + exploitIns.join('') + '</div>';
+          ph += '<div class="ins-grid">' + exploitIns.join('') + '</div>';
         }
         ph += '</div></div></div>';
       } else {
@@ -230,7 +233,7 @@ function renderPlayers(container, d, hands) {
       ph += '<div class="section"><div class="section-head">Shared Hands</div>';
       ph += '<div class="row"><div class="container player-detail-section">';
       if (totalPages > 1) {
-        ph += '<div class="row center gap-6 mb-8 end">' +
+        ph += '<div class="row center end">' +
           renderPagination(phPage, playerHands.length, PH_SIZE, 'ph-prev', 'ph-next') + '</div>';
       }
       ph += '<div class="overflow-x"><table class="table"><thead><tr><th>Pos</th><th>Cards</th><th>Board</th><th>Pot</th><th>Actions</th><th>Result</th></tr></thead><tbody>';
@@ -277,8 +280,8 @@ function renderCompare(container, d, hands) {
 
   if (playerNames.length < 2) {
     container.innerHTML =
+      '<div class="panel-header">' +
       '<div class="title title-lg c-gold">Head to Head</div>' +
-      '<div class="col gap-16">' +
       '<div class="text-body">Compare two players side by side.</div>' +
       '<div class="text-body">Need at least two players in the data to compare.</div>' +
       '</div>';
@@ -296,16 +299,18 @@ function renderCompare(container, d, hands) {
   }
 
   container.innerHTML =
+    '<div class="panel-header">' +
     '<div class="title title-lg c-gold">Head to Head</div>' +
-    '<div class="mb-16"><div class="text-body">Compare two players side by side.</div></div>' +
-    '<div class="row"><div class="container">' +
-    '<div class="row center gap-12 wrap mb-16">' +
+    '<div class="text-body">Compare two players side by side.</div>' +
+    '</div>' +
+    '<div class="section"><div class="row"><div class="container">' +
+    '<div class="row center wrap">' +
     '<select id="compare-p1">' + buildOptions(p1Default) + '</select>' +
     '<span class="text-body fw-semibold">vs</span>' +
     '<select id="compare-p2">' + buildOptions(p2Default) + '</select>' +
     '</div>' +
-    '<div id="compare-body"></div>' +
-    '</div></div>';
+    '<div id="compare-body" class="section"></div>' +
+    '</div></div></div>';
 
   function getHeroStats() {
     var c = d.core || {};
@@ -437,18 +442,17 @@ function renderCompare(container, d, hands) {
       }
     }
 
-    var h2hHtml = '<div class="mt-16"><div class="section-head">Head-to-Head Record</div>';
+    var h2hHtml = '<div class="section-head">Head-to-Head Record</div>';
     if (sharedHands.length === 0) {
       h2hHtml += '<div class="text-body">No shared hands found between these players.</div>';
     } else {
       var p1WinPct = Math.round(p1Wins / sharedHands.length * 100);
-      h2hHtml += '<div class="mb-12"><div class="text-meta col gap-4">' +
+      h2hHtml += '<div class="stat text-meta">' +
         '<span>' + sharedHands.length + ' shared hands</span>' +
         '<span>' + p1Name + ' won ' + p1Wins + ' (' + p1WinPct + '%) · ' + p2Name + ' won ' + p2Wins + '</span>' +
-        '</div></div>';
+        '</div>';
       h2hHtml += '<button class="btn btn-ghost example-hand-btn" id="compare-shared-btn">View ' + sharedHands.length + ' shared hands</button>';
     }
-    h2hHtml += '</div>';
 
     var exploits = [];
     var targetName = (p2Name !== heroName) ? p2Name : p1Name;
@@ -501,11 +505,11 @@ function renderCompare(container, d, hands) {
 
     var exploitHtml = '';
     if (exploits.length > 0) {
-      exploitHtml = '<div class="mt-16"><div class="section-head">Exploit Tips</div><div class="col gap-8">';
+      exploitHtml = '<div class="section-head">Exploit Tips</div><div class="list">';
       for (var i = 0; i < exploits.length; i++) {
         exploitHtml += '<div class="card card-s2 text-meta">' + exploits[i] + '</div>';
       }
-      exploitHtml += '</div></div>';
+      exploitHtml += '</div>';
     }
 
     var warnHtml = '';
@@ -515,7 +519,7 @@ function renderCompare(container, d, hands) {
       warnHtml = ins('a', 'Small Sample', lowName + ' only has ' + lowCount + ' hands. Stats may be unreliable until 20+ hands are available.');
     }
 
-    body.innerHTML = warnHtml + '<div class="mt-16 overflow-x">' + tableHtml + '</div>' + h2hHtml + exploitHtml;
+    body.innerHTML = warnHtml + '<div class="overflow-x">' + tableHtml + '</div>' + h2hHtml + exploitHtml;
 
     if (sharedHands.length > 0) {
       var sharedBtn = container.querySelector('#compare-shared-btn');

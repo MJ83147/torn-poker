@@ -31,7 +31,7 @@ function renderMyGame(container, d, hands) {
 
   html += '<div class="section"><div class="row"><div class="container">';
   html += '<div class="profile-row row wrap">';
-  html += '<div class="col gap-12">';
+  html += '<div class="stat">';
   html += '<div class="eyebrow">MY GAME</div>';
   html += '<div>';
   html += '<div class="profile-name">' + playerName + '</div>';
@@ -42,7 +42,7 @@ function renderMyGame(container, d, hands) {
   html += '</div>';
   html += '</div>';
   if (typeLabel) {
-    html += '<div class="profile-type-block col gap-12">';
+    html += '<div class="profile-type-block stat">';
     html += '<div class="eyebrow">PLAYER TYPE</div>';
     html += '<div>';
     html += '<div class="profile-type-name">' + typeLabel + '</div>';
@@ -115,7 +115,7 @@ function renderMyGame(container, d, hands) {
     if (workOn) {
       html += '<div class="box work-on-' + workOn.sev + '">';
       html += '<div class="lead work-on-title">' + workOn.label + '</div>';
-      html += '<div class="col gap-8">';
+      html += '<div class="list">';
       if (workOn.desc) html += '<div class="text-body">' + workOn.desc + '</div>';
       html += '<div class="text-body">' + workOn.action + '</div>';
       html += '</div>';
@@ -190,7 +190,7 @@ function renderTableDynamicsReference(hands, d) {
   h += '<div class="section">';
   h += '<div class="section-head">By Table Size</div>';
   h += '<div class="row"><div class="container">';
-  h += '<div class="cols-auto gap-16 dynamics-cards">';
+  h += '<div class="dynamics-cards">';
   for (var si = 0; si < seatKeys.length; si++) {
     var seats = seatKeys[si];
     var entry = SEAT_MATRIX[seats];
@@ -200,14 +200,14 @@ function renderTableDynamicsReference(hands, d) {
     var nHands = subD ? subD.n : 0;
 
     h += '<div class="card dynamics-card">';
-    h += '<div class="c-gold fw-bold mb-6">' + seats + '-handed <span class="c-dim">(' + nHands + ' hands)</span></div>';
+    h += '<div class="card-title c-gold">' + seats + '-handed <span class="c-dim">(' + nHands + ' hands)</span></div>';
     if (!nHands || !subD.posMap) {
       h += '<div class="text-body dynamics-card-note c-dim">' + (nHands ? 'Not enough hands at this table size yet.' : 'No hands at this table size yet.') + '</div>';
       h += '</div>';
       continue;
     }
 
-    h += '<div class="col gap-6">';
+    h += '<div class="stat">';
     h += '<div class="eyebrow c-gold">Your play: VPIP by position</div>';
     h += '<table class="table dynamics-pos-tbl"><thead><tr><th>Pos</th><th>Your VPIP</th><th>Target</th><th>Hands</th></tr></thead><tbody>';
     for (var pi = 0; pi < entry.positions.length; pi++) {
@@ -223,7 +223,7 @@ function renderTableDynamicsReference(hands, d) {
     h += '</div>';
 
     if (seatCoaching[seats]) {
-      h += '<div class="mt-12 pt-8 border-top">';
+      h += '<div class="insight-coaching">';
       h += '<div class="eyebrow c-warn">Coaching</div>';
       h += '<div class="text-body dynamics-coaching">' + seatCoaching[seats] + '</div>';
       h += '</div>';
@@ -236,7 +236,7 @@ function renderTableDynamicsReference(hands, d) {
   h += '<div class="section">';
   h += '<div class="section-head">By Flop Players</div>';
   h += '<div class="row"><div class="container">';
-  h += '<div class="cols-auto gap-16 dynamics-cards">';
+  h += '<div class="dynamics-cards">';
   var flopKeys = ['HU', '3-way', 'multiway'];
   var flopLabels = { HU: 'Heads-up flop', '3-way': '3-way flop', multiway: 'Multiway flop (4+)' };
   var flopCbetMod = { HU: 5, '3-way': 0, multiway: -10 };
@@ -250,7 +250,7 @@ function renderTableDynamicsReference(hands, d) {
     var nF = subF ? subF.n : 0;
 
     h += '<div class="card dynamics-card">';
-    h += '<div class="c-gold fw-bold mb-6">' + flopLabels[bk] + ' <span class="c-dim">(' + nF + ' hands)</span></div>';
+    h += '<div class="card-title c-gold">' + flopLabels[bk] + ' <span class="c-dim">(' + nF + ' hands)</span></div>';
     if (!nF) {
       h += '<div class="text-body dynamics-card-note c-dim">No flops with this many players yet.</div>';
       h += '</div>';
@@ -265,12 +265,12 @@ function renderTableDynamicsReference(hands, d) {
       ideal: Math.max(0, cbetSeatBand.ideal + cbetMod),
       loose: Math.max(0, cbetSeatBand.loose + cbetMod)
     } : null;
-    h += '<div class="col gap-6">';
+    h += '<div class="stat">';
     h += '<div class="eyebrow c-gold">Your play</div>';
     h += _vsRow('C-bet', cbetActual, subF.cbetOpps, fmtBandRange(cbetBand));
     h += '</div>';
 
-    h += '<div class="mt-12 pt-8 border-top">';
+    h += '<div class="insight-coaching">';
     h += '<div class="eyebrow c-warn">Coaching</div>';
     h += '<div class="text-body dynamics-coaching">' + fe.notes + '</div>';
     h += '<div class="text-meta dynamics-card-kv row between"><span class="eyebrow">Bet sizing</span><span>' + fe.cbetSizing + '</span></div>';
@@ -335,18 +335,16 @@ function renderStyleMap(container, d, hands) {
   }
 
   var html = '';
-  html += '<div class="mb-16"><div class="text-body">' + titleSentence + '</div></div>';
+  html += '<div class="text-body">' + titleSentence + '</div>';
 
-  html += '<div class="col gap-12">';
   html += '<div class="style-map-canvas-wrap"><canvas id="style-map-chart"></canvas></div>';
 
-  html += '<div class="text-meta row wrap gap-16">';
-  html += '<div class="inline center gap-6"><span class="dot dot-lg bg-pos sm-dot-you"></span><span>You (overall)</span></div>';
-  html += '<div class="inline center gap-6"><span class="dot dot-lg dot-cat-pos"></span><span>By position</span></div>';
-  html += '<div class="inline center gap-6"><span class="dot dot-lg dot-cat-seat"></span><span>By table size</span></div>';
-  html += '<div class="inline center gap-6"><span class="dot dot-lg dot-cat-tag sm-dot-tag"></span><span>TAG reference</span></div>';
-  html += '<div class="inline center gap-6"><span class="dot dot-lg bg-gold"></span><span>Target: ' + targetStyleName + '</span></div>';
-  html += '</div>';
+  html += '<div class="legend">';
+  html += '<div class="legend-item"><span class="dot dot-lg bg-pos sm-dot-you"></span><span>You (overall)</span></div>';
+  html += '<div class="legend-item"><span class="dot dot-lg dot-cat-pos"></span><span>By position</span></div>';
+  html += '<div class="legend-item"><span class="dot dot-lg dot-cat-seat"></span><span>By table size</span></div>';
+  html += '<div class="legend-item"><span class="dot dot-lg dot-cat-tag sm-dot-tag"></span><span>TAG reference</span></div>';
+  html += '<div class="legend-item"><span class="dot dot-lg bg-gold"></span><span>Target: ' + targetStyleName + '</span></div>';
   html += '</div>';
 
   container.innerHTML = html;

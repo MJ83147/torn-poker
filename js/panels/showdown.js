@@ -72,11 +72,11 @@ function renderShowdown(container, hands, meta, overallData) {
   var sdShow = sdHands.slice(0, 15);
   var nsdShow = nsdHands.slice(0, 15);
 
-  var statsHtml = '<div class="cols-2 gap-8">';
+  var statsHtml = '<div class="stat-grid">';
 
   statsHtml += '<div class="stat' + (sdShow.length ? ' stat-clickable' : '') + '"' +
     (sdShow.length ? ' data-sd-box="sd"' : '') + '>';
-  statsHtml += '<div class="eyebrow stat-label row center gap-6">' +
+  statsHtml += '<div class="eyebrow stat-label row center">' +
     '<span class="swatch swatch-dot" style="background:var(--gto-blue)"></span>Showdown' +
     (sdShow.length ? '<span class="c-dim cards-row-cue"> &middot; view hands &#8250;</span>' : '') + '</div>';
   statsHtml += '<div class="value ' + pnlValCls(cumSd) + '">' + fmtPnl(cumSd) + '</div>';
@@ -85,7 +85,7 @@ function renderShowdown(container, hands, meta, overallData) {
 
   statsHtml += '<div class="stat' + (nsdShow.length ? ' stat-clickable' : '') + '"' +
     (nsdShow.length ? ' data-sd-box="nsd"' : '') + '>';
-  statsHtml += '<div class="eyebrow stat-label row center gap-6">' +
+  statsHtml += '<div class="eyebrow stat-label row center">' +
     '<span class="swatch swatch-dot bg-neg"></span>Non-Showdown' +
     (nsdShow.length ? '<span class="c-dim cards-row-cue"> &middot; view hands &#8250;</span>' : '') + '</div>';
   statsHtml += '<div class="value ' + pnlValCls(cumNsd) + '">' + fmtPnl(cumNsd) + '</div>';
@@ -108,7 +108,7 @@ function renderShowdown(container, hands, meta, overallData) {
   var wonShow = wonHands.slice(0, 15);
   var lostShow = lostHands.slice(0, 15);
 
-  var potStatsHtml = '<div class="cols-3 gap-8">';
+  var potStatsHtml = '<div class="stat-grid">';
   potStatsHtml += '<div class="stat' + (wonShow.length ? ' stat-clickable' : '') + '"' +
     (wonShow.length ? ' data-sd-box="won"' : '') + '>';
   potStatsHtml += '<div class="eyebrow stat-label">Avg Pot Won' +

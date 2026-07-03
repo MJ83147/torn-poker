@@ -674,7 +674,7 @@ function finishUpload(results) {
   listEl.innerHTML = html;
 
   if (_uploadedHands.length > 0) {
-    var total = '<div class="mt-12"><div class="text-body"><strong class="text-strong">' + _uploadedHands.length + '</strong> total hands across ' + results.filter(function (r) { return r.count > 0; }).length + ' file(s)</div></div>';
+    var total = '<div class="text-body"><strong class="text-strong">' + _uploadedHands.length + '</strong> total hands across ' + results.filter(function (r) { return r.count > 0; }).length + ' file(s)</div>';
     listEl.innerHTML += total;
     analyseBtn.classList.remove('hidden');
   } else {

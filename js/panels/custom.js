@@ -781,7 +781,7 @@ function _crOpenAddClausePopover(targetEl, segLabel) {
   var hand = available.filter(function(c) { return c.kind === 'hand'; });
   var decision = available.filter(function(c) { return c.kind === 'decision'; });
 
-  var html = '<div class="c-gold fw-semibold mb-8">Add a clause</div>';
+  var html = '<div class="card-title c-gold">Add a clause</div>';
   if (hand.length) {
     html += '<div class="cr-pop-section eyebrow">Hand-level</div>';
     html += hand.map(function(c) {
@@ -823,11 +823,10 @@ function _crOpenClausePopover(targetEl, segLabel, clauseId) {
   var segment = _crState[segLabel];
   var current = segment.values[clauseId];
 
-  var html = '<div class="c-gold fw-semibold mb-8">' + def.label + '</div>';
+  var html = '<div class="card-title c-gold">' + def.label + '</div>';
   if (!def.options.length) {
     html += '<div class="text-body">No options available. None of your hands match this clause yet.</div>';
   } else if (def.multi) {
-    html += '<div class="col gap-2">';
     current = Array.isArray(current) ? current : [];
     html += def.options.map(function(o) {
       var checked = current.indexOf(o.value) !== -1;
@@ -836,16 +835,13 @@ function _crOpenClausePopover(targetEl, segLabel, clauseId) {
         '<span>' + o.label + (o.meta ? ' <span class="text-micro cr-pop-meta">' + o.meta + '</span>' : '') + '</span>' +
         '</label>';
     }).join('');
-    html += '</div>';
   } else {
-    html += '<div class="col gap-2">';
     html += def.options.map(function(o) {
       var sel = current === o.value;
       return '<button class="text-meta cr-pop-opt' + (sel ? ' selected' : '') + '" data-val="' + o.value + '">' +
         o.label + (o.meta ? ' <span class="text-micro cr-pop-meta">' + o.meta + '</span>' : '') +
         '</button>';
     }).join('');
-    html += '</div>';
   }
   html += '<button class="cr-pop-remove">Remove this filter</button>';
 
@@ -904,19 +900,19 @@ function _crRenderHeadline(result, compareResult) {
   var dim = result.sampleSize < CR_SAMPLE_MIN;
 
   function tile(label, val, cls) {
-    return '<div class="box col gap-6' + (dim ? ' -dim' : '') + '">' +
+    return '<div class="box stat' + (dim ? ' cr-tile-dim' : '') + '">' +
       '<div class="eyebrow">' + label + '</div>' +
-      '<div class="-value value ' + cls + '">' + val + '</div>' +
+      '<div class="cr-tile-value value ' + cls + '">' + val + '</div>' +
       '</div>';
   }
 
   function tileCompare(label, valA, valB, clsA, clsB, delta, deltaCls) {
-    return '<div class="box -compare col gap-6">' +
+    return '<div class="box stat cr-tile-compare">' +
       '<div class="eyebrow">' + label + '</div>' +
-      '<div class="-trio">' +
-      '<div class="col gap-2"><div class="eyebrow">A</div><div class="value ' + clsA + '">' + valA + '</div></div>' +
-      '<div class="col gap-2"><div class="eyebrow">Δ</div><div class="value ' + deltaCls + '">' + delta + '</div></div>' +
-      '<div class="col gap-2"><div class="eyebrow">B</div><div class="value ' + clsB + '">' + valB + '</div></div>' +
+      '<div class="cr-tile-trio">' +
+      '<div class="stat"><div class="eyebrow">A</div><div class="value ' + clsA + '">' + valA + '</div></div>' +
+      '<div class="stat"><div class="eyebrow">Δ</div><div class="value ' + deltaCls + '">' + delta + '</div></div>' +
+      '<div class="stat"><div class="eyebrow">B</div><div class="value ' + clsB + '">' + valB + '</div></div>' +
       '</div></div>';
   }
 
@@ -934,7 +930,7 @@ function _crRenderHeadline(result, compareResult) {
   var wrCls = wrCol2(m.wr);
 
   if (!compareResult) {
-    return '<div class="cols-auto cr-headline gap-12">' +
+    return '<div class="cr-headline">' +
       tile('Hands matched', result.sampleSize, 'c-gold') +
       tile('Sessions', result.sessions, 'text-strong') +
       tile('bb/100', bb100Str, bb100Cls) +
@@ -954,7 +950,7 @@ function _crRenderHeadline(result, compareResult) {
   var wrDelta = (m.wr != null && mB.wr != null) ? m.wr - mB.wr : null;
   var wrBCls = wrCol2(mB.wr);
 
-  return '<div class="cols-auto cr-headline cr-headline-compare gap-12">' +
+  return '<div class="cr-headline cr-headline-compare">' +
     tileCompare('Hands matched', result.sampleSize, compareResult.sampleSize, 'c-gold', 'c-gold', (result.sampleSize - compareResult.sampleSize), 'c-dim') +
     tileCompare('bb/100', bb100Str, bb100B, bb100Cls, bb100BCls, bb100DeltaStr, bb100DeltaCls) +
     tileCompare('Win rate', wrStr, mB.wr != null ? mB.wr + '%' : '-', wrCls, wrBCls, wrDelta != null ? (wrDelta > 0 ? '+' : '') + wrDelta + '%' : '-', 'c-dim') +
@@ -964,7 +960,7 @@ function _crRenderHeadline(result, compareResult) {
 
 function _crRenderInsightCards(cards) {
   if (!cards.length) return '';
-  return '<div class="cols-auto gap-16">' + cards.map(function(c) {
+  return '<div class="ins-grid">' + cards.map(function(c) {
     return ins(c.sev, c.title, c.body, c.chips || []);
   }).join('') + '</div>';
 }

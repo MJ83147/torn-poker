@@ -13,8 +13,9 @@
    §7  PANEL-SPECIFIC .... genuinely-unique blocks (My Game, saved hands, style)
    --------------------------------------------------------------------------
    RULE: after §1, nothing sets font-size / line-height / letter-spacing except
-   the role classes in §2 (.title · .eyebrow · .section-head · .text-* · .lead
-   · .value). Everything else composes those roles + colour/spacing utilities.
+   the role classes in §2 (.title · .eyebrow · .section-head · .card-title ·
+   .text-* · .lead · .value). Everything else composes those roles +
+   colour/spacing utilities.
    ========================================================================== */
 
 /* ==========================================================================
@@ -71,12 +72,18 @@
   --serif: 'Cormorant Garamond', serif;
   /* one scale, one job per step, real gaps: 12 / 14 / 16 / 20 / 26 / 32.
      no off-scale 15/17/18/28px values anywhere. */
-  --fs-xs: 12px;   /* labels, eyebrows, badges (uppercase) */
-  --fs-md: 14px;   /* body, table cells, insight text */
-  --fs-lg: 16px;   /* lead callout (verdict box), inline value */
-  --fs-xl: 20px;   /* stat number */
-  --fs-2xl: 26px;  /* section title */
-  --fs-3xl: 32px;  /* page title */
+  --fs-xs: 12px;
+  /* labels, eyebrows, badges (uppercase) */
+  --fs-md: 14px;
+  /* body, table cells, insight text */
+  --fs-lg: 16px;
+  /* lead callout (verdict box), inline value */
+  --fs-xl: 20px;
+  /* stat number */
+  --fs-2xl: 26px;
+  /* section title */
+  --fs-3xl: 32px;
+  /* page title */
   /* hero display sizes — loader / maintenance splash only, NOT the content scale */
   --fs-hero: clamp(40px, 7vw, 68px);
   --fs-hero-xl: clamp(54px, 12vw, 88px);
@@ -132,8 +139,8 @@ body {
   background: var(--bg);
   color: var(--text);
   font-family: var(--mono);
-  font-size: var(--fs-md); /* good reason: base document font size — the inherited default every text role builds on */
-  line-height: var(--lh-normal); /* good reason: base document line-height inherited by all text */
+  font-size: var(--fs-md);
+  line-height: var(--lh-normal);
   min-height: 100vh;
 }
 
@@ -152,7 +159,8 @@ select {
   background: var(--s2);
   border: var(--bw) solid var(--border);
   color: var(--text);
-  font-size: var(--fs-md); /* good reason: form-field primitive base — inputs don't inherit font-size, so the field size is set once here for all controls */
+  font-size: var(--fs-md);
+
   padding: var(--sp-6) var(--sp-8);
   border-radius: var(--r-sm);
   outline: none;
@@ -187,11 +195,26 @@ a {
    ========================================================================== */
 
 /* --- display / flow --- */
-.hidden { display: none; }
-.block { display: block; }
-.w-100 { width: 100%; }
-.overflow-x { overflow-x: auto; }
-.relative { position: relative; }
+.hidden {
+  display: none;
+}
+
+.block {
+  display: block;
+}
+
+.w-100 {
+  width: 100%;
+}
+
+.overflow-x {
+  overflow-x: auto;
+}
+
+.relative {
+  position: relative;
+}
+
 .truncate {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -212,14 +235,38 @@ a {
      .container    = padded content slot inside a row. Content and data-slots
                      live here, never on the row itself.
    Spacing is baked in here, never added in markup. */
-.panel { display: none; max-width: 1600px; margin: 0 auto; padding: var(--sp-32); }
-.panel.on { display: flex; flex-direction: column; gap: var(--sp-32); min-height: 60vh; }
+.panel {
+  display: none;
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: var(--sp-32);
+}
 
-.panel-header { display: flex; flex-direction: column; gap: var(--sp-4); }
+.panel.on {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-32);
+  min-height: 60vh;
+}
 
-.section { display: flex; flex-direction: column; gap: var(--sp-12); }
+.panel-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
 
-.row { display: flex; flex-wrap: wrap; gap: var(--sp-16); }
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-12);
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-16);
+}
+
 .container {
   flex: 1 1 0;
   min-width: 0;
@@ -236,63 +283,98 @@ a {
    The [hidden] rule comes last so hiding always wins — over display:contents
    above, and over .section's flex (the UA [hidden] rule alone loses to any
    author display). */
-.panel > [data-slot]:not([class]) { display: contents; }
-.panel > [data-slot][hidden] { display: none; }
-.col { display: flex; flex-direction: column; }
-.cols-2 { display: grid; grid-template-columns: 1fr 1fr; }
-.cols-3 { display: grid; grid-template-columns: repeat(3, 1fr); }
-.cols-auto {
+.panel>[data-slot]:not([class]),
+.modal>[data-slot]:not([class]) {
+  display: contents;
+}
+
+.panel>[data-slot][hidden] {
+  display: none;
+}
+
+/* --- content stacks & grids ---
+   .list = a tight vertical stack of like-minded items (bars, cards, option
+   rows). The one predefined class for "these things stack"; markup never
+   carries ad-hoc column/gap utilities.
+   The auto-grid group = card grids that fill the row and wrap. Each content
+   class may set its own --col-min (and override the gap); this shared rule
+   owns the grid itself. .ins-grid is the generic insight-card grid. */
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-8);
+}
+
+.ins-grid,
+.dynamics-cards,
+.saved-hands-list,
+.cr-headline,
+.style-welcome-cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(var(--col-min, 280px), 1fr));
+  gap: var(--sp-16);
 }
 
 /* row/col alignment modifiers */
-.center { align-items: center; }        /* cross-axis */
-.start { align-items: flex-start; }     /* cross-axis */
-.middle { justify-content: center; }    /* main-axis */
-.between { justify-content: space-between; }
-.end { justify-content: flex-end; }
-.wrap { flex-wrap: wrap; }
-.grow { flex: 1; }
-.inline { display: inline-flex; }
-.w-full { width: 100%; }
-.min-w-0 { min-width: 0; }
-.text-left { text-align: left; }
+.center {
+  align-items: center;
+}
 
-/* --- gap scale --- */
-.gap-2 { gap: var(--sp-2); }
-.gap-4 { gap: var(--sp-4); }
-.gap-6 { gap: var(--sp-6); }
-.gap-8 { gap: var(--sp-8); }
-.gap-12 { gap: var(--sp-12); }
-.gap-16 { gap: var(--sp-16); }
-.gap-24 { gap: var(--sp-24); }
-.gap-32 { gap: var(--sp-32); }
+/* cross-axis */
+.start {
+  align-items: flex-start;
+}
 
-/* --- margin scale --- */
-.mt-0 { margin-top: 0; }
-.mt-4 { margin-top: var(--sp-4); }
-.mt-8 { margin-top: var(--sp-8); }
-.mt-12 { margin-top: var(--sp-12); }
-.mt-16 { margin-top: var(--sp-16); }
-.mt-32 { margin-top: var(--sp-32); }
-.mb-0 { margin-bottom: 0; }
-.mb-2 { margin-bottom: var(--sp-2); }
-.mb-4 { margin-bottom: var(--sp-4); }
-.mb-6 { margin-bottom: var(--sp-6); }
-.mb-8 { margin-bottom: var(--sp-8); }
-.mb-12 { margin-bottom: var(--sp-12); }
-.mb-16 { margin-bottom: var(--sp-16); }
-.mb-24 { margin-bottom: var(--sp-24); }
+/* cross-axis */
+.middle {
+  justify-content: center;
+}
 
-/* --- padding scale --- */
-.p-16 { padding: var(--sp-16); }
-.pt-8 { padding-top: var(--sp-8); }
-.pb-16 { padding-bottom: var(--sp-16); }
+/* main-axis */
+.between {
+  justify-content: space-between;
+}
+
+.end {
+  justify-content: flex-end;
+}
+
+.wrap {
+  flex-wrap: wrap;
+}
+
+.grow {
+  flex: 1;
+}
+
+.inline {
+  display: inline-flex;
+}
+
+.w-full {
+  width: 100%;
+}
+
+.min-w-0 {
+  min-width: 0;
+}
+
+.text-left {
+  text-align: left;
+}
+
+/* Spacing is owned by structure (.panel/.section/.row/.container) and content
+   classes; the old gap-N / mt-N / mb-N / p-N utility scales are gone on
+   purpose — do not reintroduce them. */
 
 /* --- borders --- */
-.border-top { border-top: var(--bw) solid var(--border); }
-.border-bottom { border-bottom: var(--bw) solid var(--border); }
+.border-top {
+  border-top: var(--bw) solid var(--border);
+}
+
+.border-bottom {
+  border-bottom: var(--bw) solid var(--border);
+}
 
 /* --- text roles --- */
 .title {
@@ -301,9 +383,14 @@ a {
   line-height: var(--lh-tight);
   margin-bottom: var(--sp-4);
 }
-.title-xl { font-size: var(--fs-3xl); }
-.title-lg { font-size: var(--fs-2xl); }
-.title-md { font-size: var(--fs-xl); }
+
+.title-xl {
+  font-size: var(--fs-3xl);
+}
+
+.title-lg {
+  font-size: var(--fs-2xl);
+}
 
 .eyebrow {
   font-size: var(--fs-xs);
@@ -322,14 +409,46 @@ a {
   color: var(--text);
 }
 
-.text-body { font-size: var(--fs-md); color: var(--dim); line-height: var(--lh-body); }
-.lead { font-size: var(--fs-lg); color: var(--text); line-height: var(--lh-normal); }
-.text-meta { font-size: var(--fs-md); color: var(--dim); }
-.text-micro { font-size: var(--fs-xs); color: var(--muted); }
+/* Card title: heads a card / box / story / insight inside a section — one
+   step BELOW .section-head. Margin baked in; colour defaults to --text. */
+.card-title {
+  font-family: var(--serif);
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-tight);
+  margin-bottom: var(--sp-4);
+}
+
+.text-body {
+  font-size: var(--fs-md);
+  color: var(--dim);
+  line-height: var(--lh-body);
+}
+
+.lead {
+  font-size: var(--fs-lg);
+  color: var(--text);
+  line-height: var(--lh-normal);
+}
+
+.text-meta {
+  font-size: var(--fs-md);
+  color: var(--dim);
+}
+
+.text-micro {
+  font-size: var(--fs-xs);
+  color: var(--muted);
+}
+
 /* Stack before -> after: compact hero flow under a table cell, and the
-   per-player stacks block in the hand-replay modal. */
-.stack-flow { margin-top: var(--sp-2); white-space: nowrap; }
-.player-stacks { margin-top: var(--sp-12); }
+   per-player stacks block in the hand-replay modal. .player-stacks is
+   layout-only (owns the .stack-row grid); the modal's section gap spaces it. */
+.stack-flow {
+  margin-top: var(--sp-2);
+  white-space: nowrap;
+}
+
 .player-stacks .stack-row {
   display: grid;
   grid-template-columns: 1fr auto auto;
@@ -338,8 +457,15 @@ a {
   padding: var(--sp-4) 0;
   border-bottom: var(--bw) solid var(--border);
 }
-.player-stacks .stack-row:last-child { border-bottom: none; }
-.text-strong { color: var(--text); }
+
+.player-stacks .stack-row:last-child {
+  border-bottom: none;
+}
+
+.text-strong {
+  color: var(--text);
+}
+
 .value {
   font-family: var(--serif);
   font-size: var(--fs-xl);
@@ -348,31 +474,91 @@ a {
 }
 
 /* --- text colour modifiers --- */
-.c-gold { color: var(--gold); }
-.c-dim { color: var(--dim); }
-.c-muted { color: var(--muted); }
-.c-pos { color: var(--green); }
-.c-neg { color: var(--red); }
-.c-warn { color: var(--amber); }
+.c-gold {
+  color: var(--gold);
+}
+
+.c-dim {
+  color: var(--dim);
+}
+
+.c-muted {
+  color: var(--muted);
+}
+
+.c-pos {
+  color: var(--green);
+}
+
+.c-neg {
+  color: var(--red);
+}
+
+.c-warn {
+  color: var(--amber);
+}
 
 /* --- background fill modifiers (bar fills, dots, swatches, segments) --- */
-.bg-gold { background: var(--gold); }
-.bg-pos { background: var(--green); }
-.bg-neg { background: var(--red); }
-.bg-warn { background: var(--amber); }
-.bg-muted { background: var(--muted); }
-.bg-dim { background: var(--dim); }
-.bg-freq-low { background: var(--freq-low); }
-.bg-freq-med { background: var(--freq-med); }
-.bg-freq-high { background: var(--freq-high); }
+.bg-gold {
+  background: var(--gold);
+}
+
+.bg-pos {
+  background: var(--green);
+}
+
+.bg-neg {
+  background: var(--red);
+}
+
+.bg-warn {
+  background: var(--amber);
+}
+
+.bg-muted {
+  background: var(--muted);
+}
+
+.bg-dim {
+  background: var(--dim);
+}
+
+.bg-freq-low {
+  background: var(--freq-low);
+}
+
+.bg-freq-med {
+  background: var(--freq-med);
+}
+
+.bg-freq-high {
+  background: var(--freq-high);
+}
 
 /* --- weight / transform helpers --- */
-.fw-medium { font-weight: var(--fw-medium); }
-.fw-semibold { font-weight: var(--fw-semibold); }
-.fw-bold { font-weight: var(--fw-bold); }
-.uppercase { text-transform: uppercase; }
-.text-right { text-align: right; }
-.text-center { text-align: center; }
+.fw-medium {
+  font-weight: var(--fw-medium);
+}
+
+.fw-semibold {
+  font-weight: var(--fw-semibold);
+}
+
+.fw-bold {
+  font-weight: var(--fw-bold);
+}
+
+.uppercase {
+  text-transform: uppercase;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.text-center {
+  text-align: center;
+}
 
 /* ==========================================================================
    4. COMPONENTS   (built per CSS2-BUILD.md)
@@ -389,8 +575,13 @@ a {
   padding: var(--sp-12) var(--sp-16);
 }
 
-.card-s1 { background: var(--s1); }
-.card-s2 { background: var(--s2); }
+.card-s1 {
+  background: var(--s1);
+}
+
+.card-s2 {
+  background: var(--s2);
+}
 
 .box {
   background: var(--s2);
@@ -398,7 +589,9 @@ a {
   padding: var(--sp-16) var(--sp-16);
 }
 
-.radius-sm { border-radius: var(--r-sm); }
+.radius-sm {
+  border-radius: var(--r-sm);
+}
 
 .card-link {
   cursor: pointer;
@@ -427,8 +620,8 @@ a {
 }
 
 .table th {
-  font-size: var(--fs-xs); /* good reason: table-header cell primitive (eyebrow-style label baked into every <th>, no per-cell wrapper to carry a role) */
-  letter-spacing: var(--sp-2); /* good reason: table-header tracking, paired with the size above */
+  font-size: var(--fs-xs);
+  letter-spacing: var(--sp-2);
   text-transform: uppercase;
   font-weight: var(--fw-regular);
   color: var(--dim);
@@ -438,7 +631,7 @@ a {
 }
 
 .table td {
-  font-size: var(--fs-md); /* good reason: table body-cell primitive — body size baked into every <td>, no per-cell wrapper to carry a role */
+  font-size: var(--fs-md);
   padding: var(--sp-16) var(--sp-16);
   padding-left: 0;
   border-bottom: var(--bw) solid var(--border);
@@ -459,8 +652,13 @@ a {
 }
 
 /* clickable body rows (hand log) */
-.table tr.link { cursor: pointer; }
-.table tbody tr.link:hover { background: var(--s1); }
+.table tr.link {
+  cursor: pointer;
+}
+
+.table tbody tr.link:hover {
+  background: var(--s1);
+}
 
 /* Shared data-list rows. These are all <tr> inside .table (player list,
    all-in list, hand log) and inherit the per-row border-bottom divider from
@@ -471,6 +669,7 @@ a {
 .hrow td {
   border-bottom: var(--bw) solid var(--border);
 }
+
 .table tr.player-row:last-child td,
 .table tr.allin-row:last-child td,
 .table tr.hrow:last-child td {
@@ -478,12 +677,24 @@ a {
 }
 
 /* save/star toggle in a hand-log row (.icon-btn base; gold when saved) */
-.hrow-star { color: var(--dim); }
-.hrow-star.starred { color: var(--gold); }
+.hrow-star {
+  color: var(--dim);
+}
+
+.hrow-star.starred {
+  color: var(--gold);
+}
 
 /* table extras: dimmed (excluded) row, small cell, inline spark bar */
-.table tr.excluded { opacity: 0.35; }
-.cell-sm { font-size: var(--fs-xs); } /* good reason: table-cell size modifier — shrinks a <td> to the small step; a cell-level utility, not free text */
+.table tr.excluded {
+  opacity: 0.35;
+}
+
+.cell-sm {
+  font-size: var(--fs-xs);
+}
+
+
 .spark {
   display: inline-block;
   height: 10px;
@@ -532,7 +743,9 @@ a {
   transition: width .9s cubic-bezier(.4, 0, .2, 1);
 }
 
-.bar-value { text-align: right; }
+.bar-value {
+  text-align: right;
+}
 
 /* Segmented / stacked bar: a flex track of .bar-seg pieces (widths inline). */
 .bar-stack {
@@ -554,12 +767,16 @@ a {
   max-width: 720px;
 }
 
-.chart-full { max-width: 900px; }
+.chart-full {
+  max-width: 900px;
+}
 
 /* --- Insight card: built on .box ---
    Severity colour comes from utilities on the markup: the badge dot is
    .dot.bg-* and the badge word is .c-* (no per-severity classes here). */
-.insight { position: relative; }
+.insight {
+  position: relative;
+}
 
 /* type (12px uppercase tracking) comes from .eyebrow in markup; this owns the row layout */
 .insight-badge {
@@ -585,6 +802,13 @@ a {
   gap: var(--sp-4) var(--sp-12);
 }
 
+/* eyebrow + note stack tight; also hosts the dynamics coaching blocks */
+.insight-coaching {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
 /* --- Story card: an expandable insight (head + collapsible body) ---
    Compose on .box. One state class: add .open to expand (body shows,
    teaser hides, chevron flips); default (no .open) is collapsed. */
@@ -601,7 +825,9 @@ a {
   transition: background .15s;
 }
 
-.story:hover .story-head { background: var(--s1); }
+.story:hover .story-head {
+  background: var(--s1);
+}
 
 .story-chevron {
   position: absolute;
@@ -616,8 +842,8 @@ a {
   background: color-mix(in srgb, var(--gold) 10%, transparent);
   border: var(--bw) solid var(--gold2);
   color: var(--gold);
-  font-size: var(--fs-md); /* good reason: sizes the round chevron glyph in the story-card toggle, not text */
-  line-height: 1; /* good reason: centres the chevron glyph in its 24px circle */
+  font-size: var(--fs-md);
+  line-height: 1;
   transition: transform .15s, background .15s, border-color .15s;
 }
 
@@ -636,30 +862,53 @@ a {
    grows to half); min-width wraps them to one per line on narrow screens.
    Top-aligned so a tall open card doesn't stretch its collapsed neighbour,
    and an open card takes the full line so its siblings reflow around it. */
-[data-findings] { align-items: start; }
-.row > .story { flex: 1 1 40%; min-width: 280px; }
-.row > .story.open { flex-basis: 100%; }
+[data-findings] {
+  align-items: start;
+}
+
+.row>.story {
+  flex: 1 1 40%;
+  min-width: 280px;
+}
+
+.row>.story.open {
+  flex-basis: 100%;
+}
 
 /* Body content shares the head's inset so title and body read as one aligned
    column. Left matches .story-head's --sp-16. Right matches the title's content
    edge: the head's --sp-16 plus the title's extra --sp-32 (which clears the
    chevron), so title and body stop at the same right inset. */
-.story-body { display: none; padding: 0 calc(var(--sp-16) + var(--sp-32)) var(--sp-16) var(--sp-16); }
+.story-body {
+  display: none;
+  padding: 0 calc(var(--sp-16) + var(--sp-32)) var(--sp-16) var(--sp-16);
+}
 
-.story.open .story-body { display: block; }
+.story.open .story-body {
+  display: block;
+}
 
 /* layout hook only — type/colour come from .text-body in markup; hidden when open */
-.story-teaser { padding-right: var(--sp-24); }
+.story-teaser {
+  padding-right: var(--sp-24);
+}
 
-.story.open .story-teaser { display: none; }
+.story.open .story-teaser {
+  display: none;
+}
 
 .story-branches {
   margin: var(--sp-8) 0 var(--sp-12);
   padding-left: var(--sp-16);
 }
 
-.story-branches li { margin-bottom: var(--sp-8); }
-.story-branches li:last-child { margin-bottom: 0; }
+.story-branches li {
+  margin-bottom: var(--sp-8);
+}
+
+.story-branches li:last-child {
+  margin-bottom: 0;
+}
 
 .story-impact,
 .story-sowhat {
@@ -670,8 +919,10 @@ a {
 
 .story-tag {
   display: inline-block;
-  font-size: var(--fs-xs); /* good reason: gold bold uppercase tag label — matches eyebrow size but keeps its own bolder weight + wider tracking */
-  letter-spacing: .08em; /* good reason: wider tag tracking than the eyebrow token, paired with the size above */
+  font-size: var(--fs-xs);
+
+  letter-spacing: .08em;
+
   text-transform: uppercase;
   color: var(--gold);
   font-weight: var(--fw-bold);
@@ -686,13 +937,17 @@ a {
   border-radius: var(--r-pill);
 }
 
-.dot-lg { width: 11px; height: 11px; }
+.dot-lg {
+  width: 11px;
+  height: 11px;
+}
 
 .badge {
   display: inline-block;
   padding: var(--sp-2) var(--sp-8);
   border-radius: var(--r-sm);
-  font-size: var(--fs-xs); /* good reason: badge marker primitive — pill size is intrinsic to the component, not free text */
+  font-size: var(--fs-xs);
+
   font-weight: var(--fw-medium);
 }
 
@@ -713,13 +968,15 @@ a {
 
 /* .chip = inline text token (colour via .c-*); .tag = bordered pill. */
 .chip {
-  font-size: var(--fs-md); /* good reason: inline chip token primitive — size is intrinsic to the marker component */
+  font-size: var(--fs-md);
+
   font-weight: var(--fw-semibold);
   color: var(--dim);
 }
 
 .tag {
-  font-size: var(--fs-xs); /* good reason: bordered pill tag primitive — size is intrinsic to the marker component */
+  font-size: var(--fs-xs);
+
   font-weight: var(--fw-semibold);
   padding: var(--sp-2) var(--sp-6);
   border-radius: var(--r-sm);
@@ -750,15 +1007,20 @@ a {
   transition: background .2s, color .2s, border-color .2s;
 }
 
-.btn[disabled] { opacity: .3; cursor: default; }
+.btn[disabled] {
+  opacity: .3;
+  cursor: default;
+}
 
 .btn-primary {
   background: var(--gold);
   border-color: var(--gold);
   color: var(--bg);
   font-family: var(--serif);
-  font-size: var(--fs-lg); /* good reason: serif button-label sizing — intrinsic to the primary button control, not free text */
-  letter-spacing: .05em; /* good reason: serif button-label tracking, paired with the size above */
+  font-size: var(--fs-lg);
+
+  letter-spacing: .05em;
+
   padding: var(--sp-8);
 }
 
@@ -771,8 +1033,10 @@ a {
   border-color: var(--gold2);
   color: var(--gold2);
   font-family: var(--serif);
-  font-size: var(--fs-lg); /* good reason: serif button-label sizing — intrinsic to the secondary button control, not free text */
-  letter-spacing: .05em; /* good reason: serif button-label tracking, paired with the size above */
+  font-size: var(--fs-lg);
+
+  letter-spacing: .05em;
+
   padding: var(--sp-8);
 }
 
@@ -785,7 +1049,8 @@ a {
   border-color: var(--border);
   color: var(--dim);
   padding: var(--sp-4) var(--sp-8);
-  font-size: var(--fs-xs); /* good reason: compact ghost-button label sizing — intrinsic to the button control */
+  font-size: var(--fs-xs);
+
 }
 
 .btn-ghost:hover:not([disabled]) {
@@ -815,11 +1080,14 @@ a {
   background: none;
   border: none;
   cursor: pointer;
-  line-height: var(--lh-none); /* good reason: collapses line-box around a single glyph so the icon button sits flush */
+  line-height: var(--lh-none);
+
   transition: color .15s, transform .15s;
 }
 
-.icon-btn:hover { transform: scale(1.15); }
+.icon-btn:hover {
+  transform: scale(1.15);
+}
 
 /* --- Form controls (field base lives in the reset) ---
    .select adds the caret chrome; .toggle is the $/BB segmented switch. */
@@ -827,7 +1095,7 @@ a {
   appearance: none;
   -webkit-appearance: none;
   background-image: linear-gradient(45deg, transparent 50%, var(--dim) 50%),
-                    linear-gradient(135deg, var(--dim) 50%, transparent 50%);
+    linear-gradient(135deg, var(--dim) 50%, transparent 50%);
   background-position: calc(100% - 16px) center, calc(100% - 11px) center;
   background-size: 5px 5px, 5px 5px;
   background-repeat: no-repeat;
@@ -841,7 +1109,8 @@ a {
   overflow: hidden;
   cursor: pointer;
   font-weight: var(--fw-semibold);
-  font-size: var(--fs-md); /* good reason: segmented $/BB toggle control — label size intrinsic to the switch */
+  font-size: var(--fs-md);
+
 }
 
 .bb-opt {
@@ -881,8 +1150,10 @@ a {
 
 .subtab {
   padding: var(--sp-8) var(--sp-16);
-  font-size: var(--fs-xs); /* good reason: subtab control label — uppercase tab chrome, intrinsic to the control */
-  letter-spacing: var(--bw); /* good reason: subtab label tracking, paired with the size above */
+  font-size: var(--fs-xs);
+
+  letter-spacing: var(--bw);
+
   text-transform: uppercase;
   color: var(--dim);
   cursor: pointer;
@@ -895,7 +1166,10 @@ a {
   transition: color .15s, border-color .15s, background .15s;
 }
 
-.subtab:hover { color: var(--text); background: var(--s1); }
+.subtab:hover {
+  color: var(--text);
+  background: var(--s1);
+}
 
 .subtab.active {
   color: var(--gold);
@@ -921,6 +1195,7 @@ a {
 .stat-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: var(--sp-8);
 }
 
 .stat-strip .stat {
@@ -936,10 +1211,12 @@ a {
   border-top: var(--bw) solid var(--border);
   border-bottom: var(--bw) solid var(--border);
 }
+
 .mini-row .stat {
   padding: var(--sp-12) var(--sp-16);
   border-left: var(--bw) solid var(--border);
 }
+
 .mini-row .stat:first-child {
   border-left: none;
   padding-left: 0;
@@ -956,7 +1233,8 @@ a {
   display: flex;
   align-items: center;
   gap: var(--sp-6);
-  font-size: var(--fs-xs); /* good reason: legend swatch+label row primitive — small label at full --text colour (text-micro is muted) */
+  font-size: var(--fs-xs);
+
   color: var(--text);
 }
 
@@ -967,8 +1245,16 @@ a {
   border-radius: var(--r-sm);
 }
 
-.swatch-line { width: 10px; height: 3px; }
-.swatch-dot { width: 8px; height: 8px; border-radius: var(--r-pill); }
+.swatch-line {
+  width: 10px;
+  height: 3px;
+}
+
+.swatch-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--r-pill);
+}
 
 /* --- Overlay / modal / popover / tooltip --- */
 .overlay {
@@ -983,7 +1269,9 @@ a {
   transition: opacity .2s;
 }
 
-.overlay.show { opacity: 1; }
+.overlay.show {
+  opacity: 1;
+}
 
 .modal {
   position: relative;
@@ -995,6 +1283,13 @@ a {
   max-height: 80vh;
   overflow-y: auto;
   padding: var(--sp-24);
+  /* Modals are built like panels: a .panel-header then .sections, stacked by
+     the modal's own gap (same mechanism as .panel.on, scaled to the modal's
+     sp-24 padding). Absolutely-positioned chrome (close/star) sits outside
+     the flow. */
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-24);
 }
 
 .modal-close {
@@ -1004,37 +1299,104 @@ a {
   background: none;
   border: none;
   color: var(--dim);
-  font-size: var(--fs-lg); /* good reason: sizes the modal close "×" glyph, not text */
+  font-size: var(--fs-lg);
+
   cursor: pointer;
 }
 
-.modal-close:hover { color: var(--text); }
+.modal-close:hover {
+  color: var(--text);
+}
 
 /* modal content (hand replay popup). Modal titles reuse the shared heading:
-   markup composes `title title-md c-gold mb-4` (serif 20px bold gold) so both
+   markup composes `title title-lg c-gold` (serif 26px bold gold) so both
    the hand-replay and hand-list modals share one heading style. */
-.modal-hand-meta { margin-bottom: var(--sp-16); }
-.modal-hand-meta strong { color: var(--gold); }
-.modal-action-line { padding: var(--sp-4) 0; border-bottom: var(--bw) solid color-mix(in srgb, var(--border) 50%, transparent); }
-.modal-action-line.me { color: var(--gold); }
-.modal-coaching { margin-top: var(--sp-16); padding: var(--sp-12); } /* line-height owned by .text-body in markup */
-/* Amber coaching-label heads reuse the shared eyebrow (uppercase 12px) + the
-   .c-warn amber colour util, composed in markup as `eyebrow c-warn mb-6`. */
-.modal-notes { display: none; margin-top: var(--sp-16); }
-.modal-notes.show { display: block; }
-.modal-notes-header { margin-bottom: var(--sp-6); }
-.modal-notes-status { transition: color .3s; }
-.modal-star-btn { position: absolute; top: var(--sp-8); right: 52px; font-size: var(--fs-xl); color: var(--dim); padding: var(--sp-6) var(--sp-8); } /* good reason: sizes the save "★" glyph button, not text */
-.modal-star-btn.starred { color: var(--gold); }
+.modal-action-line {
+  padding: var(--sp-4) 0;
+  border-bottom: var(--bw) solid color-mix(in srgb, var(--border) 50%, transparent);
+}
+
+.modal-action-line.me {
+  color: var(--gold);
+}
+
+/* Equity-sim slot: plumbing inside the modal stack. Hidden while empty so it
+   never claims a slice of the modal's gap before anything renders into it. */
+.eq-slot:empty {
+  display: none;
+}
+
+.modal-notes {
+  display: none;
+}
+
+.modal-notes.show {
+  display: block;
+}
+
+.modal-notes-header {
+  margin-bottom: var(--sp-6);
+}
+
+.modal-notes-status {
+  transition: color .3s;
+}
+
+.modal-star-btn {
+  position: absolute;
+  top: var(--sp-8);
+  right: 52px;
+  font-size: var(--fs-xl);
+  color: var(--dim);
+  padding: var(--sp-6) var(--sp-8);
+}
+
+
+.modal-star-btn.starred {
+  color: var(--gold);
+}
 
 /* hand-list rows (in the hand-list popup; also used by range) */
-.range-hand-row { padding: var(--sp-8) var(--sp-8); border-radius: var(--r-sm); cursor: pointer; border-bottom: var(--bw) solid var(--border); }
-.range-hand-row:last-child { border-bottom: none; }
-.range-hand-row:hover { background: var(--s2); }
-.range-hand-row-pos { min-width: 28px; }
-.range-hand-row-hole { font-family: var(--serif); font-size: var(--fs-lg); font-weight: var(--fw-bold); line-height: var(--lh-none); color: var(--text); min-width: 52px; } /* good reason: serif hole-card glyph display in a hand-row — no text role sets serif at fs-lg */
-.range-hand-row-board { letter-spacing: .5px; } /* good reason: hairline glyph separation between board cards (e.g. "Ah Kd 7s"), not a text label — no tracking token this small */
-.range-hand-row-actions { line-height: var(--lh-snug); padding-left: 40px; } /* good reason: tightens leading on the multi-line action list (text-meta owns the size); no role sets snug leading */
+.range-hand-row {
+  padding: var(--sp-8) var(--sp-8);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  border-bottom: var(--bw) solid var(--border);
+}
+
+.range-hand-row:last-child {
+  border-bottom: none;
+}
+
+.range-hand-row:hover {
+  background: var(--s2);
+}
+
+.range-hand-row-pos {
+  min-width: 28px;
+}
+
+.range-hand-row-hole {
+  font-family: var(--serif);
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-none);
+  color: var(--text);
+  min-width: 52px;
+}
+
+
+.range-hand-row-board {
+  letter-spacing: .5px;
+}
+
+
+.range-hand-row-actions {
+  line-height: var(--lh-snug);
+  padding-left: 40px;
+}
+
+
 
 .popover {
   position: absolute;
@@ -1067,8 +1429,10 @@ a {
   border: var(--bw) solid var(--border);
   border-radius: var(--r-sm);
   color: var(--text);
-  font-size: var(--fs-md); /* good reason: tooltip popover primitive — body text at full --text colour (text roles are dim), injected as raw strings with no wrapper to carry a role */
-  line-height: var(--lh-normal); /* good reason: tooltip popover primitive leading, paired with its size above */
+  font-size: var(--fs-md);
+
+  line-height: var(--lh-normal);
+
   text-align: left;
   white-space: normal;
   pointer-events: none;
@@ -1092,7 +1456,11 @@ a {
   animation: spin .8s linear infinite;
 }
 
-@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 
 .loading {
   display: flex;
@@ -1113,8 +1481,10 @@ a {
 }
 
 .pager-info {
-  font-size: var(--fs-xs); /* good reason: pagination status label ("1 / 12") — compact control-chrome meta, rendered inside the pager component */
-  letter-spacing: var(--bw); /* good reason: pager label tracking, paired with the size above */
+  font-size: var(--fs-xs);
+
+  letter-spacing: var(--bw);
+
   color: var(--dim);
 }
 
@@ -1123,8 +1493,10 @@ a {
   padding: var(--sp-8) var(--sp-16);
   border-radius: var(--r-sm);
   border: var(--bw) solid transparent;
-  font-size: var(--fs-xs); /* good reason: notice/banner primitive — compact banner text size intrinsic to the component */
-  letter-spacing: var(--bw); /* good reason: notice tracking, paired with the size above */
+  font-size: var(--fs-xs);
+
+  letter-spacing: var(--bw);
+
 }
 
 .notice-info {
@@ -1144,8 +1516,6 @@ a {
   background: color-mix(in srgb, var(--red) 8%, transparent);
   border-color: color-mix(in srgb, var(--red) 25%, transparent);
 }
-
-
 
 /* ==========================================================================
    5. FEATURES   (built per CSS2-BUILD.md)
@@ -1180,15 +1550,20 @@ a {
 }
 
 .rc span {
-  font-size: var(--fs-xs); /* good reason: glyph size for the 13×13 range-matrix cell label (scales with the cell, not free text) */
-  line-height: var(--lh-none); /* good reason: centres the glyph in the square cell */
+  font-size: var(--fs-xs);
+
+  line-height: var(--lh-none);
+
   font-weight: var(--fw-semibold);
   text-align: center;
   color: var(--white);
   pointer-events: none;
 }
 
-.rc:hover { transform: scale(1.5); z-index: 20; }
+.rc:hover {
+  transform: scale(1.5);
+  z-index: 20;
+}
 
 /* colour states (green is shared by gto/hero/high-freq) */
 .rc[data-gto="green"],
@@ -1199,19 +1574,32 @@ a {
 }
 
 .rc[data-gto="red"],
-.rc[data-hero="wrong"] { background: var(--gto-red); }
+.rc[data-hero="wrong"] {
+  background: var(--gto-red);
+}
 
-.rc[data-gto="blue"] { background: var(--gto-blue); }
-.rc[data-gto="grey"] { background: var(--gto-grey); }
+.rc[data-gto="blue"] {
+  background: var(--gto-blue);
+}
+
+.rc[data-gto="grey"] {
+  background: var(--gto-grey);
+}
 
 .rc[data-gto="white"],
-.rc[data-hero="unjudged"] { background: var(--gto-white); }
+.rc[data-hero="unjudged"] {
+  background: var(--gto-white);
+}
 
 .rc[data-gto="white"] span,
-.rc[data-hero="unjudged"] span { color: var(--gto-dark-fg); }
+.rc[data-hero="unjudged"] span {
+  color: var(--gto-dark-fg);
+}
 
 .rc[data-gto="grey"] span,
-.rc[data-gto="blue"] span { color: var(--white); }
+.rc[data-gto="blue"] span {
+  color: var(--white);
+}
 
 .rc[data-gto="none"],
 .rc[data-hero="none"] {
@@ -1220,20 +1608,40 @@ a {
 }
 
 .rc[data-gto="none"] span,
-.rc[data-hero="none"] span { color: var(--gto-empty-fg); }
+.rc[data-hero="none"] span {
+  color: var(--gto-empty-fg);
+}
 
 /* "Your range" cells coloured by the action YOU took, same palette as the
    GTO chart. The colour is the whole story — no right/wrong overlay. */
-.rc[data-act="raise"] { background: var(--gto-red); }
-.rc[data-act="call"] { background: var(--green); }
-.rc[data-act="fold"] { background: var(--gto-grey); }
-.rc[data-act="fold"] span { color: var(--white); }
+.rc[data-act="raise"] {
+  background: var(--gto-red);
+}
+
+.rc[data-act="call"] {
+  background: var(--green);
+}
+
+.rc[data-act="fold"] {
+  background: var(--gto-grey);
+}
+
+.rc[data-act="fold"] span {
+  color: var(--white);
+}
 
 /* Cells you were actually dealt in this spot open the hands behind them. */
-.rc[data-act] { cursor: pointer; }
+.rc[data-act] {
+  cursor: pointer;
+}
 
-.rc.rc-played[data-freq="low"] { background: var(--freq-low); }
-.rc.rc-played[data-freq="med"] { background: var(--freq-med); }
+.rc.rc-played[data-freq="low"] {
+  background: var(--freq-low);
+}
+
+.rc.rc-played[data-freq="med"] {
+  background: var(--freq-med);
+}
 
 /* cell state modifiers */
 .rc.rc-played {
@@ -1242,8 +1650,13 @@ a {
   box-shadow: 0 0 0 var(--bw) rgba(0, 0, 0, 0.35) inset;
 }
 
-.rc.rc-folded { opacity: var(--range-folded-opacity); }
-.rc.rc-undealt { opacity: 0.85; }
+.rc.rc-folded {
+  opacity: var(--range-folded-opacity);
+}
+
+.rc.rc-undealt {
+  opacity: 0.85;
+}
 
 /* --- Equity viz ---
    The equity bar reuses .bar / .bar-track / .bar-fill.bg-pos. These add the
@@ -1262,7 +1675,12 @@ a {
 }
 
 /* --- Carousel: track of slides + arrows + dots --- */
-.carousel { position: relative; }
+.carousel {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-8);
+}
 
 .carousel-track {
   flex: 1;
@@ -1270,8 +1688,13 @@ a {
   min-height: 42px;
 }
 
-.carousel-slide { display: none; }
-.carousel-slide.active { display: block; }
+.carousel-slide {
+  display: none;
+}
+
+.carousel-slide.active {
+  display: block;
+}
 
 .carousel-arrow {
   flex-shrink: 0;
@@ -1281,13 +1704,18 @@ a {
   border: var(--bw) solid var(--border);
   background: none;
   color: var(--dim);
-  font-size: var(--fs-xl); /* good reason: sizes the carousel arrow "‹ ›" glyph, not text */
-  line-height: var(--lh-none); /* good reason: centres the arrow glyph in its 28px circle */
+  font-size: var(--fs-xl);
+
+  line-height: var(--lh-none);
+
   cursor: pointer;
   transition: border-color .2s, color .2s;
 }
 
-.carousel-arrow:hover { border-color: var(--gold2); color: var(--gold); }
+.carousel-arrow:hover {
+  border-color: var(--gold2);
+  color: var(--gold);
+}
 
 .carousel-dots {
   display: flex;
@@ -1305,18 +1733,24 @@ a {
   transition: background .2s;
 }
 
-.carousel-dot.active { background: var(--gold); }
+.carousel-dot.active {
+  background: var(--gold);
+}
 
 /* --- Sentence builder: serif stem with clickable clause tokens --- */
 .sentence {
   font-family: var(--serif);
-  font-size: var(--fs-xl); /* good reason: serif sentence-builder display stem — a bespoke large serif reading surface, no matching serif text role */
-  line-height: var(--lh-body); /* good reason: leading for the serif sentence stem, paired with its size above */
+  font-size: var(--fs-xl);
+
+  line-height: var(--lh-body);
+
   color: var(--text);
 }
 
 .sentence-stem,
-.sentence-join { color: var(--dim); }
+.sentence-join {
+  color: var(--dim);
+}
 
 .sentence-token {
   display: inline-block;
@@ -1327,9 +1761,15 @@ a {
   transition: color .15s, border-color .15s;
 }
 
-.sentence-token:hover { color: var(--text); border-bottom-color: var(--gold); }
+.sentence-token:hover {
+  color: var(--text);
+  border-bottom-color: var(--gold);
+}
 
-.sentence-empty { color: var(--dim); font-style: italic; }
+.sentence-empty {
+  color: var(--dim);
+  font-style: italic;
+}
 
 .sentence-add {
   display: inline-block;
@@ -1339,18 +1779,24 @@ a {
   border: var(--bw) dashed var(--border);
   border-radius: var(--r-sm);
   color: var(--dim);
-  font-size: var(--fs-md); /* good reason: "add clause" button control resets to body size from its serif fs-xl .sentence parent */
+  font-size: var(--fs-md);
+
   cursor: pointer;
   vertical-align: middle;
 }
 
-.sentence-add:hover { border-color: var(--gold2); color: var(--gold); }
+.sentence-add:hover {
+  border-color: var(--gold2);
+  color: var(--gold);
+}
 
 .sentence-seg-tag {
   display: inline-block;
   margin-right: var(--sp-8);
-  font-size: var(--fs-xs); /* good reason: gold bold segment tag resets to label size from the serif fs-xl .sentence parent (eyebrow can't be composed onto this generated inline span without also inheriting dim colour) */
-  letter-spacing: var(--sp-2); /* good reason: tag tracking, paired with the size above */
+  font-size: var(--fs-xs);
+
+  letter-spacing: var(--sp-2);
+
   text-transform: uppercase;
   color: var(--gold);
   font-weight: var(--fw-bold);
@@ -1365,8 +1811,10 @@ a {
   gap: var(--sp-12);
   margin: var(--sp-16) 0;
   text-transform: uppercase;
-  letter-spacing: var(--sp-4); /* good reason: wide divider tracking for the centred "vs" rule, resets from the serif fs-xl .sentence parent */
-  font-size: var(--fs-xs); /* good reason: "vs" divider label size, resets from the serif fs-xl .sentence parent */
+  letter-spacing: var(--sp-4);
+
+  font-size: var(--fs-xs);
+
   color: var(--dim);
 }
 
@@ -1388,11 +1836,23 @@ a {
   cursor: pointer;
 }
 
-.expand-chevron { color: var(--dim); transition: transform .15s; }
-.expand.open .expand-chevron { transform: rotate(180deg); }
+.expand-chevron {
+  color: var(--dim);
+  transition: transform .15s;
+}
 
-.expand-body { display: none; padding-bottom: var(--sp-12); }
-.expand.open .expand-body { display: block; }
+.expand.open .expand-chevron {
+  transform: rotate(180deg);
+}
+
+.expand-body {
+  display: none;
+  padding-bottom: var(--sp-12);
+}
+
+.expand.open .expand-body {
+  display: block;
+}
 
 /* --- Card-deal animation (loader / maintenance) ---
    Cards start offset + transparent; adding .show deals each one in. */
@@ -1409,7 +1869,8 @@ a {
   background: var(--s2);
   border: var(--bw) solid var(--border);
   font-family: var(--serif);
-  font-size: var(--fs-xl); /* good reason: serif rank/suit glyph on the dealt playing-card face (loader/splash), not text */
+  font-size: var(--fs-xl);
+
   font-weight: var(--fw-semibold);
   opacity: 0;
   transform: translateY(18px) scale(.92);
@@ -1419,7 +1880,8 @@ a {
 .card-face-sm {
   width: 44px;
   height: 60px;
-  font-size: var(--fs-2xl); /* good reason: larger card-face glyph for the maintenance splash variant, not text */
+  font-size: var(--fs-2xl);
+
   background: color-mix(in srgb, var(--white) 2%, transparent);
   /* Maintenance cards are static (no deal-in), so keep them visible. */
   opacity: 1;
@@ -1427,66 +1889,326 @@ a {
   transition: none;
 }
 
-.card-face.show { opacity: 1; transform: none; }
+.card-face.show {
+  opacity: 1;
+  transform: none;
+}
 
 /* --- Screen show/hide states --- */
-#loader { display: none; position: fixed; inset: 0; z-index: 1000; flex-direction: column; align-items: center; justify-content: center; background: var(--bg); transition: opacity .8s; }
-#loader.out { opacity: 0; pointer-events: none; }
-#app { display: none; }
-#app.on { display: block; }
-#dash { display: none; }
-#dash.on { display: block; }
+#loader {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  transition: opacity .8s;
+}
+
+#loader.out {
+  opacity: 0;
+  pointer-events: none;
+}
+
+#app {
+  display: none;
+}
+
+#app.on {
+  display: block;
+}
+
+#dash {
+  display: none;
+}
+
+#dash.on {
+  display: block;
+}
+
 /* .panel / .panel.on / .panel-header / .section live in the STRUCTURE block (§3). */
-.panels-wrap.blurred { filter: blur(3px); pointer-events: none; }
-#maintenance { display: none; position: fixed; inset: 0; z-index: 99999; background: var(--bg); color: var(--text); text-align: center; padding: 48px var(--sp-24); }
-body.maintenance #loader, body.maintenance #app { display: none !important; }
-body.maintenance #maintenance { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.panels-wrap.blurred {
+  filter: blur(3px);
+  pointer-events: none;
+}
+
+#maintenance {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background: var(--bg);
+  color: var(--text);
+  text-align: center;
+  padding: 48px var(--sp-24);
+}
+
+body.maintenance #loader,
+body.maintenance #app {
+  display: none !important;
+}
+
+body.maintenance #maintenance {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
 
 /* small uppercase dim label (used by the loader/maintenance/header eyebrows) */
 
 /* --- Dashboard header + hero stat strip --- */
-.dash-header { position: sticky; top: 0; z-index: 50; background: var(--bg-translucent); backdrop-filter: blur(8px); border-bottom: var(--bw) solid var(--border); padding: 0 var(--sp-32); }
-.header-inner { padding: var(--sp-12) 0; }
-.header-controls { display: flex; align-items: center; gap: var(--sp-16); flex-wrap: wrap; }
-.hero-strip { display: flex; gap: var(--bw); background: var(--border); border-bottom: var(--bw) solid var(--border); }
-.hs { flex: 1; min-width: 0; background: var(--s1); padding: var(--sp-12) var(--sp-16); }
-.hs-l { margin-bottom: 5px; white-space: nowrap; }
-.hs-v { white-space: nowrap; }
+.dash-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--bg-translucent);
+  backdrop-filter: blur(8px);
+  border-bottom: var(--bw) solid var(--border);
+  padding: 0 var(--sp-32);
+}
+
+.header-inner {
+  padding: var(--sp-12) 0;
+}
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-16);
+  flex-wrap: wrap;
+}
+
+.hero-strip {
+  display: flex;
+  gap: var(--bw);
+  background: var(--border);
+  border-bottom: var(--bw) solid var(--border);
+}
+
+.hs {
+  flex: 1;
+  min-width: 0;
+  background: var(--s1);
+  padding: var(--sp-12) var(--sp-16);
+}
+
+.hs-l {
+  margin-bottom: 5px;
+  white-space: nowrap;
+}
+
+.hs-v {
+  white-space: nowrap;
+}
 
 /* --- Tab nav (grouped dropdown menus) --- */
-.tab-nav { display: flex; position: relative; z-index: 1001; border-bottom: var(--bw) solid var(--border); background: var(--menu-bg); }
-.tab-menu { flex: 1; position: relative; }
-.tab-menu + .tab-menu { border-left: var(--bw) solid var(--border); }
-.tab-menu-btn { width: 100%; padding: var(--sp-12) var(--sp-16); font-size: var(--fs-xs); letter-spacing: 1.5px; text-transform: uppercase; color: var(--dim); background: none; border: none; cursor: pointer; text-align: left; transition: color .2s, background .2s; } /* good reason: top-level tab-menu control label — uppercase nav chrome with its own wide tracking */
-.tab-menu-btn:hover { color: var(--text); background: var(--tint-light); }
-.tab-menu-btn.active { color: var(--gold); }
-.tab-arrow { font-size: var(--fs-xs); opacity: .5; margin-left: var(--sp-4); } /* good reason: sizes the dropdown caret glyph in the tab-menu button, not text */
-.tab-menu-btn.active .tab-arrow { opacity: 1; }
-.tab-menu-items { display: none; position: absolute; top: 100%; left: 0; min-width: 100%; background: var(--menu-bg); border: var(--bw) solid var(--tint-light-2); border-top: none; z-index: 1001; box-shadow: 0 8px 32px var(--bg-overlay); border-radius: 0 0 var(--r-lg) var(--r-lg); }
-.tab-menu.open .tab-menu-items { display: block; }
-.tab-item { display: block; width: 100%; padding: var(--sp-8) var(--sp-16); font-size: var(--fs-xs); letter-spacing: var(--bw); text-transform: uppercase; color: var(--text); background: none; border: none; cursor: pointer; text-align: left; transition: color .15s, background .15s; } /* good reason: tab-menu dropdown item control — uppercase nav chrome intrinsic to the menu */
-.tab-item:hover { color: var(--white); background: var(--tint-light-2); }
-.tab-item.active { color: var(--gold); }
+.tab-nav {
+  display: flex;
+  position: relative;
+  z-index: 1001;
+  border-bottom: var(--bw) solid var(--border);
+  background: var(--menu-bg);
+}
+
+.tab-menu {
+  flex: 1;
+  position: relative;
+}
+
+.tab-menu+.tab-menu {
+  border-left: var(--bw) solid var(--border);
+}
+
+.tab-menu-btn {
+  width: 100%;
+  padding: var(--sp-12) var(--sp-16);
+  font-size: var(--fs-xs);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--dim);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: color .2s, background .2s;
+}
+
+
+.tab-menu-btn:hover {
+  color: var(--text);
+  background: var(--tint-light);
+}
+
+.tab-menu-btn.active {
+  color: var(--gold);
+}
+
+.tab-arrow {
+  font-size: var(--fs-xs);
+  opacity: .5;
+  margin-left: var(--sp-4);
+}
+
+
+.tab-menu-btn.active .tab-arrow {
+  opacity: 1;
+}
+
+.tab-menu-items {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 100%;
+  background: var(--menu-bg);
+  border: var(--bw) solid var(--tint-light-2);
+  border-top: none;
+  z-index: 1001;
+  box-shadow: 0 8px 32px var(--bg-overlay);
+  border-radius: 0 0 var(--r-lg) var(--r-lg);
+}
+
+.tab-menu.open .tab-menu-items {
+  display: block;
+}
+
+.tab-item {
+  display: block;
+  width: 100%;
+  padding: var(--sp-8) var(--sp-16);
+  font-size: var(--fs-xs);
+  letter-spacing: var(--bw);
+  text-transform: uppercase;
+  color: var(--text);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: color .15s, background .15s;
+}
+
+
+.tab-item:hover {
+  color: var(--white);
+  background: var(--tint-light-2);
+}
+
+.tab-item.active {
+  color: var(--gold);
+}
 
 /* --- Loader screen (cards deal in, progress sweeps) --- */
-.l-title { font-size: var(--fs-hero); color: var(--gold); margin-bottom: var(--sp-4); } /* good reason: loader splash hero display size (--fs-hero), outside the content type scale */
-.l-sub { letter-spacing: 5px; margin-bottom: var(--sp-32); } /* good reason: loader splash — wide display tracking beyond the eyebrow's token; preserves the loader's letter-spread */
-.l-cards { display: flex; gap: var(--sp-12); margin-bottom: 44px; }
-.l-count { display: inline-block; min-width: 120px; font-size: var(--fs-hero); font-weight: var(--fw-regular); color: var(--gold); font-variant-numeric: tabular-nums; text-align: center; } /* good reason: loader hero counter — tabular hero display size (--fs-hero), outside the content type scale */
-.l-prog { position: relative; width: 190px; height: 1px; margin: var(--sp-12) auto 0; background: var(--muted); overflow: hidden; }
-.l-prog-fill { width: 0; height: 100%; background: var(--gold); transition: width .06s linear; }
-.l-prog::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, var(--gold), transparent); transform: translateX(-100%); animation: l-prog-sweep 1.1s linear infinite; }
-@keyframes l-prog-sweep { to { transform: translateX(190px); } }
+.l-title {
+  font-size: var(--fs-hero);
+  color: var(--gold);
+  margin-bottom: var(--sp-4);
+}
+
+
+.l-sub {
+  letter-spacing: 5px;
+  margin-bottom: var(--sp-32);
+}
+
+
+.l-cards {
+  display: flex;
+  gap: var(--sp-12);
+  margin-bottom: 44px;
+}
+
+.l-count {
+  display: inline-block;
+  min-width: 120px;
+  font-size: var(--fs-hero);
+  font-weight: var(--fw-regular);
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+
+.l-prog {
+  position: relative;
+  width: 190px;
+  height: 1px;
+  margin: var(--sp-12) auto 0;
+  background: var(--muted);
+  overflow: hidden;
+}
+
+.l-prog-fill {
+  width: 0;
+  height: 100%;
+  background: var(--gold);
+  transition: width .06s linear;
+}
+
+.l-prog::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  transform: translateX(-100%);
+  animation: l-prog-sweep 1.1s linear infinite;
+}
+
+@keyframes l-prog-sweep {
+  to {
+    transform: translateX(190px);
+  }
+}
 
 /* --- Panel loading placeholder --- */
-.panel-loading { display: flex; align-items: center; justify-content: center; gap: var(--sp-8); padding: var(--sp-32) 0; min-height: 160px; }
-.eq-spinner-ring { width: 18px; height: 18px; border: var(--sp-2) solid var(--border); border-top-color: var(--gold); border-radius: var(--r-pill); animation: eq-spin .8s linear infinite; }
-.eq-spinner-text { color: var(--dim); }
-@keyframes eq-spin { to { transform: rotate(360deg); } }
+.panel-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-8);
+  padding: var(--sp-32) 0;
+  min-height: 160px;
+}
+
+.eq-spinner-ring {
+  width: 18px;
+  height: 18px;
+  border: var(--sp-2) solid var(--border);
+  border-top-color: var(--gold);
+  border-radius: var(--r-pill);
+  animation: eq-spin .8s linear infinite;
+}
+
+.eq-spinner-text {
+  color: var(--dim);
+}
+
+@keyframes eq-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 
 /* --- Maintenance screen --- */
-.m-title { font-size: var(--fs-hero-xl); line-height: var(--lh-none); color: var(--gold); margin-bottom: 18px; } /* good reason: maintenance splash hero display size (--fs-hero-xl), outside the content type scale */
-.m-sub { font-size: var(--fs-lg); color: var(--text); max-width: 520px; line-height: var(--lh-normal); margin-bottom: 36px; } /* good reason: maintenance splash subtitle at full --text colour (text roles are dim), standalone splash markup with no wrapper role */
+.m-title {
+  font-size: var(--fs-hero-xl);
+  line-height: var(--lh-none);
+  color: var(--gold);
+  margin-bottom: 18px;
+}
+
+
+.m-sub {
+  font-size: var(--fs-lg);
+  color: var(--text);
+  max-width: 520px;
+  line-height: var(--lh-normal);
+  margin-bottom: 36px;
+}
+
+
 
 /* --- Paste / import pages --- */
 #paste-wrap {
@@ -1505,7 +2227,8 @@ body.maintenance #maintenance { display: flex; flex-direction: column; align-ite
 
 .paste-suit {
   font-family: var(--serif);
-  font-size: var(--fs-3xl); /* good reason: decorative serif suit glyph (♠/♣) on the paste page, not text */
+  font-size: var(--fs-3xl);
+
   color: var(--gold2);
   opacity: .5;
   margin-bottom: var(--sp-16);
@@ -1525,40 +2248,153 @@ body.maintenance #maintenance { display: flex; flex-direction: column; align-ite
 }
 
 .paste-nav-link {
-  font-size: var(--fs-xs); /* good reason: small nav link on the paste page — dim label at fs-xs (text-micro is muted, not dim) */
-  letter-spacing: var(--bw); /* good reason: nav-link tracking, paired with the size above */
+  font-size: var(--fs-xs);
+
+  letter-spacing: var(--bw);
+
   color: var(--dim);
   text-decoration: none;
   cursor: pointer;
 }
 
-.paste-nav-link:hover { color: var(--gold); }
+.paste-nav-link:hover {
+  color: var(--gold);
+}
 
-textarea#jin { min-height: 50px; }
-.paste-box .btn { width: 60%; margin-top: var(--sp-16); }
-.paste-box .btn-primary { margin-bottom: var(--sp-24); }
-.paste-manual { border-top: var(--bw) solid var(--border); padding-top: var(--sp-24); margin-top: var(--sp-8); }
-.restore-block { display: none; margin-top: var(--sp-24); padding-top: var(--sp-24); border-top: var(--bw) solid var(--border); }
-.restore-btn { margin-top: 0; }
+textarea#jin {
+  min-height: 50px;
+}
+
+.paste-box .btn {
+  width: 60%;
+  margin-top: var(--sp-16);
+}
+
+.paste-box .btn-primary {
+  margin-bottom: var(--sp-24);
+}
+
+.paste-manual {
+  border-top: var(--bw) solid var(--border);
+  padding-top: var(--sp-24);
+  margin-top: var(--sp-8);
+}
+
+.restore-block {
+  display: none;
+  margin-top: var(--sp-24);
+  padding-top: var(--sp-24);
+  border-top: var(--bw) solid var(--border);
+}
+
+.restore-btn {
+  margin-top: 0;
+}
 
 /* --- Header style picker + page meta --- */
-.page-meta-link { cursor: pointer; padding: var(--sp-4) var(--sp-8); border-radius: var(--r-sm); border: var(--bw) solid transparent; transition: border-color .2s, color .2s; }
-.page-meta-link:hover { border-color: var(--border); color: var(--gold); }
-.fw-600 { font-weight: var(--fw-semibold); }
-.link-gold { color: var(--gold); text-decoration: underline; }
-.style-display { padding: var(--sp-4) var(--sp-8); }
-.style-display .sd-you-label, .style-display .sd-target-label { color: var(--dim); font-size: var(--fs-xs); } /* good reason: compact inline labels in the header style-display strip, sized to fit the sticky header row */
-.style-display .sd-you-val { color: var(--text); font-weight: var(--fw-semibold); }
-.style-display .sd-arrow { color: var(--dim); margin: 0 var(--sp-2); }
-.style-display .sd-target-pick { background: transparent; color: var(--gold); border: var(--bw) solid var(--border); border-radius: var(--r-sm); padding: var(--sp-2) var(--sp-6); font-size: var(--fs-md); font-weight: var(--fw-semibold); cursor: pointer; } /* good reason: target-style picker button control — label size intrinsic to the control */
-.style-display .sd-target-pick:hover { border-color: var(--gold); }
+.page-meta-link {
+  cursor: pointer;
+  padding: var(--sp-4) var(--sp-8);
+  border-radius: var(--r-sm);
+  border: var(--bw) solid transparent;
+  transition: border-color .2s, color .2s;
+}
+
+.page-meta-link:hover {
+  border-color: var(--border);
+  color: var(--gold);
+}
+
+.fw-600 {
+  font-weight: var(--fw-semibold);
+}
+
+.link-gold {
+  color: var(--gold);
+  text-decoration: underline;
+}
+
+.style-display {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-6);
+  padding: var(--sp-4) var(--sp-8);
+}
+
+.style-display .sd-you-label,
+.style-display .sd-target-label {
+  color: var(--dim);
+  font-size: var(--fs-xs);
+}
+
+
+.style-display .sd-you-val {
+  color: var(--text);
+  font-weight: var(--fw-semibold);
+}
+
+.style-display .sd-arrow {
+  color: var(--dim);
+  margin: 0 var(--sp-2);
+}
+
+.style-display .sd-target-pick {
+  background: transparent;
+  color: var(--gold);
+  border: var(--bw) solid var(--border);
+  border-radius: var(--r-sm);
+  padding: var(--sp-2) var(--sp-6);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-semibold);
+  cursor: pointer;
+}
+
+
+.style-display .sd-target-pick:hover {
+  border-color: var(--gold);
+}
 
 /* --- How it works box --- */
-.hiw-step { display: grid; grid-template-columns: 32px 1fr; grid-template-rows: auto auto; column-gap: var(--sp-12); row-gap: var(--sp-4); }
-.hiw-num { grid-row: 1 / 3; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: var(--r-pill); border: var(--bw) solid var(--gold2); color: var(--gold); font-family: var(--serif); font-size: var(--fs-md); font-weight: var(--fw-bold); } /* good reason: serif numeral inside a 28px step badge — glyph in a fixed circle, not text */
-.hiw-feat { display: grid; grid-template-columns: 110px 1fr; gap: var(--sp-12); padding: var(--sp-8) 0; border-bottom: var(--bw) solid var(--border); }
-.hiw-footer { margin-top: var(--sp-24); padding-top: var(--sp-16); border-top: var(--bw) solid var(--border); }
+.hiw-step {
+  display: grid;
+  grid-template-columns: 32px 1fr;
+  grid-template-rows: auto auto;
+  column-gap: var(--sp-12);
+  row-gap: var(--sp-4);
+}
 
+.hiw-num {
+  grid-row: 1 / 3;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r-pill);
+  border: var(--bw) solid var(--gold2);
+  color: var(--gold);
+  font-family: var(--serif);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-bold);
+}
+
+
+.hiw-feat {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: var(--sp-12);
+  padding: var(--sp-8) 0;
+  border-bottom: var(--bw) solid var(--border);
+}
+
+.hiw-footer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-8);
+  margin-top: var(--sp-24);
+  padding-top: var(--sp-16);
+  border-top: var(--bw) solid var(--border);
+}
 
 /* ==========================================================================
    6. RESPONSIVE
@@ -1570,15 +2406,27 @@ textarea#jin { min-height: 50px; }
       ========================================================================== */
 
 /* shared verdict colours (from bandVerdict): used by dynamics tables/cards */
-.v-ok { color: var(--green); }
-.v-low { color: var(--amber); }
-.v-high { color: var(--red); }
-.v-na { color: var(--muted); }
+.v-ok {
+  color: var(--green);
+}
+
+.v-low {
+  color: var(--amber);
+}
+
+.v-high {
+  color: var(--red);
+}
+
+.v-na {
+  color: var(--muted);
+}
 
 .saved-card-hole {
   font-family: var(--serif);
   font-weight: var(--fw-bold);
-  line-height: var(--lh-tight); /* good reason: serif hole-card glyph display (e.g. "A♠K♥") — no text role sets serif at fs-lg */
+  line-height: var(--lh-tight);
+
 }
 
 .style-card-name {
@@ -1700,7 +2548,8 @@ textarea#jin { min-height: 50px; }
 }
 
 .watch-star {
-  font-size: var(--fs-lg) !important; /* good reason: sizes the watch "★" glyph button (overriding the table cell), not text */
+  font-size: var(--fs-lg) !important;
+
   color: var(--gold2) !important;
   transition: color .15s, transform .15s;
 }
@@ -1725,7 +2574,9 @@ textarea#jin { min-height: 50px; }
 
 /* Player detail view: vertical rhythm between header, tendencies, and the
    shared-hands table so the sections read as distinct blocks. */
-.player-detail-section .section-head:first-child { margin-top: 0; }
+.player-detail-section .section-head:first-child {
+  margin-top: 0;
+}
 
 .saved-section-divider {
   border-bottom: var(--bw) solid var(--border);
@@ -1750,9 +2601,10 @@ textarea#jin { min-height: 50px; }
 }
 
 .profile-type-name {
-  font-size: var(--fs-3xl); /* good reason: mono display heading — the title roles force serif, this is the mono archetype name at page-title size with lh-none */
+  font-size: var(--fs-3xl);
+
   color: var(--gold);
-  line-height: var(--lh-none); /* good reason: tight display leading for the archetype-name heading, paired with its size above */
+  line-height: var(--lh-none);
 }
 
 .profile-type-desc {
@@ -1764,7 +2616,7 @@ textarea#jin { min-height: 50px; }
 }
 
 .profile-name {
-  font-size: var(--fs-3xl); /* good reason: mono display heading (player name) at page-title size — title roles force serif */
+  font-size: var(--fs-3xl);
   color: var(--gold);
 }
 
@@ -1779,7 +2631,8 @@ textarea#jin { min-height: 50px; }
 }
 
 .saved-toggle-arrow {
-  font-size: var(--fs-xs); /* good reason: sizes the collapse/expand chevron glyph, not a text label */
+  font-size: var(--fs-xs);
+
   color: var(--dim);
   transition: transform .2s;
 }
@@ -1804,7 +2657,8 @@ textarea#jin { min-height: 50px; }
 }
 
 .saved-card-hole {
-  font-size: var(--fs-lg); /* good reason: serif hole-card glyph display size (paired with the serif rule above) */
+  font-size: var(--fs-lg);
+
   color: var(--gold);
 }
 
@@ -1814,7 +2668,8 @@ textarea#jin { min-height: 50px; }
 }
 
 .saved-unsave {
-  font-size: var(--fs-lg); /* good reason: icon-button glyph size (unsave ×), not text */
+  font-size: var(--fs-lg);
+
   color: var(--gold);
   padding: 0 0 0 var(--sp-8);
 }
@@ -1840,7 +2695,8 @@ textarea#jin { min-height: 50px; }
 }
 
 .saved-note-preview {
-  line-height: var(--lh-normal); /* good reason: fixes leading so the 3-line -webkit-line-clamp truncation is predictable (size owned by .text-micro) */
+  line-height: var(--lh-normal);
+
   display: -webkit-box;
   -webkit-line-clamp: 3;
   line-clamp: 3;
@@ -1859,9 +2715,13 @@ textarea#jin { min-height: 50px; }
 
 .welcome-wrap {
   max-width: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-24);
 }
 
 .welcome-body {
+  display: grid;
   grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
   gap: 40px;
   align-items: flex-start;
@@ -1908,14 +2768,15 @@ textarea#jin { min-height: 50px; }
 }
 
 .allin-cards {
-  letter-spacing: 0.3px; /* good reason: hairline separation between card glyphs in a table cell (size inherited from .table td) */
+  letter-spacing: 0.3px;
+
 }
 
-.allin-card.r {
+.card-glyph.r {
   color: var(--red);
 }
 
-.allin-card.b {
+.card-glyph.b {
   color: var(--text);
 }
 
@@ -2024,7 +2885,8 @@ textarea#jin { min-height: 50px; }
   background: transparent;
   border: var(--bw) solid var(--border);
   color: var(--red);
-  font-size: var(--fs-md); /* good reason: "remove clause" button control in the clause popover — label size intrinsic to the control */
+  font-size: var(--fs-md);
+
   border-radius: var(--r-sm);
   cursor: pointer;
 }
@@ -2047,8 +2909,10 @@ textarea#jin { min-height: 50px; }
 }
 
 .cr-tile-value {
-  font-size: var(--fs-3xl); /* good reason: large tabular number display (clause-report headline tile) — no role sets a mono number at this size */
-  line-height: 1.1; /* good reason: tight display leading for the large number tile, paired with its size above */
+  font-size: var(--fs-3xl);
+
+  line-height: 1.1;
+
 }
 
 .cr-tile-compare .cr-tile-trio {
@@ -2057,7 +2921,6 @@ textarea#jin { min-height: 50px; }
   gap: var(--sp-12);
   align-items: end;
 }
-
 
 .cr-charts {
   --col-min: 340px;
@@ -2104,7 +2967,8 @@ textarea#jin { min-height: 50px; }
   }
 
   .welcome-toc .text-body {
-    font-size: var(--fs-xs); /* good reason: responsive step-down of the TOC body text at ≤560px so the two-column row fits the narrow viewport */
+    font-size: var(--fs-xs);
+
   }
 
   .saved-hands-list {
@@ -2122,14 +2986,14 @@ textarea#jin { min-height: 50px; }
   }
 }
 
-
 /* "see example" / run-sim buttons (compose with .btn) — a clear resting
    button look (filled + gold outline) so they read as buttons, not hover-only. */
 .example-hand-btn {
   margin-top: var(--sp-8);
   padding: var(--sp-6) var(--sp-12);
   text-transform: uppercase;
-  letter-spacing: var(--bw); /* good reason: uppercase button-label tracking on the "see example" button control (composes .btn for size) */
+  letter-spacing: var(--bw);
+
   background: var(--s1);
   border-color: var(--gold2);
   color: var(--gold);
@@ -2148,8 +3012,16 @@ textarea#jin { min-height: 50px; }
   border-radius: var(--r-sm);
   transition: background .15s;
 }
-.cards-bar-row:hover { background: var(--s1); }
-.cards-row-cue { font-size: var(--fs-xs); } /* good reason: sizes the "›" affordance glyph on a clickable row, not a text label */
+
+.cards-bar-row:hover {
+  background: var(--s1);
+}
+
+.cards-row-cue {
+  font-size: var(--fs-xs);
+}
+
+
 
 /* Stat cards that open the hands behind them. Like .cards-bar-row but without
    the negative margin, so they sit cleanly inside a stat grid. */
@@ -2159,41 +3031,50 @@ textarea#jin { min-height: 50px; }
   border-radius: var(--r-sm);
   transition: background .15s;
 }
-.stat-clickable:hover { background: var(--s1); }
 
-/* --- Equity simulator (hand-detail popup) --- */
+.stat-clickable:hover {
+  background: var(--s1);
+}
+
+/* --- Equity simulator (hand-detail popup; the modal's gap spaces the block) --- */
 .eq-sim {
-  margin-top: var(--sp-16);
   padding: var(--sp-12) var(--sp-12);
 }
+
 .eq-sim-header {
   align-items: baseline;
   margin-bottom: var(--sp-8);
   padding-bottom: var(--sp-8);
   border-bottom: var(--bw) solid var(--border);
 }
+
 .eq-row {
   padding: var(--sp-8) 0;
   border-bottom: var(--bw) solid var(--border);
 }
+
 .eq-meta-line {
   margin-top: var(--sp-4);
   padding-left: var(--sp-2);
 }
+
 .eq-row-bottom {
   margin-top: var(--sp-6);
   padding-left: var(--sp-2);
 }
+
 .eq-street {
   min-width: 58px;
 }
+
 .eq-pct {
   color: var(--text);
-  font-size: var(--fs-md); /* good reason: right-aligned tabular equity-percentage value in the sim row, sized to align in its 48px column */
+  font-size: var(--fs-md);
   font-weight: var(--fw-semibold);
   text-align: right;
   min-width: 48px;
 }
+
 .eq-bar-track {
   flex: 1;
   height: 8px;
@@ -2202,40 +3083,47 @@ textarea#jin { min-height: 50px; }
   overflow: hidden;
   min-width: 60px;
 }
+
 .eq-bar-fill {
   height: 100%;
   background: var(--green);
   border-radius: var(--r-sm);
   transition: width .3s;
 }
+
 .eq-detail {
-  line-height: var(--lh-normal); /* good reason: readable leading on the multi-line detail line (size owned by .text-micro); no role sets this leading on micro text */
+  line-height: var(--lh-normal);
   margin-top: var(--sp-4);
 }
+
 .eq-curve {
   margin-top: var(--sp-8);
   padding-top: var(--sp-8);
   border-top: var(--bw) solid var(--border);
   text-align: center;
 }
+
 .eq-summary {
   margin-top: var(--sp-12);
   padding: var(--sp-8) var(--sp-12);
   border-left: 3px solid var(--gold);
 }
+
 /* .eq-summary-text: line-height owned by .text-body in markup */
 .eq-caveats {
   margin-top: var(--sp-8);
   padding-top: var(--sp-8);
   border-top: var(--bw) solid var(--border);
-  line-height: var(--lh-normal); /* good reason: readable leading on the multi-line caveats text (size owned by .text-micro); no role sets this leading on micro text */
+  line-height: var(--lh-normal);
 }
+
 .eq-spinner {
   display: flex;
   align-items: center;
   gap: var(--sp-8);
   padding: var(--sp-12) 0;
 }
+
 .eq-spinner-ring {
   width: 18px;
   height: 18px;

@@ -20,27 +20,37 @@ function describeAction(a, hand) {
   }
 }
 
+// Action replay: each street is its own .section headed by a .section-head
+// ("Turn 3♥" — street name plus the dealt card(s) as coloured suit symbols),
+// with that street's action lines grouped in a single list block below it.
 function buildModalActionLines(hand) {
   var acts = parseActions(hand.actions) || [];
-  var board = hand.board || [];
+  var board = (hand.board || []).map(normCard);
   var streetBoard = { Flop: board.slice(0, 3), Turn: board.slice(3, 4), River: board.slice(4, 5) };
   var html = '';
   var lastStreet = null;
+  var open = false;
   for (var i = 0; i < acts.length; i++) {
     var a = acts[i];
     if (!a || !a.type) continue;
     if (a.street && a.street !== lastStreet) {
       lastStreet = a.street;
-      if (a.street !== 'Preflop') {
-        var bc = streetBoard[a.street] || [];
-        html += '<div class="eyebrow pt-8">' + a.street +
-          (bc.length ? ': ' + bc.join(' ') : '') + '</div>';
-      }
+      if (open) html += '</div></div>';
+      var bc = streetBoard[a.street] || [];
+      html += '<div class="section">' +
+        '<div class="section-head">' + a.street + (bc.length ? ' ' + displayCards(bc) : '') + '</div>' +
+        '<div>';
+      open = true;
+    } else if (!open) {
+      // Actions with no street marker before the first street: headerless section.
+      html += '<div class="section"><div>';
+      open = true;
     }
     var isMe = !!a.isMe;
     html += '<div class="text-meta modal-action-line' + (isMe ? ' me' : '') + '">' +
       (isMe ? '▸ ' : '  ') + (a.author || '?') + ': ' + describeAction(a, hand) + '</div>';
   }
+  if (open) html += '</div></div>';
   return html;
 }
 
@@ -71,9 +81,10 @@ function buildStacksBlock(hand) {
       '<span class="text-meta">' + netHtml + '</span>' +
       '</div>';
   }).join('');
-  return '<div class="player-stacks col gap-6">' +
-    '<div class="eyebrow">Stacks (before &rarr; after)</div>' +
-    '<div>' + rows + '</div></div>';
+  return '<div class="section">' +
+    '<div class="section-head">Stacks (before &rarr; after)</div>' +
+    '<div class="player-stacks">' + rows + '</div>' +
+    '</div>';
 }
 
 function createExampleModal() {
@@ -87,7 +98,6 @@ function createExampleModal() {
 
   var box = document.createElement('div');
   box.className = 'modal';
-  box.style.position = 'relative';
 
   return { overlay: overlay, box: box };
 }
@@ -108,15 +118,14 @@ function showExampleHandModal(hand, coachingNote) {
 
   var closeBtn = '<button class="modal-close" id="modal-close-btn">&times;</button>';
   var tagStrip = handTagsHtml(hand);
-  var title = '<div class="col gap-4 mb-16">' +
-    '<div class="title title-md c-gold">' + (hand.hole ? hand.hole.join(' ') : '??') + '</div>' +
+  var header = '<div class="panel-header">' +
+    '<div class="title title-lg c-gold">' + (hand.hole && hand.hole.length ? displayCards(hand.hole.map(normCard)) : '??') + '</div>' +
     '<div class="eyebrow">Example hand · ' + (hand.position || '?') + ' position' + (tagStrip ? ' · ' + tagStrip : '') + '</div>' +
     '</div>';
-  var subtitle = '';
 
-  var metaHtml = '<div class="text-meta modal-hand-meta row gap-16">' +
-    '<span>Board: <strong>' + (hand.board && hand.board.length ? hand.board.join(' ') : 'none') + '</strong></span>' +
-    '<span>Pot: <strong>' + fmtBB(hand.pot || 0, getHandBB(hand)) + '</strong></span>' +
+  var metaHtml = '<div class="section"><div class="row center">' +
+    '<span class="text-meta">Board: ' + (hand.board && hand.board.length ? displayCards(hand.board.map(normCard)) : 'none') + '</span>' +
+    '<span class="text-meta">Pot: <strong class="c-gold">' + fmtBB(hand.pot || 0, getHandBB(hand)) + '</strong></span>' +
     (function() {
       var pnl = getHandPnl(hand);
       var res = hand.outcome ? hand.outcome.result : '?';
@@ -124,16 +133,19 @@ function showExampleHandModal(hand, coachingNote) {
       if (res === 'folded' && pnl.text !== 'folded') label = 'folded ' + pnl.text;
       else if (res === 'won') label = 'won ' + pnl.text;
       else if (res === 'lost') label = 'lost ' + pnl.text;
-      return '<span>Result: <strong class="' + pnl.cls + '">' + label + '</strong></span>';
+      return '<span class="text-meta">Result: <strong class="' + pnl.cls + '">' + label + '</strong></span>';
     })() +
-    '</div>';
+    '</div></div>';
 
   var stacksHtml = buildStacksBlock(hand);
 
   var actionsHtml = buildModalActionLines(hand);
 
   var coaching = coachingNote
-    ? '<div class="card card-s2 text-body modal-coaching col gap-6"><div class="eyebrow c-warn">What to improve</div>' + coachingNote + '</div>'
+    ? '<div class="section">' +
+        '<div class="section-head c-warn">What to improve</div>' +
+        '<div class="card card-s2"><div class="text-body">' + coachingNote + '</div></div>' +
+      '</div>'
     : '';
 
   var starred = isHandStarred(hand);
@@ -148,8 +160,8 @@ function showExampleHandModal(hand, coachingNote) {
     '<textarea id="modal-notes-input" placeholder="Add notes about this hand...">' + noteVal + '</textarea>' +
     '</div>';
 
-  var equitySlot = '<div id="equity-slot"></div>';
-  box.innerHTML = closeBtn + starBtn + title + subtitle + metaHtml + stacksHtml + equitySlot + actionsHtml + coaching + notesSection;
+  var equitySlot = '<div class="eq-slot" id="equity-slot"></div>';
+  box.innerHTML = closeBtn + starBtn + header + metaHtml + stacksHtml + equitySlot + actionsHtml + coaching + notesSection;
   mountExampleModal(overlay, box);
 
   if (typeof injectEquityButton === 'function') {
@@ -205,12 +217,12 @@ function buildHandRow(h, idx) {
   var res = renderResult(h, 'span', 'saved-res range-hand-row-result');
   return '<div class="range-hand-row" data-ridx="' + idx + '">' +
     '<div class="row between">' +
-      '<div class="row center gap-12">' +
+      '<div class="row center">' +
         '<span class="eyebrow range-hand-row-pos">' + (h.position || '?') + '</span>' +
-        '<span class="range-hand-row-hole">' + (h.hole ? h.hole.join(' ') : '??') + '</span>' +
-        '<span class="text-meta range-hand-row-board">' + (h.board && h.board.length ? h.board.join(' ') : '-') + '</span>' +
+        '<span class="range-hand-row-hole">' + (h.hole && h.hole.length ? displayCards(h.hole.map(normCard)) : '??') + '</span>' +
+        '<span class="text-meta range-hand-row-board">' + (h.board && h.board.length ? displayCards(h.board.map(normCard)) : '-') + '</span>' +
       '</div>' +
-      '<div class="row center gap-12">' + res + '</div>' +
+      '<div class="row center">' + res + '</div>' +
     '</div>' +
     '<div class="text-meta range-hand-row-actions">' + myActs + '</div>' +
     '</div>';
@@ -223,20 +235,21 @@ function showExampleHandListModal(title, handsList, coachingNote) {
   var modal = createExampleModal();
   var overlay = modal.overlay;
   var box = modal.box;
-  box.style.maxHeight = '80vh';
-  box.style.overflowY = 'auto';
 
-  var header = '<div class="col gap-4 mb-16">' +
-    '<div class="title title-md c-gold">' + title + '</div>' +
+  var header = '<div class="panel-header">' +
+    '<div class="title title-lg c-gold">' + title + '</div>' +
     '<div class="text-meta">' + handsList.length + ' example hand' + (handsList.length !== 1 ? 's' : '') + '</div>' +
     '</div>';
 
   if (coachingNote) {
-    header += '<div class="card card-s2 text-body modal-coaching col gap-6"><div class="eyebrow c-warn">What to look for</div>' + coachingNote + '</div>';
+    header += '<div class="section">' +
+      '<div class="section-head c-warn">What to look for</div>' +
+      '<div class="card card-s2"><div class="text-body">' + coachingNote + '</div></div>' +
+      '</div>';
   }
 
   box.innerHTML = '<button class="modal-close" id="modal-close-btn">&times;</button>' +
-    header + '<div class="mt-12" id="hand-list-rows"></div>';
+    header + '<div id="hand-list-rows"></div>';
 
   var rowsContainer = box.querySelector('#hand-list-rows');
 

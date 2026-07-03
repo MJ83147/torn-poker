@@ -118,7 +118,7 @@ function renderEquityResults(container, simResult) {
   }
 
   var html = '<div class="card card-s1 eq-sim">';
-  html += '<div class="row between eq-sim-header"><span class="eyebrow c-gold fw-medium">Equity Simulation</span><span class="text-meta eq-sim-note">' + headerNote + '</span></div>';
+  html += '<div class="row between eq-sim-header"><span class="card-title c-gold">Equity Simulation</span><span class="text-meta eq-sim-note">' + headerNote + '</span></div>';
 
   var curvePoints = [];
 
@@ -131,7 +131,7 @@ function renderEquityResults(container, simResult) {
     curvePoints.push({ street: res.street, equity: res.equity });
 
     html += '<div class="eq-row">';
-    html += '<div class="row center gap-8">';
+    html += '<div class="row center">';
     html += '<div class="c-gold fw-semibold eq-street">' + res.street + '</div>';
     if (res.texture) {
       var texCls = res.texture.wetness === 'wet' ? 'tex-wet' : res.texture.wetness === 'dry' ? 'tex-dry' : 'tex-med';
@@ -143,7 +143,7 @@ function renderEquityResults(container, simResult) {
 
     var metaParts = [];
     if (res.boardCards && res.boardCards.length > 0) {
-      metaParts.push(res.boardCards.join(' '));
+      metaParts.push(displayCards(res.boardCards.map(normCard)));
     }
     if (res.potSize > 0) {
       metaParts.push('Pot: ' + fmt(res.potSize));
@@ -159,7 +159,7 @@ function renderEquityResults(container, simResult) {
     if (hasBottom) {
       html += '<div class="eq-row-bottom">';
       if (res.madeHand) {
-        html += '<div class="row wrap center gap-6">';
+        html += '<div class="row wrap center">';
         html += '<span class="badge badge-neutral">' + res.madeHand.label + '</span>';
         if (res.madeHand.draws.length) {
           for (var dri = 0; dri < res.madeHand.draws.length; dri++) {
@@ -194,8 +194,8 @@ function renderEquityResults(container, simResult) {
 
   if (summary && summary.text) {
     var sumClass = summary.quality === 'good' ? 'val-pos' : summary.quality === 'bad' ? 'val-neg' : 'text-gold';
-    html += '<div class="box eq-summary col gap-6">';
-    html += '<div class="eyebrow c-gold fw-semibold">Hand Summary</div>';
+    html += '<div class="box eq-summary">';
+    html += '<div class="card-title c-gold">Hand Summary</div>';
     html += '<div class="text-body eq-summary-text ' + sumClass + '">' + summary.text + '</div>';
     html += '</div>';
   }

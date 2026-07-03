@@ -193,7 +193,7 @@
       );
     }
     if (!parts.length) return '';
-    return '<div class="row wrap gap-8 mt-12">' + parts.join('') + '</div>';
+    return '<div class="row wrap">' + parts.join('') + '</div>';
   }
 
   function wireExampleButtons(root) {
@@ -293,7 +293,7 @@
     html += '<div class="story-head">';
     html += '<div class="eyebrow insight-badge"><span class="dot ' + dotCls + '"></span><span class="' + wordCls + '">' + sevWord + '</span></div>';
     html += '<div class="story-chevron">&#9662;</div>';
-    html += '<div class="title title-md">' + name + '</div>';
+    html += '<div class="card-title">' + name + '</div>';
     if (teaser) html += '<div class="story-teaser text-body">' + escapeHtml(teaser) + '</div>';
     html += '</div>';
 

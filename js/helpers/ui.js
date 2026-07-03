@@ -120,7 +120,7 @@ function renderMiniRow(items, opts) {
   else if (opts.dim) rowAttrs += ' style="opacity:0.45"';
   if (opts.columns && opts.dim) rowAttrs = ' style="grid-template-columns:' + opts.columns + ';opacity:0.45;"';
   var CMAP = { g: 'c-pos', r: 'c-neg', a: 'c-warn' };
-  return '<div class="mini-row stat-grid gap-8"' + rowAttrs + '>' + items.map(function(m) {
+  return '<div class="mini-row stat-grid"' + rowAttrs + '>' + items.map(function(m) {
     var cc = CMAP[m.c] || (m.c && m.c !== 'text' ? 'c-' + m.c : '');
     var dot = m.dot ? '<span class="swatch-line ' + m.dot + '"></span> ' : '';
     return '<div class="stat"><div class="eyebrow stat-label">' + dot + m.l + '</div><div class="value ' + cc + '">' + m.v + '</div></div>';
@@ -165,9 +165,9 @@ function ins(sev, label, text, chips, coaching) {
     }).join('') + '</div>'
     : '';
   const coachingHtml = coaching
-    ? '<div class="insight-coaching col gap-4"><div class="eyebrow c-warn">Coaching</div><div class="text-body">' + coaching + '</div></div>'
+    ? '<div class="insight-coaching"><div class="eyebrow c-warn">Coaching</div><div class="text-body">' + coaching + '</div></div>'
     : '';
-  return '<div class="box insight"><div class="eyebrow insight-badge"><span class="dot ' + dotCls + '"></span><span class="' + wordCls + '">' + INS_WORDS[sev] + '</span></div><div class="title title-md">' + label + '</div><div class="text-body insight-body">' + text + '</div>' + chipHtml + coachingHtml + '</div>';
+  return '<div class="box insight"><div class="eyebrow insight-badge"><span class="dot ' + dotCls + '"></span><span class="' + wordCls + '">' + INS_WORDS[sev] + '</span></div><div class="card-title">' + label + '</div><div class="text-body insight-body">' + text + '</div>' + chipHtml + coachingHtml + '</div>';
 }
 
 function insWithExample(sev, label, text, chips, exampleHands, coachingNote, coaching) {
@@ -192,7 +192,7 @@ function renderInsights(insArr, fallbackLabel, fallbackText) {
   if (!insArr.length) {
     insArr.push(ins('n', fallbackLabel, fallbackText || 'More hands needed for ' + fallbackLabel.toLowerCase() + ' patterns.', []));
   }
-  return '<div class="cols-auto gap-16">' + insArr.join('') + '</div>';
+  return '<div class="ins-grid">' + insArr.join('') + '</div>';
 }
 
 function renderResult(h, tag, baseClass) {
@@ -207,7 +207,7 @@ function handTagsHtml(h) {
   if (h.flopBucket) {
     parts.push('<span class="tag">' + h.flopBucket + '</span>');
   }
-  return '<span class="row wrap center gap-4">' + parts.join('') + '</span>';
+  return '<span class="row wrap center">' + parts.join('') + '</span>';
 }
 
 // Compact "start -> end" stack line for the hero. Returns '' when neither
@@ -231,9 +231,9 @@ function renderHandRow(h, idx, opts) {
   return '<tr class="hrow link" data-hand-idx="' + idx + '">' +
     starCol +
     '<td class="c-gold">' + (h.position || '?') + '</td>' +
-    '<td>' + (h.hole && h.hole.length ? h.hole.join(' ') : '?? ??') + '</td>' +
+    '<td>' + (h.hole && h.hole.length ? displayCards(h.hole.map(normCard)) : '?? ??') + '</td>' +
     '<td>' + tags + '</td>' +
-    '<td class="c-dim truncate">' + (h.board && h.board.length ? h.board.join(' ') : '-') + '</td>' +
+    '<td class="c-dim truncate">' + (h.board && h.board.length ? displayCards(h.board.map(normCard)) : '-') + '</td>' +
     '<td>' + fmtBB(h.pot || 0, getHandBB(h)) + stackLine + '</td>' +
     '<td class="c-dim truncate">' + myActs + '</td>' +
     res + '</tr>';
