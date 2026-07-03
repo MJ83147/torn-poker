@@ -264,10 +264,16 @@
     return sentence || (pick.name || '');
   }
 
+  // Headerless section wrapping the verdict callout, so it stacks and gaps
+  // like every other section. The box sits in a container (not bare on the
+  // row) so it lines up with the container-inset content of the sections
+  // around it.
   function renderVerdict(findings, fallback) {
     var text = synthesiseVerdict(findings, fallback);
     if (!text) return '';
-    return '<div class="box lead">' + escapeHtml(text) + '</div>';
+    return '<div class="section"><div class="row"><div class="container">' +
+      '<div class="box lead">' + escapeHtml(text) + '</div>' +
+      '</div></div></div>';
   }
 
   function renderStoryCard(finding) {
@@ -315,11 +321,14 @@
     return html;
   }
 
+  // Headerless section holding one row of story cards. The cards sit directly
+  // on the row (they are self-padded boxes); data-findings stays on the cards'
+  // direct parent because wireExampleButtons/wireCardToggles walk it.
   function renderFindings(findings) {
     if (!findings || !findings.length) return '';
     var parts = [];
     for (var i = 0; i < findings.length; i++) parts.push(renderStoryCard(findings[i]));
-    var html = '<div class="cols-2 gap-16" data-findings>' + parts.join('') + '</div>';
+    var html = '<div class="section"><div class="row" data-findings>' + parts.join('') + '</div></div>';
     setTimeout(function() {
       var nodes = document.querySelectorAll('[data-findings]');
       for (var i = 0; i < nodes.length; i++) {
@@ -333,19 +342,26 @@
   // Render findings under a sequence of labelled groups (e.g. by street). Each
   // group is { label, findings, emptyNote }. Empty groups show their note so the
   // full sequence (Preflop/Flop/Turn/River) is always visible and in order.
+  // Each group is ONE .section: its head, then a row of cards (or the empty
+  // note boxed in a container), so groups pick up the panel's gap like any
+  // other section.
   function renderFindingsGrouped(groups) {
     if (!groups || !groups.length) return '';
     var parts = [];
     for (var g = 0; g < groups.length; g++) {
       var grp = groups[g];
       if (!grp) continue;
-      parts.push('<div class="section-head">' + escapeHtml(grp.label) + '</div>');
+      var head = '<div class="section-head">' + escapeHtml(grp.label) + '</div>';
       if (grp.findings && grp.findings.length) {
         var cards = [];
         for (var i = 0; i < grp.findings.length; i++) cards.push(renderStoryCard(grp.findings[i]));
-        parts.push('<div class="cols-2 gap-16" data-findings>' + cards.join('') + '</div>');
+        parts.push('<div class="section">' + head +
+          '<div class="row" data-findings>' + cards.join('') + '</div></div>');
       } else {
-        parts.push('<div class="box lead">' + escapeHtml(grp.emptyNote || 'Nothing flagged here yet.') + '</div>');
+        parts.push('<div class="section">' + head +
+          '<div class="row"><div class="container">' +
+          '<div class="box lead">' + escapeHtml(grp.emptyNote || 'Nothing flagged here yet.') + '</div>' +
+          '</div></div></div>');
       }
     }
     setTimeout(function() {

@@ -275,14 +275,14 @@ function gtoTargetAction(color) {
   return 'fold';
 }
 
-// Verdict line plus the story cards, spaced off the grid above. Returns '' when
-// the insight engine is unavailable so the grids still render on their own.
+// Verdict section plus the story-cards section. Both are .sections, so they
+// pick up whatever gap their parent stack provides (the panel gap in By Spot,
+// the container gap in Overall). Returns '' when the insight engine is
+// unavailable so the grids still render on their own.
 function storiesHtml(findings, fallback) {
   if (typeof Sections === 'undefined' || typeof Sections.renderFindings !== 'function') return '';
-  return '<div class="mt-16">' +
-    Sections.renderVerdict(findings, fallback) +
-    Sections.renderFindings(findings) +
-    '</div>';
+  return Sections.renderVerdict(findings, fallback) +
+    Sections.renderFindings(findings);
 }
 
 function spotHeroAction(rec) {

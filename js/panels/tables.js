@@ -28,9 +28,11 @@ function renderTables(container, hands, allHands, excludedTables, onRerender) {
   filterEl.value = prevVal;
 
   if (Object.keys(allTableGroups).length <= 1) {
-    container.innerHTML = '<div class="title title-lg c-gold">Tables</div>' +
+    container.innerHTML = '<div class="panel-header">' +
+      '<div class="title title-lg c-gold">Tables</div>' +
       '<div class="text-body">Compare stats across different stakes.</div>' +
-      '<div class="box lead">All hands are from a single table. Play across multiple tables to see comparisons.</div>';
+      '</div>' +
+      '<div class="section"><div class="row"><div class="container"><div class="box lead">All hands are from a single table. Play across multiple tables to see comparisons.</div></div></div></div>';
     return;
   }
 

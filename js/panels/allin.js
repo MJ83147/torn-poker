@@ -113,7 +113,7 @@ function renderAllIn(container, d, hands) {
 
   if (!_allinHands.length) {
     mountPanel(container, 'allin', { title: 'All-In EV', desc: 'Compares actual results vs expected value at all-in showdowns to measure variance.' });
-    setSlot(container, 'verdict', '<div class="box lead">No all-in showdown hands found yet. When you go all-in and both players show cards, those hands appear here with equity calculations.</div>');
+    setSlot(container, 'verdict', '<div class="section"><div class="row"><div class="container"><div class="box lead">No all-in showdown hands found yet. When you go all-in and both players show cards, those hands appear here with equity calculations.</div></div></div></div>');
     return;
   }
 
@@ -195,15 +195,17 @@ function showAllInResults(container) {
   var equityWinRate = pct(favouriteCount, allInHands.length);
   var actualWinRate = pct(actualWins, allInHands.length);
 
-  var html = '<div class="title title-lg c-gold">All-In EV</div>';
-  html += '<div class="text-body">Compares actual results vs expected value at all-in showdowns to measure variance.</div>';
+  var html = '<div class="panel-header">' +
+    '<div class="title title-lg c-gold">All-In EV</div>' +
+    '<div class="text-body">Compares actual results vs expected value at all-in showdowns to measure variance.</div>' +
+    '</div>';
 
-  html += renderMiniRow([
+  html += '<div class="section"><div class="row"><div class="container">' + renderMiniRow([
     { l: 'All-In Hands', v: allInHands.length, c: 'text' },
     { l: 'EV Diff', v: (totalEvDiff >= 0 ? '+' : '') + fmt(totalEvDiff), c: totalEvDiff >= 0 ? 'g' : 'r' },
     { l: 'Equity Win Rate', v: equityWinRate !== null ? equityWinRate + '%' : '\u2014', c: equityWinRate >= 50 ? 'g' : 'a' },
     { l: 'Actual Win Rate', v: actualWinRate !== null ? actualWinRate + '%' : '\u2014', c: actualWinRate >= 50 ? 'g' : 'r' },
-  ]);
+  ]) + '</div></div></div>';
 
   if (cashAllIns.length >= 2) {
     html += '<div class="section"><div class="section-head">Cumulative All-In Results vs Expected Value (Cash Hands)</div>';
@@ -222,7 +224,7 @@ function showAllInResults(container) {
     variance = 'You\'re frequently all-in as an underdog (' + equityWinRate + '% favourite rate). Check whether the spots are +EV given pot odds, or if tighter selection helps.';
   }
   if (variance) {
-    html += '<div class="box lead">' + variance + '</div>';
+    html += '<div class="section"><div class="row"><div class="container"><div class="box lead">' + variance + '</div></div></div></div>';
   }
 
   html += '<div class="section"><div class="section-head">All-In Hand Details</div>';

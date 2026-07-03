@@ -14,7 +14,7 @@ function renderShowdown(container, hands, meta, overallData) {
 
   if (cash.length < 5) {
     mountPanel(container, 'showdown', { title: 'Showdown', desc: 'Showdown vs non-showdown P&L breakdown.' });
-    setSlot(container, 'verdict', '<div class="box lead">Need at least 5 cash hands with outcomes to show the showdown graph. Keep playing and tracking.</div>');
+    setSlot(container, 'verdict', '<div class="section"><div class="row"><div class="container"><div class="box lead">Need at least 5 cash hands with outcomes to show the showdown graph. Keep playing and tracking.</div></div></div></div>');
     return;
   }
 

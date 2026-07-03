@@ -44,7 +44,7 @@ function renderTrends(container, hands, meta, overallData) {
   if (sorted.length < 5) {
     mountPanel(container, 'trends', { title: 'Trends', desc: 'Session-over-session charts for win rate, VPIP, and P&L.' });
     var vSlot = container.querySelector('[data-slot="verdict"]');
-    if (vSlot) vSlot.innerHTML = '<div class="box lead">Need at least 5 hands to show trends. Keep playing and tracking.</div>';
+    if (vSlot) vSlot.innerHTML = '<div class="section"><div class="row"><div class="container"><div class="box lead">Need at least 5 hands to show trends. Keep playing and tracking.</div></div></div></div>';
     return;
   }
   var sessions = [];

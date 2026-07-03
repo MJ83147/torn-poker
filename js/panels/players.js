@@ -58,8 +58,13 @@ function renderPlayers(container, d, hands) {
 
   function renderPlayerList() {
     if (!filtered.length) {
-      mountPanel(container, 'players', { title: 'Players', desc: 'Opponent records, head-to-head stats, and watch list.' });
-      container.innerHTML = '<div class="box lead">Not enough shared hands to show opponent stats. Keep playing to build data.</div>';
+      // No mountPanel here: the template body (watch list / opponent tables)
+      // would render empty, so build just the header + verdict section.
+      container.innerHTML = '<div class="panel-header">' +
+        '<div class="title title-lg c-gold">Players</div>' +
+        '<div class="text-body">Opponent records, head-to-head stats, and watch list.</div>' +
+        '</div>' +
+        '<div class="section"><div class="row"><div class="container"><div class="box lead">Not enough shared hands to show opponent stats. Keep playing to build data.</div></div></div></div>';
       return;
     }
     var watched = getWatchedPlayers();

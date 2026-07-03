@@ -4,7 +4,9 @@
    §1  TOKENS ............ colours · font sizes · spacing · radii — the ONLY
                           place raw values are defined
    §2  BASE / RESET ...... element defaults + the text ROLE classes
-   §3  UTILITIES ......... layout + spacing helpers (flex, gap, margin, pad)
+   §3  UTILITIES ......... the STRUCTURE block (panel → section → row →
+                          container) + layout/spacing helpers (flex, gap,
+                          margin, pad)
    §4  COMPONENTS ........ shared blocks: card, box, button, table, story, bar
    §5  FEATURES .......... range grid, equity viz, charts, carousel, sentence
    §6  RESPONSIVE ........ breakpoint overrides
@@ -196,10 +198,27 @@ a {
   white-space: nowrap;
 }
 
-/* --- structure ---
-   row       = puts its containers side by side and splits the width between them.
-   container = fills its share of the row, holds content, owns its padding + gap.
+/* --- STRUCTURE ---
+   One hierarchy owns every panel, end to end:
+     .panel        = one view (the #p-* elements in index.html). Hidden by
+                     default; .on shows it as a vertical stack whose gap spaces
+                     the header and each section.
+     .panel-header = title + description block at the top. Title and description
+                     sit tight; the panel's gap gives the space below.
+     .section      = one .section-head (only when titled) + its .row(s), grouped
+                     tight; the panel's gap separates section from section.
+     .row          = puts its .container(s) side by side and splits the width
+                     between them; wraps when there are many.
+     .container    = padded content slot inside a row. Content and data-slots
+                     live here, never on the row itself.
    Spacing is baked in here, never added in markup. */
+.panel { display: none; max-width: 1600px; margin: 0 auto; padding: var(--sp-32); }
+.panel.on { display: flex; flex-direction: column; gap: var(--sp-32); min-height: 60vh; }
+
+.panel-header { display: flex; flex-direction: column; gap: var(--sp-4); }
+
+.section { display: flex; flex-direction: column; gap: var(--sp-12); }
+
 .row { display: flex; flex-wrap: wrap; gap: var(--sp-16); }
 .container {
   flex: 1 1 0;
@@ -209,6 +228,16 @@ a {
   gap: var(--sp-12);
   padding: var(--sp-16);
 }
+
+/* Slot hosts are plumbing, not structure. A bare (class-less) [data-slot] div
+   sitting directly under a panel is made transparent so its children join the
+   panel's stack and pick up the panel gap. Slot hosts that carry a real class
+   (a .section toggled via [hidden], the .subtabs bar) keep their own display.
+   The [hidden] rule comes last so hiding always wins — over display:contents
+   above, and over .section's flex (the UA [hidden] rule alone loses to any
+   author display). */
+.panel > [data-slot]:not([class]) { display: contents; }
+.panel > [data-slot][hidden] { display: none; }
 .col { display: flex; flex-direction: column; }
 .cols-2 { display: grid; grid-template-columns: 1fr 1fr; }
 .cols-3 { display: grid; grid-template-columns: repeat(3, 1fr); }
@@ -602,11 +631,14 @@ a {
   border-color: var(--gold2);
 }
 
-/* Findings grid: keep rows top-aligned and let an open card span the full
-   width so its sibling reflows instead of stretching to match the tall open
-   card (which left the sibling looking blank). */
+/* Findings row: story cards sit directly in a .row (they are self-padded
+   boxes, so no .container wrapper). A 40% basis puts two on a line (each
+   grows to half); min-width wraps them to one per line on narrow screens.
+   Top-aligned so a tall open card doesn't stretch its collapsed neighbour,
+   and an open card takes the full line so its siblings reflow around it. */
 [data-findings] { align-items: start; }
-.cols-2 > .story.open { grid-column: 1 / -1; }
+.row > .story { flex: 1 1 40%; min-width: 280px; }
+.row > .story.open { flex-basis: 100%; }
 
 /* Body content shares the head's inset so title and body read as one aligned
    column. Left matches .story-head's --sp-16. Right matches the title's content
@@ -1404,17 +1436,7 @@ a {
 #app.on { display: block; }
 #dash { display: none; }
 #dash.on { display: block; }
-/* panel = a view: stacks its header + rows down the page. */
-.panel { display: none; max-width: 1600px; margin: 0 auto; padding: var(--sp-32); }
-.panel.on { display: flex; flex-direction: column; gap: var(--sp-32); min-height: 60vh; }
-
-/* panel-header = the panel's title block; title + description sit tight together,
-   and the panel's own gap gives the space below it before the content. */
-.panel-header { display: flex; flex-direction: column; gap: var(--sp-4); }
-
-/* section = one section-header (if needed) + its rows, grouped tight together;
-   the panel's own gap separates one section from the next. */
-.section { display: flex; flex-direction: column; gap: var(--sp-12); }
+/* .panel / .panel.on / .panel-header / .section live in the STRUCTURE block (§3). */
 .panels-wrap.blurred { filter: blur(3px); pointer-events: none; }
 #maintenance { display: none; position: fixed; inset: 0; z-index: 99999; background: var(--bg); color: var(--text); text-align: center; padding: 48px var(--sp-24); }
 body.maintenance #loader, body.maintenance #app { display: none !important; }
