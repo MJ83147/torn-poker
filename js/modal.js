@@ -39,15 +39,15 @@ function buildModalActionLines(hand) {
       var bc = streetBoard[a.street] || [];
       html += '<div class="section">' +
         '<div class="section-head">' + a.street + (bc.length ? ' ' + displayCards(bc) : '') + '</div>' +
-        '<div>';
+        '<div class="list">';
       open = true;
     } else if (!open) {
       // Actions with no street marker before the first street: headerless section.
-      html += '<div class="section"><div>';
+      html += '<div class="section"><div class="list">';
       open = true;
     }
     var isMe = !!a.isMe;
-    html += '<div class="text-meta modal-action-line' + (isMe ? ' me' : '') + '">' +
+    html += '<div class="text-meta' + (isMe ? ' c-gold' : '') + '">' +
       (isMe ? '▸ ' : '  ') + (a.author || '?') + ': ' + describeAction(a, hand) + '</div>';
   }
   if (open) html += '</div></div>';
@@ -75,7 +75,7 @@ function buildStacksBlock(hand) {
     if (p.profit != null) {
       netHtml = '<span class="' + pnlValCls(p.profit) + '">' + fmtPnl(p.profit) + '</span>';
     }
-    return '<div class="stack-row">' +
+    return '<div class="row between center">' +
       '<span class="text-meta' + (p.isHero ? ' c-gold' : '') + '">' + name + '</span>' +
       '<span class="text-meta">' + start + ' &rarr; ' + end + '</span>' +
       '<span class="text-meta">' + netHtml + '</span>' +
@@ -83,7 +83,7 @@ function buildStacksBlock(hand) {
   }).join('');
   return '<div class="section">' +
     '<div class="section-head">Stacks (before &rarr; after)</div>' +
-    '<div class="player-stacks">' + rows + '</div>' +
+    '<div class="list">' + rows + '</div>' +
     '</div>';
 }
 

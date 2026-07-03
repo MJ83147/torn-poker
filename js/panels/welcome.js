@@ -40,6 +40,7 @@ function renderWelcome(container, d, hands, meta) {
     { tab: 'range',    name: 'Range',    desc: 'Your play and win rate by hand type, plus a 13x13 GTO comparison by spot' },
     { tab: 'tables',   name: 'Tables',   desc: 'Compare stats across different stakes' },
     { tab: 'trends',   name: 'Trends',   desc: 'Session-over-session charts for win rate, VPIP, and P&L' },
+    { tab: 'sessions', name: 'Sessions', desc: 'Each sitting read as its own story: the stack arc, tilt, fatigue, and leaks' },
     { tab: 'log',      name: 'Hand Log', desc: 'Every hand played, click any row to replay' },
     { tab: 'allin',    name: 'All-In EV', desc: 'Luck tracker: equity at all-in vs actual results' },
     { tab: 'players',  name: 'Players',  desc: 'Opponent records, head-to-head comparison, and watch list' },
