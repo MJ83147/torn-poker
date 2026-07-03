@@ -902,7 +902,7 @@ function _crRenderHeadline(result, compareResult) {
   function tile(label, val, cls) {
     return '<div class="box stat' + (dim ? ' cr-tile-dim' : '') + '">' +
       '<div class="eyebrow">' + label + '</div>' +
-      '<div class="cr-tile-value value ' + cls + '">' + val + '</div>' +
+      '<div class="value value-lg ' + cls + '">' + val + '</div>' +
       '</div>';
   }
 
