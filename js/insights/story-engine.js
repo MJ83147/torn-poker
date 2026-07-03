@@ -299,7 +299,7 @@
 
     html += '<div class="story-body">';
     if (finding.openingText) {
-      html += '<div class="text-body insight-body">' + escapeHtml(finding.openingText) + '</div>';
+      html += '<div class="text-body">' + escapeHtml(finding.openingText) + '</div>';
     }
     if (finding.branchTexts && finding.branchTexts.length) {
       html += '<ul class="story-branches c-dim">';

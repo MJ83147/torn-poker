@@ -153,7 +153,7 @@ function showExampleHandModal(hand, coachingNote) {
 
   var noteVal = getHandNote(hand).replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   var notesSection = '<div class="modal-notes' + (starred ? ' show' : '') + '" id="modal-notes">' +
-    '<div class="row between modal-notes-header">' +
+    '<div class="row between">' +
       '<div class="eyebrow">Your Notes</div>' +
       '<div class="text-micro modal-notes-status" id="modal-notes-status">Saves automatically</div>' +
     '</div>' +

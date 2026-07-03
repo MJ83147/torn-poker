@@ -167,7 +167,7 @@ function ins(sev, label, text, chips, coaching) {
   const coachingHtml = coaching
     ? '<div class="insight-coaching"><div class="eyebrow c-warn">Coaching</div><div class="text-body">' + coaching + '</div></div>'
     : '';
-  return '<div class="box insight"><div class="eyebrow insight-badge"><span class="dot ' + dotCls + '"></span><span class="' + wordCls + '">' + INS_WORDS[sev] + '</span></div><div class="card-title">' + label + '</div><div class="text-body insight-body">' + text + '</div>' + chipHtml + coachingHtml + '</div>';
+  return '<div class="box insight"><div class="eyebrow insight-badge"><span class="dot ' + dotCls + '"></span><span class="' + wordCls + '">' + INS_WORDS[sev] + '</span></div><div class="card-title">' + label + '</div><div class="text-body">' + text + '</div>' + chipHtml + coachingHtml + '</div>';
 }
 
 function insWithExample(sev, label, text, chips, exampleHands, coachingNote, coaching) {
@@ -255,8 +255,8 @@ function barRow(label, val, max, cls, valStr, val2Str) {
   return '<div class="bar ' + (val2Str ? 'bar-3' : '') + '">' +
     '<div class="c-gold fw-semibold">' + label + '</div>' +
     '<div class="bar-track"><div class="bar-fill ' + fill + '" style="width:' + w + '%"></div></div>' +
-    '<div class="bar-value text-meta text-right">' + valStr + '</div>' +
-    (val2Str ? '<div class="bar-value text-micro text-right">' + val2Str + '</div>' : '') +
+    '<div class="text-meta text-right">' + valStr + '</div>' +
+    (val2Str ? '<div class="text-micro text-right">' + val2Str + '</div>' : '') +
     '</div>';
 }
 

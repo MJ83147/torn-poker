@@ -113,7 +113,7 @@ function renderSavedSection() {
     var savedDate = fmtDateShort(entry.savedAt);
 
     html += '<div class="card card-link list saved-card" data-saved-key="' + keys[i].replace(/"/g, '&quot;') + '">' +
-      '<div class="row between saved-card-top">' +
+      '<div class="row between">' +
         '<div class="saved-card-hole">' + (h.hole ? displayCards(h.hole.map(normCard)) : '??') + '</div>' +
         '<div class="text-meta row center">' +
           '<span class="saved-pos">' + (h.position || '?') + '</span>' +
@@ -121,10 +121,10 @@ function renderSavedSection() {
         '</div>' +
         '<button class="btn btn-icon saved-unsave" data-unsave-key="' + keys[i].replace(/"/g, '&quot;') + '" title="Remove from saved">&#9733;</button>' +
       '</div>' +
-      '<div class="text-meta saved-card-board">' + (h.board && h.board.length ? displayCards(h.board.map(normCard)) : 'No board') + '</div>' +
+      '<div class="text-meta">' + (h.board && h.board.length ? displayCards(h.board.map(normCard)) : 'No board') + '</div>' +
       '<div class="text-meta saved-card-acts">' + (myActs || 'No actions') + '</div>' +
       (notePreview ? '<div class="card card-s2 saved-card-note-wrap">' + notePreview + '</div>' : '<div class="text-micro saved-card-note-empty">No notes</div>') +
-      '<div class="text-micro text-right saved-card-date">' + savedDate + '</div>' +
+      '<div class="text-micro text-right">' + savedDate + '</div>' +
       '</div>';
   }
   html += '</div></div></div>';

@@ -245,7 +245,7 @@ function injectEquityButton(box, hand) {
   slot.appendChild(btn);
 
   btn.onclick = function () {
-    slot.innerHTML = '<div class="eq-spinner"><div class="eq-spinner-ring"></div><span class="text-meta eq-spinner-text">Simulating...</span></div>';
+    slot.innerHTML = '<div class="eq-spinner"><div class="eq-spinner-ring"></div><span class="text-meta">Simulating...</span></div>';
 
     setTimeout(function () {
       var results = runEquitySimulation(hand);

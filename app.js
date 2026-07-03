@@ -373,7 +373,7 @@ function renderActivePanelDeferred(forceTabId) {
   if (_panelsRenderedFor[tabId] === filterKey) return;
   var container = document.getElementById('p-' + tabId);
   if (container) {
-    container.innerHTML = '<div class="panel-loading"><div class="eq-spinner-ring"></div><div class="eq-spinner-text c-dim">Crunching numbers…</div></div>';
+    container.innerHTML = '<div class="panel-loading"><div class="eq-spinner-ring"></div><div class="c-dim">Crunching numbers…</div></div>';
   }
   setTimeout(function () { renderActivePanel(tabId); }, 0);
 }

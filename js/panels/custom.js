@@ -751,10 +751,10 @@ function _crRenderSentence(segment, segLabel) {
   var sentence = '';
   if (segLabel === 'A' && _crState.compare) sentence += '<span class="sentence-seg-tag">A:</span> ';
   if (segLabel === 'B') sentence += '<span class="sentence-seg-tag">B:</span> ';
-  sentence += '<span class="sentence-stem c-dim">Show me how I play</span> ';
+  sentence += '<span class="c-dim">Show me how I play</span> ';
   for (var pi = 0; pi < parts.length; pi++) {
     if (pi > 0) {
-      sentence += (pi === parts.length - 1) ? ' <span class="sentence-join c-dim">and</span> ' : '<span class="sentence-join c-dim">,</span> ';
+      sentence += (pi === parts.length - 1) ? ' <span class="c-dim">and</span> ' : '<span class="c-dim">,</span> ';
     }
     sentence += parts[pi];
   }
