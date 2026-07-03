@@ -39,16 +39,16 @@ function buildModalActionLines(hand) {
       var bc = streetBoard[a.street] || [];
       html += '<div class="section">' +
         '<div class="section-head">' + a.street + (bc.length ? ' ' + displayCards(bc) : '') + '</div>' +
-        '<div class="list">';
+        '<div class="lines">';
       open = true;
     } else if (!open) {
       // Actions with no street marker before the first street: headerless section.
-      html += '<div class="section"><div class="list">';
+      html += '<div class="section"><div class="lines">';
       open = true;
     }
     var isMe = !!a.isMe;
-    html += '<div class="text-meta' + (isMe ? ' c-gold' : '') + '">' +
-      (isMe ? '▸ ' : '  ') + (a.author || '?') + ': ' + describeAction(a, hand) + '</div>';
+    html += '<div class="line"><span class="text-meta' + (isMe ? ' c-gold' : '') + '">' +
+      (isMe ? '▸ ' : '  ') + (a.author || '?') + ': ' + describeAction(a, hand) + '</span></div>';
   }
   if (open) html += '</div></div>';
   return html;
@@ -75,7 +75,7 @@ function buildStacksBlock(hand) {
     if (p.profit != null) {
       netHtml = '<span class="' + pnlValCls(p.profit) + '">' + fmtPnl(p.profit) + '</span>';
     }
-    return '<div class="row between center">' +
+    return '<div class="line">' +
       '<span class="text-meta' + (p.isHero ? ' c-gold' : '') + '">' + name + '</span>' +
       '<span class="text-meta">' + start + ' &rarr; ' + end + '</span>' +
       '<span class="text-meta">' + netHtml + '</span>' +
@@ -83,7 +83,7 @@ function buildStacksBlock(hand) {
   }).join('');
   return '<div class="section">' +
     '<div class="section-head">Stacks (before &rarr; after)</div>' +
-    '<div class="list">' + rows + '</div>' +
+    '<div class="lines">' + rows + '</div>' +
     '</div>';
 }
 
@@ -123,7 +123,7 @@ function showExampleHandModal(hand, coachingNote) {
     '<div class="eyebrow">Example hand · ' + (hand.position || '?') + ' position' + (tagStrip ? ' · ' + tagStrip : '') + '</div>' +
     '</div>';
 
-  var metaHtml = '<div class="section"><div class="row center">' +
+  var metaHtml = '<div class="head">' +
     '<span class="text-meta">Board: ' + (hand.board && hand.board.length ? displayCards(hand.board.map(normCard)) : 'none') + '</span>' +
     '<span class="text-meta">Pot: <strong class="c-gold">' + fmtBB(hand.pot || 0, getHandBB(hand)) + '</strong></span>' +
     (function() {
@@ -135,7 +135,7 @@ function showExampleHandModal(hand, coachingNote) {
       else if (res === 'lost') label = 'lost ' + pnl.text;
       return '<span class="text-meta">Result: <strong class="' + pnl.cls + '">' + label + '</strong></span>';
     })() +
-    '</div></div>';
+    '</div>';
 
   var stacksHtml = buildStacksBlock(hand);
 

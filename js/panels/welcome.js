@@ -63,7 +63,7 @@ function renderWelcome(container, d, hands, meta) {
     '<div class="welcome-toc">' +
     '<div class="section-head">The tabs</div>' +
     tabDescs.map(function(t) {
-      return '<div class="card card-s1 card-link welcome-toc-row" data-goto="' + t.tab + '">' +
+      return '<div class="card card-s1 card-link" data-goto="' + t.tab + '">' +
         '<div class="c-gold fw-semibold">' + t.name + '</div>' +
         '<div class="text-body">' + t.desc + '</div>' +
         '</div>';
@@ -89,19 +89,19 @@ function renderWelcome(container, d, hands, meta) {
     '</div>' +
     '<div class="list">' +
       '<div class="section-head">What\'s new</div>' +
-      '<button type="button" class="card card-hero card-link list start text-left" data-goto="custom">' +
+      '<button type="button" class="card card-hero card-link" data-goto="custom">' +
         '<div class="badge badge-gold">New</div>' +
         '<div class="title title-lg c-gold">Custom Report</div>' +
         '<div class="text-body">Build your own report by clicking together clauses like a sentence. Twelve filters across table, position, opponent, stake, time window, pot type and more, with a trend chart, breakdowns and a side-by-side compare mode.</div>' +
         '<div class="c-gold fw-semibold">Open the Custom Report &rarr;</div>' +
       '</button>' +
-      '<div class="card card-s1 list start text-left">' +
+      '<div class="card card-s1">' +
         '<div class="badge badge-gold">New</div>' +
         '<div class="title title-lg c-gold">Stack tracking</div>' +
         '<div class="text-body">The tracker now records every player’s starting and ending stack on each hand — the foundation for effective-stack depth, spotting who was short, and stack-aware insights to come.</div>' +
         '<div class="text-body">Applies to hands tracked from now on. Hands already in your history stay exactly as they are — they won’t carry stack data, and any stack-based stats simply skip them rather than counting them as zero.</div>' +
       '</div>' +
-      '<div class="card card-s1 list start text-left">' +
+      '<div class="card card-s1">' +
         '<div class="badge badge-gold">Improved</div>' +
         '<div class="title title-lg c-gold">Detailed insights</div>' +
         '<div class="text-body">Every analysis tab now ships story cards that flag strengths, leaks and patterns in your data, each with a real example hand from your session.</div>' +
@@ -112,13 +112,8 @@ function renderWelcome(container, d, hands, meta) {
     '</div>';
 
   container.innerHTML = welcomeHtml;
-  container.querySelectorAll('.welcome-toc-row[data-goto]').forEach(function(row) {
-    row.onclick = function() {
-      switchTab(this.getAttribute('data-goto'));
-    };
-  });
-  container.querySelectorAll('.card-hero[data-goto]').forEach(function(card) {
-    card.onclick = function() {
+  container.querySelectorAll('[data-goto]').forEach(function(el) {
+    el.onclick = function() {
       switchTab(this.getAttribute('data-goto'));
     };
   });

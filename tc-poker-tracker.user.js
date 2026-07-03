@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         TC Poker Tracker
 // @namespace    https://poker.systoned.cc/
-// @version      5.1.0
+// @version      5.1.2
 // @description  Records your Torn City Hold'em hands as you play (structured, from the game's own WebSocket frames — never chat) and exports them to the poker analysis app. Captures per-player starting/ending stacks and action timing.
 // @author       systoned
 // @match        https://www.torn.com/*
@@ -295,7 +295,8 @@
     var startedAtPreflop = (firstFrame.communityCards || []).length === 0;
 
     // Torn frames carry no per-hand timestamp; stamp with capture time (ms).
-    var handTs = Date.now();
+    // On re-derive (export), keep the original captured time instead of restamping.
+    var handTs = buf.timestamp != null ? buf.timestamp : Date.now();
 
     var tableId = buf.tableId != null ? buf.tableId : null;
     var bigBlind = firstFrame.bigBlind != null ? firstFrame.bigBlind : null;
@@ -752,8 +753,22 @@
     } catch (e) { return false; }
   }
   var APP_URL = 'https://poker.systoned.cc/';
+  // Hero's name is learned live from table frames; if we're exporting after a
+  // reload (no live session yet) it's blank, so recover it from the hands — each
+  // stores the hero's name in its stacks[] entry flagged isHero.
+  function heroNameFromHands(hands) {
+    for (var i = 0; i < (hands || []).length; i++) {
+      var st = hands[i] && hands[i].stacks;
+      if (!Array.isArray(st)) continue;
+      for (var j = 0; j < st.length; j++) {
+        if (st[j] && st[j].isHero && st[j].name) return st[j].name;
+      }
+    }
+    return '';
+  }
   function buildV2Envelope(hands) {
-    return { schemaVersion: 2, player: heroName || 'Unknown', exportedAt: new Date().toISOString(), hands: hands || [] };
+    var player = heroName || heroNameFromHands(hands) || 'Unknown';
+    return { schemaVersion: 2, player: player, exportedAt: new Date().toISOString(), hands: hands || [] };
   }
   // Drop the heavy raw payload (and internal bookkeeping) from exported hands.
   function stripForExport(h) {
@@ -773,7 +788,8 @@
       token: 'rederive', tableId: record.tableId,
       heroUserID: record.heroUserID != null ? record.heroUserID : heroUserID,
       hole: record._raw.hole || record.hole || [],
-      frames: record._raw.frames, frameTimes: record._raw.frameTimes || []
+      frames: record._raw.frames, frameTimes: record._raw.frameTimes || [],
+      timestamp: record.timestamp
     };
     try { var h = reconstructHand(buf); return h ? stripForExport(h) : stripForExport(record); }
     catch (e) { return stripForExport(record); }

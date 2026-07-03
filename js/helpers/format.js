@@ -107,7 +107,7 @@ function pnlColor(val) {
 
 function wrCls(wr) {
   if (wr === null) return '';
-  return wr >= 50 ? 'val-pos' : 'val-neg';
+  return wr >= 50 ? 'c-pos' : 'c-neg';
 }
 
 function fmtAvgAmount(chipArr, bbArr) {

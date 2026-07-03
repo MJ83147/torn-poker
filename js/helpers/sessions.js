@@ -396,12 +396,15 @@ function _sessDetStrength(ctx) {
   var c = best.ph && best.ph.core ? best.ph.core : {};
   var prose = 'Across the ' + best.label + ' you made ' + _sPos(fmtPnl(best.pnl)) + '.';
   if (c.vpipPct != null) prose += ' You played ' + _sEm(c.vpipPct + '% VPIP') + (c.agg != null ? (' at ' + _sEm(c.agg + '% aggression')) : '') + ' — disciplined, value-heavy poker worth repeating.';
+  var winners = ctx.hands.slice(best.a, best.b)
+    .filter(function(h) { return _sessHandPnl(h) > 0; })
+    .sort(function(a, b) { return _sessHandPnl(b) - _sessHandPnl(a); });
   return {
     id: 'strength', lens: 'What went right', flag: 'strength',
     title: 'Your ' + best.label + ' was your best poker',
     prose: prose,
-    linkLabel: 'The winning stretch ›',
-    linkHands: ctx.hands.slice(best.a, best.b),
+    linkLabel: winners.length ? (winners.length + ' pots you won in that stretch ›') : null,
+    linkHands: winners.length ? winners : null,
     magnitude: best.pnl
   };
 }

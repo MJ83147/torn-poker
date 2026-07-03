@@ -112,7 +112,8 @@ function _renderSessionDetail(session, ctx, stories) {
 
   html += '<div class="section"><div class="row"><div class="container"><div class="box sess-head">';
   html += '<div><div class="card-title">' + tableName + ' <span class="c-dim">·</span> ' + fmtDate(ctx.startTs) + ', ' + _fmtClock(ctx.startTs) + '</div>' +
-    '<div class="text-meta">' + fmtSessionDuration(ctx.durationMs) + ' · ' + session.hands.length + ' hands' + (seatsTxt ? (' · ' + seatsTxt) : '') + '</div></div>';
+    '<div class="text-meta">' + fmtSessionDuration(ctx.durationMs) + ' · ' + session.hands.length + ' hands' + (seatsTxt ? (' · ' + seatsTxt) : '') + '</div>' +
+    '<div class="sess-link" data-sess-allhands>View all ' + session.hands.length + ' hands ›</div></div>';
   html += '<div class="sess-head-right"><div class="sess-head-res ' + resCls + '">' + resTxt + '</div>' +
     '<div class="text-meta">peaked <span class="c-pos">' + fmtPnl(peak.cum) + '</span> at hand ' + peak.i +
     ' · low <span class="c-neg">' + fmtPnl(low.cum) + '</span> at hand ' + low.i + '</div></div>';
@@ -269,6 +270,12 @@ function _openSessionDetail(container, session, base) {
       if (st && st.linkHands && st.linkHands.length) showExampleHandListModal(st.title, st.linkHands, _stripTags(st.prose));
     };
   });
+
+  var allBtn = det.querySelector('[data-sess-allhands]');
+  if (allBtn) allBtn.onclick = function() {
+    var label = (session.tableId ? getTableLabel(session.tableId) : 'Session') + ' · all hands';
+    showExampleHandListModal(label, res.ctx.hands, 'Every hand in this session, in the order played.');
+  };
 
   var ctx = res.ctx;
   var buildWhenReady = function() { _buildSessionCharts(ctx); };

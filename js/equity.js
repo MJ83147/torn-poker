@@ -117,8 +117,8 @@ function renderEquityResults(container, simResult) {
     headerNote = 'Exact enumeration';
   }
 
-  var html = '<div class="card card-s1 eq-sim">';
-  html += '<div class="row between eq-sim-header"><span class="card-title c-gold">Equity Simulation</span><span class="text-meta eq-sim-note">' + headerNote + '</span></div>';
+  var html = '<div class="section">';
+  html += '<div class="head"><span class="section-head">Equity Simulation</span><span class="text-meta">' + headerNote + '</span></div>';
 
   var curvePoints = [];
 
@@ -126,18 +126,17 @@ function renderEquityResults(container, simResult) {
     var res = results[r];
     var eqPct = fmtPct(res.equity * 100);
     var barWidth = Math.round(res.equity * 100);
-    var qualClass = res.guidance.quality === 'good' ? 'val-pos' : res.guidance.quality === 'bad' ? 'val-neg' : 'c-gold';
+    var qualClass = res.guidance.quality === 'good' ? 'c-pos' : res.guidance.quality === 'bad' ? 'c-neg' : 'c-gold';
 
     curvePoints.push({ street: res.street, equity: res.equity });
 
-    html += '<div class="eq-row">';
+    html += '<div class="list">';
     html += '<div class="row center">';
     html += '<div class="c-gold fw-semibold eq-street">' + res.street + '</div>';
     if (res.texture) {
-      var texCls = res.texture.wetness === 'wet' ? 'tex-wet' : res.texture.wetness === 'dry' ? 'tex-dry' : 'tex-med';
-      html += '<span class="badge board-texture-badge ' + texCls + '">' + res.texture.label + '</span>';
+      html += '<span class="tag">' + res.texture.label + '</span>';
     }
-    html += '<div class="eq-pct">' + eqPct + '</div>';
+    html += '<div class="eq-pct fw-semibold">' + eqPct + '</div>';
     html += '<div class="eq-bar-track"><div class="eq-bar-fill" style="width:' + barWidth + '%"></div></div>';
     html += '</div>';
 
@@ -152,24 +151,22 @@ function renderEquityResults(container, simResult) {
       metaParts.push(res.playersActive + '-way');
     }
     if (metaParts.length > 0) {
-      html += '<div class="text-meta eq-meta-line">' + metaParts.join(' · ') + '</div>';
+      html += '<div class="text-meta">' + metaParts.join(' · ') + '</div>';
     }
 
     var hasBottom = res.madeHand || res.guidance.text;
     if (hasBottom) {
-      html += '<div class="eq-row-bottom">';
       if (res.madeHand) {
         html += '<div class="row wrap center">';
-        html += '<span class="badge badge-neutral">' + res.madeHand.label + '</span>';
+        html += '<span class="tag">' + res.madeHand.label + '</span>';
         if (res.madeHand.draws.length) {
           for (var dri = 0; dri < res.madeHand.draws.length; dri++) {
-            html += '<span class="badge badge-warn draw-outs">' + res.madeHand.draws[dri] + '</span>';
+            html += '<span class="tag tag-gold">' + res.madeHand.draws[dri] + '</span>';
           }
         }
         html += '</div>';
       }
-      html += '<div class="text-micro eq-detail ' + qualClass + '">' + res.actionDesc + ' ' + res.guidance.text + '</div>';
-      html += '</div>';
+      html += '<div class="text-micro ' + qualClass + '">' + res.actionDesc + ' ' + res.guidance.text + '</div>';
     }
     html += '</div>';
   }
@@ -177,7 +174,6 @@ function renderEquityResults(container, simResult) {
   if (curvePoints.length >= 2) {
     var svgW = 240, svgH = 60, pad = 20;
     var plotW = svgW - pad * 2, plotH = svgH - pad;
-    html += '<div class="eq-curve">';
     html += '<svg width="' + svgW + '" height="' + svgH + '" viewBox="0 0 ' + svgW + ' ' + svgH + '">';
     var pts = [];
     for (var c = 0; c < curvePoints.length; c++) {
@@ -189,19 +185,19 @@ function renderEquityResults(container, simResult) {
       html += '<text x="' + x + '" y="' + (y - 7) + '" text-anchor="middle" fill="var(--dim)" font-size="10" font-family="IBM Plex Mono, monospace">' + (curvePoints[c].equity * 100).toFixed(0) + '%</text>';
     }
     html += '<polyline points="' + pts.join(' ') + '" fill="none" stroke="var(--gold)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>';
-    html += '</svg></div>';
+    html += '</svg>';
   }
 
   if (summary && summary.text) {
-    var sumClass = summary.quality === 'good' ? 'val-pos' : summary.quality === 'bad' ? 'val-neg' : 'c-gold';
-    html += '<div class="box eq-summary">';
+    var sumClass = summary.quality === 'good' ? 'c-pos' : summary.quality === 'bad' ? 'c-neg' : 'c-gold';
+    html += '<div class="box">';
     html += '<div class="card-title c-gold">Hand Summary</div>';
-    html += '<div class="text-body eq-summary-text ' + sumClass + '">' + summary.text + '</div>';
+    html += '<div class="text-body ' + sumClass + '">' + summary.text + '</div>';
     html += '</div>';
   }
 
   var hasFlopOrTurn = results.some(function (r) { return r.street === 'Flop' || r.street === 'Turn'; });
-  var caveats = '<div class="text-micro eq-caveats">';
+  var caveats = '<div class="text-micro">';
   caveats += 'Equity calculated against a single random hand. In multiway pots, true equity may be lower.';
   if (hasFlopOrTurn) {
     caveats += ' Pot odds comparisons use raw equity; implied odds (potential to win more on later streets) are not factored in and may justify calls that appear unprofitable.';

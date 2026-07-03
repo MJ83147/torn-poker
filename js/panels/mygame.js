@@ -200,7 +200,7 @@ function renderTableDynamicsReference(hands, d) {
     h += '<div class="card dynamics-card">';
     h += '<div class="card-title c-gold">' + seats + '-handed <span class="c-dim">(' + nHands + ' hands)</span></div>';
     if (!nHands || !subD.posMap) {
-      h += '<div class="text-body dynamics-card-note c-dim">' + (nHands ? 'Not enough hands at this table size yet.' : 'No hands at this table size yet.') + '</div>';
+      h += '<div class="text-body c-dim">' + (nHands ? 'Not enough hands at this table size yet.' : 'No hands at this table size yet.') + '</div>';
       h += '</div>';
       continue;
     }
@@ -223,7 +223,7 @@ function renderTableDynamicsReference(hands, d) {
     if (seatCoaching[seats]) {
       h += '<div class="insight-coaching">';
       h += '<div class="eyebrow c-warn">Coaching</div>';
-      h += '<div class="text-body dynamics-coaching">' + seatCoaching[seats] + '</div>';
+      h += '<div class="text-body">' + seatCoaching[seats] + '</div>';
       h += '</div>';
     }
     h += '</div>';
@@ -250,7 +250,7 @@ function renderTableDynamicsReference(hands, d) {
     h += '<div class="card dynamics-card">';
     h += '<div class="card-title c-gold">' + flopLabels[bk] + ' <span class="c-dim">(' + nF + ' hands)</span></div>';
     if (!nF) {
-      h += '<div class="text-body dynamics-card-note c-dim">No flops with this many players yet.</div>';
+      h += '<div class="text-body c-dim">No flops with this many players yet.</div>';
       h += '</div>';
       continue;
     }
@@ -270,7 +270,7 @@ function renderTableDynamicsReference(hands, d) {
 
     h += '<div class="insight-coaching">';
     h += '<div class="eyebrow c-warn">Coaching</div>';
-    h += '<div class="text-body dynamics-coaching">' + fe.notes + '</div>';
+    h += '<div class="text-body">' + fe.notes + '</div>';
     h += '<div class="text-meta dynamics-card-kv row between"><span class="eyebrow c-muted">Bet sizing</span><span>' + fe.cbetSizing + '</span></div>';
     h += '<div class="text-meta dynamics-card-kv row between"><span class="eyebrow c-muted">Continue with</span><span>' + fe.continueRange + '</span></div>';
     h += '</div>';

@@ -294,6 +294,37 @@ a {
   gap: var(--sp-8);
 }
 
+/* --- Content lines: ONE definition for "a row of content", reused inside any
+   component (modal, card, panel). Fixes "rows defined differently everywhere".
+   .head  = a heading line (title left, meta right)
+   .lines = a stack of .line rows
+   .line  = one content row: baked-in vertical rhythm + hairline divider. Its
+            children space themselves (label left / value right, or just text). */
+.head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--sp-16);
+}
+
+.lines {
+  display: flex;
+  flex-direction: column;
+}
+
+.line {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--sp-16);
+  padding: var(--sp-8) 0;
+  border-bottom: var(--bw) solid color-mix(in srgb, var(--border) 55%, transparent);
+}
+
+.line:last-child {
+  border-bottom: none;
+}
+
 .ins-grid,
 .dynamics-cards,
 .saved-hands-list,
@@ -413,25 +444,11 @@ a {
   color: var(--muted);
 }
 
-/* Stack before -> after: compact hero flow under a table cell, and the
-   per-player stacks block in the hand-replay modal. .player-stacks is
-   layout-only (owns the .stack-row grid); the modal's section gap spaces it. */
+/* Stack before -> after: compact hero flow under a table cell. The modal's
+   per-player stacks block is a plain .list of .row items now. */
 .stack-flow {
   margin-top: var(--sp-2);
   white-space: nowrap;
-}
-
-.player-stacks .stack-row {
-  display: grid;
-  grid-template-columns: 1fr auto auto;
-  gap: var(--sp-8);
-  align-items: baseline;
-  padding: var(--sp-8) 0;
-  border-bottom: var(--bw) solid var(--border);
-}
-
-.player-stacks .stack-row:last-child {
-  border-bottom: none;
 }
 
 .text-strong {
@@ -521,9 +538,21 @@ a {
    .box   = filled callout, no border (verdict, work-on, insight).
    .card-link = clickable, lifts on hover (works on either). */
 .card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-12);
   border: var(--bw) solid var(--border);
   border-radius: var(--r-lg);
   padding: var(--sp-12) var(--sp-16);
+  text-align: left;
+}
+
+/* Inline markers never stretch when they're a direct flex child of a stacking
+   container (card/box/section) — they keep their natural size, top-left. */
+.badge,
+.tag,
+.chip {
+  align-self: flex-start;
 }
 
 .card-s1 {
@@ -535,9 +564,13 @@ a {
 }
 
 .box {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-8);
   background: var(--s2);
   border-radius: var(--r-lg);
   padding: var(--sp-16) var(--sp-16);
+  text-align: left;
 }
 
 .card-link {
@@ -1214,18 +1247,6 @@ a {
 
 .modal-close:hover {
   color: var(--text);
-}
-
-/* modal content (hand replay popup). Modal titles reuse the shared heading:
-   markup composes `title title-lg c-gold` (serif 26px bold gold) so both
-   the hand-replay and hand-list modals share one heading style. */
-.modal-action-line {
-  padding: var(--sp-6) 0;
-  border-bottom: var(--bw) solid color-mix(in srgb, var(--border) 50%, transparent);
-}
-
-.modal-action-line.me {
-  color: var(--gold);
 }
 
 /* Equity-sim slot: plumbing inside the modal stack. Hidden while empty so it
@@ -2378,15 +2399,6 @@ textarea#jin {
   gap: var(--sp-4);
 }
 
-/* Two-column link row (tab name | description). Layout only — the parent's
-   gap owns the spacing between rows and the section head. */
-.welcome-toc-row {
-  display: grid;
-  grid-template-columns: 100px 1fr;
-  gap: var(--sp-16);
-  padding: var(--sp-12) var(--sp-12);
-}
-
 .hiw-overlay {
   pointer-events: none;
 }
@@ -2560,15 +2572,6 @@ textarea#jin {
     gap: var(--sp-16);
   }
 
-  .welcome-tips {
-    margin-top: 0;
-  }
-
-  .welcome-toc-row {
-    grid-template-columns: 1fr;
-    gap: var(--sp-4);
-  }
-
   .saved-hands-list {
     grid-template-columns: 1fr;
   }
@@ -2582,12 +2585,6 @@ textarea#jin {
 @media (max-width: 560px) {
   .welcome-body {
     gap: var(--sp-16);
-  }
-
-  .welcome-toc-row {
-    grid-template-columns: 1fr;
-    gap: var(--sp-2);
-    padding: var(--sp-8) var(--sp-12);
   }
 
   .welcome-toc .text-body {
@@ -2642,41 +2639,14 @@ textarea#jin {
   background: var(--s1);
 }
 
-/* --- Equity simulator (hand-detail popup; the modal's gap spaces the block) --- */
-.eq-sim {
-  padding: var(--sp-16) var(--sp-16);
-}
-
-.eq-sim-header {
-  align-items: baseline;
-  margin-bottom: var(--sp-8);
-  padding-bottom: var(--sp-8);
-  border-bottom: var(--bw) solid var(--border);
-}
-
-.eq-row {
-  padding: var(--sp-12) 0;
-  border-bottom: var(--bw) solid var(--border);
-}
-
-.eq-meta-line {
-  margin-top: var(--sp-4);
-  padding-left: var(--sp-2);
-}
-
-.eq-row-bottom {
-  margin-top: var(--sp-6);
-  padding-left: var(--sp-2);
-}
-
+/* --- Equity simulator: the labelled equity-bar row (street | pct | track).
+   The card is a .list, each street a .list, so all spacing comes from the
+   generics — only the bar row's column widths live here. --- */
 .eq-street {
   min-width: 58px;
 }
 
 .eq-pct {
-  color: var(--text);
-  font-size: var(--fs-md);
-  font-weight: var(--fw-semibold);
   text-align: right;
   min-width: 48px;
 }
@@ -2695,34 +2665,6 @@ textarea#jin {
   background: var(--green);
   border-radius: var(--r-sm);
   transition: width .3s;
-}
-
-/* margin-top divides it from the badges above (eq-row-bottom has no structure gap) */
-.eq-detail {
-  margin-top: var(--sp-4);
-}
-
-.eq-curve {
-  margin-top: var(--sp-8);
-  padding-top: var(--sp-8);
-  border-top: var(--bw) solid var(--border);
-  text-align: center;
-}
-
-/* margin-top + gold accent bar divide the summary from the rows above (eq-sim
-   card has no structure gap). 3px = deliberate accent border, not a hairline. */
-.eq-summary {
-  margin-top: var(--sp-12);
-  padding: var(--sp-8) var(--sp-12);
-  border-left: 3px solid var(--gold);
-}
-
-/* margin-top + top-border divide it from the summary above; type owned by
-   .text-micro in markup. */
-.eq-caveats {
-  margin-top: var(--sp-8);
-  padding-top: var(--sp-8);
-  border-top: var(--bw) solid var(--border);
 }
 
 .eq-spinner {
