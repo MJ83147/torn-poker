@@ -2071,11 +2071,7 @@ textarea#jin {
 }
 
 /* ==========================================================================
-   6. RESPONSIVE
-   ========================================================================== */
-
-/* ==========================================================================
-   7. PANEL-SPECIFIC  (genuinely-unique blocks: mygame, saved hands, style
+   6. PANEL-SPECIFIC  (genuinely-unique blocks: mygame, saved hands, style
       picker, custom popover, allin cards). Ported from the old styles.
       ========================================================================== */
 
@@ -2457,40 +2453,6 @@ textarea#jin {
   align-items: end;
 }
 
-/* Tablet: collapse the welcome two-column body and TOC rows to one column.
-   These were orphaned (the @media wrappers were lost in the css2 cutover),
-   which forced the single-column layout onto every screen. */
-@media (max-width: 900px) {
-  .welcome-body {
-    grid-template-columns: 1fr;
-    gap: var(--sp-16);
-  }
-
-  .saved-hands-list {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 560px) {
-  .welcome-body {
-    gap: var(--sp-16);
-  }
-
-  .welcome-toc .text-body {
-    font-size: var(--fs-xs);
-
-  }
-
-  .saved-hands-list {
-    grid-template-columns: 1fr;
-    gap: var(--sp-8);
-  }
-
-  .saved-card {
-    padding: var(--sp-12);
-  }
-}
-
 /* Cards panel: each hand-type bar is a button into its example hands. */
 .cards-bar-row {
   cursor: pointer;
@@ -2724,4 +2686,43 @@ textarea#jin {
 .introjs-helperLayer {
   border-radius: var(--r-sm) !important;
   box-shadow: 0 0 0 2px var(--gold2), 0 0 0 5000px rgba(0, 0, 0, 0.6) !important;
+}
+
+/* ==========================================================================
+   7. RESPONSIVE
+   All @media overrides live here, LAST in the file, so they win the cascade
+   over the base rules they narrow (which are defined in the sections above).
+   ========================================================================== */
+
+/* Tablet: collapse the welcome two-column body and saved-hands grid to one
+   column. (These were orphaned in the css2 cutover, forcing single-column on
+   every screen; restored to real breakpoints here.) */
+@media (max-width: 900px) {
+  .welcome-body {
+    grid-template-columns: 1fr;
+    gap: var(--sp-16);
+  }
+
+  .saved-hands-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .welcome-body {
+    gap: var(--sp-16);
+  }
+
+  .welcome-toc .text-body {
+    font-size: var(--fs-xs);
+  }
+
+  .saved-hands-list {
+    grid-template-columns: 1fr;
+    gap: var(--sp-8);
+  }
+
+  .saved-card {
+    padding: var(--sp-12);
+  }
 }
