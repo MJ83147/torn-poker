@@ -374,11 +374,29 @@
     return parts.join('');
   }
 
+  // Verdict callout + story-cards as one markup string, for callers that place
+  // the findings block somewhere other than the standard panel slot (e.g. the
+  // Range subtabs). Same output as mountFindings puts in the findings slot, so
+  // every panel renders findings through this one path.
+  function findingsBlock(findings, fallback) {
+    return renderVerdict(findings, fallback) + renderFindings(findings);
+  }
+
+  // Wire example buttons + card expand/collapse for findings a panel rendered
+  // itself via renderStoryCard (renderFindings/renderFindingsGrouped self-wire;
+  // this is the hook for the hand-placed cases). Idempotent (per-node _wired).
+  function wireFindings(root) {
+    wireExampleButtons(root);
+    wireCardToggles(root);
+  }
+
   window.Sections = {
     defineSection: defineSection,
     evaluateSections: evaluateSections,
     evaluateSectionsChunked: evaluateSectionsChunked,
     findingsForPanel: findingsForPanel,
+    findingsBlock: findingsBlock,
+    wireFindings: wireFindings,
     classify: classify,
     combineSeverity: combineSeverity,
     classifyPnlGate: classifyPnlGate,

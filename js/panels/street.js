@@ -21,12 +21,10 @@ function streetSummaryNote(d, street) {
     '%, and fold ' + (fp || 0) + '%. No leak flagged here.';
 }
 
-// Render the Street story cards grouped under Preflop / Flop / Turn / River.
-function mountStreetFindings(container, d, hands) {
-  if (typeof Sections === 'undefined' || typeof Sections.evaluateSections !== 'function') return;
-  var findings = Sections.findingsForPanel(Sections.evaluateSections(d, {}, hands), 'Street');
-  setSlot(container, 'verdict', Sections.renderVerdict(findings, 'Street-by-street action looks balanced for now.'));
-
+// Group the Street findings under Preflop / Flop / Turn / River. Passed to
+// mountFindings as opts.group so the cards render through the shared path;
+// streetSummaryNote fills any street with no leak so all four always show.
+function streetGroups(findings, d) {
   var STREET_ORDER = ['Preflop', 'Flop', 'Turn', 'River'];
   var byStreet = { Preflop: [], Flop: [], Turn: [], River: [] };
   for (var i = 0; i < findings.length; i++) {
@@ -34,15 +32,9 @@ function mountStreetFindings(container, d, hands) {
     if (!byStreet[st]) st = 'Flop';
     byStreet[st].push(findings[i]);
   }
-  var groups = STREET_ORDER.map(function(s) {
+  return STREET_ORDER.map(function(s) {
     return { label: s, findings: byStreet[s], emptyNote: streetSummaryNote(d, s) };
   });
-
-  var slot = container.querySelector('[data-slot="findings"]');
-  if (slot) {
-    slot.innerHTML = Sections.renderFindingsGrouped(groups);
-    slot.removeAttribute('hidden');
-  }
 }
 
 function renderStreet(container, d, hands) {
@@ -53,7 +45,7 @@ function renderStreet(container, d, hands) {
   var maxSeen = d.ss.Preflop.seen || 1;
 
   mountPanel(container, 'street', { title: 'Streets', desc: 'Action breakdown by preflop, flop, turn, and river.' });
-  mountStreetFindings(container, d, hands);
+  mountFindings(container, 'Street', d, hands, 'Street-by-street action looks balanced for now.', { group: streetGroups });
 
   setSlot(container, 'seenBars', streets.map(function(s) {
     var seen2 = d.ss[s].seen;

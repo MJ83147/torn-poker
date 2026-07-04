@@ -63,20 +63,21 @@ function _sessBaseVs(base, key, suffix) {
   return v == null ? '' : ('base ' + v + (suffix || ''));
 }
 
-function _sessFlagWord(flag) {
-  return flag === 'leak' ? 'Leak' : flag === 'strength' ? 'Strength' : 'Turning point';
-}
-
-function _renderStoryCard(st, i) {
-  return '<div class="sess-story">' +
-    '<div class="sess-story-head"><span class="sess-lens">' + st.lens + '</span>' +
-    '<span class="sess-flag ' + st.flag + '">' + _sessFlagWord(st.flag) + '</span></div>' +
-    '<div class="sess-story-title">' + st.title + '</div>' +
-    '<div class="sess-prose">' + st.prose + '</div>' +
-    (st.linkHands && st.linkHands.length
-      ? '<div class="sess-link" data-sess-story="' + i + '">' + (st.linkLabel || 'View hands ›') + '</div>'
-      : '') +
-    '</div>';
+// Adapt a per-session story to a Sections finding so it renders through the
+// shared story-card component. flag->severity; linkHands becomes an example
+// button. Prose is stripped to plain text (the shared card escapes its text).
+function _sessStoryToFinding(st) {
+  var sev = st.flag === 'strength' ? 'g' : st.flag === 'watch' ? 'a' : 'r';
+  var note = _stripTags(st.prose);
+  var label = st.linkLabel ? st.linkLabel.replace(/\s*›\s*$/, '') : 'View hands';
+  return {
+    name: st.title,
+    severity: sev,
+    openingText: note,
+    examples: (st.linkHands && st.linkHands.length)
+      ? [{ label: label, hands: st.linkHands, coachingNote: note }]
+      : []
+  };
 }
 
 function _pctCell(v) { return v == null ? '-' : v + '%'; }
@@ -135,9 +136,12 @@ function _renderSessionDetail(session, ctx, stories) {
 
   html += '<div class="section"><div class="section-head">The stories in this session</div>';
   if (stories.length) {
-    html += '<div class="sess-story-grid">';
-    for (var si = 0; si < stories.length; si++) html += _renderStoryCard(stories[si], si);
-    html += '</div>';
+    var cards = '';
+    for (var si = 0; si < stories.length; si++) {
+      cards += (typeof Sections !== 'undefined' && Sections.renderStoryCard)
+        ? Sections.renderStoryCard(_sessStoryToFinding(stories[si])) : '';
+    }
+    html += '<div class="row" data-findings>' + cards + '</div>';
   } else {
     html += '<div class="row"><div class="container"><div class="box text-body">No clear patterns in this session — it played close to your baseline throughout.</div></div></div>';
   }
@@ -254,6 +258,8 @@ function _openSessionDetail(container, session, base) {
   det.removeAttribute('hidden');
   if (list) list.setAttribute('hidden', '');
   window.scrollTo(0, 0);
+  // Wire the story cards' example buttons + expand toggles (shared component).
+  if (typeof Sections !== 'undefined' && Sections.wireFindings) Sections.wireFindings(det);
 
   var back = det.querySelector('[data-sess-back]');
   if (back) back.onclick = function() {
@@ -262,14 +268,6 @@ function _openSessionDetail(container, session, base) {
     if (list) list.removeAttribute('hidden');
     window.scrollTo(0, 0);
   };
-
-  det.querySelectorAll('[data-sess-story]').forEach(function(el) {
-    var idx = parseInt(el.getAttribute('data-sess-story'), 10);
-    var st = res.stories[idx];
-    el.onclick = function() {
-      if (st && st.linkHands && st.linkHands.length) showExampleHandListModal(st.title, st.linkHands, _stripTags(st.prose));
-    };
-  });
 
   var allBtn = det.querySelector('[data-sess-allhands]');
   if (allBtn) allBtn.onclick = function() {

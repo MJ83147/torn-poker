@@ -275,16 +275,6 @@ function gtoTargetAction(color) {
   return 'fold';
 }
 
-// Verdict section plus the story-cards section. Both are .sections, so they
-// pick up whatever gap their parent stack provides (the panel gap in By Spot,
-// the container gap in Overall). Returns '' when the insight engine is
-// unavailable so the grids still render on their own.
-function storiesHtml(findings, fallback) {
-  if (typeof Sections === 'undefined' || typeof Sections.renderFindings !== 'function') return '';
-  return Sections.renderVerdict(findings, fallback) +
-    Sections.renderFindings(findings);
-}
-
 function spotHeroAction(rec) {
   if (rec.raise.n >= rec.call.n && rec.raise.n >= rec.fold.n && rec.raise.n) return 'raise';
   if (rec.call.n >= rec.fold.n && rec.call.n) return 'call';
@@ -632,7 +622,7 @@ function renderRange(container, d, hands) {
       '<div class="row">' +
       '<div class="container">' +
       '<div class="text-meta">How wide you play and which combos carry your results. The 13x13 chart, position by position, lives under By Spot.</div>' +
-      storiesHtml(Sections.findingsForPanel(Sections.evaluateSections(d, {}, hands), 'Range'), 'Range data is still building.') +
+      Sections.findingsBlock(Sections.findingsForPanel(Sections.evaluateSections(d, {}, hands), 'Range'), 'Range data is still building.') +
       '</div>' +
       '</div>' +
       '</div>';
@@ -681,7 +671,7 @@ function renderRange(container, d, hands) {
       '</div>' +
       '</div>' +
       twoGridHtml(chart, filtered, scenarioType, tallies, dealtCount) +
-      storiesHtml(
+      Sections.findingsBlock(
         buildSpotFindings(
           state.hero + ' · ' + label,
           heroComboBreakdown(filtered, scenarioType),

@@ -89,7 +89,6 @@ function renderMyGame(container, d, hands) {
 
     html += '<div class="section">';
     html += '<div class="section-head">Work On Next</div>';
-    html += '<div class="row"><div class="container">';
     var workOn = null;
     var _workAggFloor = _afBandMG ? _afBandMG.tight - 3 : 15;
     var _workLimpCeil = _domSeatsMG && _domSeatsMG <= 2 ? 70 : _domSeatsMG && _domSeatsMG <= 3 ? 45 : 22;
@@ -110,21 +109,16 @@ function renderMyGame(container, d, hands) {
     if (!workOn && _workEpCeil && epVpip !== null && epVpip > _workEpCeil && earlyHands >= 10) workOn = { sev: 'r', label: 'Too Loose Early', desc: 'EP VPIP at ' + epVpip + '%. Ceiling around ' + _workEpCeil + '%.', action: 'Next session: from UTG/MP, only play top 25% of hands. Fold marginal suited connectors and weak aces from these seats.' };
     if (!workOn && allLeaks.length) workOn = { sev: allLeaks[0].severity, label: allLeaks[0].name, desc: '', action: 'Focus on this pattern in your next session and track whether the stat improves.' };
 
-    if (workOn) {
-      html += '<div class="box list work-on-' + workOn.sev + '">';
-      html += '<div class="lead fw-semibold">' + workOn.label + '</div>';
-      html += '<div class="list">';
-      if (workOn.desc) html += '<div class="text-body">' + workOn.desc + '</div>';
-      html += '<div class="text-body">' + workOn.action + '</div>';
-      html += '</div>';
-      html += '</div>';
-    } else {
-      html += '<div class="box list work-on-g">';
-      html += '<div class="lead fw-semibold">Solid game</div>';
-      html += '<div class="text-body">No major leaks detected from ' + d.n + ' hands. Keep playing to refine the picture.</div>';
-      html += '</div>';
-    }
-    html += '</div></div></div>';
+    // The chosen work-on item renders as a shared story card (same component as
+    // every other panel's findings): desc -> openingText, action -> soWhatText.
+    var workFinding = workOn
+      ? { name: workOn.label, severity: workOn.sev, openingText: workOn.desc || '', soWhatText: workOn.action }
+      : { name: 'Solid game', severity: 'g', openingText: 'No major leaks detected from ' + d.n + ' hands. Keep playing to refine the picture.' };
+    var workCard = (typeof Sections !== 'undefined' && Sections.renderStoryCard)
+      ? Sections.renderStoryCard(workFinding)
+      : '<div class="box"><div class="lead fw-semibold">' + workFinding.name + '</div></div>';
+    html += '<div class="row" data-findings>' + workCard + '</div>';
+    html += '</div>';
 
   }
 
@@ -132,6 +126,7 @@ function renderMyGame(container, d, hands) {
 
   mountPanel(container, 'mygame', { title: 'My Game', desc: 'Your scouting report: player type, the one leak to work on next, and how your play stacks up against target benchmarks by table size and flop.' });
   setSlot(container, 'body', html);
+  if (typeof Sections !== 'undefined' && Sections.wireFindings) Sections.wireFindings(container);
 
   var smHost = container.querySelector('#mygame-stylemap');
   if (smHost && typeof renderStyleMap === 'function') {

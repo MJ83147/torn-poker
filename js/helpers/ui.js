@@ -397,16 +397,23 @@ function renderTableHead(cols, sortState) {
   return '<tr>' + ths.join('') + '</tr>';
 }
 
-// Templates must provide a `verdict` slot and a `findings` slot.
-function mountFindings(root, panelName, d, hands, fallback) {
+// mountPanel provides the `verdict` and `findings` slots this fills.
+// opts.group(findings, d) -> [{ label, findings, emptyNote }] renders the cards
+// grouped (e.g. Streets by street) via renderFindingsGrouped; without it the
+// flat renderFindings is used. Every findings panel goes through this one path.
+function mountFindings(root, panelName, d, hands, fallback, opts) {
   if (typeof Sections === 'undefined' || typeof Sections.evaluateSections !== 'function') {
     return [];
   }
+  opts = opts || {};
   var findings = Sections.findingsForPanel(Sections.evaluateSections(d, {}, hands), panelName);
   setSlot(root, 'verdict', Sections.renderVerdict(findings, fallback));
   var slot = root.querySelector('[data-slot="findings"]');
   if (slot) {
-    if (findings.length) {
+    if (opts.group) {
+      slot.innerHTML = Sections.renderFindingsGrouped(opts.group(findings, d));
+      slot.removeAttribute('hidden');
+    } else if (findings.length) {
       slot.innerHTML = Sections.renderFindings(findings);
       slot.removeAttribute('hidden');
     } else {
