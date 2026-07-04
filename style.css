@@ -9,8 +9,8 @@
                           margin, pad)
    §4  COMPONENTS ........ shared blocks: card, box, button, table, story, bar
    §5  FEATURES .......... range grid, equity viz, charts, carousel, sentence
-   §6  RESPONSIVE ........ breakpoint overrides
-   §7  PANEL-SPECIFIC .... genuinely-unique blocks (My Game, saved hands, style)
+   §6  PANEL-SPECIFIC .... genuinely-unique blocks (My Game, saved hands, style)
+   §7  RESPONSIVE ........ breakpoint overrides
    --------------------------------------------------------------------------
    RULE: after §1, nothing sets font-size / line-height / letter-spacing except
    the role classes in §2 (.title · .eyebrow · .section-head · .card-title ·
@@ -2525,64 +2525,6 @@ textarea#jin {
    story cards, phase table). Classes are namespaced sess-* to avoid the
    existing insight .story / .spark cards.
    ========================================================================== */
-.sess-spark {
-  vertical-align: middle;
-}
-
-.sess-back {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--sp-6);
-  cursor: pointer;
-  color: var(--dim);
-  font-size: var(--fs-xs);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  margin-bottom: var(--sp-16);
-}
-
-.sess-back:hover {
-  color: var(--gold);
-}
-
-.sess-head {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: flex-end;
-  gap: var(--sp-12);
-}
-
-.sess-head-right {
-  text-align: right;
-}
-
-.sess-head-res {
-  font-size: var(--fs-2xl);
-  font-weight: var(--fw-medium);
-  line-height: var(--lh-none);
-}
-
-.sess-stat-v {
-  font-size: var(--fs-xl);
-  font-weight: var(--fw-medium);
-}
-
-.sess-stat-vs {
-  font-size: var(--fs-xs);
-}
-
-.sess-link {
-  margin-top: auto;
-  font-size: var(--fs-xs);
-  color: var(--dim);
-  cursor: pointer;
-}
-
-.sess-link:hover {
-  color: var(--gold);
-}
-
 /* ==========================================================================
    GUIDED TOUR (intro.js)
    The intro.js stylesheet is injected from the CDN at tour start, AFTER this

@@ -26,7 +26,7 @@ function _sessSparkline(session) {
   }).join(' ');
   var color = session.pnl >= 0 ? 'var(--green)' : 'var(--red)';
   var zeroY = (h - 2 - ((0 - min) / rng) * (h - 4)).toFixed(1);
-  return '<svg class="sess-spark" width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '" aria-hidden="true">' +
+  return '<svg style="vertical-align:middle" width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '" aria-hidden="true">' +
     '<line x1="0" y1="' + zeroY + '" x2="' + w + '" y2="' + zeroY + '" stroke="var(--border)" stroke-width="1"/>' +
     '<polyline points="' + poly + '" fill="none" stroke="' + color + '" stroke-width="1.5"/></svg>';
 }
@@ -54,8 +54,8 @@ function _renderSessionList(sessions) {
 
 function _sessStatCell(label, val, vs) {
   return '<div class="stat"><div class="eyebrow">' + label + '</div>' +
-    '<div class="sess-stat-v">' + (val == null ? '-' : val) + '</div>' +
-    (vs ? '<div class="c-dim sess-stat-vs">' + vs + '</div>' : '') + '</div>';
+    '<div class="value">' + (val == null ? '-' : val) + '</div>' +
+    (vs ? '<div class="text-micro">' + vs + '</div>' : '') + '</div>';
 }
 
 function _sessBaseVs(base, key, suffix) {
@@ -109,16 +109,16 @@ function _renderSessionDetail(session, ctx, stories) {
   var seatsTxt = seatsHand.seats ? (seatsHand.seats + '-handed') : (seatsHand.tableSize ? (seatsHand.tableSize + '-max') : '');
 
   var html = '';
-  html += '<div class="sess-back" data-sess-back>&#8249; All sessions</div>';
+  html += '<div class="section"><div class="row center"><button class="btn btn-ghost" data-sess-back>&laquo; All sessions</button></div></div>';
 
-  html += '<div class="section"><div class="row"><div class="container"><div class="box sess-head">';
+  html += '<div class="section"><div class="row"><div class="container"><div class="box"><div class="row between">';
   html += '<div><div class="card-title">' + tableName + ' <span class="c-dim">·</span> ' + fmtDate(ctx.startTs) + ', ' + _fmtClock(ctx.startTs) + '</div>' +
     '<div class="text-meta">' + fmtSessionDuration(ctx.durationMs) + ' · ' + session.hands.length + ' hands' + (seatsTxt ? (' · ' + seatsTxt) : '') + '</div>' +
-    '<div class="sess-link" data-sess-allhands>View all ' + session.hands.length + ' hands ›</div></div>';
-  html += '<div class="sess-head-right"><div class="sess-head-res ' + resCls + '">' + resTxt + '</div>' +
+    '<button class="btn btn-ghost" data-sess-allhands>View all ' + session.hands.length + ' hands</button></div>';
+  html += '<div class="text-right"><div class="value value-lg ' + resCls + '">' + resTxt + '</div>' +
     '<div class="text-meta">peaked <span class="c-pos">' + fmtPnl(peak.cum) + '</span> at hand ' + peak.i +
     ' · low <span class="c-neg">' + fmtPnl(low.cum) + '</span> at hand ' + low.i + '</div></div>';
-  html += '</div></div></div></div>';
+  html += '</div></div></div></div></div>';
 
   var b = ctx.base;
   html += '<div class="section"><div class="row"><div class="container"><div class="stat-grid">';
