@@ -719,7 +719,7 @@ function renderRange(container, d, hands) {
       // so does nothing, on either grid.
       var matched = active.filter(function(h) { return parseHoleKey(h.hole) === key; });
       if (!matched.length) return;
-      openHandModal(key, matched);
+      showExampleHandListModal(key, matched);
     });
   }
 
@@ -747,43 +747,3 @@ function bindSelector(scope, id, cb) {
   el.onchange = function() { cb(el.value); };
 }
 
-function openHandModal(key, matched) {
-  var existing = document.getElementById('example-hand-modal');
-  if (existing) existing.remove();
-  var overlay = document.createElement('div');
-  overlay.id = 'example-hand-modal';
-  overlay.className = 'overlay';
-  overlay.onclick = function(ev) { if (ev.target === overlay) closeModal(); };
-  var box = document.createElement('div');
-  box.className = 'modal';
-  var summary = '<div class="panel-header">' +
-    '<div class="title c-gold">' + key + '</div>' +
-    '<div class="text-meta">' + matched.length + ' hands</div>' +
-    '</div>';
-  var rows = matched.map(function(h, idx) {
-    var myActs = getActsSummary(h);
-    var res = renderResult(h, 'span', 'saved-res');
-    return '<div class="range-hand-row" data-ridx="' + idx + '">' +
-      '<div class="row between">' +
-      '<div class="row center">' +
-      '<span class="eyebrow range-hand-row-pos">' + (h.position || '?') + '</span>' +
-      '<span class="range-hand-row-hole">' + (h.hole ? displayCards(h.hole.map(normCard)) : '??') + '</span>' +
-      '<span class="text-meta range-hand-row-board">' + (h.board && h.board.length ? displayCards(h.board.map(normCard)) : '-') + '</span>' +
-      '</div>' +
-      '<div class="row center">' +
-      '<span class="text-meta range-hand-row-actions">' + myActs + '</span>' +
-      res + '</div></div></div>';
-  }).join('');
-  box.innerHTML = '<button class="modal-close" id="modal-close-btn">&times;</button>' +
-    summary + '<div class="list">' + rows + '</div>';
-  overlay.appendChild(box);
-  document.body.appendChild(overlay);
-  requestAnimationFrame(function() { overlay.classList.add(CSS.SHOW); });
-  document.getElementById('modal-close-btn').onclick = closeModal;
-  box.querySelectorAll('.range-hand-row').forEach(function(row) {
-    row.onclick = function() {
-      var idx = parseInt(row.getAttribute('data-ridx'));
-      if (!isNaN(idx) && matched[idx]) showExampleHandModal(matched[idx]);
-    };
-  });
-}

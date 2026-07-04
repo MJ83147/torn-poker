@@ -37,13 +37,13 @@ function buildModalActionLines(hand) {
       lastStreet = a.street;
       if (open) html += '</div></div>';
       var bc = streetBoard[a.street] || [];
-      html += '<div class="section">' +
+      html += '<div class="inner-section">' +
         '<div class="section-head">' + a.street + (bc.length ? ' ' + displayCards(bc) : '') + '</div>' +
         '<div class="lines">';
       open = true;
     } else if (!open) {
       // Actions with no street marker before the first street: headerless section.
-      html += '<div class="section"><div class="lines">';
+      html += '<div class="inner-section"><div class="lines">';
       open = true;
     }
     var isMe = !!a.isMe;
@@ -81,7 +81,7 @@ function buildStacksBlock(hand) {
       '<span class="text-meta">' + netHtml + '</span>' +
       '</div>';
   }).join('');
-  return '<div class="section">' +
+  return '<div class="inner-section">' +
     '<div class="section-head">Stacks (before &rarr; after)</div>' +
     '<div class="lines">' + rows + '</div>' +
     '</div>';
@@ -142,7 +142,7 @@ function showExampleHandModal(hand, coachingNote) {
   var actionsHtml = buildModalActionLines(hand);
 
   var coaching = coachingNote
-    ? '<div class="section">' +
+    ? '<div class="inner-section">' +
         '<div class="section-head c-warn">What to improve</div>' +
         '<div class="card card-s2"><div class="text-body">' + coachingNote + '</div></div>' +
       '</div>'
@@ -212,19 +212,15 @@ function findExampleHand(filterFn) {
   return results;
 }
 
+// The one hand-row used by every panel's example-hands modal. .hand-row owns
+// its whole layout in CSS (a grid); each child carries a single class.
 function buildHandRow(h, idx) {
-  var myActs = getActsSummary(h);
-  var res = renderResult(h, 'span', 'saved-res range-hand-row-result');
-  return '<div class="range-hand-row" data-ridx="' + idx + '">' +
-    '<div class="row between">' +
-      '<div class="row center">' +
-        '<span class="eyebrow range-hand-row-pos">' + (h.position || '?') + '</span>' +
-        '<span class="range-hand-row-hole">' + (h.hole && h.hole.length ? displayCards(h.hole.map(normCard)) : '??') + '</span>' +
-        '<span class="text-meta range-hand-row-board">' + (h.board && h.board.length ? displayCards(h.board.map(normCard)) : '-') + '</span>' +
-      '</div>' +
-      '<div class="row center">' + res + '</div>' +
-    '</div>' +
-    '<div class="text-meta range-hand-row-actions">' + myActs + '</div>' +
+  return '<div class="hand-row" data-ridx="' + idx + '">' +
+    '<span class="hand-row-pos">' + (h.position || '?') + '</span>' +
+    '<span class="hand-row-hole">' + (h.hole && h.hole.length ? displayCards(h.hole.map(normCard)) : '??') + '</span>' +
+    '<span class="hand-row-board">' + (h.board && h.board.length ? displayCards(h.board.map(normCard)) : '-') + '</span>' +
+    renderResult(h, 'span', 'hand-row-result') +
+    '<span class="hand-row-acts">' + getActsSummary(h) + '</span>' +
     '</div>';
 }
 
@@ -242,7 +238,7 @@ function showExampleHandListModal(title, handsList, coachingNote) {
     '</div>';
 
   if (coachingNote) {
-    header += '<div class="section">' +
+    header += '<div class="inner-section">' +
       '<div class="section-head c-warn">What to look for</div>' +
       '<div class="card card-s2"><div class="text-body">' + coachingNote + '</div></div>' +
       '</div>';

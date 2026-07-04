@@ -52,10 +52,20 @@ function _renderSessionList(sessions) {
     '<table class="table"><thead>' + head + '</thead><tbody>' + rows + '</tbody></table></div></div></div></div>';
 }
 
-function _sessStatCell(label, val, vs) {
+function _sessStatCell(label, val, vs, cls) {
   return '<div class="stat"><div class="eyebrow">' + label + '</div>' +
-    '<div class="value">' + (val == null ? '-' : val) + '</div>' +
+    '<div class="value' + (cls ? ' ' + cls : '') + '">' + (val == null ? '-' : val) + '</div>' +
     (vs ? '<div class="text-micro">' + vs + '</div>' : '') + '</div>';
+}
+
+// Colour a session stat vs the player's baseline: green when it moved the good
+// way this session, red the bad way, uncoloured when within ~2 points.
+// betterHigher marks which direction is good for that stat.
+function _sessStatColor(sessVal, baseVal, betterHigher) {
+  if (sessVal == null || baseVal == null) return '';
+  var diff = sessVal - baseVal;
+  if (Math.abs(diff) < 2) return '';
+  return (betterHigher ? diff > 0 : diff < 0) ? 'c-pos' : 'c-neg';
 }
 
 function _sessBaseVs(base, key, suffix) {
@@ -121,13 +131,15 @@ function _renderSessionDetail(session, ctx, stories) {
   html += '</div></div></div></div></div>';
 
   var b = ctx.base;
-  html += '<div class="section"><div class="row"><div class="container"><div class="stat-grid">';
-  html += _sessStatCell('VPIP', _pctCell(ctx.sd.core.vpipPct), _sessBaseVs(b, 'vpipPct', '%'));
-  html += _sessStatCell('PFR', _pctCell(ctx.sd.core.pfrPct), _sessBaseVs(b, 'pfrPct', '%'));
-  html += _sessStatCell('Aggression', _pctCell(ctx.sd.core.agg), _sessBaseVs(b, 'agg', '%'));
-  html += _sessStatCell('C-bet', _pctCell(ctx.sd.core.cbetPct), _sessBaseVs(b, 'cbetPct', '%'));
-  html += _sessStatCell('WTSD', _pctCell(ctx.sd.core.wtsdPct), _sessBaseVs(b, 'wtsdPct', '%'));
-  html += _sessStatCell('Result', resTxt, session.hands.length + ' hands');
+  var sc = ctx.sd.core, bc = (b && b.core) || {};
+  html += '<div class="section"><div class="section-head">Session Stats</div><div class="row"><div class="container"><div class="stat-grid">';
+  // VPIP has no inherently good/bad direction, so it stays uncoloured.
+  html += _sessStatCell('VPIP', _pctCell(sc.vpipPct), _sessBaseVs(b, 'vpipPct', '%'), '');
+  html += _sessStatCell('PFR', _pctCell(sc.pfrPct), _sessBaseVs(b, 'pfrPct', '%'), _sessStatColor(sc.pfrPct, bc.pfrPct, true));
+  html += _sessStatCell('Aggression', _pctCell(sc.agg), _sessBaseVs(b, 'agg', '%'), _sessStatColor(sc.agg, bc.agg, true));
+  html += _sessStatCell('C-bet', _pctCell(sc.cbetPct), _sessBaseVs(b, 'cbetPct', '%'), _sessStatColor(sc.cbetPct, bc.cbetPct, true));
+  html += _sessStatCell('WTSD', _pctCell(sc.wtsdPct), _sessBaseVs(b, 'wtsdPct', '%'), _sessStatColor(sc.wtsdPct, bc.wtsdPct, false));
+  html += _sessStatCell('Result', resTxt, session.hands.length + ' hands', resCls);
   html += '</div></div></div></div>';
 
   html += _chartSection('Stack through the session', 'sess-c-stack');

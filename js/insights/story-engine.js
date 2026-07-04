@@ -297,7 +297,7 @@
     if (teaser) html += '<div class="story-teaser text-body">' + escapeHtml(teaser) + '</div>';
     html += '</div>';
 
-    html += '<div class="story-body">';
+    html += '<div class="inner-section">';
     if (finding.openingText) {
       html += '<div class="text-body">' + escapeHtml(finding.openingText) + '</div>';
     }

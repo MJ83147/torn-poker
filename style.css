@@ -106,6 +106,7 @@
   --sp-16: 16px;
   --sp-24: 24px;
   --sp-32: 32px;
+  --sp-48: 48px;
 
   /* radius */
   --r-sm: 4px;
@@ -234,7 +235,7 @@ a {
 .panel.on {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-32);
+  gap: var(--sp-48);
   min-height: 60vh;
 }
 
@@ -406,7 +407,7 @@ a {
    heading (serif, larger than body), distinct from the tiny .eyebrow label. */
 .section-head {
   font-family: var(--serif);
-  font-size: var(--fs-xl);
+  font-size: var(--fs-2xl);
   font-weight: var(--fw-semibold);
   line-height: var(--lh-tight);
   color: var(--text);
@@ -840,13 +841,23 @@ a {
    column. Left matches .story-head's --sp-16. Right matches the title's content
    edge: the head's --sp-16 plus the title's extra --sp-32 (which clears the
    chevron), so title and body stop at the same right inset. */
-.story-body {
+/* Nested section: a vertical stack inside a card or modal, with baked-in
+   spacing between its children. Used for the story card's expanded body and
+   for blocks inside modals (which use .inner-section, never .section). */
+.inner-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-12);
+}
+
+/* The story card's body is an inner-section, collapsed until the card opens. */
+.story .inner-section {
   display: none;
   padding: 0 calc(var(--sp-16) + var(--sp-32)) var(--sp-16) var(--sp-16);
 }
 
-.story.open .story-body {
-  display: block;
+.story.open .inner-section {
+  display: flex;
 }
 
 /* layout hook only — type/colour come from .text-body in markup; hidden when open */
@@ -859,7 +870,6 @@ a {
 }
 
 .story-branches {
-  margin: var(--sp-8) 0 var(--sp-12);
   padding-left: var(--sp-16);
 }
 
@@ -874,7 +884,6 @@ a {
 .story-impact,
 .story-sowhat {
   padding-top: var(--sp-12);
-  margin-top: var(--sp-12);
   border-top: var(--bw) solid var(--border);
 }
 
@@ -1276,42 +1285,61 @@ a {
   transition: color .3s;
 }
 
-/* hand-list rows (in the hand-list popup; also used by range) */
-.range-hand-row {
-  padding: var(--sp-8) var(--sp-8);
+/* The one hand row — every panel's example-hands modal. A grid owns the whole
+   layout: position · hole · board · result on the top line, actions below.
+   Each child has a single class; markup carries no layout utilities. */
+.hand-row {
+  display: grid;
+  grid-template-columns: auto auto 1fr auto;
+  align-items: baseline;
+  column-gap: var(--sp-12);
+  row-gap: var(--sp-4);
+  padding: var(--sp-8);
   border-radius: var(--r-sm);
-  cursor: pointer;
   border-bottom: var(--bw) solid var(--border);
+  cursor: pointer;
 }
 
-.range-hand-row:last-child {
+.hand-row:last-child {
   border-bottom: none;
 }
 
-.range-hand-row:hover {
+.hand-row:hover {
   background: var(--s2);
 }
 
-.range-hand-row-pos {
+.hand-row-pos {
   min-width: 28px;
+  font-size: var(--fs-xs);
+  letter-spacing: var(--sp-2);
+  text-transform: uppercase;
+  color: var(--gold);
 }
 
-.range-hand-row-hole {
+.hand-row-hole {
   font-family: var(--serif);
   font-size: var(--fs-lg);
   font-weight: var(--fw-bold);
   line-height: var(--lh-none);
   color: var(--text);
-  min-width: 52px;
 }
 
-.range-hand-row-board {
+.hand-row-board {
+  font-size: var(--fs-md);
+  color: var(--dim);
   letter-spacing: .5px;
 }
 
-.range-hand-row-actions {
+.hand-row-result {
+  justify-self: end;
+  font-weight: var(--fw-semibold);
+}
+
+.hand-row-acts {
+  grid-column: 2 / -1;
+  font-size: var(--fs-md);
+  color: var(--dim);
   line-height: var(--lh-snug);
-  padding-left: 40px;
 }
 
 .popover {
@@ -2208,15 +2236,6 @@ textarea#jin {
 
 .watch-star.watched {
   color: var(--gold) !important;
-}
-
-/* Players panel: the compare prompt sits at the top of the panel body as a
-   bordered toolbar so the action reads as primary, not an afterthought. */
-.players-toolbar {
-  padding: var(--sp-12) var(--sp-16);
-  background: var(--s1);
-  border: var(--bw) solid var(--border);
-  border-radius: var(--r-lg);
 }
 
 /* Player detail view: vertical rhythm between header, tendencies, and the
