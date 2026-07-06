@@ -2824,7 +2824,7 @@ textarea#jin {
   flex-direction: column;
   justify-content: center;
   gap: var(--sp-8);
-  background: var(--s2);
+
   border: var(--bw) solid var(--border);
   border-radius: var(--r-lg);
   padding: var(--sp-24);
