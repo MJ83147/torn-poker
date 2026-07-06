@@ -338,10 +338,6 @@ a {
   justify-content: flex-end;
 }
 
-.grow {
-  flex: 1;
-}
-
 .min-w-0 {
   min-width: 0;
 }
@@ -894,11 +890,6 @@ a {
   font-size: var(--fs-xs);
 
   font-weight: var(--fw-medium);
-}
-
-.badge-warn {
-  background: color-mix(in srgb, var(--amber) 12%, transparent);
-  color: var(--amber);
 }
 
 .badge-gold {
