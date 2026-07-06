@@ -33,7 +33,8 @@ function renderBestWorstSessions(hands, overallData) {
     var s = sess.session;
     var tableName = s.tableId ? getTableLabel(s.tableId) : 'Unknown Table';
     var isTourney = s.hands.some(function(h) { return !isCashHand(h); });
-    var pnlDisplay = isTourney ? 'Tournament' : fmtPnl(s.pnl);
+    var sessBB = s.tableId && TABLE_META[s.tableId] ? TABLE_META[s.tableId].bb : null;
+    var pnlDisplay = isTourney ? 'Tournament' : fmtPnlBB(s.pnl, sessBB);
     var pnlCellCls = isTourney ? '' : (typeof pnlValCls === 'function' ? pnlValCls(s.pnl) : '');
 
     var sessStart = fmtDate(s.startTs);
@@ -116,10 +117,20 @@ function renderTrends(container, hands, meta, overallData) {
     findingsHtml = panelFindings('Tables and Trends', sectionD, hands, 'Direction of travel is steady across sessions.');
   }
 
-  var chartsHtml = chartConfigs.map(function(cfg) {
+  // Two charts per row; an odd one out gets its row (and the width) to itself.
+  var validCharts = chartConfigs.filter(function(cfg) {
     var vals = points.map(function(p) { return p[cfg.key]; }).filter(function(v) { return v !== null; });
-    return vals.length < 2 ? '' : chartSection(cfg.title, cfg.id);
-  }).join('');
+    return vals.length >= 2;
+  });
+  var chartRows = '';
+  for (var ci2 = 0; ci2 < validCharts.length; ci2 += 2) {
+    chartRows += '<div class="row">' + validCharts.slice(ci2, ci2 + 2).map(function(cfg) {
+      return `<div class="container"><div class="eyebrow">${cfg.title}</div><canvas id="${cfg.id}"></canvas></div>`;
+    }).join('') + '</div>';
+  }
+  var chartsHtml = validCharts.length
+    ? `<div class="section"><div class="section-head">Charts</div>${chartRows}</div>`
+    : '';
 
   var bwHtml = overallData ? (renderBestWorstSessions(hands, overallData) || '') : '';
 

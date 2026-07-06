@@ -21,7 +21,14 @@ function playersModel(hands) {
         if (h.outcome.result === 'won') oppMap[a.author].won++;
         else if (h.outcome.result === 'folded') oppMap[a.author].folded++;
         else oppMap[a.author].lost++;
-        oppMap[a.author].profit += getHandPnlValue(h);
+        var pnlV = getHandPnlValue(h);
+        oppMap[a.author].profit += pnlV;
+        // BB-normalized so the $/BB toggle can show cross-stake profit in BB.
+        var oppBB = getHandBB(h);
+        if (oppBB > 0) {
+          oppMap[a.author].profitBB = (oppMap[a.author].profitBB || 0) + pnlV / oppBB;
+          oppMap[a.author].profitBBKnown = true;
+        }
       }
     }
   }

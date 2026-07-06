@@ -36,22 +36,22 @@ function renderShowdown(container, hands, meta, overallData) {
   var statsHtml = '<div class="stat-grid">' +
     _sdStatBox('sd',
       '<span class="swatch swatch-dot" style="background:var(--gto-blue)"></span>Showdown',
-      { cls: pnlValCls(m.sd.pnl), text: fmtPnl(m.sd.pnl) },
+      { cls: pnlValCls(m.sd.pnl), text: fmtPnlAgg(m.sd.pnl, m.sd.pnlBB) },
       m.sd.total + ' hands · ' + (m.sd.winRate !== null ? m.sd.winRate + '% win rate' : 'no data'),
       m.sd.hands.length > 0) +
     _sdStatBox('nsd',
       '<span class="swatch swatch-dot bg-neg"></span>Non-Showdown',
-      { cls: pnlValCls(m.nsd.pnl), text: fmtPnl(m.nsd.pnl) },
+      { cls: pnlValCls(m.nsd.pnl), text: fmtPnlAgg(m.nsd.pnl, m.nsd.pnlBB) },
       m.nsd.total + ' hands · ' + (m.nsd.winRate !== null ? m.nsd.winRate + '% win rate' : 'no data'),
       m.nsd.hands.length > 0) +
     '</div>';
 
   var potStatsHtml = '<div class="stat-grid">' +
     _sdStatBox('won', 'Avg Pot Won',
-      { cls: 'c-pos', text: fmt(m.won.avgPot) },
+      { cls: 'c-pos', text: (_displayBB && m.won.avgPotBB != null) ? fmtBBRaw(m.won.avgPotBB) : fmt(m.won.avgPot) },
       m.won.count + ' hands', m.won.hands.length > 0) +
     _sdStatBox('lost', 'Avg Pot Lost',
-      { cls: 'c-neg', text: fmt(m.lost.avgPot) },
+      { cls: 'c-neg', text: (_displayBB && m.lost.avgPotBB != null) ? fmtBBRaw(m.lost.avgPotBB) : fmt(m.lost.avgPot) },
       m.lost.count + ' hands', m.lost.hands.length > 0) +
     `<div class="stat">
       <div class="eyebrow">Win/Loss Pot Ratio</div>
@@ -69,6 +69,8 @@ function renderShowdown(container, hands, meta, overallData) {
       <div class="section-head">Average Pot Size by Outcome</div>
       <div class="row">
         <div class="container"><canvas id="pot-size-chart"></canvas></div>
+      </div>
+      <div class="row">
         <div class="container">${potStatsHtml}</div>
       </div>
     </div>`;

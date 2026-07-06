@@ -30,6 +30,22 @@ function fmtBBRaw(bbs) {
   return bbs.toFixed(2) + ' BB';
 }
 
+// Signed P&L honouring the $/BB toggle for a single-stake value (a hand, a
+// table, a session): bb is that context's big blind.
+function fmtPnlBB(val, bb) {
+  if (!_displayBB || !bb || bb <= 0) return fmtPnl(val);
+  if (val == null || !isFinite(val)) return fmtPnl(val);
+  return (val < 0 ? '-' : '+') + fmtBBRaw(Math.abs(val) / bb);
+}
+
+// Signed P&L honouring the toggle for a cross-stake aggregate: bbSum is the
+// pre-normalized BB total (accumulated hand-by-hand at each hand's own bb).
+// Falls back to dollars when BB mode is off or no bb data exists.
+function fmtPnlAgg(val, bbSum) {
+  if (!_displayBB || bbSum == null || !isFinite(bbSum)) return fmtPnl(val);
+  return (bbSum < 0 ? '-' : '+') + fmtBBRaw(Math.abs(bbSum));
+}
+
 // pct: whole-number percentage (e.g. 42). Use for headline stats and display.
 // safePct: one-decimal percentage (e.g. 42.3). Use where the extra precision matters.
 // Both return null when the denominator is zero/falsy.

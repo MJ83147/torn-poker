@@ -193,7 +193,7 @@
       );
     }
     if (!parts.length) return '';
-    return '<div class="row wrap">' + parts.join('') + '</div>';
+    return '<div class="row">' + parts.join('') + '</div>';
   }
 
   function wireExampleButtons(root) {

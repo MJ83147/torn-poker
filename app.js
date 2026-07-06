@@ -5,6 +5,7 @@ document.getElementById('bb-toggle').onclick = function () {
   });
   if (State.allHands.length) {
     invalidateRenderedPanels();
+    _renderHeaderStrip();
     renderActivePanel();
   }
 };
@@ -403,7 +404,7 @@ function _renderHeaderStrip() {
   document.getElementById('hero-strip').innerHTML = [
     { l: 'Hands', v: d.n, c: 'c-gold' },
     { l: 'Win Rate', v: c.wr !== null ? c.wr + '%' : '-', c: c.wr >= 50 ? 'c-pos' : 'c-neg' },
-    { l: 'Net P&L', v: fmtPnl(c.netPnl), c: c.netPnl >= 0 ? 'c-pos' : 'c-neg' },
+    { l: 'Net P&L', v: fmtPnlAgg(c.netPnl, c.netPnlBB), c: c.netPnl >= 0 ? 'c-pos' : 'c-neg' },
     { l: 'VPIP', v: c.vpipPct !== null ? c.vpipPct + '%' : '-', c: c.vpipPct > 55 ? 'c-warn' : '' },
     { l: 'Aggression', v: c.agg !== null ? c.agg + '%' : '-', c: c.agg > 25 ? 'c-pos' : 'c-warn' },
     { l: 'vs All-in', v: c.allinFold !== null ? c.allinFold + '% fold' : '-', c: '' },
@@ -700,6 +701,53 @@ document.getElementById('upload-analyse-btn').onclick = function () {
     hands: _uploadedHands,
   };
   process(JSON.stringify(merged));
+};
+
+// Export the current app data back out as a .json file. This is the mirror of
+// the Upload flow: it reads the FULL stored dataset from IndexedDB (loadSaved
+// returns every stored hand, including any the dashboard filters out) and wraps
+// it in the same schemaVersion 2 envelope the uploader accepts, so the file
+// round-trips straight back into this app or into another device.
+function downloadJSON(filename, text) {
+  try {
+    var blob = new Blob([text], { type: 'application/json' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () {
+      try { document.body.removeChild(a); URL.revokeObjectURL(url); } catch (e) {}
+    }, 0);
+    return true;
+  } catch (e) {
+    console.warn('Export failed', e);
+    return false;
+  }
+}
+
+function exportAppData() {
+  var btn = document.getElementById('export-btn');
+  if (btn) btn.disabled = true;
+  State.loadSaved(function (data) {
+    if (btn) btn.disabled = false;
+    var hands = (data && data.hands) || State.allHands || [];
+    if (!hands.length) return;
+    var envelope = {
+      schemaVersion: 2,
+      player: (data && data.player) || (State.meta && State.meta.player) || 'Unknown',
+      exportedAt: new Date().toISOString(),
+      totalHands: hands.length,
+      hands: hands
+    };
+    var stamp = new Date().toISOString().replace(/[:.]/g, '-');
+    downloadJSON('tcp-app-export-' + stamp + '.json', JSON.stringify(envelope));
+  });
+}
+
+document.getElementById('export-btn').onclick = function () {
+  exportAppData();
 };
 
 initStorage(function () {

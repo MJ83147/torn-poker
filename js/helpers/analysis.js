@@ -34,15 +34,20 @@ function getActsSummary(h) {
 function getHandPnl(h) {
   if (!h.outcome) return { cls: "c-muted", text: "?" };
   var invested = getInvested(h);
+  var bb = getHandBB(h);
+  // Honours the $/BB toggle: amounts show in this hand's big blinds when on.
+  function money(v) {
+    return (_displayBB && bb > 0) ? fmtBBRaw(v / bb) : fmt(v);
+  }
   if (h.outcome.result === "won") {
     var profit = (h.outcome.amount || 0) - invested;
-    if (profit >= 0) return { cls: "c-pos", text: "+" + fmt(profit) };
-    return { cls: "c-neg", text: "-" + fmt(Math.abs(profit)) };
+    if (profit >= 0) return { cls: "c-pos", text: "+" + money(profit) };
+    return { cls: "c-neg", text: "-" + money(Math.abs(profit)) };
   }
   if (h.outcome.result === "folded") {
-    return { cls: "c-neg", text: invested > 0 ? "-" + fmt(invested) : "folded" };
+    return { cls: "c-neg", text: invested > 0 ? "-" + money(invested) : "folded" };
   }
-  return { cls: "c-neg", text: "-" + fmt(invested) };
+  return { cls: "c-neg", text: "-" + money(invested) };
 }
 
 function getHandPnlValue(h) {

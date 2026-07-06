@@ -12,6 +12,8 @@ function showdownModel(hands) {
 
   // Chart.js bogs down past ~1000 points, so stride to ~500.
   var cumSd = 0, cumNsd = 0;
+  var cumSdBB = 0, cumNsdBB = 0, bbKnown = false;
+  var winPotBB = 0, winPotBBCount = 0, lossPotBB = 0, lossPotBBCount = 0;
   var sdWon = 0, sdTotal = 0, nsdWon = 0, nsdTotal = 0;
   var dataSd = [], dataNsd = [], dataTotal = [], labels = [];
   var CHART_TARGET_POINTS = 500;
@@ -24,14 +26,23 @@ function showdownModel(hands) {
     var delta = getHandPnlValue(h);
     var won = h.outcome.result === 'won';
     var pot = h.pot || 0;
+    // BB-normalized parallels so the $/BB toggle works across stakes.
+    var hBB = getHandBB(h);
+    if (hBB > 0) {
+      bbKnown = true;
+      if (won) { winPotBB += pot / hBB; winPotBBCount++; }
+      else { lossPotBB += pot / hBB; lossPotBBCount++; }
+    }
 
     if (isShowdown(h)) {
       cumSd += delta;
+      if (hBB > 0) cumSdBB += delta / hBB;
       sdTotal++;
       if (won) { sdWon++; potSdWin.push(pot); }
       else { potSdLoss.push(pot); }
     } else {
       cumNsd += delta;
+      if (hBB > 0) cumNsdBB += delta / hBB;
       nsdTotal++;
       if (won) { nsdWon++; potNsdWin.push(pot); }
       else { potNsdLoss.push(pot); }
@@ -59,10 +70,10 @@ function showdownModel(hands) {
 
   return {
     cashCount: cash.length,
-    sd: { pnl: cumSd, total: sdTotal, winRate: pct(sdWon, sdTotal), hands: sdHands.slice(0, 15) },
-    nsd: { pnl: cumNsd, total: nsdTotal, winRate: pct(nsdWon, nsdTotal), hands: nsdHands.slice(0, 15) },
-    won: { avgPot: avgWinPot, count: potSdWin.length + potNsdWin.length, hands: wonHands.slice(0, 15) },
-    lost: { avgPot: avgLossPot, count: potSdLoss.length + potNsdLoss.length, hands: lostHands.slice(0, 15) },
+    sd: { pnl: cumSd, pnlBB: bbKnown ? cumSdBB : null, total: sdTotal, winRate: pct(sdWon, sdTotal), hands: sdHands.slice(0, 15) },
+    nsd: { pnl: cumNsd, pnlBB: bbKnown ? cumNsdBB : null, total: nsdTotal, winRate: pct(nsdWon, nsdTotal), hands: nsdHands.slice(0, 15) },
+    won: { avgPot: avgWinPot, avgPotBB: winPotBBCount > 0 ? winPotBB / winPotBBCount : null, count: potSdWin.length + potNsdWin.length, hands: wonHands.slice(0, 15) },
+    lost: { avgPot: avgLossPot, avgPotBB: lossPotBBCount > 0 ? lossPotBB / lossPotBBCount : null, count: potSdLoss.length + potNsdLoss.length, hands: lostHands.slice(0, 15) },
     winLossRatio: avgLossPot > 0 ? (avgWinPot / avgLossPot).toFixed(2) : null,
     potAvgs: {
       sdWin: Math.round(avg(potSdWin)), sdLoss: Math.round(avg(potSdLoss)),

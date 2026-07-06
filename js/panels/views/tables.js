@@ -34,7 +34,8 @@ function renderTables(container, hands, allHands, excludedTables, onRerender) {
 
 function _tablesRow(r, isExcluded, maxHands) {
   var barW = Math.round(r.n / maxHands * 100);
-  var avgPotDisp = r.tid !== 'unknown' && TABLE_META[r.tid] ? fmtBB(r.avgPot, TABLE_META[r.tid].bb) : fmt(r.avgPot);
+  var tableBB = r.tid !== 'unknown' && TABLE_META[r.tid] ? TABLE_META[r.tid].bb : null;
+  var avgPotDisp = tableBB ? fmtBB(r.avgPot, tableBB) : fmt(r.avgPot);
   return `
     <tr class="link${isExcluded ? ' excluded' : ''}" data-table-cell="${r.tid}">
       <td>${r.label} <span class="c-dim cards-row-cue">&#8250;</span></td>
@@ -42,7 +43,7 @@ function _tablesRow(r, isExcluded, maxHands) {
       <td>${r.n}</td>
       <td style="width:80px;"><span class="spark" style="width:${barW}%;background:var(--gold2);"></span></td>
       <td class="${wrCls(r.wr)}">${r.wr !== null ? r.wr + '%' : '-'}</td>
-      <td class="${pnlCls(r.net)}">${fmtPnl(r.net)}</td>
+      <td class="${pnlCls(r.net)}">${fmtPnlBB(r.net, tableBB)}</td>
       <td>${r.vpipP !== null ? r.vpipP + '%' : '-'}</td>
       <td>${r.aggP !== null ? r.aggP + '%' : '-'}</td>
       <td class="c-dim">${r.avgPot > 0 ? avgPotDisp : '-'}</td>
@@ -79,8 +80,9 @@ function _wireTablesRows(container, groups) {
       var net = 0;
       for (var gi = 0; gi < group.length; gi++) net += getHandPnlValue(group[gi]) || 0;
       var label = tid === 'unknown' ? 'Unknown' : getTableLabel(tid);
+      var noteBB = tid !== 'unknown' && TABLE_META[tid] ? TABLE_META[tid].bb : null;
       showExampleHandListModal('Hands at ' + label, recent,
-        'Recent hands at ' + label + '. Net P&L here is ' + fmtPnl(net) + ' across ' + group.length +
+        'Recent hands at ' + label + '. Net P&L here is ' + fmtPnlBB(net, noteBB) + ' across ' + group.length +
         ' hands. Look for the pattern that sets this table apart from the others.');
     };
   });

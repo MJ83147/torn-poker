@@ -295,35 +295,14 @@ a {
   gap: var(--sp-8);
 }
 
-/* --- Content lines: ONE definition for "a row of content", reused inside any
-   component (modal, card, panel). Fixes "rows defined differently everywhere".
-   .head  = a heading line (title left, meta right)
-   .lines = a stack of .line rows
-   .line  = one content row: baked-in vertical rhythm + hairline divider. Its
-            children space themselves (label left / value right, or just text). */
+/* --- Heading line, reused inside any component (modal, card, panel).
+   .head = a heading line (title left, meta right). Content stacks use .list
+   (or .inner-section for interior blocks) — there is no content-line class. */
 .head {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
   gap: var(--sp-16);
-}
-
-.lines {
-  display: flex;
-  flex-direction: column;
-}
-
-.line {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: var(--sp-16);
-  padding: var(--sp-8) 0;
-  border-bottom: var(--bw) solid color-mix(in srgb, var(--border) 55%, transparent);
-}
-
-.line:last-child {
-  border-bottom: none;
 }
 
 .ins-grid,
@@ -357,10 +336,6 @@ a {
 
 .end {
   justify-content: flex-end;
-}
-
-.wrap {
-  flex-wrap: wrap;
 }
 
 .grow {
@@ -440,7 +415,7 @@ a {
   color: var(--dim);
 }
 
-.text-micro {
+.text-meta {
   font-size: var(--fs-xs);
   color: var(--muted);
 }
@@ -1158,22 +1133,13 @@ a {
   gap: var(--sp-8);
 }
 
-/* .mini-row = a stat-grid rendered by renderMiniRow (Action Totals / Showdown /
-   Summary / player Tendencies). Give the cells a shared divider so adjacent
-   mini stats read as distinct entries, matching the app's border language. */
-.mini-row {
-  border-top: var(--bw) solid var(--border);
-  border-bottom: var(--bw) solid var(--border);
-}
-
-.mini-row .stat {
+/* Every stat-grid cell is a distinct tile at rest (bg + border), so adjacent
+   stats read as separate entries without needing hover. */
+.stat-grid>.stat {
+  background: var(--s2);
+  border: var(--bw) solid var(--border);
+  border-radius: var(--r-sm);
   padding: var(--sp-12) var(--sp-16);
-  border-left: var(--bw) solid var(--border);
-}
-
-.mini-row .stat:first-child {
-  border-left: none;
-  padding-left: 0;
 }
 
 /* --- Legend: swatch + label --- */
@@ -1747,6 +1713,8 @@ body.maintenance #maintenance {
   gap: var(--bw);
   background: var(--border);
   border-bottom: var(--bw) solid var(--border);
+  /* Break out of the .dash-header side padding so the strip spans edge to edge. */
+  margin: 0 calc(-1 * var(--sp-32));
 }
 
 .hs {
@@ -2413,17 +2381,50 @@ textarea#jin {
   font-size: var(--fs-xs);
 }
 
-/* Stat cards that open the hands behind them. Like .cards-bar-row but without
-   the negative margin, so they sit cleanly inside a stat grid. */
+/* Stat cards that open the hands behind them. Sizing comes from the shared
+   stat-grid tile rule; this only adds the interaction affordance. */
 .stat-clickable {
   cursor: pointer;
-  padding: var(--sp-8);
-  border-radius: var(--r-sm);
   transition: background .15s;
 }
 
 .stat-clickable:hover {
   background: var(--s1);
+}
+
+/* Hand-modal stacks block: the component owns its rows — plain divs, each a
+   grid of name | start | arrow | end | net so every row's numbers line up. */
+.stacks-grid {
+  display: flex;
+  flex-direction: column;
+}
+
+.stacks-grid>div {
+  display: grid;
+  /* Fixed tracks (not max-content) so the columns line up across rows —
+     each row is its own grid and would otherwise size independently. */
+  grid-template-columns: minmax(0, 1fr) 11ch 2ch 11ch 11ch;
+  gap: var(--sp-12);
+  align-items: baseline;
+  padding: var(--sp-8) 0;
+  border-bottom: var(--bw) solid color-mix(in srgb, var(--border) 55%, transparent);
+}
+
+.stacks-grid>div:last-child {
+  border-bottom: none;
+}
+
+.stacks-grid>div> :nth-child(4) {
+  text-align: left;
+}
+
+.stacks-grid .stack-start,
+.stacks-grid .stack-net {
+  text-align: right;
+}
+
+.stacks-grid .stack-arrow {
+  text-align: center;
 }
 
 /* --- Equity simulator: the labelled equity-bar row (street | pct | track).
@@ -2596,6 +2597,7 @@ textarea#jin {
     padding: var(--sp-12);
   }
 }
+
 /* ===== Home & hub pages (nav redesign) =====
    The welcome tab is a compact home: hero band, three area hub cards, then a
    What's-new carousel beside a rotating tip. Each area also has a hub page of
@@ -2725,7 +2727,7 @@ textarea#jin {
   margin: var(--sp-48) 0 var(--sp-16);
 }
 
-.hub-head + .subgroup-head {
+.hub-head+.subgroup-head {
   margin-top: 0;
 }
 
@@ -2813,7 +2815,7 @@ textarea#jin {
   background: var(--gold);
 }
 
-.card > .badge {
+.card>.badge {
   align-self: flex-start;
 }
 

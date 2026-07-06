@@ -5,10 +5,10 @@ function runEquitySimulation(hand) {
   var results = [];
 
   var streetDefs = [
-    { name: 'Preflop', boardSlice: 0, iters: 10000 },
-    { name: 'Flop', boardSlice: 3, iters: 10000 },
-    { name: 'Turn', boardSlice: 4, iters: 5000 },
-    { name: 'River', boardSlice: 5, iters: 0 } // exact
+    { name: "Preflop", boardSlice: 0, iters: 10000 },
+    { name: "Flop", boardSlice: 3, iters: 10000 },
+    { name: "Turn", boardSlice: 4, iters: 5000 },
+    { name: "River", boardSlice: 5, iters: 0 }, // exact
   ];
 
   for (var i = 0; i < streetDefs.length; i++) {
@@ -24,7 +24,7 @@ function runEquitySimulation(hand) {
     }
 
     var streetInfo = heroInfo.streets[sd.name];
-    if (!streetInfo && sd.name !== 'Preflop') continue;
+    if (!streetInfo && sd.name !== "Preflop") continue;
 
     var sim = simulateStreet(heroHole, streetBoard, sd.iters);
 
@@ -36,37 +36,37 @@ function runEquitySimulation(hand) {
       return {
         street: pr.street,
         equity: pr.equity,
-        heroActionType: pr.heroActionType || '',
-        villainActionType: pr.villainActionType || '',
+        heroActionType: pr.heroActionType || "",
+        villainActionType: pr.villainActionType || "",
         madeHand: pr.madeHand,
-        texture: pr.texture
+        texture: pr.texture,
       };
     });
 
-    var guidance = streetInfo ? generateGuidance(sim.equity, streetInfo, texture, madeHand, villainProfile, priorStreets) : { text: '', quality: 'neutral' };
+    var guidance = streetInfo ? generateGuidance(sim.equity, streetInfo, texture, madeHand, villainProfile, priorStreets) : { text: "", quality: "neutral" };
 
-    var actionDesc = '';
-    var heroActionType = '';
-    var villainActionType = '';
+    var actionDesc = "";
+    var heroActionType = "";
+    var villainActionType = "";
     if (streetInfo && streetInfo.action) {
       var a = streetInfo.action;
       heroActionType = a.type;
-      if (a.type === 'fold') actionDesc = 'You folded.';
-      else if (a.type === 'check') actionDesc = 'You checked.';
-      else if (a.type === 'call') actionDesc = 'You called ' + fmt(a.amount) + '.';
-      else if (a.type === 'raise') actionDesc = 'You raised to ' + fmt(a.amount) + '.';
-      else if (a.type === 'bet') actionDesc = 'You bet ' + fmt(a.amount) + '.';
-      else if (a.type === 'sb') actionDesc = 'Small blind.';
-      else if (a.type === 'bb') actionDesc = 'Big blind.';
+      if (a.type === "fold") actionDesc = "You folded.";
+      else if (a.type === "check") actionDesc = "You checked.";
+      else if (a.type === "call") actionDesc = "You called " + fmt(a.amount) + ".";
+      else if (a.type === "raise") actionDesc = "You raised to " + fmt(a.amount) + ".";
+      else if (a.type === "bet") actionDesc = "You bet " + fmt(a.amount) + ".";
+      else if (a.type === "sb") actionDesc = "Small blind.";
+      else if (a.type === "bb") actionDesc = "Big blind.";
     }
     if (streetInfo && streetInfo.villainAction) {
-      villainActionType = streetInfo.villainAction.type || '';
+      villainActionType = streetInfo.villainAction.type || "";
     }
 
-    var potOddsStr = '';
+    var potOddsStr = "";
 
-    var potSize = streetInfo ? (streetInfo.potBefore || 0) : 0;
-    if (streetInfo && streetInfo.action && streetInfo.action.amount && streetInfo.action.type !== 'fold') {
+    var potSize = streetInfo ? streetInfo.potBefore || 0 : 0;
+    if (streetInfo && streetInfo.action && streetInfo.action.amount && streetInfo.action.type !== "fold") {
       potSize += streetInfo.action.amount;
     }
 
@@ -87,7 +87,7 @@ function runEquitySimulation(hand) {
       villainProfile: villainProfile,
       potSize: potSize,
       boardCards: boardDisplay,
-      playersActive: streetInfo ? (streetInfo.playersActive || 0) : 0
+      playersActive: streetInfo ? streetInfo.playersActive || 0 : 0,
     });
   }
 
@@ -108,17 +108,17 @@ function renderEquityResults(container, simResult) {
     if (!results[i].exact && results[i].iterations > maxIters) maxIters = results[i].iterations;
   }
 
-  var headerNote = '';
+  var headerNote = "";
   if (maxIters > 0 && hasExact) {
-    headerNote = maxIters.toLocaleString() + ' iterations \u00b7 river is exact';
+    headerNote = maxIters.toLocaleString() + " iterations \u00b7 river is exact";
   } else if (maxIters > 0) {
-    headerNote = maxIters.toLocaleString() + ' iterations';
+    headerNote = maxIters.toLocaleString() + " iterations";
   } else if (hasExact) {
-    headerNote = 'Exact enumeration';
+    headerNote = "Exact enumeration";
   }
 
   var html = '<div class="section">';
-  html += '<div class="head"><span class="section-head">Equity Simulation</span><span class="text-meta">' + headerNote + '</span></div>';
+  html += '<div class="head"><span class="section-head">Equity Simulation</span><span class="text-meta">' + headerNote + "</span></div>";
 
   var curvePoints = [];
 
@@ -126,91 +126,105 @@ function renderEquityResults(container, simResult) {
     var res = results[r];
     var eqPct = fmtPct(res.equity * 100);
     var barWidth = Math.round(res.equity * 100);
-    var qualClass = res.guidance.quality === 'good' ? 'c-pos' : res.guidance.quality === 'bad' ? 'c-neg' : 'c-gold';
+    var qualClass = res.guidance.quality === "good" ? "c-pos" : res.guidance.quality === "bad" ? "c-neg" : "c-gold";
 
     curvePoints.push({ street: res.street, equity: res.equity });
 
     html += '<div class="list">';
     html += '<div class="row center">';
-    html += '<div class="c-gold fw-semibold eq-street">' + res.street + '</div>';
+    html += '<div class="c-gold fw-semibold eq-street">' + res.street + "</div>";
     if (res.texture) {
-      html += '<span class="tag">' + res.texture.label + '</span>';
+      html += '<span class="tag">' + res.texture.label + "</span>";
     }
-    html += '<div class="eq-pct fw-semibold">' + eqPct + '</div>';
+    html += '<div class="eq-pct fw-semibold">' + eqPct + "</div>";
     html += '<div class="eq-bar-track"><div class="eq-bar-fill" style="width:' + barWidth + '%"></div></div>';
-    html += '</div>';
+    html += "</div>";
 
     var metaParts = [];
     if (res.boardCards && res.boardCards.length > 0) {
       metaParts.push(displayCards(res.boardCards.map(normCard)));
     }
     if (res.potSize > 0) {
-      metaParts.push('Pot: ' + fmt(res.potSize));
+      metaParts.push("Pot: " + fmt(res.potSize));
     }
     if (res.playersActive > 0) {
-      metaParts.push(res.playersActive + '-way');
+      metaParts.push(res.playersActive + "-way");
     }
     if (metaParts.length > 0) {
-      html += '<div class="text-meta">' + metaParts.join(' · ') + '</div>';
+      html += '<div class="text-meta">' + metaParts.join(" · ") + "</div>";
     }
 
     var hasBottom = res.madeHand || res.guidance.text;
     if (hasBottom) {
       if (res.madeHand) {
-        html += '<div class="row wrap center">';
-        html += '<span class="tag">' + res.madeHand.label + '</span>';
+        html += '<div class="row center">';
+        html += '<span class="tag">' + res.madeHand.label + "</span>";
         if (res.madeHand.draws.length) {
           for (var dri = 0; dri < res.madeHand.draws.length; dri++) {
-            html += '<span class="tag tag-gold">' + res.madeHand.draws[dri] + '</span>';
+            html += '<span class="tag tag-gold">' + res.madeHand.draws[dri] + "</span>";
           }
         }
-        html += '</div>';
+        html += "</div>";
       }
-      html += '<div class="text-micro ' + qualClass + '">' + res.actionDesc + ' ' + res.guidance.text + '</div>';
+      html += '<div class="text-meta ' + qualClass + '">' + res.actionDesc + " " + res.guidance.text + "</div>";
     }
-    html += '</div>';
+    html += "</div>";
   }
 
   if (curvePoints.length >= 2) {
-    var svgW = 240, svgH = 60, pad = 20;
-    var plotW = svgW - pad * 2, plotH = svgH - pad;
-    html += '<svg width="' + svgW + '" height="' + svgH + '" viewBox="0 0 ' + svgW + ' ' + svgH + '">';
+    // Stretches to the card width; the viewBox keeps the drawing proportional.
+    var svgW = 560,
+      svgH = 150,
+      pad = 32;
+    var plotW = svgW - pad * 2,
+      plotH = svgH - pad * 2;
+    html += '<svg viewBox="0 0 ' + svgW + " " + svgH + '" style="width:100%;height:auto;display:block;">';
     var pts = [];
     for (var c = 0; c < curvePoints.length; c++) {
       var x = pad + (plotW / (curvePoints.length - 1)) * c;
-      var y = svgH - pad - (curvePoints[c].equity * plotH);
-      pts.push(x + ',' + y);
-      html += '<text x="' + x + '" y="' + (svgH - 2) + '" text-anchor="middle" fill="var(--dim)" font-size="10" font-family="IBM Plex Mono, monospace">' + curvePoints[c].street.slice(0, 1) + '</text>';
-      html += '<circle cx="' + x + '" cy="' + y + '" r="3" fill="var(--gold)"/>';
-      html += '<text x="' + x + '" y="' + (y - 7) + '" text-anchor="middle" fill="var(--dim)" font-size="10" font-family="IBM Plex Mono, monospace">' + (curvePoints[c].equity * 100).toFixed(0) + '%</text>';
+      var y = svgH - pad - curvePoints[c].equity * plotH;
+      pts.push(x + "," + y);
+      html +=
+        '<text x="' + x + '" y="' + (svgH - 6) + '" text-anchor="middle" fill="var(--dim)" font-size="11" font-family="IBM Plex Mono, monospace">' + curvePoints[c].street.slice(0, 1) + "</text>";
+      html += '<circle cx="' + x + '" cy="' + y + '" r="4" fill="var(--gold)"/>';
+      html +=
+        '<text x="' +
+        x +
+        '" y="' +
+        (y - 10) +
+        '" text-anchor="middle" fill="var(--dim)" font-size="11" font-family="IBM Plex Mono, monospace">' +
+        (curvePoints[c].equity * 100).toFixed(0) +
+        "%</text>";
     }
-    html += '<polyline points="' + pts.join(' ') + '" fill="none" stroke="var(--gold)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>';
-    html += '</svg>';
+    html += '<polyline points="' + pts.join(" ") + '" fill="none" stroke="var(--gold)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>';
+    html += "</svg>";
   }
 
   if (summary && summary.text) {
-    var sumClass = summary.quality === 'good' ? 'c-pos' : summary.quality === 'bad' ? 'c-neg' : 'c-gold';
-    html += '<div class="box">';
-    html += '<div class="card-title c-gold">Hand Summary</div>';
-    html += '<div class="text-body ' + sumClass + '">' + summary.text + '</div>';
-    html += '</div>';
+    var sumClass = summary.quality === "good" ? "c-pos" : summary.quality === "bad" ? "c-neg" : "c-gold";
+    html += '<div class="inner-section">';
+    html += '<div class="section-head c-gold">Hand Summary</div>';
+    html += '<div class="text-body ' + sumClass + '">' + summary.text + "</div>";
+    html += "</div>";
   }
 
-  var hasFlopOrTurn = results.some(function (r) { return r.street === 'Flop' || r.street === 'Turn'; });
-  var caveats = '<div class="text-micro">';
-  caveats += 'Equity calculated against a single random hand. In multiway pots, true equity may be lower.';
+  var hasFlopOrTurn = results.some(function (r) {
+    return r.street === "Flop" || r.street === "Turn";
+  });
+  var caveats = '<div class="text-meta">';
+  caveats += "Equity calculated against a single random hand. In multiway pots, true equity may be lower.";
   if (hasFlopOrTurn) {
-    caveats += ' Pot odds comparisons use raw equity; implied odds (potential to win more on later streets) are not factored in and may justify calls that appear unprofitable.';
+    caveats += " Pot odds comparisons use raw equity; implied odds (potential to win more on later streets) are not factored in and may justify calls that appear unprofitable.";
   }
-  caveats += '</div>';
+  caveats += "</div>";
   html += caveats;
 
-  html += '</div>';
+  html += "</div>";
   container.innerHTML = html;
 }
 
 function injectEquityButton(box, hand) {
-  var slot = box.querySelector('#equity-slot');
+  var slot = box.querySelector("#equity-slot");
   if (!slot) return;
 
   if (!hand.hole || hand.hole.length !== 2) return;
@@ -219,7 +233,7 @@ function injectEquityButton(box, hand) {
   var parsed = parseActions(hand.actions);
   var heroFoldedPreflop = false;
   for (var i = 0; i < parsed.length; i++) {
-    if (parsed[i].isMe && parsed[i].type === 'fold' && parsed[i].street === 'Preflop') {
+    if (parsed[i].isMe && parsed[i].type === "fold" && parsed[i].street === "Preflop") {
       heroFoldedPreflop = true;
       break;
     }
@@ -229,7 +243,7 @@ function injectEquityButton(box, hand) {
   var heroAllInPreflop = false;
   if (!hasBoard) {
     for (var j = 0; j < parsed.length; j++) {
-      if (parsed[j].isMe && parsed[j].street === 'Preflop' && parsed[j].type === 'raise') {
+      if (parsed[j].isMe && parsed[j].street === "Preflop" && parsed[j].type === "raise") {
         heroAllInPreflop = true;
       }
     }
@@ -238,10 +252,10 @@ function injectEquityButton(box, hand) {
   if (heroFoldedPreflop && !hasBoard) return;
   if (!hasBoard && !heroAllInPreflop) return;
 
-  var btn = document.createElement('button');
-  btn.className = 'btn btn-secondary';
-  btn.id = 'mc-sim-btn';
-  btn.textContent = 'Run Equity Simulation';
+  var btn = document.createElement("button");
+  btn.className = "btn btn-secondary";
+  btn.id = "mc-sim-btn";
+  btn.textContent = "Run Equity Simulation";
   slot.appendChild(btn);
 
   btn.onclick = function () {

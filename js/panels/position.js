@@ -23,6 +23,7 @@ function positionModel(d) {
       bandLo: bandLo,
       bandHi: bandHi,
       pnl: s.pnl,
+      pnlBB: s.pnlBB != null ? s.pnlBB : null,
       avgPotDisplay: _displayBB && s.potBBCount > 0
         ? fmtBBRaw(s.potBB / s.potBBCount)
         : fmt(Math.round(s.pot / s.hands)),

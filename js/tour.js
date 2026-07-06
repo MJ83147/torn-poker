@@ -93,7 +93,7 @@
     ],
     actions: [
       { el: '.panel-header', intro: '<strong>Betting</strong><br>Action frequencies, bet sizing, and situational stats across all streets.', pos: 'bottom' },
-      { el: '.mini-row', intro: '<strong>Action Totals</strong><br>Total action count broken into folds, checks, calls, and raises.', pos: 'bottom' },
+      { el: '.stat-grid', intro: '<strong>Action Totals</strong><br>Total action count broken into folds, checks, calls, and raises.', pos: 'bottom' },
       { el: '.bar-stack', intro: '<strong>Action Split Bar</strong><br>Visual breakdown of your frequencies. Red = fold, green = raise, amber = call, grey = check. A healthy profile has more green than red.', pos: 'top' },
       { el: '[data-tour="sit-stats"]', intro: '<strong>Situational Stats</strong><br>Key spots like C-Bet rate, donk bet frequency, fold to 3-bet, and more. These pinpoint specific leaks in your game. Rows with hands behind them click through.', pos: 'top' },
       { el: '[data-tour="avg-bets"]', intro: '<strong>Bet Sizing</strong><br>Average bet size and bet frequency on each street. Use BB mode in the header to compare across stakes.', pos: 'top' },
@@ -146,7 +146,7 @@
         fallback: '<strong>Run Equity Simulation</strong><br>Once all-in hands are detected, a button appears to run equity calculations. After simulation, you\'ll see EV diff, fair share, and a cumulative graph.' },
       { el: '.overflow-x', intro: '<strong>All-In Hands Table</strong><br>Every detected all-in showdown with your hole cards, opponent cards, board, street, pot size, and result. <strong>Click any row</strong> to replay the full hand.', pos: 'top',
         fallback: '<strong>All-In Hands Table</strong><br>A table listing every all-in showdown appears here when all-in hands are found in your data.' },
-      { el: '.mini-row', intro: '<strong>Summary Stats</strong><br>Total all-in hands, cumulative EV difference (how much above or below expectation you\'re running), equity win rate (how often you were the favourite), and actual win rate.', pos: 'top',
+      { el: '.stat-grid', intro: '<strong>Summary Stats</strong><br>Total all-in hands, cumulative EV difference (how much above or below expectation you\'re running), equity win rate (how often you were the favourite), and actual win rate.', pos: 'top',
         fallback: '<strong>Summary Stats</strong><br>After running the simulation, summary stats appear showing your EV diff, equity win rate, and actual win rate across all all-in hands.' },
       { el: '#allin-ev-chart', intro: '<strong>EV Graph</strong><br>Gold line = your actual cumulative results. Dashed line = expected value based on equity. If gold is above the dashed line, you\'re running hot. Below means you\'re running cold.', pos: 'top',
         fallback: '<strong>EV Graph</strong><br>After simulation, a cumulative graph shows your actual results vs expected value over time. The gap between the lines is your variance.' },

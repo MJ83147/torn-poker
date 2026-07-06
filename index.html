@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=IBM+Plex+Mono:wght@300;400;500&display=swap" onload="this.rel='stylesheet'">
   <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=IBM+Plex+Mono:wght@300;400;500&display=swap"></noscript>
-  <link rel="stylesheet" href="style.css?v=1783343444">
+  <link rel="stylesheet" href="style.css?v=1783357301">
 </head>
 
 <body class="maintenance">
@@ -130,6 +130,7 @@
             </select>
             <div id="style-display" class="card card-s2 style-display" title="Your detected style and your target style"></div>
             <div class="text-meta page-meta-link" id="page-meta"></div>
+            <button class="btn btn-icon" id="export-btn" title="Export all your hand data as a .json file you can back up or move to another device">&#8615;</button>
             <button class="btn btn-icon" id="tour-btn" title="Guided tour of this page">?</button>
           </div>
         </div>
@@ -232,17 +233,17 @@
 
         <div class="inner-section">
         <div class="eyebrow">What it analyses</div>
-        <div class="lines">
-          <div class="line"><span class="c-gold fw-semibold">Hand types</span><span class="text-body">Win rates for pairs, broadway, suited connectors, ace-rag, and more</span></div>
-          <div class="line"><span class="c-gold fw-semibold">Position</span><span class="text-body">VPIP, fold rate, win rate, and P&L from every seat at the table</span></div>
-          <div class="line"><span class="c-gold fw-semibold">Street action</span><span class="text-body">How you play on each street: fold rates, aggression, bet sizing</span></div>
-          <div class="line"><span class="c-gold fw-semibold">Bet sizing</span><span class="text-body">Average bets by street with BB normalization across different stakes</span></div>
-          <div class="line"><span class="c-gold fw-semibold">Range grid</span><span class="text-body">Full 13x13 hand matrix showing win rate and frequency for every combo</span></div>
-          <div class="line"><span class="c-gold fw-semibold">Opponents</span><span class="text-body">Track every player you face, your record against them, and a watch list</span></div>
-          <div class="line"><span class="c-gold fw-semibold">Tables</span><span class="text-body">Compare your stats across different stakes and table types</span></div>
-          <div class="line"><span class="c-gold fw-semibold">Trends</span><span class="text-body">Session-over-session charts for win rate, VPIP, aggression, and P&L</span></div>
-          <div class="line"><span class="c-gold fw-semibold">Hand replays</span><span class="text-body">Click any hand to see the full action sequence with coaching notes</span></div>
-          <div class="line"><span class="c-gold fw-semibold">Automated insights</span><span class="text-body">The tool flags leaks, strengths, and patterns you might not spot yourself</span></div>
+        <div class="list">
+          <div><span class="c-gold fw-semibold">Hand types</span> <span class="text-body">Win rates for pairs, broadway, suited connectors, ace-rag, and more</span></div>
+          <div><span class="c-gold fw-semibold">Position</span> <span class="text-body">VPIP, fold rate, win rate, and P&L from every seat at the table</span></div>
+          <div><span class="c-gold fw-semibold">Street action</span> <span class="text-body">How you play on each street: fold rates, aggression, bet sizing</span></div>
+          <div><span class="c-gold fw-semibold">Bet sizing</span> <span class="text-body">Average bets by street with BB normalization across different stakes</span></div>
+          <div><span class="c-gold fw-semibold">Range grid</span> <span class="text-body">Full 13x13 hand matrix showing win rate and frequency for every combo</span></div>
+          <div><span class="c-gold fw-semibold">Opponents</span> <span class="text-body">Track every player you face, your record against them, and a watch list</span></div>
+          <div><span class="c-gold fw-semibold">Tables</span> <span class="text-body">Compare your stats across different stakes and table types</span></div>
+          <div><span class="c-gold fw-semibold">Trends</span> <span class="text-body">Session-over-session charts for win rate, VPIP, aggression, and P&L</span></div>
+          <div><span class="c-gold fw-semibold">Hand replays</span> <span class="text-body">Click any hand to see the full action sequence with coaching notes</span></div>
+          <div><span class="c-gold fw-semibold">Automated insights</span> <span class="text-body">The tool flags leaks, strengths, and patterns you might not spot yourself</span></div>
         </div>
         </div>
 
@@ -256,7 +257,7 @@
   </div>
 
   <!-- App (bundled + minified). Chart.js and intro.js are loaded on demand from app.min.js. -->
-  <script defer src="app.min.js?v=1783343444"></script>
+  <script defer src="app.min.js?v=1783357301"></script>
 </body>
 
 </html>

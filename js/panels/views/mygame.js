@@ -4,7 +4,7 @@
 function renderMyGame(container, d, hands) {
   var profile = mygameProfile(d, hands);
 
-  var profileHtml = `<div class="profile-row row wrap">
+  var profileHtml = `<div class="profile-row row">
     <div class="stat">
       <div class="eyebrow">MY GAME</div>
       <div>

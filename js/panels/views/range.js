@@ -165,7 +165,7 @@ function renderRange(container, d, hands) {
     }
     body.innerHTML =
       section('',
-        `<div class="row wrap center">
+        `<div class="row center">
           <div class="row center"><label class="eyebrow">Position</label>${positionSelector('range-hero', HERO_SEATS, state.hero)}</div>
           <div class="row center"><label class="eyebrow">Scenario</label><select class="select" id="range-scenario">${scenarioOptions}</select></div>
         </div>` +

@@ -77,14 +77,20 @@ function _aggregatePosition(state, h) {
     var invested = getInvested(h);
     if (cash) state.totalInvested += invested;
     var amount = h.outcome.amount || 0;
+    var pnlDelta = h.outcome.result === 'won' ? amount - invested : -invested;
     if (h.outcome.result === 'won') {
       state.handsWon++;
-      var profit = amount - invested;
       if (cash) state.totalWonAmount += amount;
       state.posMap[p].won++;
-      if (cash) state.posMap[p].pnl += profit;
-    } else {
-      if (cash) state.posMap[p].pnl -= invested;
+    }
+    if (cash) {
+      state.posMap[p].pnl += pnlDelta;
+      // BB-normalized P&L so aggregates spanning stakes can display in BB.
+      if (handBB && handBB > 0) {
+        state.pnlBB = (state.pnlBB || 0) + pnlDelta / handBB;
+        state.pnlBBKnown = true;
+        state.posMap[p].pnlBB = (state.posMap[p].pnlBB || 0) + pnlDelta / handBB;
+      }
     }
   }
 }
@@ -361,6 +367,7 @@ function _computeCoreMetrics(state) {
     limpPct:   pct(state.limpHands, state.n),
     allinFold: pct(state.foldAllin, state.facedAllin),
     netPnl:    state.totalWonAmount - state.totalInvested,
+    netPnlBB:  state.pnlBBKnown ? state.pnlBB : null,
     ftrPct:    pct(state.foldedToRaise, state.facedRaise),
     cbetPct:   pct(state.cbetDone, state.cbetOpps),
     wtsdPct:   pct(state.wentToShowdown, state.sawFlop),
