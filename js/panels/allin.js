@@ -1,9 +1,17 @@
-var _allinChart = null;
-var _allinHands = null;
+// All-In EV panel logic. No DOM, no markup — the view is
+// js/panels/views/allin.js.
+
 // Cache candidate detection by hands array: re-walking 20k+ hands on every
 // panel revisit is the freeze.
 var _allinCandidatesFor = null;
 var _allinCandidates = null;
+
+function allinCandidates(hands) {
+  if (_allinCandidatesFor === hands && _allinCandidates) return _allinCandidates;
+  _allinCandidates = detectAllInCandidates(hands);
+  _allinCandidatesFor = hands;
+  return _allinCandidates;
+}
 
 function detectAllInCandidates(hands) {
   var results = [];
@@ -99,222 +107,34 @@ function detectAllInCandidates(hands) {
   return results;
 }
 
-function renderAllIn(container, d, hands) {
-  if (_allinChart) { _allinChart.destroy(); _allinChart = null; }
-
-  // Reuse last detection when the hands array identity is unchanged.
-  if (_allinCandidatesFor === hands && _allinCandidates) {
-    _allinHands = _allinCandidates;
-  } else {
-    _allinHands = detectAllInCandidates(hands);
-    _allinCandidatesFor = hands;
-    _allinCandidates = _allinHands;
-  }
-
-  if (!_allinHands.length) {
-    mountPanel(container, 'allin', { title: 'All-In EV', desc: 'Compares actual results vs expected value at all-in showdowns to measure variance.' });
-    setSlot(container, 'verdict', '<div class="section"><div class="row"><div class="container"><div class="box lead">No all-in showdown hands found yet. When you go all-in and both players show cards, those hands appear here with equity calculations.</div></div></div></div>');
-    return;
-  }
-
-  mountPanel(container, 'allin', { title: 'All-In EV', desc: 'Compares actual results vs expected value at all-in showdowns to measure variance.' });
-
-  // Reads d.facedAllin etc, so it works without the Monte Carlo step.
-  if (d) mountFindings(container, 'All-In EV', d, hands, 'Not enough all-in spots yet to call out a pattern.');
-
-  bind(container, { count: _allinHands.length });
-
-  var previewHtml = '';
-  for (var ti = 0; ti < _allinHands.length; ti++) {
-    var ah = _allinHands[ti];
-    var actCls = ah.actualResult >= 0 ? 'c-pos' : 'c-neg';
-    previewHtml += '<tr class="allin-row link" data-allin-idx="' + ti + '">' +
-      '<td>' + (ti + 1) + '</td>' +
-      '<td>' + displayCards(ah.heroHole) + '</td>' +
-      '<td>' + ah.opponents.map(function (opp) { return displayCards(opp); }).join('<br>') + '</td>' +
-      '<td>' + (ah.fullBoard.length ? displayCards(ah.fullBoard) : '\u2014') + '</td>' +
-      '<td>' + ah.street + '</td>' +
-      '<td>' + fmt(ah.potAtAllIn) + '</td>' +
-      '<td class="' + actCls + '">' + fmtPnl(Math.round(ah.actualResult)) + '</td>' +
-      '</tr>';
-  }
-  setSlot(container, 'previewRows', previewHtml);
-
-  container.querySelectorAll('.allin-row').forEach(function (row) {
-    row.onclick = function () {
-      var idx = parseInt(row.getAttribute('data-allin-idx'));
-      if (!isNaN(idx) && _allinHands[idx]) showExampleHandModal(_allinHands[idx].hand);
-    };
-  });
-
-  var runBtn = document.getElementById('allin-run-btn');
-  if (runBtn) {
-    runBtn.onclick = function () {
-      runBtn.disabled = true;
-      runBtn.textContent = 'Simulating\u2026 0/' + _allinHands.length;
-      var batchSize = 2;
-      var idx = 0;
-
-      function processBatch() {
-        var end = Math.min(idx + batchSize, _allinHands.length);
-        for (var i = idx; i < end; i++) {
-          var ah = _allinHands[i];
-          ah.equity = simulateStreet(ah.heroHole, ah.boardAtAllIn, 5000, ah.opponents).equity;
-          ah.fairShare = ah.equity * ah.potAtAllIn;
-          ah.expectedValue = (ah.equity * ah.potAtAllIn) - ah.heroInvested;
-          ah.evDiff = ah.actualResult - ah.expectedValue;
-        }
-        idx = end;
-        runBtn.textContent = 'Simulating\u2026 ' + idx + '/' + _allinHands.length;
-
-        if (idx < _allinHands.length) {
-          setTimeout(processBatch, 0);
-        } else {
-          showAllInResults(container);
-        }
-      }
-      setTimeout(processBatch, 50);
-    };
-  }
-}
-
-function showAllInResults(container) {
-  var allInHands = _allinHands;
-
-  var cashAllIns = [];
-  for (var ci = 0; ci < allInHands.length; ci++) {
-    if (allInHands[ci].isCash) cashAllIns.push(allInHands[ci]);
-  }
+// Post-simulation summary across the all-in hands (equity fields filled in).
+function allinSummary(allInHands) {
+  var cashAllIns = allInHands.filter(function(ah) { return ah.isCash; });
 
   var totalEvDiff = 0, favouriteCount = 0, actualWins = 0;
-  for (var si = 0; si < allInHands.length; si++) {
-    totalEvDiff += allInHands[si].evDiff;
-    if (allInHands[si].equity > 0.5) favouriteCount++;
-    if (allInHands[si].actualResult > 0) actualWins++;
+  for (var i = 0; i < allInHands.length; i++) {
+    totalEvDiff += allInHands[i].evDiff;
+    if (allInHands[i].equity > 0.5) favouriteCount++;
+    if (allInHands[i].actualResult > 0) actualWins++;
   }
   var equityWinRate = pct(favouriteCount, allInHands.length);
   var actualWinRate = pct(actualWins, allInHands.length);
 
-  var html = '<div class="panel-header">' +
-    '<div class="title title-lg c-gold">All-In EV</div>' +
-    '<div class="text-body">Compares actual results vs expected value at all-in showdowns to measure variance.</div>' +
-    '</div>';
-
-  html += '<div class="section"><div class="row"><div class="container">' + renderMiniRow([
-    { l: 'All-In Hands', v: allInHands.length, c: 'text' },
-    { l: 'EV Diff', v: (totalEvDiff >= 0 ? '+' : '') + fmt(totalEvDiff), c: totalEvDiff >= 0 ? 'g' : 'r' },
-    { l: 'Equity Win Rate', v: equityWinRate !== null ? equityWinRate + '%' : '\u2014', c: equityWinRate >= 50 ? 'g' : 'a' },
-    { l: 'Actual Win Rate', v: actualWinRate !== null ? actualWinRate + '%' : '\u2014', c: actualWinRate >= 50 ? 'g' : 'r' },
-  ]) + '</div></div></div>';
-
-  if (cashAllIns.length >= 2) {
-    html += '<div class="section"><div class="section-head">Cumulative All-In Results vs Expected Value (Cash Hands)</div>';
-    html += '<div class="row"><div class="container">';
-    html += '<canvas id="allin-ev-chart"></canvas>';
-    html += '</div></div></div>';
-  }
-
-  var _aiN = allInHands.length;
+  var n = allInHands.length;
   var variance = '';
-  if (_aiN >= 10 && totalEvDiff > 1) {
-    variance = 'You\'re running ' + fmt(totalEvDiff) + ' above expectation across ' + _aiN + ' all-in hands. Results converge toward the EV line over time.';
-  } else if (_aiN >= 10 && totalEvDiff < -1) {
-    variance = 'You\'re running ' + fmt(Math.abs(totalEvDiff)) + ' below expectation across ' + _aiN + ' all-in hands. Play has been correct more often than results suggest.';
+  if (n >= 10 && totalEvDiff > 1) {
+    variance = 'You\'re running ' + fmt(totalEvDiff) + ' above expectation across ' + n + ' all-in hands. Results converge toward the EV line over time.';
+  } else if (n >= 10 && totalEvDiff < -1) {
+    variance = 'You\'re running ' + fmt(Math.abs(totalEvDiff)) + ' below expectation across ' + n + ' all-in hands. Play has been correct more often than results suggest.';
   } else if (equityWinRate !== null && equityWinRate < 45) {
     variance = 'You\'re frequently all-in as an underdog (' + equityWinRate + '% favourite rate). Check whether the spots are +EV given pot odds, or if tighter selection helps.';
   }
-  if (variance) {
-    html += '<div class="section"><div class="row"><div class="container"><div class="box lead">' + variance + '</div></div></div></div>';
-  }
 
-  html += '<div class="section"><div class="section-head">All-In Hand Details</div>';
-  html += '<div class="row"><div class="container">';
-  if (cashAllIns.length < allInHands.length) {
-    html += '<div class="card text-micro allin-caveat">Side pots are approximated using total pot. Tournament hands are included in the table but excluded from the cumulative graph.</div>';
-  }
-  html += '<div class="overflow-x"><table class="table">';
-  html += '<thead><tr><th>#</th><th>Hole</th><th>vs</th><th>Board</th><th>Street</th><th>Equity</th><th>Fair Share</th><th>Actual</th><th>EV Diff</th></tr></thead><tbody>';
-
-  for (var ti = 0; ti < allInHands.length; ti++) {
-    var ah = allInHands[ti];
-    var evCls = ah.evDiff >= 0 ? 'c-pos' : 'c-neg';
-    var actCls = ah.actualResult >= 0 ? 'c-pos' : 'c-neg';
-    html += '<tr class="allin-row link" data-allin-idx="' + ti + '">' +
-      '<td>' + (ti + 1) + '</td>' +
-      '<td>' + displayCards(ah.heroHole) + '</td>' +
-      '<td>' + ah.opponents.map(function (opp) { return displayCards(opp); }).join('<br>') + '</td>' +
-      '<td>' + (ah.fullBoard.length ? displayCards(ah.fullBoard) : '\u2014') + '</td>' +
-      '<td>' + ah.street + '</td>' +
-      '<td>' + fmtPct(ah.equity * 100) + '</td>' +
-      '<td>' + fmt(Math.round(ah.fairShare)) + '</td>' +
-      '<td class="' + actCls + '">' + fmtPnl(Math.round(ah.actualResult)) + '</td>' +
-      '<td class="' + evCls + '">' + (ah.evDiff >= 0 ? '+' : '') + fmt(Math.round(ah.evDiff)) + '</td>' +
-      '</tr>';
-  }
-  html += '</tbody></table></div></div></div></div>';
-
-  container.innerHTML = html;
-
-  container.querySelectorAll('.allin-row').forEach(function (row) {
-    row.onclick = function () {
-      var idx = parseInt(row.getAttribute('data-allin-idx'));
-      if (!isNaN(idx) && allInHands[idx]) showExampleHandModal(allInHands[idx].hand);
-    };
-  });
-
-  if (cashAllIns.length >= 2) {
-    var canvas = document.getElementById('allin-ev-chart');
-    if (!canvas) return;
-
-    var colors = getChartColors();
-
-    var chartLabels = [], dataActual = [], dataExpected = [];
-    var cumActual = 0, cumExpected = 0;
-    for (var gi = 0; gi < cashAllIns.length; gi++) {
-      cumActual += cashAllIns[gi].actualResult;
-      cumExpected += cashAllIns[gi].expectedValue;
-      chartLabels.push(gi + 1);
-      dataActual.push(cumActual);
-      dataExpected.push(cumExpected);
-    }
-
-    if (_allinChart) { _allinChart.destroy(); _allinChart = null; }
-    _allinChart = createChart(canvas, 'line', {
-      labels: chartLabels,
-      datasets: [
-        {
-          label: 'Actual Results',
-          data: dataActual,
-          borderColor: colors.gold,
-          borderWidth: 2,
-          pointRadius: 0,
-          pointHitRadius: 6,
-          tension: 0.3,
-          order: 1,
-        },
-        {
-          label: 'Expected (EV)',
-          data: dataExpected,
-          borderColor: colors.dim,
-          borderWidth: 2,
-          borderDash: [5, 3],
-          pointRadius: 0,
-          pointHitRadius: 6,
-          tension: 0.3,
-          order: 2,
-        },
-      ],
-    }, {
-      interaction: { mode: 'index', intersect: false },
-      legend: chartLegend(colors),
-      tooltip: chartTooltip(colors, {
-        title: function (items) { return 'All-In #' + items[0].label; },
-        label: function (ctx) { return ' ' + ctx.dataset.label + ': ' + fmtPnl(ctx.parsed.y); },
-      }),
-      scales: {
-        x: chartXScale(colors, { title: 'All-In Hands', tickSize: 9, maxTicksLimit: 8 }),
-        y: chartYScaleZeroLine(colors, { tickCallback: function (val) { return fmt(val); } }),
-      },
-    });
-  }
+  return {
+    cashAllIns: cashAllIns,
+    totalEvDiff: totalEvDiff,
+    equityWinRate: equityWinRate,
+    actualWinRate: actualWinRate,
+    variance: variance,
+  };
 }

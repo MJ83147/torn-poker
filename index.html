@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=IBM+Plex+Mono:wght@300;400;500&display=swap" onload="this.rel='stylesheet'">
   <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=IBM+Plex+Mono:wght@300;400;500&display=swap"></noscript>
-  <link rel="stylesheet" href="style.css?v=1783160565">
+  <link rel="stylesheet" href="style.css?v=1783339663">
 </head>
 
 <body class="maintenance">
@@ -136,32 +136,26 @@
         <div class="hero-strip" id="hero-strip"></div>
         <div class="tab-nav" id="tab-nav">
           <div class="tab-menu">
-            <button class="tab-menu-btn active" data-group="overview">Overview <span class="tab-arrow">&#9662;</span></button>
+            <button class="tab-menu-btn" data-hub="sum">Summary <span class="tab-arrow">&#9662;</span></button>
             <div class="tab-menu-items">
-              <button class="tab-item active" data-tab="welcome">Overview</button>
               <button class="tab-item" data-tab="mygame">My Game</button>
               <button class="tab-item" data-tab="trends">Trends</button>
             </div>
           </div>
           <div class="tab-menu">
-            <button class="tab-menu-btn" data-group="analysis">Hand Analysis <span class="tab-arrow">&#9662;</span></button>
+            <button class="tab-menu-btn" data-hub="brk">Breakdown <span class="tab-arrow">&#9662;</span></button>
             <div class="tab-menu-items">
               <button class="tab-item" data-tab="cards">Cards</button>
               <button class="tab-item" data-tab="range">Range</button>
               <button class="tab-item" data-tab="position">Position</button>
-              <button class="tab-item" data-tab="street">Street</button>
-            </div>
-          </div>
-          <div class="tab-menu">
-            <button class="tab-menu-btn" data-group="betting">Betting <span class="tab-arrow">&#9662;</span></button>
-            <div class="tab-menu-items">
+              <button class="tab-item" data-tab="street">Streets</button>
               <button class="tab-item" data-tab="actions">Betting</button>
               <button class="tab-item" data-tab="showdown">Showdown</button>
               <button class="tab-item" data-tab="allin">All-In EV</button>
             </div>
           </div>
           <div class="tab-menu">
-            <button class="tab-menu-btn" data-group="session">History <span class="tab-arrow">&#9662;</span></button>
+            <button class="tab-menu-btn" data-hub="his">History <span class="tab-arrow">&#9662;</span></button>
             <div class="tab-menu-items">
               <button class="tab-item" data-tab="sessions">Sessions</button>
               <button class="tab-item" data-tab="tables">Tables</button>
@@ -179,6 +173,9 @@
       <div id="sample-note"></div>
 
       <div class="panel on" id="p-welcome"></div>
+      <div class="panel" id="p-hub-sum"></div>
+      <div class="panel" id="p-hub-brk"></div>
+      <div class="panel" id="p-hub-his"></div>
       <div class="panel" id="p-cards"></div>
       <div class="panel" id="p-position"></div>
       <div class="panel" id="p-street"></div>
@@ -259,7 +256,7 @@
   </div>
 
   <!-- App (bundled + minified). Chart.js and intro.js are loaded on demand from app.min.js. -->
-  <script defer src="app.min.js?v=1783160565"></script>
+  <script defer src="app.min.js?v=1783339663"></script>
 </body>
 
 </html>

@@ -66,11 +66,13 @@ function switchTab(tabId) {
     item.classList.add('active');
     var menu = item.closest('.tab-menu');
     if (menu) menu.querySelector('.tab-menu-btn').classList.add('active');
+  } else if (tabId.indexOf('hub-') === 0) {
+    var hubBtn = document.querySelector('.tab-menu-btn[data-hub="' + tabId.slice(4) + '"]');
+    if (hubBtn) hubBtn.classList.add('active');
   } else {
     var directBtn = document.querySelector('.tab-menu-btn[data-tab="' + tabId + '"]');
     if (directBtn) directBtn.classList.add('active');
   }
-  document.querySelectorAll('.tab-menu').forEach(function(m) { m.classList.remove('open'); });
   var pw = document.getElementById('panels-wrap');
   if (pw) pw.classList.remove('blurred');
 }
@@ -85,21 +87,10 @@ function _toggleBackdrop(show) {
     var btn = e.target.closest('.tab-menu-btn');
     if (btn) {
       e.stopPropagation();
-      if (btn.dataset.tab) {
-        document.querySelectorAll('.tab-menu').forEach(function(m) { m.classList.remove('open'); });
-        _toggleBackdrop(false);
-        switchTab(btn.dataset.tab);
-        return;
-      }
-      var menu = btn.closest('.tab-menu');
-      var wasOpen = menu.classList.contains('open');
-      document.querySelectorAll('.tab-menu').forEach(function(m) { m.classList.remove('open'); });
-      if (!wasOpen) {
-        menu.classList.add('open');
-        _toggleBackdrop(true);
-      } else {
-        _toggleBackdrop(false);
-      }
+      _toggleBackdrop(false);
+      // Section labels open their hub page; dropdowns open on hover (CSS).
+      if (btn.dataset.hub) switchTab('hub-' + btn.dataset.hub);
+      else if (btn.dataset.tab) switchTab(btn.dataset.tab);
       return;
     }
     var item = e.target.closest('.tab-item');
@@ -108,41 +99,9 @@ function _toggleBackdrop(show) {
       switchTab(item.getAttribute('data-tab'));
       return;
     }
-    document.querySelectorAll('.tab-menu').forEach(function(m) { m.classList.remove('open'); });
     _toggleBackdrop(false);
   });
 })();
-
-function renderMiniRow(items, opts) {
-  opts = opts || {};
-  var rowAttrs = '';
-  if (opts.columns) rowAttrs += ' style="grid-template-columns:' + opts.columns + ';"';
-  else if (opts.dim) rowAttrs += ' style="opacity:0.45"';
-  if (opts.columns && opts.dim) rowAttrs = ' style="grid-template-columns:' + opts.columns + ';opacity:0.45;"';
-  var CMAP = { g: 'c-pos', r: 'c-neg', a: 'c-warn' };
-  return '<div class="mini-row stat-grid"' + rowAttrs + '>' + items.map(function(m) {
-    var cc = CMAP[m.c] || (m.c && m.c !== 'text' ? 'c-' + m.c : '');
-    var dot = m.dot ? '<span class="swatch-line ' + m.dot + '"></span> ' : '';
-    return '<div class="stat"><div class="eyebrow">' + dot + m.l + '</div><div class="value ' + cc + '">' + m.v + '</div></div>';
-  }).join('') + '</div>';
-}
-
-function renderStatsTable(rows, columns, opts) {
-  opts = opts || {};
-  var wrapClass = opts.wrapClass || 'overflow-x';
-  var tableClass = opts.tableClass || 'table';
-  var head = '<thead><tr>' + columns.map(function(c) {
-    return '<th>' + (c.tip ? tipWrap(c.label) : c.label) + '</th>';
-  }).join('') + '</tr></thead>';
-  var body = '<tbody>' + rows.map(function(row, idx) {
-    return '<tr>' + columns.map(function(c) {
-      var val = (typeof c.key === 'function') ? c.key(row, idx) : row[c.key];
-      var cell = c.fmt ? c.fmt(val, row, idx) : (val == null ? '-' : val);
-      return '<td' + (c.cls ? ' class="' + c.cls + '"' : '') + '>' + cell + '</td>';
-    }).join('') + '</tr>';
-  }).join('') + '</tbody>';
-  return '<div class="' + wrapClass + '"><table class="' + tableClass + '">' + head + body + '</table></div>';
-}
 
 function tipWrap(label) {
   const def = TIPS[label];
@@ -188,178 +147,6 @@ function insWithExample(sev, label, text, chips, exampleHands, coachingNote, coa
   return result;
 }
 
-function renderInsights(insArr, fallbackLabel, fallbackText) {
-  if (!insArr.length) {
-    insArr.push(ins('n', fallbackLabel, fallbackText || 'More hands needed for ' + fallbackLabel.toLowerCase() + ' patterns.', []));
-  }
-  return '<div class="ins-grid">' + insArr.join('') + '</div>';
-}
-
-function renderResult(h, tag, baseClass) {
-  var pnl = getHandPnl(h);
-  return '<' + tag + ' class="' + baseClass + ' ' + pnl.cls + '">' + pnl.text + '</' + tag + '>';
-}
-
-function handTagsHtml(h) {
-  if (!h || !h.seatBucket) return '';
-  var parts = [];
-  parts.push('<span class="tag tag-gold">' + h.seatBucket + '</span>');
-  if (h.flopBucket) {
-    parts.push('<span class="tag">' + h.flopBucket + '</span>');
-  }
-  return '<span class="row wrap center">' + parts.join('') + '</span>';
-}
-
-// Compact "start -> end" stack line for the hero. Returns '' when neither
-// stack value is present (legacy hands) so nothing is fabricated as 0.
-function heroStackLine(h) {
-  if (h == null) return '';
-  var start = h.startStack, end = h.endStack;
-  if (start == null && end == null) return '';
-  var bb = getHandBB(h);
-  var s = start != null ? fmtBB(start, bb) : '—';
-  var e = end != null ? fmtBB(end, bb) : '—';
-  return '<div class="text-micro c-dim stack-flow">' + s + ' &rarr; ' + e + '</div>';
-}
-
-function renderHandRow(h, idx, opts) {
-  var myActs = getActsSummary(h);
-  var res = renderResult(h, 'td', 'num');
-  var starCol = opts && opts.starHtml ? '<td>' + opts.starHtml + '</td>' : '';
-  var tags = handTagsHtml(h);
-  var stackLine = heroStackLine(h);
-  return '<tr class="hrow link" data-hand-idx="' + idx + '">' +
-    starCol +
-    '<td class="c-gold">' + (h.position || '?') + '</td>' +
-    '<td>' + (h.hole && h.hole.length ? displayCards(h.hole.map(normCard)) : '?? ??') + '</td>' +
-    '<td>' + tags + '</td>' +
-    '<td class="c-dim truncate">' + (h.board && h.board.length ? displayCards(h.board.map(normCard)) : '-') + '</td>' +
-    '<td>' + fmtBB(h.pot || 0, getHandBB(h)) + stackLine + '</td>' +
-    '<td class="c-dim truncate">' + myActs + '</td>' +
-    res + '</tr>';
-}
-
-function renderPagination(page, totalItems, pageSize, prevId, nextId) {
-  var totalPages = Math.ceil(totalItems / pageSize);
-  if (totalPages <= 1) return '';
-  return '<button class="btn btn-ghost" id="' + prevId + '" ' + (page === 0 ? 'disabled' : '') + '>&laquo; Prev</button>' +
-    '<span class="text-meta">Page ' + (page + 1) + '/' + totalPages + '</span>' +
-    '<button class="btn btn-ghost" id="' + nextId + '" ' + (page >= totalPages - 1 ? 'disabled' : '') + '>Next &raquo;</button>';
-}
-
-function barRow(label, val, max, cls, valStr, val2Str) {
-  const w = max > 0 ? clamp(Math.round(val / max * 100), 0, 100) : 0;
-  // cls is a severity letter (g/r/a/n/o) mapped via INS_BG, or a literal
-  // bg-* utility class passed straight through.
-  var fill = INS_BG[cls] || (cls || 'bg-gold');
-  return '<div class="bar ' + (val2Str ? 'bar-3' : '') + '">' +
-    '<div class="c-gold fw-semibold">' + label + '</div>' +
-    '<div class="bar-track"><div class="bar-fill ' + fill + '" style="width:' + w + '%"></div></div>' +
-    '<div class="text-meta text-right">' + valStr + '</div>' +
-    (val2Str ? '<div class="text-micro text-right">' + val2Str + '</div>' : '') +
-    '</div>';
-}
-
-
-/* ===== merged from panel-shared.js ===== */
-function panelTitle(text) {
-  return '<div class="title title-lg c-gold">' + text + '</div>';
-}
-
-function panelDesc(text) {
-  return '<div class="text-body">' + text + '</div>';
-}
-
-function panelHeader(title, desc) {
-  return panelTitle(title) + (desc ? panelDesc(desc) : '');
-}
-
-function dimLabel(text) {
-  return '<div class="eyebrow">' + text + '</div>';
-}
-
-function descText(text) {
-  return '<div class="text-body">' + text + '</div>';
-}
-
-function pRow(body, label) {
-  var html = '<div class="">';
-  if (label) html += dimLabel(label);
-  html += (body || '');
-  html += '</div>';
-  return html;
-}
-
-function insGrid(items, label) {
-  if (!items || !items.length) return '';
-  var inner = '<div class="">' + items.join('') + '</div>';
-  return label ? pRow(inner, label) : inner;
-}
-
-function mountTemplate(container, name) {
-  if (!container) return;
-  var TPL = (typeof window !== 'undefined' && window.__TPL) || {};
-  var html = TPL[name];
-  if (html == null) {
-    console.warn('[panel-shared] missing template for "' + name + '"');
-    container.innerHTML = '';
-    return;
-  }
-  container.innerHTML = html;
-}
-
-// style.css panel shell. The whole panel is one .col.gap-32 of sections:
-//   header (title + subtitle), verdict slot, findings slot, then the body.
-// The panel's __TPL[name] template holds ONLY the body markup (its own
-// sections). title/desc are passed as data, not baked into every template.
-function mountPanel(container, name, opts) {
-  if (!container) return;
-  opts = opts || {};
-  var TPL = (typeof window !== 'undefined' && window.__TPL) || {};
-  var body = TPL[name];
-  if (body == null) {
-    console.warn('[panel-shared] missing template for "' + name + '"');
-    body = '';
-  }
-  var title = opts.title || '';
-  var desc = opts.desc || '';
-  container.innerHTML =
-    '<div class="panel-header">' +
-      '<div class="title title-lg c-gold">' + title + '</div>' +
-      (desc ? '<div class="text-body">' + desc + '</div>' : '') +
-    '</div>' +
-    '<div data-slot="verdict"></div>' +
-    '<div data-slot="findings" hidden></div>' +
-    body;
-}
-
-function bind(root, data) {
-  if (!root || !data) return;
-  var nodes = root.querySelectorAll('[data-bind]');
-  for (var i = 0; i < nodes.length; i++) {
-    var key = nodes[i].getAttribute('data-bind');
-    if (key in data) nodes[i].textContent = (data[key] == null ? '' : String(data[key]));
-  }
-}
-
-// innerHTML variant: only pass markup the caller controls, never user strings.
-function bindHtml(root, data) {
-  if (!root || !data) return;
-  var nodes = root.querySelectorAll('[data-bind-html]');
-  for (var i = 0; i < nodes.length; i++) {
-    var key = nodes[i].getAttribute('data-bind-html');
-    if (key in data) nodes[i].innerHTML = (data[key] == null ? '' : String(data[key]));
-  }
-}
-
-function setSlot(root, name, html) {
-  if (!root) return null;
-  var el = root.querySelector('[data-slot="' + name + '"]');
-  if (!el) return null;
-  el.innerHTML = html || '';
-  return el;
-}
-
 // Classify a value against a [lo, hi] band. Returns { cls, label } using the
 // shared v-* color classes. null value -> no-data.
 function bandVerdict(value, lo, hi) {
@@ -374,83 +161,6 @@ function fmtBandRange(band) {
   if (!band) return '-';
   return Math.round(band.tight) + '-' + Math.round(band.loose) + '%';
 }
-
-// Build a <tr> of <th> from column specs. Each spec is one of:
-//   '' / null            -> empty <th></th>
-//   'Plain'              -> <th>Plain</th> (raw HTML allowed)
-//   { tip: 'Win Rate' }  -> <th> with tipWrap(label)
-//   { html: '...' }      -> <th> with custom inner HTML
-//   { label/tip, sort: 'key' } -> sortable <th data-sort-col="key"> with arrow
-// sortState is { col, dir } and drives the active-column arrow.
-function renderTableHead(cols, sortState) {
-  function arrow(key) {
-    if (!sortState || sortState.col !== key) return '';
-    return sortState.dir === 'asc' ? ' &#9650;' : ' &#9660;';
-  }
-  var ths = cols.map(function(c) {
-    if (c == null || c === '') return '<th></th>';
-    if (typeof c === 'string') return '<th>' + c + '</th>';
-    var label = c.tip ? tipWrap(c.tip) : (c.html != null ? c.html : c.label);
-    if (c.sort) return '<th class="sortable" data-sort-col="' + c.sort + '">' + label + arrow(c.sort) + '</th>';
-    return '<th>' + label + '</th>';
-  });
-  return '<tr>' + ths.join('') + '</tr>';
-}
-
-// mountPanel provides the `verdict` and `findings` slots this fills.
-// opts.group(findings, d) -> [{ label, findings, emptyNote }] renders the cards
-// grouped (e.g. Streets by street) via renderFindingsGrouped; without it the
-// flat renderFindings is used. Every findings panel goes through this one path.
-function mountFindings(root, panelName, d, hands, fallback, opts) {
-  if (typeof Sections === 'undefined' || typeof Sections.evaluateSections !== 'function') {
-    return [];
-  }
-  opts = opts || {};
-  var findings = Sections.findingsForPanel(Sections.evaluateSections(d, {}, hands), panelName);
-  setSlot(root, 'verdict', Sections.renderVerdict(findings, fallback));
-  var slot = root.querySelector('[data-slot="findings"]');
-  if (slot) {
-    if (opts.group) {
-      slot.innerHTML = Sections.renderFindingsGrouped(opts.group(findings, d));
-      slot.removeAttribute('hidden');
-    } else if (findings.length) {
-      slot.innerHTML = Sections.renderFindings(findings);
-      slot.removeAttribute('hidden');
-    } else {
-      slot.innerHTML = '';
-      slot.setAttribute('hidden', '');
-    }
-  }
-  return findings;
-}
-
-// Clone `<template data-row>` inside `[data-fill="key"]` once per item.
-// onClone(rowEl, item, index) wires per-row events the template cannot express.
-function fillRows(root, key, items, onClone) {
-  if (!root || !items) return [];
-  var holder = root.querySelector('[data-fill="' + key + '"]');
-  if (!holder) return [];
-  var tpl = holder.querySelector('template[data-row]');
-  if (!tpl) return [];
-  while (holder.lastChild && holder.lastChild !== tpl) {
-    holder.removeChild(holder.lastChild);
-  }
-  var appended = [];
-  for (var i = 0; i < items.length; i++) {
-    var frag = tpl.content.cloneNode(true);
-    bind(frag, items[i]);
-    bindHtml(frag, items[i]);
-    var firstEl = null;
-    for (var c = 0; c < frag.childNodes.length; c++) {
-      if (frag.childNodes[c].nodeType === 1) { firstEl = frag.childNodes[c]; break; }
-    }
-    if (onClone && firstEl) onClone(firstEl, items[i], i);
-    holder.appendChild(frag);
-    if (firstEl) appended.push(firstEl);
-  }
-  return appended;
-}
-
 
 /* ===== merged from ui-bindings.js ===== */
 (function() {

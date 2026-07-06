@@ -1,3 +1,6 @@
+// Betting (actions) panel logic. No DOM, no markup — the view is
+// js/panels/views/actions.js.
+
 // Standalone hand predicates for the situational-stats rows, so each stat box
 // can open the hands behind it. These mirror the definitions used in the
 // Streets insight section but are kept local so the panel does not depend on
@@ -120,138 +123,94 @@ var _ACT_SIT_NOTES = {
   'Fold to 4-Bet': 'Hands where you 3-bet, faced a 4-bet, and folded. Check whether any of these are strong enough to 5-bet jam or call.'
 };
 
-function renderActions(container, d, hands) {
-  if (!container) return;
-  var streets = STREETS;
+// Colour a situational stat vs the profile bands for this game context.
+function _actSitStatColour(label, p, ctx) {
+  if (p === null) return 'o';
+  var fb = ctx.flopBucket;
+  var fbMod = fb === 'HU' ? 5 : fb === 'multiway' ? -10 : 0;
+  var cbetBand = ctx.band('cbet');
+  var ftrBand = ctx.band('foldToRaise');
+  switch (label) {
+    case 'C-Bet': {
+      var hi = cbetBand ? cbetBand.ideal + fbMod : 60;
+      var lo = cbetBand ? cbetBand.tight + fbMod : 40;
+      return p >= hi ? 'g' : p >= lo ? 'o' : 'r';
+    }
+    case 'Delayed C-Bet': return p >= 30 ? 'g' : 'o';
+    case 'Donk Bet': return p > 30 ? 'a' : 'o';
+    case 'Fold to C-Bet': {
+      var ceil = ftrBand ? ftrBand.loose + 15 + (fb === 'multiway' ? 5 : -5) : 70;
+      var soft = ftrBand ? ftrBand.ideal + 10 : 50;
+      return p > ceil ? 'r' : p > soft ? 'a' : 'g';
+    }
+    case 'Fold to 3-Bet': {
+      var ceil3 = ctx.seats <= 2 ? 55 : ctx.seats <= 4 ? 60 : 70;
+      var soft3 = ctx.seats <= 2 ? 40 : ctx.seats <= 4 ? 45 : 50;
+      return p > ceil3 ? 'r' : p > soft3 ? 'a' : 'g';
+    }
+    case 'Fold to 4-Bet': return p > 80 ? 'a' : 'o';
+    default: return 'o';
+  }
+}
+
+function actionsModel(d, hands) {
   var actTotal = d.folds + d.checks + d.calls + d.raises;
-  var fPct = pct(d.folds, actTotal);
-  var chPct = pct(d.checks, actTotal);
-  var caPct = pct(d.calls, actTotal);
-  var raPct = pct(d.raises, actTotal);
+  var split = {
+    fold: pct(d.folds, actTotal),
+    check: pct(d.checks, actTotal),
+    call: pct(d.calls, actTotal),
+    raise: pct(d.raises, actTotal),
+  };
 
   var ctx = getGameContext(d);
-  var _domSeats = ctx.seats;
-  var _domFb = ctx.flopBucket;
-  var _cbetBand = ctx.band('cbet');
-  var _ftrBand = ctx.band('foldToRaise');
-
-  mountPanel(container, 'actions', { title: 'Betting', desc: 'How you size your bets and choose your actions.' });
-  mountFindings(container, 'Betting', d, hands, 'Betting profile looks balanced at this sample size.');
-
-  setSlot(container, 'miniRow', renderMiniRow([
-    { l: 'Total Actions', v: actTotal, c: 'o' },
-    { l: 'Folds', v: d.folds, c: 'r' },
-    { l: 'Checks', v: d.checks, c: 'w' },
-    { l: 'Calls', v: d.calls, c: 'a' },
-    { l: 'Raises', v: d.raises, c: 'g' },
-  ]));
-
-  var segs = [
-    { p: fPct || 0, bg: 'bg-neg', l: 'Fold ' + fPct + '%' },
-    { p: chPct || 0, bg: 'bg-muted', l: 'Check ' + chPct + '%' },
-    { p: caPct || 0, bg: 'bg-warn', l: 'Call ' + caPct + '%' },
-    { p: raPct || 0, bg: 'bg-pos', l: 'Raise ' + raPct + '%' },
-  ];
-  setSlot(container, 'actionSplitBar', segs.map(function (s) { return '<div class="bar-seg ' + s.bg + '" style="width:' + s.p + '%;"></div>'; }).join(''));
-  setSlot(container, 'actionSplitLabels', segs.map(function (s) { return '<div class="legend-item"><div class="swatch ' + s.bg + '"></div>' + s.l + '</div>'; }).join(''));
-
-  function sitStatColour(label, p) {
-    if (p === null) return 'o';
-    var fbMod = _domFb === 'HU' ? 5 : _domFb === 'multiway' ? -10 : 0;
-    switch (label) {
-      case 'C-Bet': {
-        var hi = _cbetBand ? _cbetBand.ideal + fbMod : 60;
-        var lo = _cbetBand ? _cbetBand.tight + fbMod : 40;
-        return p >= hi ? 'g' : p >= lo ? 'o' : 'r';
-      }
-      case 'Delayed C-Bet': return p >= 30 ? 'g' : 'o';
-      case 'Donk Bet': return p > 30 ? 'a' : 'o';
-      case 'Fold to C-Bet': {
-        var ceil = _ftrBand ? _ftrBand.loose + 15 + (_domFb === 'multiway' ? 5 : -5) : 70;
-        var soft = _ftrBand ? _ftrBand.ideal + 10 : 50;
-        return p > ceil ? 'r' : p > soft ? 'a' : 'g';
-      }
-      case 'Fold to 3-Bet': {
-        var ceil3 = _domSeats <= 2 ? 55 : _domSeats <= 4 ? 60 : 70;
-        var soft3 = _domSeats <= 2 ? 40 : _domSeats <= 4 ? 45 : 50;
-        return p > ceil3 ? 'r' : p > soft3 ? 'a' : 'g';
-      }
-      case 'Fold to 4-Bet': return p > 80 ? 'a' : 'o';
-      default: return 'o';
-    }
-  }
-
-  var sitStats = [
+  var sit = [
     { label: 'C-Bet', done: d.cbetDone, opps: d.cbetOpps },
     { label: 'Delayed C-Bet', done: d.delayCbetDone, opps: d.delayCbetOpps },
     { label: 'Donk Bet', done: d.donkDone, opps: d.donkOpps },
     { label: 'Fold to C-Bet', done: d.foldToCbetDone, opps: d.foldToCbetOpps },
     { label: 'Fold to 3-Bet', done: d.foldTo3betDone, opps: d.foldTo3betOpps },
     { label: 'Fold to 4-Bet', done: d.foldTo4betDone, opps: d.foldTo4betOpps },
-  ];
-
-  var sitStatHtml = '';
-  var sitClickable = [];
-  for (var si = 0; si < sitStats.length; si++) {
-    var s = sitStats[si];
-    if (s.opps === 0) continue;
+  ].filter(function(s) { return s.opps !== 0; }).map(function(s) {
     var p = pct(s.done, s.opps);
-    var cls = sitStatColour(s.label, p);
     var pred = _ACT_SIT_PREDICATES[s.label];
     var matches = pred ? pickHands(hands, pred, 15) : [];
-    var clickIdx = sitClickable.length;
-    var hasHands = matches.length > 0;
-    var labelHtml = tipWrap(s.label) +
-      (hasHands ? '<span class="c-dim cards-row-cue"> &middot; view hands &#8250;</span>' : '');
-    var rowHtml = barRow(labelHtml, p || 0, 100, cls, (p !== null ? p + '%' : '-'), s.done + '/' + s.opps + ' spots');
-    if (hasHands) {
-      sitStatHtml += '<div class="cards-bar-row" data-sit-idx="' + clickIdx + '">' + rowHtml + '</div>';
-      sitClickable.push({
-        title: s.label + ' hands',
-        hands: matches,
-        note: (_ACT_SIT_NOTES[s.label] || '') +
-          ' This happened in ' + s.done + ' of ' + s.opps + ' spots (' + (p !== null ? p + '%' : '-') + ').'
-      });
-    } else {
-      sitStatHtml += rowHtml;
-    }
-  }
-  setSlot(container, 'sitStats', sitStatHtml);
-
-  container.querySelectorAll('[data-sit-idx]').forEach(function(row) {
-    row.onclick = function() {
-      var idx = parseInt(row.getAttribute('data-sit-idx'), 10);
-      var entry = sitClickable[idx];
-      if (entry && entry.hands.length) showExampleHandListModal(entry.title, entry.hands, entry.note);
+    return {
+      label: s.label, done: s.done, opps: s.opps, p: p,
+      cls: _actSitStatColour(s.label, p, ctx),
+      hands: matches,
+      note: (_ACT_SIT_NOTES[s.label] || '') +
+        ' This happened in ' + s.done + ' of ' + s.opps + ' spots (' + (p !== null ? p + '%' : '-') + ').'
     };
   });
 
-  var avgBets = {};
-  var avgBetsBB = {};
-  streets.forEach(function(s) {
-    avgBets[s] = Math.round(avg(d.betAmts[s]));
-    avgBetsBB[s] = avg(d.betAmtsBB ? d.betAmtsBB[s] : []);
-  });
-  d.avgBetPre = avgBets.Preflop; d.avgBetFlop = avgBets.Flop;
-  d.avgBetTurn = avgBets.Turn; d.avgBetRiver = avgBets.River;
-  d.avgBetBBFlop = avgBetsBB.Flop; d.avgBetBBTurn = avgBetsBB.Turn; d.avgBetBBRiver = avgBetsBB.River;
+  // Bet sizes shown in BB when the toggle is on and BB data exists.
   var betDisplay = {};
-  streets.forEach(function(s) {
+  STREETS.forEach(function(s) {
     betDisplay[s] = _displayBB && d.betAmtsBB && d.betAmtsBB[s] && d.betAmtsBB[s].length
       ? avg(d.betAmtsBB[s]) : avg(d.betAmts[s]);
   });
   var maxAvg = Math.max(betDisplay.Preflop, betDisplay.Flop, betDisplay.Turn, betDisplay.River, 1);
+  var avgBetRows = STREETS.filter(function(s) { return betDisplay[s] > 0; }).map(function(s) {
+    return {
+      street: s, val: betDisplay[s], max: maxAvg,
+      valStr: fmtAvgAmount(d.betAmts[s], d.betAmtsBB ? d.betAmtsBB[s] : []),
+      meta: d.betAmts[s] ? d.betAmts[s].length + ' bets' : ''
+    };
+  });
 
-  setSlot(container, 'avgBetBars',
-    streets.filter(function(s) { return betDisplay[s] > 0; }).map(function(s) {
-      return barRow(s, betDisplay[s], maxAvg, 'o', fmtAvgAmount(d.betAmts[s], d.betAmtsBB ? d.betAmtsBB[s] : []), d.betAmts[s] ? d.betAmts[s].length + ' bets' : '');
-    }).join(''));
-  setSlot(container, 'betFreqBars',
-    streets.map(function(s) {
-      var bo = d.betOpps[s];
-      if (!bo || !bo.t) return null;
-      var fp2 = pct(bo.b, bo.t);
-      var cls2 = fp2 < 25 ? 'r' : fp2 > 65 ? 'a' : 'g';
-      return barRow(s, fp2 || 0, 100, cls2, (fp2 !== null ? fp2 + '%' : '-'), bo.b + '/' + bo.t + ' opps');
-    }).filter(Boolean).join(''));
+  var betFreqRows = STREETS.map(function(s) {
+    var bo = d.betOpps[s];
+    if (!bo || !bo.t) return null;
+    var p = pct(bo.b, bo.t);
+    return { street: s, p: p, cls: p < 25 ? 'r' : p > 65 ? 'a' : 'g', meta: bo.b + '/' + bo.t + ' opps' };
+  }).filter(Boolean);
+
+  return {
+    actTotal: actTotal,
+    counts: { folds: d.folds, checks: d.checks, calls: d.calls, raises: d.raises },
+    split: split,
+    sit: sit,
+    avgBetRows: avgBetRows,
+    betFreqRows: betFreqRows,
+  };
 }

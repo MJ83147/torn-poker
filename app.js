@@ -322,6 +322,9 @@ function _drawPanel(tabId, meta) {
 
   switch (tabId) {
     case 'welcome':  renderWelcome(container, { n: filtered.length }, filtered, meta); break;
+    case 'hub-sum':
+    case 'hub-brk':
+    case 'hub-his':  renderHub(container, tabId.slice(4)); break;
     case 'mygame':   renderMyGame(container, d, filtered); break;
     case 'cards':    renderCards(container, d, filtered); break;
     case 'position': renderPosition(container, d, filtered); break;
@@ -352,7 +355,9 @@ function _resolveActiveTabId(forceTabId) {
   var activeItem = document.querySelector('.tab-item.active');
   if (activeItem) return activeItem.dataset.tab;
   var activeBtn = document.querySelector('.tab-menu-btn[data-tab].active');
-  return activeBtn ? activeBtn.dataset.tab : 'welcome';
+  if (activeBtn) return activeBtn.dataset.tab;
+  var activeHub = document.querySelector('.tab-menu-btn[data-hub].active');
+  return activeHub ? 'hub-' + activeHub.dataset.hub : 'welcome';
 }
 
 function renderActivePanel(forceTabId) {

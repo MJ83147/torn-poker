@@ -1,280 +1,75 @@
-function renderMyGame(container, d, hands) {
-  var playerName = State.meta.player || detectPlayerFromActions(hands) || 'Unknown';
-  var exportDate = fmtDate(State.meta.exportedAt);
+// My Game panel logic. No DOM, no markup — the view is
+// js/panels/views/mygame.js.
 
-  var html = '';
-
-  var vpipVal   = pct(d.vpip, d.n);
-  var pfrVal    = pct(d.pfrHands, d.n);
-  var limpVal   = pct(d.limpHands, d.n);
-  var aggVal    = calcAggression(d.raises, d.calls, d.checks);
-  var ftrVal    = pct(d.foldedToRaise, d.facedRaise);
-  var cbetVal   = pct(d.cbetDone, d.cbetOpps);
-  var wtsdVal   = pct(d.wentToShowdown, d.sawFlop);
-
+// Header profile: who, when, how many hands, detected player type.
+function mygameProfile(d, hands) {
   var smallSample = d.n < 30;
-
-  // Classification thresholds track table size: a 50% VPIP at 6-max is loose, at HU it's tight.
-  var ctx = getGameContext(d);
-  var _domSeatsMG = ctx.seats;
-  var _vpipBandMG = ctx.band('vpip');
-  var _afBandMG = ctx.band('af');
-
   var typeLabel = '', typeDesc = '';
   if (!smallSample && typeof detectCurrentStyle === 'function') {
     var detected = detectCurrentStyle(d);
     typeLabel = detected.name;
     typeDesc = (typeof styleDescription === 'function') ? styleDescription(typeLabel) : '';
   }
-
-  html += '<div class="section"><div class="row"><div class="container">';
-  html += '<div class="profile-row row wrap">';
-  html += '<div class="stat">';
-  html += '<div class="eyebrow">MY GAME</div>';
-  html += '<div>';
-  html += '<div class="value value-lg c-gold">' + playerName + '</div>';
-  html += '<div class="text-body profile-meta">';
-  if (exportDate) html += exportDate + ' &middot; ';
-  html += d.n + ' hands';
-  html += '</div>';
-  html += '</div>';
-  html += '</div>';
-  if (typeLabel) {
-    html += '<div class="profile-type-block stat">';
-    html += '<div class="eyebrow">PLAYER TYPE</div>';
-    html += '<div>';
-    html += '<div class="value value-lg c-gold">' + typeLabel + '</div>';
-    html += '<div class="text-body profile-type-desc">' + typeDesc + '</div>';
-    html += '</div>';
-    html += '</div>';
-  }
-  html += '</div>';
-  html += '</div></div></div>';
-
-  var _ftrBandMG = ctx.band('foldToRaise');
-  var _cbetBandMG = ctx.band('cbet');
-  if (smallSample) {
-    html += '<div class="section"><div class="row"><div class="container">';
-    html += '<div class="text-meta">Stats from ' + d.n + ' hands. These become reliable around 100+ hands.</div>';
-    html += '</div></div></div>';
-  }
-
-  if (!smallSample) {
-
-    var earlyGroup = calcPositionGroupVpip(d.posMap, EARLY_POSITIONS);
-    var lateGroup = calcPositionGroupVpip(d.posMap, LATE_POSITIONS);
-    var epVpip = earlyGroup.vpip, earlyHands = earlyGroup.hands;
-    var lpVpip = lateGroup.vpip, lateHands = lateGroup.hands;
-
-    var bestPos = null, bestPosPnl = -Infinity, bestPosWr = null;
-    var posKeys = Object.keys(d.posMap);
-    for (var pi = 0; pi < posKeys.length; pi++) {
-      var pk = posKeys[pi];
-      var pm = d.posMap[pk];
-      if (pm.hands >= 20 && pm.pnl > bestPosPnl) {
-        bestPosPnl = pm.pnl;
-        bestPos = pk;
-        bestPosWr = pct(pm.won, pm.hands);
-      }
-    }
-
-    var f3b = pct(d.foldTo3betDone, d.foldTo3betOpps);
-    var fcbet = pct(d.foldToCbetDone, d.foldToCbetOpps);
-
-    var allLeaks = (typeof Sections !== 'undefined' && typeof Sections.evaluateSections === 'function')
-      ? Sections.evaluateSections(d, {}, hands).filter(function(f) {
-          return f.severity === 'r' || f.severity === 'a';
-        })
-      : [];
-
-    html += '<div class="section">';
-    html += '<div class="section-head">Work On Next</div>';
-    var workOn = null;
-    var _workAggFloor = _afBandMG ? _afBandMG.tight - 3 : 15;
-    var _workLimpCeil = _domSeatsMG && _domSeatsMG <= 2 ? 70 : _domSeatsMG && _domSeatsMG <= 3 ? 45 : 22;
-    var _workFtrCeil = _ftrBandMG ? _ftrBandMG.loose + 15 : 70;
-    var _workCbetFloor = _cbetBandMG ? _cbetBandMG.tight - 10 : 25;
-    var _workWtsdCeil = _domSeatsMG && _domSeatsMG <= 2 ? 55 : 50;
-    var _workEpCeil = (function() {
-      if (!_domSeatsMG || _domSeatsMG <= 3) return null;
-      var b = (typeof matrixTarget === 'function')
-        ? matrixTarget('vpip', 'UTG', _domSeatsMG, getUserStyle()) : null;
-      return b ? b.loose + 5 : 35;
-    })();
-    if (!workOn && aggVal !== null && aggVal < _workAggFloor) workOn = { sev: 'r', label: 'Too Passive', desc: 'Only ' + aggVal + '% aggression. Expected floor around ' + Math.round(_workAggFloor) + '%. You check and call when you should be betting for value.', action: 'Next 20 hands: when you have a strong hand, raise instead of calling. Track whether your aggression % moves above ' + Math.round(_workAggFloor + 5) + '%.' };
-    if (!workOn && limpVal !== null && limpVal > _workLimpCeil) workOn = { sev: 'r', label: 'Limping Too Much', desc: 'You limp ' + limpVal + '% of hands at ' + (_domSeatsMG || '?') + '-max (ceiling around ' + _workLimpCeil + '%). Limping gives up initiative.', action: 'Next 20 hands: every time you want to limp, either raise or fold instead. No flat calls preflop without a raise in front.' };
-    if (!workOn && ftrVal !== null && ftrVal > _workFtrCeil && d.facedRaise >= 5) workOn = { sev: 'r', label: 'Folding To Pressure', desc: 'You fold ' + ftrVal + '% when raised. Ceiling around ' + Math.round(_workFtrCeil) + '%.', action: 'Next session: when raised, pause and consider if your hand is strong enough to continue. Look for spots to call or re-raise instead of auto-folding.' };
-    if (!workOn && cbetVal !== null && cbetVal < _workCbetFloor && d.cbetOpps >= 5) workOn = { sev: 'r', label: 'Low C-Bet', desc: 'You only c-bet ' + cbetVal + '%. Expected floor around ' + Math.round(_workCbetFloor) + '%.', action: 'Next session: when you raised preflop and the flop comes, bet at least half the time regardless of whether you connected. Maintaining aggression wins pots.' };
-    if (!workOn && wtsdVal !== null && wtsdVal > _workWtsdCeil) workOn = { sev: 'r', label: 'Paying Off Too Much', desc: 'WTSD at ' + wtsdVal + '%. Ceiling around ' + _workWtsdCeil + '%.', action: 'Next session: on the river facing a big bet, ask whether your hand beats their value range. If not, fold. Saving one big call per session adds up.' };
-    if (!workOn && _workEpCeil && epVpip !== null && epVpip > _workEpCeil && earlyHands >= 10) workOn = { sev: 'r', label: 'Too Loose Early', desc: 'EP VPIP at ' + epVpip + '%. Ceiling around ' + _workEpCeil + '%.', action: 'Next session: from UTG/MP, only play top 25% of hands. Fold marginal suited connectors and weak aces from these seats.' };
-    if (!workOn && allLeaks.length) workOn = { sev: allLeaks[0].severity, label: allLeaks[0].name, desc: '', action: 'Focus on this pattern in your next session and track whether the stat improves.' };
-
-    // The chosen work-on item renders as a shared story card (same component as
-    // every other panel's findings): desc -> openingText, action -> soWhatText.
-    var workFinding = workOn
-      ? { name: workOn.label, severity: workOn.sev, openingText: workOn.desc || '', soWhatText: workOn.action }
-      : { name: 'Solid game', severity: 'g', openingText: 'No major leaks detected from ' + d.n + ' hands. Keep playing to refine the picture.' };
-    var workCard = (typeof Sections !== 'undefined' && Sections.renderStoryCard)
-      ? Sections.renderStoryCard(workFinding)
-      : '<div class="box"><div class="lead fw-semibold">' + workFinding.name + '</div></div>';
-    html += '<div class="row" data-findings>' + workCard + '</div>';
-    html += '</div>';
-
-  }
-
-  html += renderTableDynamicsReference(hands, d);
-
-  mountPanel(container, 'mygame', { title: 'My Game', desc: 'Your scouting report: player type, the one leak to work on next, and how your play stacks up against target benchmarks by table size and flop.' });
-  setSlot(container, 'body', html);
-  if (typeof Sections !== 'undefined' && Sections.wireFindings) Sections.wireFindings(container);
-
-  var smHost = container.querySelector('#mygame-stylemap');
-  if (smHost && typeof renderStyleMap === 'function') {
-    renderStyleMap(smHost, d, hands);
-  }
-}
-
-function _parsePctRange(s) {
-  if (!s) return null;
-  var m = s.match(/(\d+)\s*-\s*(\d+)/);
-  if (!m) return null;
-  return [parseInt(m[1], 10), parseInt(m[2], 10)];
-}
-
-function _vsRow(label, actualPct, actualDenom, targetText) {
-  var rng = _parsePctRange(targetText);
-  var actualStr = (actualPct == null) ? '-' : actualPct + '%';
-  var sampleStr = actualDenom != null ? ' <span class="c-dim">(' + actualDenom + ' spots)</span>' : '';
-  var v = rng ? bandVerdict(actualPct, rng[0], rng[1]) : { cls: 'v-na', label: '' };
-  var labelHtml = label ? '<div class="dynamics-vs-stat eyebrow">' + label + '</div>' : '';
-  return '<div class="dynamics-vs ' + v.cls + '">' +
-    labelHtml +
-    '<div class="row between text-meta dynamics-vs-top"><span>You: <strong>' + actualStr + '</strong>' + sampleStr + '</span>' +
-    '<span class="c-dim">Target: ' + targetText + '</span></div>' +
-    (v.label ? '<div class="eyebrow dynamics-vs-verdict">' + v.label + '</div>' : '') +
-    '</div>';
-}
-
-// Targets must come from matrixTarget so the user's style offset (TAG/LAG/Nit/etc)
-// is applied — reading SEAT_MATRIX / FLOP_MATRIX directly would skip the offset.
-function renderTableDynamicsReference(hands, d) {
-  var h = '<div class="section">';
-  h += '<div class="section-head">Table Dynamics: You vs Target</div>';
-  h += '<div class="row"><div class="container">';
-  h += '<div class="text-body">Your actual play at each table size and flop multiplicity, compared to the recommended benchmarks for your target style. <span class="c-pos">Green = on target</span>, <span class="c-warn">amber = too low / too tight</span>, <span class="c-neg">red = too high / too loose</span>.</div>';
-  h += '</div></div></div>';
-
-  var styleKey = (typeof getUserStyle === 'function') ? getUserStyle() : 'TAG';
-  var seatKeys = Object.keys(SEAT_MATRIX).map(Number).sort(function(a, b) { return a - b; });
-
-  // SEAT_MATRIX.notes are written as deltas from the previous seat count
-  // ("Adds UTG+1") so they read as nonsense in isolation. These stand alone.
-  var seatCoaching = {
-    2: 'Heads-up: defend the BB very wide and open 80%+ from the button. Postflop is about fold equity. C-bet often, double-barrel turns where you have equity.',
-    3: '3-handed plays like heads-up with one extra seat. BTN opens 60-70%. SB defends wide vs BTN steals. Aggression and position dominate.',
-    4: '4-max: the cutoff joins late position. BTN still opens 50-60%. SB and BB need wider defends than full-ring: calling 3-bets light is fine in position.',
-    5: '5-max: the hijack starts to feel early. Late position is still where you make most of your money. BTN opens 45-55%, CO opens 30-40%.',
-    6: '6-max: UTG is the only true early seat. CO and BTN should be your most-played positions for opens, 3-bets, and steals. Tighten UTG to premiums only.',
-    7: '7-handed adds UTG+1. Early position needs to be tight (premiums and broadway). Late position keeps attacking the blinds aggressively.',
-    8: 'Full-ring 8-max. Tighten UTG and UTG+1 to premiums only. Widen CO/BTN to attack the blinds when folded to.',
-    9: 'Full-ring 9-max. Very disciplined early position: JJ+, AKs/AKo, AQs only from UTG. Exploit weak limps and small opens from the blinds when folded to.'
+  return {
+    playerName: State.meta.player || detectPlayerFromActions(hands) || 'Unknown',
+    exportDate: fmtDate(State.meta.exportedAt),
+    smallSample: smallSample,
+    typeLabel: typeLabel,
+    typeDesc: typeDesc,
   };
+}
 
-  h += '<div class="section">';
-  h += '<div class="section-head">By Table Size</div>';
-  h += '<div class="row"><div class="container">';
-  h += '<div class="dynamics-cards">';
-  for (var si = 0; si < seatKeys.length; si++) {
-    var seats = seatKeys[si];
-    var entry = SEAT_MATRIX[seats];
-    if (!entry) continue;
-    var seatBucket = seats + 'p';
-    var subD = d && d.bySeatBucket ? d.bySeatBucket[seatBucket] : null;
-    var nHands = subD ? subD.n : 0;
+// The one leak to work on next, as a shared-story-card finding object:
+// desc -> openingText, action -> soWhatText. Falls back to the highest
+// severity insight finding, then to a green "solid game" card.
+function mygameWorkFinding(d, hands) {
+  var vpipVal = pct(d.vpip, d.n);
+  var limpVal = pct(d.limpHands, d.n);
+  var aggVal = calcAggression(d.raises, d.calls, d.checks);
+  var ftrVal = pct(d.foldedToRaise, d.facedRaise);
+  var cbetVal = pct(d.cbetDone, d.cbetOpps);
+  var wtsdVal = pct(d.wentToShowdown, d.sawFlop);
 
-    h += '<div class="card dynamics-card">';
-    h += '<div class="card-title c-gold">' + seats + '-handed <span class="c-dim">(' + nHands + ' hands)</span></div>';
-    if (!nHands || !subD.posMap) {
-      h += '<div class="text-body c-dim">' + (nHands ? 'Not enough hands at this table size yet.' : 'No hands at this table size yet.') + '</div>';
-      h += '</div>';
-      continue;
-    }
-
-    h += '<div class="stat">';
-    h += '<div class="eyebrow c-gold">Your play: VPIP by position</div>';
-    h += '<table class="table dynamics-pos-tbl"><thead><tr><th>Pos</th><th>Your VPIP</th><th>Target</th><th>Hands</th></tr></thead><tbody>';
-    for (var pi = 0; pi < entry.positions.length; pi++) {
-      var p = entry.positions[pi];
-      if (!entry.guideByPos[p]) continue;
-      var pm = subD.posMap[p];
-      var actPct = (pm && pm.hands > 0) ? pct(pm.vpip, pm.hands) : null;
-      var band = matrixTarget('vpip', p, seats, styleKey);
-      var cls = band ? bandVerdict(actPct, Math.round(band.tight), Math.round(band.loose)).cls : 'v-na';
-      h += '<tr class="' + cls + '"><td>' + p + '</td><td>' + (actPct != null ? actPct + '%' : '-') + '</td><td class="c-dim">' + fmtBandRange(band) + '</td><td class="c-dim">' + (pm ? pm.hands : 0) + '</td></tr>';
-    }
-    h += '</tbody></table>';
-    h += '</div>';
-
-    if (seatCoaching[seats]) {
-      h += '<div class="insight-coaching">';
-      h += '<div class="eyebrow c-warn">Coaching</div>';
-      h += '<div class="text-body">' + seatCoaching[seats] + '</div>';
-      h += '</div>';
-    }
-    h += '</div>';
-  }
-  h += '</div>';
-  h += '</div></div></div>';
-
-  h += '<div class="section">';
-  h += '<div class="section-head">By Flop Players</div>';
-  h += '<div class="row"><div class="container">';
-  h += '<div class="dynamics-cards">';
-  var flopKeys = ['HU', '3-way', 'multiway'];
-  var flopLabels = { HU: 'Heads-up flop', '3-way': '3-way flop', multiway: 'Multiway flop (4+)' };
-  var flopCbetMod = { HU: 5, '3-way': 0, multiway: -10 };
+  // Classification thresholds track table size: a 50% VPIP at 6-max is loose, at HU it's tight.
   var ctx = getGameContext(d);
-  var domSeats = ctx.seats;
-  var domPos = ctx.defaultPos;
-  for (var fk = 0; fk < flopKeys.length; fk++) {
-    var bk = flopKeys[fk];
-    var fe = FLOP_MATRIX[bk];
-    var subF = d && d.byFlopBucket ? d.byFlopBucket[bk] : null;
-    var nF = subF ? subF.n : 0;
+  var seats = ctx.seats;
+  var afBand = ctx.band('af');
+  var ftrBand = ctx.band('foldToRaise');
+  var cbetBand = ctx.band('cbet');
 
-    h += '<div class="card dynamics-card">';
-    h += '<div class="card-title c-gold">' + flopLabels[bk] + ' <span class="c-dim">(' + nF + ' hands)</span></div>';
-    if (!nF) {
-      h += '<div class="text-body c-dim">No flops with this many players yet.</div>';
-      h += '</div>';
-      continue;
-    }
+  var earlyGroup = calcPositionGroupVpip(d.posMap, EARLY_POSITIONS);
+  var epVpip = earlyGroup.vpip, earlyHands = earlyGroup.hands;
 
-    var cbetActual = subF.cbetOpps > 0 ? pct(subF.cbetDone, subF.cbetOpps) : null;
-    var cbetSeatBand = matrixTarget('cbet', domPos, domSeats, styleKey);
-    var cbetMod = flopCbetMod[bk] || 0;
-    var cbetBand = cbetSeatBand ? {
-      tight: Math.max(0, cbetSeatBand.tight + cbetMod),
-      ideal: Math.max(0, cbetSeatBand.ideal + cbetMod),
-      loose: Math.max(0, cbetSeatBand.loose + cbetMod)
-    } : null;
-    h += '<div class="stat">';
-    h += '<div class="eyebrow c-gold">Your play</div>';
-    h += _vsRow('C-bet', cbetActual, subF.cbetOpps, fmtBandRange(cbetBand));
-    h += '</div>';
+  var allLeaks = (typeof Sections !== 'undefined' && typeof Sections.evaluateSections === 'function')
+    ? Sections.evaluateSections(d, {}, hands).filter(function(f) {
+        return f.severity === 'r' || f.severity === 'a';
+      })
+    : [];
 
-    h += '<div class="insight-coaching">';
-    h += '<div class="eyebrow c-warn">Coaching</div>';
-    h += '<div class="text-body">' + fe.notes + '</div>';
-    h += '<div class="text-meta dynamics-card-kv row between"><span class="eyebrow c-muted">Bet sizing</span><span>' + fe.cbetSizing + '</span></div>';
-    h += '<div class="text-meta dynamics-card-kv row between"><span class="eyebrow c-muted">Continue with</span><span>' + fe.continueRange + '</span></div>';
-    h += '</div>';
-    h += '</div>';
-  }
-  h += '</div>';
-  h += '</div></div></div>';
+  var aggFloor = afBand ? afBand.tight - 3 : 15;
+  var limpCeil = seats && seats <= 2 ? 70 : seats && seats <= 3 ? 45 : 22;
+  var ftrCeil = ftrBand ? ftrBand.loose + 15 : 70;
+  var cbetFloor = cbetBand ? cbetBand.tight - 10 : 25;
+  var wtsdCeil = seats && seats <= 2 ? 55 : 50;
+  var epCeil = (function() {
+    if (!seats || seats <= 3) return null;
+    var b = (typeof matrixTarget === 'function')
+      ? matrixTarget('vpip', 'UTG', seats, getUserStyle()) : null;
+    return b ? b.loose + 5 : 35;
+  })();
 
-  return h;
+  var workOn = null;
+  if (!workOn && aggVal !== null && aggVal < aggFloor) workOn = { sev: 'r', label: 'Too Passive', desc: 'Only ' + aggVal + '% aggression. Expected floor around ' + Math.round(aggFloor) + '%. You check and call when you should be betting for value.', action: 'Next 20 hands: when you have a strong hand, raise instead of calling. Track whether your aggression % moves above ' + Math.round(aggFloor + 5) + '%.' };
+  if (!workOn && limpVal !== null && limpVal > limpCeil) workOn = { sev: 'r', label: 'Limping Too Much', desc: 'You limp ' + limpVal + '% of hands at ' + (seats || '?') + '-max (ceiling around ' + limpCeil + '%). Limping gives up initiative.', action: 'Next 20 hands: every time you want to limp, either raise or fold instead. No flat calls preflop without a raise in front.' };
+  if (!workOn && ftrVal !== null && ftrVal > ftrCeil && d.facedRaise >= 5) workOn = { sev: 'r', label: 'Folding To Pressure', desc: 'You fold ' + ftrVal + '% when raised. Ceiling around ' + Math.round(ftrCeil) + '%.', action: 'Next session: when raised, pause and consider if your hand is strong enough to continue. Look for spots to call or re-raise instead of auto-folding.' };
+  if (!workOn && cbetVal !== null && cbetVal < cbetFloor && d.cbetOpps >= 5) workOn = { sev: 'r', label: 'Low C-Bet', desc: 'You only c-bet ' + cbetVal + '%. Expected floor around ' + Math.round(cbetFloor) + '%.', action: 'Next session: when you raised preflop and the flop comes, bet at least half the time regardless of whether you connected. Maintaining aggression wins pots.' };
+  if (!workOn && wtsdVal !== null && wtsdVal > wtsdCeil) workOn = { sev: 'r', label: 'Paying Off Too Much', desc: 'WTSD at ' + wtsdVal + '%. Ceiling around ' + wtsdCeil + '%.', action: 'Next session: on the river facing a big bet, ask whether your hand beats their value range. If not, fold. Saving one big call per session adds up.' };
+  if (!workOn && epCeil && epVpip !== null && epVpip > epCeil && earlyHands >= 10) workOn = { sev: 'r', label: 'Too Loose Early', desc: 'EP VPIP at ' + epVpip + '%. Ceiling around ' + epCeil + '%.', action: 'Next session: from UTG/MP, only play top 25% of hands. Fold marginal suited connectors and weak aces from these seats.' };
+  if (!workOn && allLeaks.length) workOn = { sev: allLeaks[0].severity, label: allLeaks[0].name, desc: '', action: 'Focus on this pattern in your next session and track whether the stat improves.' };
+
+  return workOn
+    ? { name: workOn.label, severity: workOn.sev, openingText: workOn.desc || '', soWhatText: workOn.action }
+    : { name: 'Solid game', severity: 'g', openingText: 'No major leaks detected from ' + d.n + ' hands. Keep playing to refine the picture.' };
 }
 
 var _STYLE_ANCHORS = {
@@ -312,47 +107,16 @@ function _smGapPhrase(detected, target) {
   return 'Both VPIP and aggression need work to hit the target.';
 }
 
-function renderStyleMap(container, d, hands) {
-  if (!container) return;
-
+// Data behind the style-map scatter: you overall, per-position and per-seat
+// points, plus the TAG and target anchors.
+function styleMapModel(d) {
   var detected = (typeof detectCurrentStyle === 'function') ? detectCurrentStyle(d) : null;
   var targetStyleName = (typeof getTargetStyle === 'function') ? getTargetStyle() : 'TAG';
-  var targetAnchor = _styleAnchor(targetStyleName);
-  var tagAnchor = _styleAnchor('TAG');
-
-  var titleSentence = '';
-  if (detected) {
-    titleSentence = 'You play like a ' + detected.name + '. Your target is ' + targetStyleName + '. ' + _smGapPhrase(detected, targetStyleName);
-  } else {
-    titleSentence = 'Your target style is ' + targetStyleName + '.';
-  }
-
-  var html = '';
-  html += '<div class="text-body">' + titleSentence + '</div>';
-
-  html += '<div class="style-map-canvas-wrap"><canvas id="style-map-chart"></canvas></div>';
-
-  html += '<div class="legend">';
-  html += '<div class="legend-item"><span class="dot dot-lg bg-pos sm-dot-you"></span><span>You (overall)</span></div>';
-  html += '<div class="legend-item"><span class="dot dot-lg dot-cat-pos"></span><span>By position</span></div>';
-  html += '<div class="legend-item"><span class="dot dot-lg dot-cat-seat"></span><span>By table size</span></div>';
-  html += '<div class="legend-item"><span class="dot dot-lg dot-cat-tag sm-dot-tag"></span><span>TAG reference</span></div>';
-  html += '<div class="legend-item"><span class="dot dot-lg bg-gold"></span><span>Target: ' + targetStyleName + '</span></div>';
-  html += '</div>';
-
-  container.innerHTML = html;
-
-  var canvas = document.getElementById('style-map-chart');
-  if (!canvas || typeof Chart === 'undefined') return;
-
-  var colors = (typeof getChartColors === 'function') ? getChartColors() : {
-    dim: '#666', border: '#333', green: '#2ecc71', gold: '#f1c40f', red: '#e74c3c', amber: '#e67e22'
-  };
 
   var youAgg = null;
-  var aggVpip = (typeof pct === 'function') ? pct(d.vpip, d.n) : null;
-  var aggAf = (typeof calcAggression === 'function') ? calcAggression(d.raises, d.calls, d.checks) : null;
-  if (aggVpip != null && aggAf != null) youAgg = { vpip: aggVpip, af: aggAf, n: d.n };
+  var vpip = (typeof pct === 'function') ? pct(d.vpip, d.n) : null;
+  var af = (typeof calcAggression === 'function') ? calcAggression(d.raises, d.calls, d.checks) : null;
+  if (vpip != null && af != null) youAgg = { vpip: vpip, af: af, n: d.n };
 
   var posPoints = [];
   if (d.byPosition) {
@@ -372,135 +136,28 @@ function renderStyleMap(container, d, hands) {
       if (sd && sd.gated) continue;
       var srd = _smReadBucket(sd);
       if (!srd) continue;
-      var seatLabel = String(sb).replace(/p$/, '') + '-handed';
-      seatPoints.push({ x: srd.vpip, y: srd.af, n: srd.n, label: seatLabel });
+      seatPoints.push({ x: srd.vpip, y: srd.af, n: srd.n, label: String(sb).replace(/p$/, '') + '-handed' });
     }
   }
 
-  function _radiusForN(n, base, max) {
-    base = base || 4;
-    max = max || 14;
-    var r = base + Math.sqrt(Math.max(1, n)) / 4;
-    return Math.min(max, r);
-  }
+  var titleSentence = detected
+    ? 'You play like a ' + detected.name + '. Your target is ' + targetStyleName + '. ' + _smGapPhrase(detected, targetStyleName)
+    : 'Your target style is ' + targetStyleName + '.';
 
-  var datasets = [];
+  return {
+    targetStyleName: targetStyleName,
+    targetAnchor: _styleAnchor(targetStyleName),
+    tagAnchor: _styleAnchor('TAG'),
+    youAgg: youAgg,
+    posPoints: posPoints,
+    seatPoints: seatPoints,
+    titleSentence: titleSentence,
+  };
+}
 
-  if (youAgg) {
-    datasets.push({
-      type: 'line',
-      label: 'Gap to target',
-      data: [
-        { x: youAgg.vpip, y: youAgg.af },
-        { x: targetAnchor.vpip, y: targetAnchor.af }
-      ],
-      borderColor: colors.gold,
-      borderWidth: 2,
-      borderDash: [4, 4],
-      pointRadius: 0,
-      pointHoverRadius: 0,
-      fill: false,
-      showLine: true,
-      tension: 0
-    });
-  }
-
-  if (posPoints.length) {
-    datasets.push({
-      type: 'scatter',
-      label: 'By position',
-      data: posPoints.map(function(p) { return { x: p.x, y: p.y, _label: p.label, _n: p.n }; }),
-      backgroundColor: 'rgba(160, 200, 240, 0.55)',
-      borderColor: 'rgba(160, 200, 240, 0.9)',
-      pointRadius: posPoints.map(function(p) { return _radiusForN(p.n, 4, 11); }),
-      pointHoverRadius: posPoints.map(function(p) { return _radiusForN(p.n, 4, 11) + 2; })
-    });
-  }
-
-  if (seatPoints.length) {
-    datasets.push({
-      type: 'scatter',
-      label: 'By table size',
-      data: seatPoints.map(function(p) { return { x: p.x, y: p.y, _label: p.label, _n: p.n }; }),
-      backgroundColor: 'rgba(200, 160, 220, 0.55)',
-      borderColor: 'rgba(200, 160, 220, 0.9)',
-      pointRadius: seatPoints.map(function(p) { return _radiusForN(p.n, 4, 11); }),
-      pointHoverRadius: seatPoints.map(function(p) { return _radiusForN(p.n, 4, 11) + 2; })
-    });
-  }
-
-  datasets.push({
-    type: 'scatter',
-    label: 'TAG',
-    data: [{ x: tagAnchor.vpip, y: tagAnchor.af, _label: 'TAG' }],
-    backgroundColor: 'rgba(160, 160, 160, 0.7)',
-    borderColor: 'rgba(200, 200, 200, 0.9)',
-    pointRadius: 9,
-    pointStyle: 'rectRot'
-  });
-
-  datasets.push({
-    type: 'scatter',
-    label: 'Target: ' + targetStyleName,
-    data: [{ x: targetAnchor.vpip, y: targetAnchor.af, _label: targetStyleName }],
-    backgroundColor: colors.gold,
-    borderColor: colors.gold,
-    pointRadius: 11,
-    pointStyle: 'star'
-  });
-
-  // Drawn last so it sits on top.
-  if (youAgg) {
-    datasets.push({
-      type: 'scatter',
-      label: 'You',
-      data: [{ x: youAgg.vpip, y: youAgg.af, _label: 'You', _n: youAgg.n }],
-      backgroundColor: colors.green,
-      borderColor: '#fff',
-      borderWidth: 2,
-      pointRadius: 12,
-      pointHoverRadius: 14
-    });
-  }
-
-  new Chart(canvas, {
-    type: 'scatter',
-    data: { datasets: datasets },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: chartTooltip(colors, {
-          label: function(ctx) {
-            var raw = ctx.raw || {};
-            var lab = raw._label || ctx.dataset.label || '';
-            var x = ctx.parsed && ctx.parsed.x != null ? Math.round(ctx.parsed.x * 10) / 10 : '?';
-            var y = ctx.parsed && ctx.parsed.y != null ? Math.round(ctx.parsed.y * 10) / 10 : '?';
-            var s = lab + ': VPIP ' + x + '%, AF ' + y + '%';
-            if (raw._n) s += ' (' + raw._n + ' hands)';
-            return s;
-          }
-        })
-      },
-      scales: {
-        x: {
-          type: 'linear',
-          min: 0,
-          max: 70,
-          title: { display: true, text: 'VPIP %', color: colors.dim, font: { family: 'IBM Plex Mono', size: 11 } },
-          ticks: { color: colors.dim, font: { family: 'IBM Plex Mono', size: 10 } },
-          grid: { color: colors.border }
-        },
-        y: {
-          type: 'linear',
-          min: 0,
-          max: 70,
-          title: { display: true, text: 'Aggression %', color: colors.dim, font: { family: 'IBM Plex Mono', size: 11 } },
-          ticks: { color: colors.dim, font: { family: 'IBM Plex Mono', size: 10 } },
-          grid: { color: colors.border }
-        }
-      }
-    }
-  });
+function _parsePctRange(s) {
+  if (!s) return null;
+  var m = s.match(/(\d+)\s*-\s*(\d+)/);
+  if (!m) return null;
+  return [parseInt(m[1], 10), parseInt(m[2], 10)];
 }

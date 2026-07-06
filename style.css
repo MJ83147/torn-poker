@@ -8,7 +8,7 @@
                           container) + layout/spacing helpers (flex, gap,
                           margin, pad)
    §4  COMPONENTS ........ shared blocks: card, box, button, table, story, bar
-   §5  FEATURES .......... range grid, equity viz, charts, carousel, sentence
+   §5  FEATURES .......... range grid, equity viz, charts, sentence
    §6  PANEL-SPECIFIC .... genuinely-unique blocks (My Game, saved hands, style)
    §7  RESPONSIVE ........ breakpoint overrides
    --------------------------------------------------------------------------
@@ -1533,48 +1533,6 @@ a {
   cursor: pointer;
 }
 
-/* --- Carousel: track of slides + arrows + dots --- */
-.carousel {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: var(--sp-8);
-}
-
-.carousel-track {
-  flex: 1;
-  position: relative;
-  min-height: 42px;
-}
-
-.carousel-slide {
-  display: none;
-}
-
-.carousel-slide.active {
-  display: block;
-}
-
-.carousel-dots {
-  display: flex;
-  gap: var(--sp-6);
-  justify-content: center;
-  margin-top: var(--sp-8);
-}
-
-.carousel-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: var(--r-pill);
-  background: var(--border);
-  cursor: pointer;
-  transition: background .2s;
-}
-
-.carousel-dot.active {
-  background: var(--gold);
-}
-
 /* --- Sentence builder: serif stem with clickable clause tokens --- */
 .sentence {
   font-family: var(--serif);
@@ -1872,10 +1830,6 @@ body.maintenance #maintenance {
   z-index: 1001;
   box-shadow: 0 8px 32px var(--bg-overlay);
   border-radius: 0 0 var(--r-lg) var(--r-lg);
-}
-
-.tab-menu.open .tab-menu-items {
-  display: block;
 }
 
 .tab-item {
@@ -2346,36 +2300,6 @@ textarea#jin {
   font-style: italic;
 }
 
-.welcome-wrap {
-  max-width: none;
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-24);
-}
-
-.welcome-body {
-  display: grid;
-  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
-  gap: 40px;
-  align-items: flex-start;
-}
-
-/* Right column of the welcome page: Tips carousel above the What's New cards. */
-.welcome-aside {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-24);
-  min-width: 0;
-}
-
-.welcome-toc {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-width: 0;
-  gap: var(--sp-4);
-}
-
 .card-glyph.r {
   color: var(--red);
 }
@@ -2655,29 +2579,14 @@ textarea#jin {
    over the base rules they narrow (which are defined in the sections above).
    ========================================================================== */
 
-/* Tablet: collapse the welcome two-column body and saved-hands grid to one
-   column. (These were orphaned in the css2 cutover, forcing single-column on
-   every screen; restored to real breakpoints here.) */
+/* Tablet: collapse the saved-hands grid to one column. */
 @media (max-width: 900px) {
-  .welcome-body {
-    grid-template-columns: 1fr;
-    gap: var(--sp-16);
-  }
-
   .saved-hands-list {
     grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 560px) {
-  .welcome-body {
-    gap: var(--sp-16);
-  }
-
-  .welcome-toc .text-body {
-    font-size: var(--fs-xs);
-  }
-
   .saved-hands-list {
     grid-template-columns: 1fr;
     gap: var(--sp-8);
@@ -2686,4 +2595,250 @@ textarea#jin {
   .saved-card {
     padding: var(--sp-12);
   }
+}
+/* ===== Home & hub pages (nav redesign) =====
+   The welcome tab is a compact home: hero band, three area hub cards, then a
+   What's-new carousel beside a rotating tip. Each area also has a hub page of
+   page cards. These panels run on their own tight rhythm, so the default
+   .panel.on gap is zeroed and the blocks carry their own margins. */
+
+/* Dropdowns open on hover; clicking the section label opens its hub page. */
+.tab-menu:hover .tab-menu-items {
+  display: block;
+}
+
+#p-welcome.on,
+#p-hub-sum.on,
+#p-hub-brk.on,
+#p-hub-his.on {
+  gap: 0;
+}
+
+/* home: compact hero — one tight band, not a full screen of headline */
+.home-hero {
+  margin-bottom: var(--sp-24);
+}
+
+.home-hero h1 {
+  font-size: clamp(32px, 4vw, 44px);
+  line-height: var(--lh-none);
+  color: var(--gold);
+}
+
+.home-hero .lead {
+  font-family: var(--mono);
+  font-size: var(--fs-md);
+  color: var(--dim);
+  max-width: 60ch;
+  margin-top: var(--sp-6);
+}
+
+.home-tour-btn {
+  white-space: nowrap;
+}
+
+.areas-head {
+  margin-bottom: var(--sp-16);
+}
+
+/* the hubs — the hero of the page: three tall cards, or one stacked column */
+.hub-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--sp-16);
+}
+
+@media (max-width: 980px) {
+  .hub-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.hub-card {
+  text-align: left;
+  justify-content: flex-start;
+  gap: var(--sp-16);
+  padding: var(--sp-24) var(--sp-24) var(--sp-16);
+  min-height: 240px;
+}
+
+.hub-card h2 {
+  color: var(--gold);
+}
+
+.hub-card .text-body {
+  flex: 1;
+}
+
+.hub-card .hub-pages {
+  padding-top: var(--sp-12);
+  border-top: var(--bw) solid var(--border);
+  color: var(--dim);
+  font-size: var(--fs-xs);
+  letter-spacing: .5px;
+  text-transform: uppercase;
+  line-height: var(--lh-snug);
+}
+
+.hub-card .go,
+.page-card .go {
+  color: var(--gold);
+  font-weight: var(--fw-semibold);
+  font-size: var(--fs-md);
+}
+
+/* hub page */
+.crumb {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-6);
+  color: var(--dim);
+  font-size: var(--fs-xs);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  margin-bottom: var(--sp-16);
+}
+
+.crumb:hover {
+  color: var(--gold);
+}
+
+.hub-head {
+  margin-bottom: var(--sp-48);
+}
+
+.hub-head h1 {
+  color: var(--gold);
+}
+
+.hub-head .lead {
+  font-size: var(--fs-xl);
+  max-width: 760px;
+  margin-top: var(--sp-12);
+}
+
+.subgroup-head {
+  font-family: var(--serif);
+  font-size: var(--fs-2xl);
+  color: var(--text);
+  margin: var(--sp-48) 0 var(--sp-16);
+}
+
+.hub-head + .subgroup-head {
+  margin-top: 0;
+}
+
+.page-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--sp-24);
+}
+
+@media (max-width: 620px) {
+  .page-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.page-card {
+  text-align: left;
+  padding: var(--sp-16);
+}
+
+.page-card h3 {
+  color: var(--gold);
+}
+
+.page-card .go {
+  margin-top: auto;
+  padding-top: var(--sp-8);
+}
+
+/* home foot: What's new (left) + Tip (right) share one compact row */
+.home-foot {
+  display: grid;
+  grid-template-columns: 1.7fr 1fr;
+  gap: var(--sp-24);
+  align-items: stretch;
+  margin-top: var(--sp-24);
+  padding-top: var(--sp-24);
+  border-top: var(--bw) solid var(--border);
+}
+
+@media (max-width: 860px) {
+  .home-foot {
+    grid-template-columns: 1fr;
+  }
+}
+
+.wn-head {
+  margin-bottom: var(--sp-12);
+}
+
+.wn-controls {
+  gap: var(--sp-8);
+}
+
+.whatsnew .card {
+  text-align: left;
+  padding: var(--sp-16);
+}
+
+.wn-slide {
+  display: none;
+}
+
+.wn-slide.on {
+  display: flex;
+}
+
+.wn-dots {
+  display: flex;
+  gap: var(--sp-6);
+  align-items: center;
+}
+
+.wn-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--r-pill);
+  background: var(--border);
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.wn-dot.on {
+  background: var(--gold);
+}
+
+.card > .badge {
+  align-self: flex-start;
+}
+
+.tip-panel {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--sp-8);
+  background: var(--s2);
+  border: var(--bw) solid var(--border);
+  border-radius: var(--r-lg);
+  padding: var(--sp-24);
+}
+
+.tip-panel .tip-label {
+  font-size: var(--fs-xs);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--gold2);
+}
+
+.tip-panel .tip-text {
+  font-size: var(--fs-md);
+  font-weight: 300;
+  line-height: var(--lh-body);
+  color: var(--text);
+  transition: opacity .3s;
 }

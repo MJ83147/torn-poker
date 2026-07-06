@@ -1,20 +1,32 @@
-const RANKS = ['2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A'];
-const SUITS = ['\u2660', '\u2665', '\u2666', '\u2663'];
+const RANKS = ["2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", "K", "A"];
+const SUITS = ["\u2660", "\u2665", "\u2666", "\u2663"];
 
 var SUIT_WORD = {
-  'diamonds': '♦', 'hearts': '♥', 'spades': '♠', 'clubs': '♣',
-  'diamond': '♦', 'heart': '♥', 'spade': '♠', 'club': '♣'
+  diamonds: "♦",
+  hearts: "♥",
+  spades: "♠",
+  clubs: "♣",
+  diamond: "♦",
+  heart: "♥",
+  spade: "♠",
+  club: "♣",
 };
-var SUIT_LETTER  = { h: '\u2665', d: '\u2666', c: '\u2663', s: '\u2660' };
-var SUIT_TO_CODE = { '\u2665': 'h', '\u2666': 'd', '\u2663': 'c', '\u2660': 's' };
-var SUIT_CLASS   = { h: 'r', d: 'r', c: 'b', s: 'b' };
+var SUIT_LETTER = { h: "\u2665", d: "\u2666", c: "\u2663", s: "\u2660" };
+var SUIT_TO_CODE = { "\u2665": "h", "\u2666": "d", "\u2663": "c", "\u2660": "s" };
+var SUIT_CLASS = { h: "r", d: "r", c: "b", s: "b" };
 
 // ---- Card primitives (shared by hand-evaluator, insights, panels) ----
 // Accessors on a "rank+suit" card string ("A\u2660", "Ts"): the last char is the
 // suit, everything before it is the rank.
-function cardRank(card) { return card.slice(0, -1); }
-function cardSuit(card) { return card.slice(-1); }
-function cardRankIndex(card) { return RANKS.indexOf(card.slice(0, -1)); }
+function cardRank(card) {
+  return card.slice(0, -1);
+}
+function cardSuit(card) {
+  return card.slice(-1);
+}
+function cardRankIndex(card) {
+  return RANKS.indexOf(card.slice(0, -1));
+}
 
 // Frequency map over an array of primitive values: [a,a,b] -> {a:2, b:1}.
 // Centralises the counts[k]=(counts[k]||0)+1 idiom used for rank/suit tallies.
@@ -28,14 +40,15 @@ function freqMap(values) {
 
 // Normalise to "rank+suit-symbol": "3hearts"→"3♥", "10spades"→"T♠", "Ts"→"Ts"
 function normCard(c) {
-  if (!c || typeof c !== 'string') return c;
+  if (!c || typeof c !== "string") return c;
   var m = c.match(/^(\d{1,2}|[AKQJT])([a-z]+)$/i);
   if (m) {
-    var rank = m[1]; if (rank === '10') rank = 'T';
+    var rank = m[1];
+    if (rank === "10") rank = "T";
     var suit = SUIT_WORD[m[2].toLowerCase()];
     return suit ? rank + suit : c;
   }
-  if (c.length > 2 && c.slice(0, 2) === '10') return 'T' + c.slice(2);
+  if (c.length > 2 && c.slice(0, 2) === "10") return "T" + c.slice(2);
   return c;
 }
 
@@ -51,12 +64,12 @@ function displayCard(c) {
   if (!c || c.length < 2) return c;
   var rank = c.slice(0, -1);
   var suit = c.slice(-1);
-  if (rank === 'T') rank = '10';
-  return '<span class="card-glyph ' + (SUIT_CLASS[SUIT_TO_CODE[suit] || suit] || 'b') + '">' + rank + (SUIT_LETTER[SUIT_TO_CODE[suit] || suit] || suit) + '</span>';
+  if (rank === "T") rank = "10";
+  return '<span class="card-glyph ' + (SUIT_CLASS[SUIT_TO_CODE[suit] || suit] || "b") + '">' + rank + (SUIT_LETTER[SUIT_TO_CODE[suit] || suit] || suit) + "</span>";
 }
 
 function displayCards(cards) {
-  return cards.map(displayCard).join(' ');
+  return cards.map(displayCard).join(" ");
 }
 
 function classifyBoardTexture(boardCards) {
@@ -67,17 +80,24 @@ function classifyBoardTexture(boardCards) {
 
   var suitCounts = freqMap(suits);
   var maxSuit = 0;
-  for (var s in suitCounts) { if (suitCounts[s] > maxSuit) maxSuit = suitCounts[s]; }
+  for (var s in suitCounts) {
+    if (suitCounts[s] > maxSuit) maxSuit = suitCounts[s];
+  }
 
   var monotone = maxSuit === cards.length;
   var twoTone = !monotone && maxSuit >= 2;
   var rainbow = Object.keys(suitCounts).length >= 3;
   var flushDraw = !monotone && maxSuit >= 3;
 
-  var sorted = ranks.slice().sort(function(a, b) { return a - b; });
+  var sorted = ranks.slice().sort(function (a, b) {
+    return a - b;
+  });
   var paired = false;
   for (var p = 1; p < sorted.length; p++) {
-    if (sorted[p] === sorted[p - 1]) { paired = true; break; }
+    if (sorted[p] === sorted[p - 1]) {
+      paired = true;
+      break;
+    }
   }
 
   var connected = false;
@@ -91,7 +111,10 @@ function classifyBoardTexture(boardCards) {
     for (var wi = 0; wi < unique.length; wi++) {
       if (unique[wi] >= w && unique[wi] <= w + 4) inWindow++;
     }
-    if (inWindow >= 3) { connected = true; break; }
+    if (inWindow >= 3) {
+      connected = true;
+      break;
+    }
   }
   if (connected && cards.length <= 4) straightDraw = true;
 
@@ -116,34 +139,40 @@ function classifyBoardTexture(boardCards) {
   if (sorted[sorted.length - 1] === 12 && !connected) score -= 1;
   score = Math.max(0, Math.min(10, score));
 
-  var wetness = score <= 3 ? 'dry' : score <= 6 ? 'medium' : 'wet';
+  var wetness = score <= 3 ? "dry" : score <= 6 ? "medium" : "wet";
 
   var tags = [];
-  if (wetness === 'wet') tags.push('Wet');
-  else if (wetness === 'dry') tags.push('Dry');
-  if (monotone) tags.push('Monotone');
-  else if (twoTone) tags.push('Two-tone');
-  else if (rainbow) tags.push('Rainbow');
-  if (paired) tags.push('Paired');
-  if (connected) tags.push('Connected');
+  if (wetness === "wet") tags.push("Wet");
+  else if (wetness === "dry") tags.push("Dry");
+  if (monotone) tags.push("Monotone");
+  else if (twoTone) tags.push("Two-tone");
+  else if (rainbow) tags.push("Rainbow");
+  if (paired) tags.push("Paired");
+  if (connected) tags.push("Connected");
 
   return {
-    wetness: wetness, monotone: monotone, twoTone: twoTone, rainbow: rainbow,
-    paired: paired, flushDraw: flushDraw, straightDraw: straightDraw,
-    connected: connected, highCard: highCard, score: score,
+    wetness: wetness,
+    monotone: monotone,
+    twoTone: twoTone,
+    rainbow: rainbow,
+    paired: paired,
+    flushDraw: flushDraw,
+    straightDraw: straightDraw,
+    connected: connected,
+    highCard: highCard,
+    score: score,
     boardRankCounts: boardRankCounts,
-    tags: tags, label: tags.join(' ')
+    tags: tags,
+    label: tags.join(" "),
   };
 }
 
-
-/* ===== merged from hand-parsing.js ===== */
 function parseActions(actions) {
   // Hands are schemaVersion 2: actions already ship as structured objects
   // ({ author, isMe, street, type, amount, raiseTo, allIn }). Pass them through
   // verbatim. An empty or otherwise unstructured array yields no actions.
   if (!Array.isArray(actions) || !actions.length) return [];
-  return (typeof actions[0] === 'object' && actions[0] !== null) ? actions : [];
+  return typeof actions[0] === "object" && actions[0] !== null ? actions : [];
 }
 
 // Structured hands carry an explicit allIn boolean; absent means not all-in.
@@ -157,39 +186,41 @@ function parseHoleKey(hole) {
   if (hole._keyCached) return hole._key;
   var r1 = hole[0].slice(0, -1);
   var r2 = hole[1].slice(0, -1);
-  if (r1 === '10') r1 = 'T';
-  if (r2 === '10') r2 = 'T';
+  if (r1 === "10") r1 = "T";
+  if (r2 === "10") r2 = "T";
   const s1 = hole[0].slice(-1);
   const s2 = hole[1].slice(-1);
   const v1 = RANKS.indexOf(r1);
   const v2 = RANKS.indexOf(r2);
-  if (v1 < 0 || v2 < 0) { hole._key = null; hole._keyCached = true; return null; }
+  if (v1 < 0 || v2 < 0) {
+    hole._key = null;
+    hole._keyCached = true;
+    return null;
+  }
   const hi = Math.max(v1, v2);
   const lo = Math.min(v1, v2);
-  var key = hi === lo
-    ? RANKS[hi] + RANKS[hi]
-    : RANKS[hi] + RANKS[lo] + (s1 === s2 ? 's' : 'o');
+  var key = hi === lo ? RANKS[hi] + RANKS[hi] : RANKS[hi] + RANKS[lo] + (s1 === s2 ? "s" : "o");
   hole._key = key;
   hole._keyCached = true;
   return key;
 }
 
 function classifyKey(key) {
-  if (!key) return 'unknown';
-  if (key.length >= 2 && key[0] === key[1] && RANKS.includes(key[0])) return 'Pocket Pairs';
-  const suited = key.endsWith('s');
+  if (!key) return "unknown";
+  if (key.length >= 2 && key[0] === key[1] && RANKS.includes(key[0])) return "Pocket Pairs";
+  const suited = key.endsWith("s");
   const r1 = key[0];
-  const r2 = key.endsWith('s') || key.endsWith('o') ? key.slice(1, -1) : key.slice(1);
+  const r2 = key.endsWith("s") || key.endsWith("o") ? key.slice(1, -1) : key.slice(1);
   const v1 = RANKS.indexOf(r1);
   const v2 = RANKS.indexOf(r2);
   const hi = Math.max(v1, v2);
   const lo = Math.min(v1, v2);
-  if (hi >= 12 && lo >= 9) return 'Broadway';
-  if (hi === 12) return 'Ace-Rag';
-  if (suited && hi - lo <= 4) return 'Suited Connectors';
-  if (suited) return 'Suited';
-  if (!suited && hi - lo <= 4) return 'Connectors';
-  return 'Offsuit Trash';
+  if (hi >= 12 && lo >= 9) return "Broadway";
+  if (hi === 12) return "Ace-Rag";
+  if (suited && hi - lo <= 4) return "Suited Connectors";
+  if (suited) return "Suited";
+  if (!suited && hi - lo <= 4) return "Connectors";
+  return "Offsuit Trash";
 }
 
 function countHandPlayers(hand) {
@@ -202,7 +233,10 @@ function countHandPlayers(hand) {
     n = 0;
     for (var i = 0; i < parsed.length; i++) {
       var a = parsed[i].author;
-      if (!seen[a]) { seen[a] = true; n++; }
+      if (!seen[a]) {
+        seen[a] = true;
+        n++;
+      }
     }
   }
   return Math.min(n, 9);
@@ -218,24 +252,26 @@ function countActivePerStreet(hand) {
   var folded = {};
   var activeCount = seats;
   var seenAuthors = {};
-  var reachedFlop = false, reachedTurn = false, reachedRiver = false;
+  var reachedFlop = false,
+    reachedTurn = false,
+    reachedRiver = false;
 
   for (var i = 0; i < acts.length; i++) {
     var a = acts[i];
-    if (a.street === 'Flop' && !reachedFlop) {
+    if (a.street === "Flop" && !reachedFlop) {
       result.flop = activeCount;
       reachedFlop = true;
     }
-    if (a.street === 'Turn' && !reachedTurn) {
+    if (a.street === "Turn" && !reachedTurn) {
       result.turn = activeCount;
       reachedTurn = true;
     }
-    if (a.street === 'River' && !reachedRiver) {
+    if (a.street === "River" && !reachedRiver) {
       result.river = activeCount;
       reachedRiver = true;
     }
     if (a.author && !seenAuthors[a.author]) seenAuthors[a.author] = true;
-    if (a.type === 'fold' && a.author && !folded[a.author]) {
+    if (a.type === "fold" && a.author && !folded[a.author]) {
       folded[a.author] = true;
       activeCount--;
     }
@@ -250,7 +286,7 @@ function countActivePerStreet(hand) {
 }
 
 function estimateEffStackBB(hand) {
-  var bb = (typeof getHandBB === 'function') ? getHandBB(hand) : null;
+  var bb = typeof getHandBB === "function" ? getHandBB(hand) : null;
   if (!bb || bb <= 0) bb = hand.bigBlind || null;
   if (!bb || bb <= 0) return null;
 
@@ -273,12 +309,15 @@ function estimateEffStackBB(hand) {
     var a = acts[i];
     if (a.isMe) heroAuthor = a.author;
     if (!a.author) continue;
-    if (a.type === 'fold') { folded[a.author] = true; continue; }
-    if (a.type === 'won') continue;
+    if (a.type === "fold") {
+      folded[a.author] = true;
+      continue;
+    }
+    if (a.type === "won") continue;
     if (isAllInAction(acts, i)) sawAllIn = true;
 
     // Structured hands carry the raise total explicitly as raiseTo; prefer it.
-    if (a.type === 'raise' && typeof a.raiseTo === 'number') {
+    if (a.type === "raise" && typeof a.raiseTo === "number") {
       var totalR = a.raiseTo;
       if (!committed[a.author] || totalR > committed[a.author]) committed[a.author] = totalR;
       continue;
@@ -310,11 +349,9 @@ function estimateEffStackBB(hand) {
 
 function isShowdown(hand) {
   // Structured hands carry an explicit showdown boolean.
-  return typeof hand.showdown === 'boolean' ? hand.showdown : false;
+  return typeof hand.showdown === "boolean" ? hand.showdown : false;
 }
 
-
-/* ===== merged from hand-predicates.js ===== */
 // Loads after analysis.js (getInvested) and hand-parsing.js (parseActions).
 
 function heroPlayed(h) {
@@ -323,7 +360,7 @@ function heroPlayed(h) {
   for (var i = 0; i < acts.length; i++) {
     var a = acts[i];
     if (!a.isMe) continue;
-    if (a.type === 'call' || a.type === 'bet' || a.type === 'raise') return true;
+    if (a.type === "call" || a.type === "bet" || a.type === "raise") return true;
   }
   return false;
 }
@@ -333,21 +370,21 @@ function heroFoldedPreflop(h) {
   var acts = parseActions(h.actions);
   for (var i = 0; i < acts.length; i++) {
     var a = acts[i];
-    if (!a.isMe || a.street !== 'Preflop') continue;
-    if (a.type === 'sb' || a.type === 'bb') continue;
-    return a.type === 'fold';
+    if (!a.isMe || a.street !== "Preflop") continue;
+    if (a.type === "sb" || a.type === "bb") continue;
+    return a.type === "fold";
   }
   return false;
 }
 
 function heroLost(h) {
   if (!h || !h.outcome) return false;
-  if (h.outcome.result === 'won') return false;
+  if (h.outcome.result === "won") return false;
   return getInvested(h) > 0;
 }
 
 function heroWon(h) {
-  if (!h || !h.outcome || h.outcome.result !== 'won') return false;
+  if (!h || !h.outcome || h.outcome.result !== "won") return false;
   return (h.outcome.amount || 0) - getInvested(h) > 0;
 }
 

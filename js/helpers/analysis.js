@@ -1,63 +1,71 @@
 function isStrongShowdownHand(strength) {
   if (!strength) return false;
   var s = String(strength).toLowerCase();
-  return s.indexOf('two pair') !== -1 ||
-         s.indexOf('three of a kind') !== -1 ||
-         s.indexOf('straight') !== -1 ||
-         s.indexOf('flush') !== -1 ||
-         s.indexOf('full house') !== -1 ||
-         s.indexOf('four of a kind') !== -1;
+  return (
+    s.indexOf("two pair") !== -1 ||
+    s.indexOf("three of a kind") !== -1 ||
+    s.indexOf("straight") !== -1 ||
+    s.indexOf("flush") !== -1 ||
+    s.indexOf("full house") !== -1 ||
+    s.indexOf("four of a kind") !== -1
+  );
 }
 
 function getInvested(h) {
   if (!h) return 0;
   // Structured (v2) hands always carry a numeric `invested` (0 is valid for a fold).
-  return (typeof h.invested === 'number') ? h.invested : 0;
+  return typeof h.invested === "number" ? h.invested : 0;
 }
 
 function getHeroActions(h) {
-  return parseActions(h.actions).filter(function(a) { return a.isMe; });
+  return parseActions(h.actions).filter(function (a) {
+    return a.isMe;
+  });
 }
 
 function getActsSummary(h) {
-  return getHeroActions(h).map(function(a) { return a.type; }).join(' · ');
+  return getHeroActions(h)
+    .map(function (a) {
+      return a.type;
+    })
+    .join(" · ");
 }
 
 function getHandPnl(h) {
-  if (!h.outcome) return { cls: 'c-muted', text: '?' };
+  if (!h.outcome) return { cls: "c-muted", text: "?" };
   var invested = getInvested(h);
-  if (h.outcome.result === 'won') {
+  if (h.outcome.result === "won") {
     var profit = (h.outcome.amount || 0) - invested;
-    if (profit >= 0) return { cls: 'c-pos', text: '+' + fmt(profit) };
-    return { cls: 'c-neg', text: '-' + fmt(Math.abs(profit)) };
+    if (profit >= 0) return { cls: "c-pos", text: "+" + fmt(profit) };
+    return { cls: "c-neg", text: "-" + fmt(Math.abs(profit)) };
   }
-  if (h.outcome.result === 'folded') {
-    return { cls: 'c-neg', text: invested > 0 ? '-' + fmt(invested) : 'folded' };
+  if (h.outcome.result === "folded") {
+    return { cls: "c-neg", text: invested > 0 ? "-" + fmt(invested) : "folded" };
   }
-  return { cls: 'c-neg', text: '-' + fmt(invested) };
+  return { cls: "c-neg", text: "-" + fmt(invested) };
 }
 
 function getHandPnlValue(h) {
   if (!h.outcome) return 0;
   var invested = getInvested(h);
-  if (h.outcome.result === 'won') return (h.outcome.amount || 0) - invested;
+  if (h.outcome.result === "won") return (h.outcome.amount || 0) - invested;
   return -invested;
 }
 
 function inferTable(hand) {
   if (hand.tableId) {
-    const num = String(hand.tableId).replace(/\D/g, '');
+    const num = String(hand.tableId).replace(/\D/g, "");
     if (num && TABLE_META[num]) return Number(num);
   }
   if (hand.table) {
-    const num = String(hand.table).replace(/\D/g, '');
+    const num = String(hand.table).replace(/\D/g, "");
     if (num && TABLE_META[num]) return Number(num);
   }
   if (hand.bigBlind) {
     const candidates = BB_TO_TABLES[hand.bigBlind];
     if (candidates && candidates.length === 1) return candidates[0].id;
     if (candidates && candidates.length > 1 && hand.tableSize) {
-      const match = candidates.find(c => c.max >= hand.tableSize);
+      const match = candidates.find((c) => c.max >= hand.tableSize);
       if (match) return match.id;
     }
   }
@@ -66,8 +74,8 @@ function inferTable(hand) {
     const players = new Set();
     for (let i = 0; i < hand.actions.length; i++) {
       const line = hand.actions[i];
-      if (!line || typeof line !== 'object') continue;
-      if (line.type === 'bb' && line.amount) bb = line.amount;
+      if (!line || typeof line !== "object") continue;
+      if (line.type === "bb" && line.amount) bb = line.amount;
       if (line.author) players.add(line.author);
     }
     if (bb && BB_TO_TABLES[bb]) {
@@ -75,7 +83,7 @@ function inferTable(hand) {
       if (candidates.length === 1) return candidates[0].id;
       const playerCount = players.size;
       const sorted = candidates.slice().sort((a, b) => a.max - b.max);
-      const match = sorted.find(c => c.max >= playerCount);
+      const match = sorted.find((c) => c.max >= playerCount);
       if (match) return match.id;
       return sorted[sorted.length - 1].id;
     }
@@ -96,19 +104,19 @@ function getHandBB(hand) {
 }
 
 function getTableLabel(tableId) {
-  if (!tableId || !TABLE_META[tableId]) return 'Unknown Table';
+  if (!tableId || !TABLE_META[tableId]) return "Unknown Table";
   const t = TABLE_META[tableId];
-  const prefix = t.tournament ? 'T: ' : '';
-  return prefix + t.name + ' (' + fmt(t.sb) + '/' + fmt(t.bb) + ')';
+  const prefix = t.tournament ? "T: " : "";
+  return prefix + t.name + " (" + fmt(t.sb) + "/" + fmt(t.bb) + ")";
 }
 
 function getPositionCategory(position) {
   if (!position) return null;
-  var p = position.toUpperCase().replace(/[^A-Z0-9+]/g, '');
-  if (p === 'UTG' || p === 'UTG+1') return 'EP';
-  if (p === 'MP' || p === 'LJ') return 'MP';
-  if (p === 'HJ' || p === 'CO' || p === 'BTN') return 'LP';
-  if (p === 'SB' || p === 'BB') return 'Blinds';
+  var p = position.toUpperCase().replace(/[^A-Z0-9+]/g, "");
+  if (p === "UTG" || p === "UTG+1") return "EP";
+  if (p === "MP" || p === "LJ") return "MP";
+  if (p === "HJ" || p === "CO" || p === "BTN") return "LP";
+  if (p === "SB" || p === "BB") return "Blinds";
   return null;
 }
 
@@ -122,15 +130,22 @@ function classifyPreflopAction(h) {
 }
 
 function _classifyPreflopActionUncached(h) {
-  var acts = parseActions(h.actions).filter(function(a) { return a.street === 'Preflop'; });
+  var acts = parseActions(h.actions).filter(function (a) {
+    return a.street === "Preflop";
+  });
   if (!acts.length) return null;
   var heroAuthor = null;
-  for (var i = 0; i < acts.length; i++) { if (acts[i].isMe) { heroAuthor = acts[i].author; break; } }
+  for (var i = 0; i < acts.length; i++) {
+    if (acts[i].isMe) {
+      heroAuthor = acts[i].author;
+      break;
+    }
+  }
   var firstHero = null;
   for (var i = 0; i < acts.length; i++) {
     var a = acts[i];
     if (!a.isMe) continue;
-    if (a.type === 'sb' || a.type === 'bb' || a.type === 'won') continue;
+    if (a.type === "sb" || a.type === "bb" || a.type === "won") continue;
     firstHero = a;
     break;
   }
@@ -141,58 +156,74 @@ function _classifyPreflopActionUncached(h) {
       var a = acts[i];
       if (a === firstHero) break;
       if (a.isMe) continue;
-      if (a.type === 'raise' || a.type === 'bet') raisesBefore++;
-      else if (a.type === 'call') callsBefore++;
+      if (a.type === "raise" || a.type === "bet") raisesBefore++;
+      else if (a.type === "call") callsBefore++;
     }
   }
   if (!firstHero) {
-    var heroIsBB = acts.some(function(a) { return a.isMe && a.type === 'bb'; });
-    var heroFolded = acts.some(function(a) { return a.isMe && a.type === 'fold'; });
-    if (heroIsBB && !heroFolded && raisesBefore === 0) return 'walked';
-    return 'folded-pre';
+    var heroIsBB = acts.some(function (a) {
+      return a.isMe && a.type === "bb";
+    });
+    var heroFolded = acts.some(function (a) {
+      return a.isMe && a.type === "fold";
+    });
+    if (heroIsBB && !heroFolded && raisesBefore === 0) return "walked";
+    return "folded-pre";
   }
-  if (firstHero.type === 'fold') return 'folded-pre';
-  if (raisesBefore === 0 && (firstHero.type === 'raise' || firstHero.type === 'bet')) {
+  if (firstHero.type === "fold") return "folded-pre";
+  if (raisesBefore === 0 && (firstHero.type === "raise" || firstHero.type === "bet")) {
     var sawThreeBet = false;
     var heroResponse = null;
     var heroOwn3betCount = 0;
     var startedAfter = false;
     for (var i = 0; i < acts.length; i++) {
       var a = acts[i];
-      if (a === firstHero) { startedAfter = true; continue; }
+      if (a === firstHero) {
+        startedAfter = true;
+        continue;
+      }
       if (!startedAfter) continue;
-      if (!a.isMe && (a.type === 'raise' || a.type === 'bet')) sawThreeBet = true;
+      if (!a.isMe && (a.type === "raise" || a.type === "bet")) sawThreeBet = true;
       if (sawThreeBet && a.isMe) {
-        if (a.type === 'fold') { heroResponse = 'fold'; break; }
-        if (a.type === 'call') { heroResponse = 'call'; break; }
-        if (a.type === 'raise' || a.type === 'bet') { heroResponse = '4bet'; break; }
+        if (a.type === "fold") {
+          heroResponse = "fold";
+          break;
+        }
+        if (a.type === "call") {
+          heroResponse = "call";
+          break;
+        }
+        if (a.type === "raise" || a.type === "bet") {
+          heroResponse = "4bet";
+          break;
+        }
       }
     }
     if (sawThreeBet) {
-      if (heroResponse === 'fold') return 'rfi-vs-3bet-fold';
-      if (heroResponse === 'call') return 'rfi-vs-3bet-call';
-      if (heroResponse === '4bet') return 'rfi-vs-3bet-4bet';
-      return 'rfi-vs-3bet-fold';
+      if (heroResponse === "fold") return "rfi-vs-3bet-fold";
+      if (heroResponse === "call") return "rfi-vs-3bet-call";
+      if (heroResponse === "4bet") return "rfi-vs-3bet-4bet";
+      return "rfi-vs-3bet-fold";
     }
-    return 'rfi';
+    return "rfi";
   }
   if (raisesBefore >= 1) {
-    if (firstHero.type === 'raise' || firstHero.type === 'bet') {
-      if (callsBefore >= 1) return 'squeeze';
-      return 'vs-rfi-3bet';
+    if (firstHero.type === "raise" || firstHero.type === "bet") {
+      if (callsBefore >= 1) return "squeeze";
+      return "vs-rfi-3bet";
     }
-    if (firstHero.type === 'call') return 'vs-rfi-call';
-    return 'folded-pre';
+    if (firstHero.type === "call") return "vs-rfi-call";
+    return "folded-pre";
   }
-  if (firstHero.type === 'call') {
-    return callsBefore >= 1 ? 'limp-behind' : 'limp-open';
+  if (firstHero.type === "call") {
+    return callsBefore >= 1 ? "limp-behind" : "limp-open";
   }
   return null;
 }
 
 function detectPlayerFromActions(hands) {
   for (let i = 0; i < hands.length; i++) {
-    if (hands[i].player && hands[i].player !== 'Unknown') {
+    if (hands[i].player && hands[i].player !== "Unknown") {
       return hands[i].player;
     }
   }
@@ -202,7 +233,7 @@ function detectPlayerFromActions(hands) {
     for (let j = 0; j < actions.length; j++) {
       const line = actions[j];
       // Structured (v2) actions are objects: the hero is the `isMe` author.
-      if (line && typeof line === 'object' && line.isMe && line.author) {
+      if (line && typeof line === "object" && line.isMe && line.author) {
         nameCounts[line.author] = (nameCounts[line.author] || 0) + 1;
       }
     }
@@ -218,8 +249,6 @@ function detectPlayerFromActions(hands) {
   return bestName;
 }
 
-
-/* ===== merged from migration.js ===== */
 // Structured (v2) hands ship board/pot/outcome/showdown already populated, so
 // there is nothing to mine from the actions. Normalise the card strings and
 // attach the per-hand dynamics tags.
@@ -274,4 +303,3 @@ function annotateHandDynamics(hand) {
   hand._dyn = true;
   return hand;
 }
-

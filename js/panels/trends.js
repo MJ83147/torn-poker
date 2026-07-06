@@ -1,11 +1,4 @@
-var _trendsCharts = [];
-
-function destroyTrendsCharts() {
-  for (var i = 0; i < _trendsCharts.length; i++) {
-    if (_trendsCharts[i]) _trendsCharts[i].destroy();
-  }
-  _trendsCharts = [];
-}
+// Trends panel logic. No DOM, no markup — the view is js/panels/views/trends.js.
 
 // Walk each hand once instead of calling analyse() per day-group — at 20k+
 // hands the per-group analyse() turns into multi-second freezes.
@@ -37,17 +30,63 @@ function _newTrendsAccum() {
   return { n: 0, handsWon: 0, handsWithOutcome: 0, vpip: 0, raises: 0, calls: 0, checks: 0, totalWonAmount: 0, totalInvested: 0 };
 }
 
-function renderTrends(container, hands, meta, overallData) {
-  destroyTrendsCharts();
+// How a single session's stats deviated from the player's overall baseline.
+// Feeds the Best & Worst Sessions cards in the Trends view.
+function detectSessionPatterns(sessionData, overallData) {
+  var patterns = [];
+  var sCore = sessionData.core || {};
+  var oCore = overallData.core || {};
+  var sVpip = sCore.vpipPct, oVpip = oCore.vpipPct;
+  var sAgg  = sCore.agg,     oAgg  = oCore.agg;
+  var sLimp = sCore.limpPct, oLimp = oCore.limpPct;
+  var sPfr  = sCore.pfrPct,  oPfr  = oCore.pfrPct;
+  var sCbet = sCore.cbetPct, oCbet = oCore.cbetPct;
+  var sWtsd = sCore.wtsdPct, oWtsd = oCore.wtsdPct;
 
-  var sorted = hands.slice().sort(function(a, b) { return (a.timestamp || 0) - (b.timestamp || 0); });
-  if (sorted.length < 5) {
-    mountPanel(container, 'trends', { title: 'Trends', desc: 'Session-over-session charts for win rate, VPIP, and P&L.' });
-    var vSlot = container.querySelector('[data-slot="verdict"]');
-    if (vSlot) vSlot.innerHTML = '<div class="section"><div class="row"><div class="container"><div class="box lead">Need at least 5 hands to show trends. Keep playing and tracking.</div></div></div></div>';
-    return;
+  var sEpGroup = calcPositionGroupVpip(sessionData.posMap, EARLY_POSITIONS);
+  var sEpVpip = sEpGroup.vpip;
+  var sEarlyHands = sEpGroup.hands;
+  var oEpVpip = calcPositionGroupVpip(overallData.posMap, EARLY_POSITIONS).vpip;
+
+  var THRESH = 10;
+
+  if (sVpip !== null && oVpip !== null && sVpip - oVpip >= THRESH) {
+    patterns.push({ stat: 'VPIP', session: sVpip, overall: oVpip, dir: 'up', text: 'Played looser than usual (' + sVpip + '% vs your average ' + oVpip + '%). More hands entered, more exposure.' });
   }
-  var sessions = [];
+  if (sVpip !== null && oVpip !== null && oVpip - sVpip >= THRESH) {
+    patterns.push({ stat: 'VPIP', session: sVpip, overall: oVpip, dir: 'down', text: 'Played tighter than usual (' + sVpip + '% vs your average ' + oVpip + '%). Fewer hands, less risk.' });
+  }
+  if (sAgg !== null && oAgg !== null && oAgg - sAgg >= THRESH) {
+    patterns.push({ stat: 'Aggression', session: sAgg, overall: oAgg, dir: 'down', text: 'Aggression dropped to ' + sAgg + '% (average ' + oAgg + '%). More checking and calling, less betting.' });
+  }
+  if (sAgg !== null && oAgg !== null && sAgg - oAgg >= THRESH) {
+    patterns.push({ stat: 'Aggression', session: sAgg, overall: oAgg, dir: 'up', text: 'Aggression spiked to ' + sAgg + '% (average ' + oAgg + '%). More raising, possibly over-bluffing.' });
+  }
+  if (sLimp !== null && oLimp !== null && sLimp - oLimp >= THRESH) {
+    patterns.push({ stat: 'Limp', session: sLimp, overall: oLimp, dir: 'up', text: 'Limping spiked to ' + sLimp + '% (average ' + oLimp + '%). Entering pots without initiative.' });
+  }
+  if (sPfr !== null && oPfr !== null && oPfr - sPfr >= THRESH) {
+    patterns.push({ stat: 'PFR', session: sPfr, overall: oPfr, dir: 'down', text: 'Preflop raise rate dropped to ' + sPfr + '% (average ' + oPfr + '%). Less initiative preflop.' });
+  }
+  if (sCbet !== null && oCbet !== null && oCbet - sCbet >= 15) {
+    patterns.push({ stat: 'C-Bet', session: sCbet, overall: oCbet, dir: 'down', text: 'C-bet dropped to ' + sCbet + '% (average ' + oCbet + '%). Gave up flop initiative more often.' });
+  }
+  if (sWtsd !== null && oWtsd !== null && sWtsd - oWtsd >= THRESH) {
+    patterns.push({ stat: 'WTSD', session: sWtsd, overall: oWtsd, dir: 'up', text: 'Went to showdown ' + sWtsd + '% (average ' + oWtsd + '%). Called down more often than usual.' });
+  }
+  if (sEpVpip !== null && oEpVpip !== null && sEpVpip - oEpVpip >= 15 && sEarlyHands >= 3) {
+    patterns.push({ stat: 'EP VPIP', session: sEpVpip, overall: oEpVpip, dir: 'up', text: 'Early position VPIP was ' + sEpVpip + '% (average ' + oEpVpip + '%). Played too wide from bad seats.' });
+  }
+
+  return patterns;
+}
+
+// Day-bucketed cumulative trend points.
+function trendsModel(hands) {
+  var sorted = hands.slice().sort(function(a, b) { return (a.timestamp || 0) - (b.timestamp || 0); });
+  if (sorted.length < 5) return { tooFew: true };
+
+  var days = [];
   var dayMap = {};
   // Bucket by integer day first, format the label once per distinct day —
   // 20k toLocaleDateString calls cost ~1.7s, ~60 calls is negligible.
@@ -60,13 +99,14 @@ function renderTrends(container, hands, meta, overallData) {
       day = new Date(ts).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
       labelByBucket[bucket] = day;
     }
-    if (!dayMap[day]) { dayMap[day] = []; sessions.push(day); }
+    if (!dayMap[day]) { dayMap[day] = []; days.push(day); }
     dayMap[day].push(sorted[i]);
   }
+
   var points = [];
   var cumWon = 0, cumOutcome = 0, cumVpip = 0, cumN = 0, cumRaise = 0, cumCalls = 0, cumChecks = 0, cumCashWon = 0, cumCashInvested = 0;
-  for (var si = 0; si < sessions.length; si++) {
-    var dayHands = dayMap[sessions[si]];
+  for (var si = 0; si < days.length; si++) {
+    var dayHands = dayMap[days[si]];
     var dStats = _newTrendsAccum();
     for (var dhi = 0; dhi < dayHands.length; dhi++) _trendsAccumulate(dStats, dayHands[dhi]);
     cumWon += dStats.handsWon;
@@ -79,7 +119,7 @@ function renderTrends(container, hands, meta, overallData) {
     cumCashWon += dStats.totalWonAmount;
     cumCashInvested += dStats.totalInvested;
     points.push({
-      label: sessions[si],
+      label: days[si],
       hands: dayHands.length,
       cumHands: cumN,
       wr: cumOutcome > 0 ? Math.round(cumWon / cumOutcome * 100) : null,
@@ -90,160 +130,5 @@ function renderTrends(container, hands, meta, overallData) {
     });
   }
 
-  var colors = getChartColors();
-  var dimColor = colors.dim;
-  var greenColor = colors.green;
-  var goldColor = colors.gold;
-  var amberColor = colors.amber;
-
-  var chartConfigs = [
-    { id: 'trend-wr', title: 'Cumulative Win Rate', key: 'wr', color: greenColor, suffix: '%', baseline: 50 },
-    { id: 'trend-vpip', title: 'Cumulative VPIP', key: 'vpip', color: goldColor, suffix: '%', baseline: null },
-    { id: 'trend-agg', title: 'Cumulative Aggression', key: 'agg', color: amberColor, suffix: '%', baseline: null },
-    { id: 'trend-pnl', title: 'Cumulative Net P&L (Cash Only)', key: 'netPnl', color: greenColor, suffix: '', baseline: 0 },
-  ];
-
-  mountPanel(container, 'trends', { title: 'Trends', desc: 'Session-over-session charts for win rate, VPIP, and P&L.' });
-
-  if (typeof Sections !== 'undefined' && typeof Sections.evaluateSections === 'function') {
-    // overallData is cached upstream; reuse it to avoid a second full-pass analyse.
-    var sectionD = overallData || (typeof State !== 'undefined' && State.overallAnalysis) || analyse(hands);
-    mountFindings(container, 'Tables and Trends', sectionD, hands, 'Direction of travel is steady across sessions.');
-  }
-
-  var chartsHtml = '';
-  for (var ci = 0; ci < chartConfigs.length; ci++) {
-    var cfg = chartConfigs[ci];
-    var vals = points.map(function(p) { return p[cfg.key]; }).filter(function(v) { return v !== null; });
-    if (vals.length < 2) continue;
-    chartsHtml += '<div class="section">' +
-      '<div class="section-head">' + cfg.title + '</div>' +
-      '<div class="row"><div class="container">' +
-      '<canvas id="' + cfg.id + '"></canvas></div></div></div>';
-  }
-  setSlot(container, 'charts', chartsHtml);
-
-  if (overallData) {
-    var bwHtml = renderBestWorstSessions(hands, overallData);
-    if (bwHtml) {
-      var bwSlot = container.querySelector('[data-slot="bestWorst"]');
-      if (bwSlot) { bwSlot.innerHTML = bwHtml; bwSlot.removeAttribute('hidden'); }
-    }
-  }
-
-  setSlot(container, 'head', renderTableHead(['Date', 'Hands', { html: 'Session ' + tipWrap('Win Rate') }, { html: 'Cumulative ' + tipWrap('Win Rate') }]));
-  var rowsHtml = '';
-  for (var pi = points.length - 1; pi >= 0; pi--) {
-    var pt = points[pi];
-    var wrCls2 = pt.sessionWr === null ? 'c-muted' : pnlCls(pt.sessionWr - 50);
-    rowsHtml += '<tr class="link" data-trend-idx="' + pi + '"><td>' + pt.label +
-      '<span class="c-dim cards-row-cue"> &#8250;</span></td><td>' + pt.hands + '</td>' +
-      '<td class="' + wrCls2 + '">' + (pt.sessionWr !== null ? pt.sessionWr + '%' : '-') + '</td>' +
-      '<td>' + (pt.wr !== null ? pt.wr + '%' : '-') + '</td></tr>';
-  }
-  setSlot(container, 'rows', rowsHtml);
-
-  container.querySelectorAll('[data-trend-idx]').forEach(function(row) {
-    row.onclick = function() {
-      var idx = parseInt(row.getAttribute('data-trend-idx'), 10);
-      var pt = points[idx];
-      if (!pt) return;
-      var day = pt.label;
-      var dayHands = dayMap[day];
-      if (!dayHands || !dayHands.length) return;
-      var recent = dayHands.slice().sort(function(a, b) {
-        return (b.timestamp || 0) - (a.timestamp || 0);
-      }).slice(0, 15);
-      var net = 0, withOutcome = 0, won = 0;
-      for (var di = 0; di < dayHands.length; di++) {
-        var h = dayHands[di];
-        net += getHandPnlValue(h) || 0;
-        if (h.outcome) { withOutcome++; if (h.outcome.result === 'won') won++; }
-      }
-      var wrStr = withOutcome > 0 ? Math.round(won / withOutcome * 100) + '% win rate' : 'no outcome data';
-      showExampleHandListModal('Hands on ' + day, recent,
-        'Hands played on ' + day + '. ' + dayHands.length + ' hands, ' + wrStr + ', net ' + fmtPnl(net) +
-        '. Look at how this day played out versus your usual game.');
-    };
-  });
-
-  var labels = points.map(function(p) { return p.label; });
-
-  for (var ci = 0; ci < chartConfigs.length; ci++) {
-    var cfg = chartConfigs[ci];
-    var canvas = document.getElementById(cfg.id);
-    if (!canvas) continue;
-
-    var data = points.map(function(p) { return p[cfg.key]; });
-    var validCount = data.filter(function(v) { return v !== null; }).length;
-    if (validCount < 2) continue;
-
-    var suffix = cfg.suffix;
-    var baselineVal = cfg.baseline;
-
-    var gridColorFn = (baselineVal !== null)
-      ? (function(bl) {
-          return function(ctx) {
-            return ctx.tick.value === bl ? dimColor : 'rgba(255,255,255,0.04)';
-          };
-        })(baselineVal)
-      : 'rgba(255,255,255,0.04)';
-
-    var gridWidthFn = (baselineVal !== null)
-      ? (function(bl) {
-          return function(ctx) {
-            return ctx.tick.value === bl ? 1 : 0.5;
-          };
-        })(baselineVal)
-      : 0.5;
-
-    var tooltipLabelFn = (function(s) {
-      return function(ctx) {
-        var v = ctx.parsed.y;
-        return s ? ' ' + v + s : ' ' + fmtPnl(v);
-      };
-    })(suffix);
-
-    var tickFn = (function(s) {
-      return function(val) { return s ? val + s : fmt(val); };
-    })(suffix);
-
-    var yScale = (baselineVal !== null)
-      ? chartYScaleZeroLine(colors, { tickCallback: tickFn })
-      : chartYScale(colors, { tickCallback: tickFn, gridColor: gridColorFn, gridWidth: gridWidthFn });
-
-    var chart = createChart(canvas, 'line', {
-      labels: labels,
-      datasets: [{
-        data: data,
-        borderColor: cfg.color,
-        borderWidth: 2,
-        pointRadius: points.length <= 15 ? 3 : 0,
-        pointHoverRadius: 5,
-        pointBackgroundColor: cfg.color,
-        pointHitRadius: 8,
-        tension: 0.3,
-        fill: true,
-        backgroundColor: (function(c) {
-          var ctx = canvas.getContext('2d');
-          var grad = ctx.createLinearGradient(0, 0, 0, canvas.parentElement.clientHeight || 160);
-          grad.addColorStop(0, c + '22');
-          grad.addColorStop(1, c + '02');
-          return grad;
-        })(cfg.color),
-        spanGaps: true,
-      }],
-    }, {
-      interaction: { mode: 'index', intersect: false },
-      tooltip: chartTooltip(colors, {
-        title: function(items) { return items[0].label; },
-        label: tooltipLabelFn,
-      }),
-      scales: {
-        x: chartXScale(colors, { tickSize: 9, maxTicksLimit: 6, maxRotation: 0 }),
-        y: yScale,
-      },
-    });
-    _trendsCharts.push(chart);
-  }
+  return { tooFew: false, points: points, dayMap: dayMap };
 }

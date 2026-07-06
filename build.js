@@ -22,7 +22,9 @@ var helperOrder = [
   'js/helpers/opponents.js',
 ];
 
+var components = listJs('js/components');
 var panels = listJs('js/panels');
+var panelViews = listJs('js/panels/views');
 
 var insightsOrder = [
   'js/insights/story-engine.js',
@@ -45,7 +47,9 @@ var files = []
   .concat(['js/helpers/matrix.js'])
   .concat(insightsOrder)
   .concat(['js/loader.js', 'js/state.js', 'js/modal.js', 'js/charting.js'])
+  .concat(components)
   .concat(panels)
+  .concat(panelViews)
   .concat([
     'js/hand-evaluator.js',
     'js/equity-monte-carlo.js',
@@ -61,7 +65,7 @@ files.forEach(function(f) {
   }
 });
 
-var auditedDirs = ['js/helpers', 'js/panels'];
+var auditedDirs = ['js/helpers', 'js/panels', 'js/components', 'js/panels/views'];
 auditedDirs.forEach(function(dir) {
   listJs(dir).forEach(function(f) {
     if (files.indexOf(f) === -1) {
@@ -74,28 +78,6 @@ auditedDirs.forEach(function(dir) {
 var combined = files
   .map(function(f) { return fs.readFileSync(path.join(__dirname, f), 'utf8'); })
   .join('\n');
-
-function minifyHtml(src) {
-  return src
-    .replace(/<!--[\s\S]*?-->/g, '')
-    .replace(/\s+/g, ' ')
-    .replace(/>\s+</g, '><')
-    .trim();
-}
-var tplFiles = listJs('js/panels').map(function(jsPath) {
-  return jsPath.replace(/\.js$/, '.html');
-});
-var tplAssignments = [];
-tplFiles.forEach(function(htmlPath) {
-  var full = path.join(__dirname, htmlPath);
-  if (!fs.existsSync(full)) return;
-  var name = path.basename(htmlPath, '.html');
-  var html = minifyHtml(fs.readFileSync(full, 'utf8'));
-  tplAssignments.push("window.__TPL['" + name + "']=" + JSON.stringify(html) + ";");
-});
-if (tplAssignments.length) {
-  combined = "window.__TPL=window.__TPL||{};" + tplAssignments.join('') + '\n' + combined;
-}
 
 var result = esbuild.buildSync({
   stdin: {
