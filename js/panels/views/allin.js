@@ -20,7 +20,7 @@ function _allinRow(ah, i, withEv) {
     evCols = `<td>${fmt(ah.potAtAllIn)}</td>
       <td class="${actCls}">${fmtPnl(Math.round(ah.actualResult))}</td>`;
   }
-  return `<tr class="allin-row link" data-allin-idx="${i}">
+  return `<tr class="link" data-allin-idx="${i}">
     <td>${i + 1}</td>
     <td>${displayCards(ah.heroHole)}</td>
     <td>${ah.opponents
@@ -35,7 +35,7 @@ function _allinRow(ah, i, withEv) {
 }
 
 function _wireAllinRows(container, list) {
-  container.querySelectorAll(".allin-row").forEach(function (row) {
+  container.querySelectorAll("[data-allin-idx]").forEach(function (row) {
     row.onclick = function () {
       var idx = parseInt(row.getAttribute("data-allin-idx"));
       if (!isNaN(idx) && list[idx]) showExampleHandModal(list[idx].hand);

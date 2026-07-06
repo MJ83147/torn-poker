@@ -309,10 +309,10 @@
       html += '</ul>';
     }
     if (finding.impactText) {
-      html += '<div class="story-impact"><span class="story-tag">Impact</span> ' + escapeHtml(finding.impactText) + '</div>';
+      html += '<div class="story-impact"><span class="tag tag-gold">Impact</span> ' + escapeHtml(finding.impactText) + '</div>';
     }
     if (finding.soWhatText) {
-      html += '<div class="story-sowhat"><span class="story-tag">So what</span> ' + escapeHtml(finding.soWhatText) + '</div>';
+      html += '<div class="story-sowhat"><span class="tag tag-gold">So what</span> ' + escapeHtml(finding.soWhatText) + '</div>';
     }
     html += renderExampleButtons(finding);
     html += '</div>';

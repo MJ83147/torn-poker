@@ -9,13 +9,9 @@
                           margin, pad)
    §4  COMPONENTS ........ shared blocks: card, box, button, table, story, bar
    §5  FEATURES .......... range grid, equity viz, charts, sentence
-   §6  PANEL-SPECIFIC .... genuinely-unique blocks (My Game, saved hands, style)
    §7  RESPONSIVE ........ breakpoint overrides
    --------------------------------------------------------------------------
-   RULE: after §1, nothing sets font-size / line-height / letter-spacing except
-   the role classes in §2 (.title · .eyebrow · .section-head · .card-title ·
-   .text-* · .lead · .value). Everything else composes those roles +
-   colour/spacing utilities.
+  
    ========================================================================== */
 
 /* ==========================================================================
@@ -81,9 +77,8 @@
   /* section title */
   --fs-3xl: 32px;
   /* page title */
-  /* hero display sizes — loader / maintenance splash only, NOT the content scale */
+  /* hero display size — loader / splash only, NOT the content scale */
   --fs-hero: clamp(40px, 7vw, 68px);
-  --fs-hero-xl: clamp(54px, 12vw, 88px);
   --fw-regular: 400;
   --fw-medium: 500;
   --fw-semibold: 600;
@@ -346,11 +341,6 @@ a {
   text-align: left;
 }
 
-/* Spacing is owned by structure (.panel/.section/.row/.container) and content
-   classes; the old gap-N / mt-N / mb-N / p-N utility scales are gone on
-   purpose — do not reintroduce them. */
-
-/* --- borders --- */
 /* --- text roles --- */
 .title {
   font-family: var(--serif);
@@ -526,9 +516,7 @@ a {
 
 /* Inline markers never stretch when they're a direct flex child of a stacking
    container (card/box/section) — they keep their natural size, top-left. */
-.badge,
-.tag,
-.chip {
+.tag {
   align-self: flex-start;
 }
 
@@ -615,22 +603,6 @@ a {
 
 .table tbody tr.link:hover {
   background: var(--s1);
-}
-
-/* Shared data-list rows. These are all <tr> inside .table (player list,
-   all-in list, hand log) and inherit the per-row border-bottom divider from
-   .table td above. Named here as shared hooks so the separation is consistent
-   and the classes are not orphaned. */
-.player-row td,
-.allin-row td,
-.hrow td {
-  border-bottom: var(--bw) solid var(--border);
-}
-
-.table tr.player-row:last-child td,
-.table tr.allin-row:last-child td,
-.table tr.hrow:last-child td {
-  border-bottom: none;
 }
 
 /* table extras: dimmed (excluded) row, small cell, inline spark bar */
@@ -858,19 +830,7 @@ a {
   border-top: var(--bw) solid var(--border);
 }
 
-.story-tag {
-  display: inline-block;
-  font-size: var(--fs-xs);
-
-  letter-spacing: .08em;
-
-  text-transform: uppercase;
-  color: var(--gold);
-  font-weight: var(--fw-bold);
-  margin-right: var(--sp-8);
-}
-
-/* --- Markers: dot, badge, chip, tag --- */
+/* --- Markers: dot, tag --- */
 .dot {
   display: inline-block;
   width: 6px;
@@ -881,28 +841,6 @@ a {
 .dot-lg {
   width: 11px;
   height: 11px;
-}
-
-.badge {
-  display: inline-block;
-  padding: var(--sp-2) var(--sp-8);
-  border-radius: var(--r-sm);
-  font-size: var(--fs-xs);
-
-  font-weight: var(--fw-medium);
-}
-
-.badge-gold {
-  background: color-mix(in srgb, var(--gold) 15%, transparent);
-  color: var(--gold);
-}
-
-/* .chip = inline text token (colour via .c-*); .tag = bordered pill. */
-.chip {
-  font-size: var(--fs-md);
-
-  font-weight: var(--fw-semibold);
-  color: var(--dim);
 }
 
 .tag {
@@ -1574,11 +1512,10 @@ a {
   background: var(--border);
 }
 
-/* --- Card-deal animation (loader / maintenance) ---
+/* --- Card-deal animation (loader) ---
    Cards start offset + transparent; adding .show deals each one in. */
 
-/* Shared playing-card face (loader deal / hero splash / maintenance).
-   .card-face-sm is the smaller maintenance-screen variant. */
+/* Shared playing-card face (loader deal / hero splash). */
 .card-face {
   display: flex;
   align-items: center;
@@ -1595,18 +1532,6 @@ a {
   opacity: 0;
   transform: translateY(18px) scale(.92);
   transition: opacity .38s ease, transform .38s ease;
-}
-
-.card-face-sm {
-  width: 44px;
-  height: 60px;
-  font-size: var(--fs-2xl);
-
-  background: color-mix(in srgb, var(--white) 2%, transparent);
-  /* Maintenance cards are static (no deal-in), so keep them visible. */
-  opacity: 1;
-  transform: none;
-  transition: none;
 }
 
 .card-face.show {
@@ -1652,29 +1577,6 @@ a {
 .panels-wrap.blurred {
   filter: blur(3px);
   pointer-events: none;
-}
-
-#maintenance {
-  display: none;
-  position: fixed;
-  inset: 0;
-  z-index: 99999;
-  background: var(--bg);
-  color: var(--text);
-  text-align: center;
-  padding: 48px var(--sp-24);
-}
-
-body.maintenance #loader,
-body.maintenance #app {
-  display: none !important;
-}
-
-body.maintenance #maintenance {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
 }
 
 /* --- Dashboard header + hero stat strip --- */
@@ -1897,22 +1799,6 @@ body.maintenance #maintenance {
   to {
     transform: rotate(360deg);
   }
-}
-
-/* --- Maintenance screen --- */
-.m-title {
-  font-size: var(--fs-hero-xl);
-  line-height: var(--lh-none);
-  color: var(--gold);
-  margin-bottom: 18px;
-}
-
-.m-sub {
-  font-size: var(--fs-lg);
-  color: var(--text);
-  max-width: 520px;
-  line-height: var(--lh-normal);
-  margin-bottom: 36px;
 }
 
 /* --- Paste / import pages --- */

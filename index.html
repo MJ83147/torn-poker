@@ -16,40 +16,10 @@
     <link rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=IBM+Plex+Mono:wght@300;400;500&display=swap">
   </noscript>
-  <link rel="stylesheet" href="style.css?v=1783357691">
+  <link rel="stylesheet" href="style.css?v=1783368904">
 </head>
 
-<body class="maintenance">
-  <script>
-    // Maintenance bypass: visit once with ?dev to stash a localStorage flag,
-    // then this browser skips the maintenance overlay on every subsequent visit.
-    // Clear with: localStorage.removeItem('tcp-bypass')
-    (function () {
-      try {
-        var qs = new URLSearchParams(location.search);
-        if (qs.has('dev')) localStorage.setItem('tcp-bypass', '1');
-        if (localStorage.getItem('tcp-bypass') === '1') {
-          document.body.classList.remove('maintenance');
-        }
-      } catch (e) { }
-    })();
-  </script>
-
-  <div id="maintenance">
-    <div class="stat">
-      <div class="eyebrow">TC Poker Analysis</div>
-      <div class="m-title">Back soon</div>
-    </div>
-    <div class="m-sub">Exciting updates in progress. Check back shortly.</div>
-    <div class="row">
-      <span class="card-face card-face-sm">A&spades;</span>
-      <span class="card-face card-face-sm c-neg">K&hearts;</span>
-      <span class="card-face card-face-sm">Q&clubs;</span>
-      <span class="card-face card-face-sm c-neg">J&diams;</span>
-      <span class="card-face card-face-sm">10&spades;</span>
-    </div>
-  </div>
-
+<body>
   <div id="loader">
     <div class="stat">
       <div class="eyebrow">Torn City</div>
@@ -289,7 +259,7 @@
   </div>
 
   <!-- App (bundled + minified). Chart.js and intro.js are loaded on demand from app.min.js. -->
-  <script defer src="app.min.js?v=1783357691"></script>
+  <script defer src="app.min.js?v=1783368904"></script>
 </body>
 
 </html>

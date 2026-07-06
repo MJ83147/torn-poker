@@ -40,14 +40,14 @@ function renderLog(container, hands) {
 
     wireSavedSection(container);
 
-    container.querySelectorAll(".hrow[data-hand-idx]").forEach(function (row) {
+    container.querySelectorAll("tr[data-hand-idx]").forEach(function (row) {
       row.onclick = function (e) {
-        if (e.target.closest(".hrow-star")) return;
+        if (e.target.closest("[data-star-idx]")) return;
         var idx = parseInt(this.getAttribute("data-hand-idx"));
         if (!isNaN(idx) && m.sorted[idx]) showExampleHandModal(m.sorted[idx]);
       };
     });
-    container.querySelectorAll(".hrow-star").forEach(function (star) {
+    container.querySelectorAll("[data-star-idx]").forEach(function (star) {
       star.onclick = function (e) {
         e.stopPropagation();
         var idx = parseInt(this.getAttribute("data-star-idx"));
@@ -90,7 +90,7 @@ function renderLog(container, hands) {
 
 function _logStarBtn(h, globalIdx) {
   var starred = isHandStarred(h);
-  return `<span class="btn btn-icon hrow-star${starred ? " starred" : ""}" data-star-idx="${globalIdx}" data-hand-key="${getHandKey(h)}" title="${starred ? "Unsave" : "Save"} hand">${starred ? "&#9733;" : "&#9734;"}</span>`;
+  return `<span class="btn btn-icon${starred ? " starred" : ""}" data-star-idx="${globalIdx}" data-hand-key="${getHandKey(h)}" title="${starred ? "Unsave" : "Save"} hand">${starred ? "&#9733;" : "&#9734;"}</span>`;
 }
 
 function renderSavedSection() {
@@ -190,7 +190,7 @@ function refreshSavedSection(container) {
   // Keep the table's star icons in step with storage, so unsaving from a
   // saved card (or the modal) repaints the matching row immediately.
   var starMap = getStarredHands();
-  container.querySelectorAll(".hrow-star[data-hand-key]").forEach(function (star) {
+  container.querySelectorAll("[data-star-idx][data-hand-key]").forEach(function (star) {
     var starred = !!starMap[star.getAttribute("data-hand-key")];
     star.innerHTML = starred ? "&#9733;" : "&#9734;";
     star.classList.toggle("starred", starred);

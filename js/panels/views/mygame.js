@@ -107,12 +107,13 @@ function renderTableDynamicsReference(hands, d) {
         var pm = subD.posMap[p];
         var actPct = (pm && pm.hands > 0) ? pct(pm.vpip, pm.hands) : null;
         var band = matrixTarget('vpip', p, seats, styleKey);
-        var cls = band ? bandVerdict(actPct, Math.round(band.tight), Math.round(band.loose)).cls : 'v-na';
-        posRows += `<tr class="${cls}"><td>${p}</td><td>${actPct != null ? actPct + '%' : '-'}</td><td class="c-dim">${fmtBandRange(band)}</td><td class="c-dim">${pm ? pm.hands : 0}</td></tr>`;
+        var v = band ? bandVerdict(actPct, Math.round(band.tight), Math.round(band.loose)).cls : 'v-na';
+        var vpipCls = v === 'v-ok' ? 'c-pos fw-semibold' : v === 'v-low' ? 'c-warn fw-semibold' : v === 'v-high' ? 'c-neg fw-semibold' : '';
+        posRows += `<tr><td>${p}</td><td class="${vpipCls}">${actPct != null ? actPct + '%' : '-'}</td><td class="c-dim">${fmtBandRange(band)}</td><td class="c-dim">${pm ? pm.hands : 0}</td></tr>`;
       }
       cardBody = `<div class="stat">
         <div class="eyebrow c-gold">Your play: VPIP by position</div>
-        <table class="table dynamics-pos-tbl"><thead><tr><th>Pos</th><th>Your VPIP</th><th>Target</th><th>Hands</th></tr></thead><tbody>${posRows}</tbody></table>
+        <table class="table"><thead><tr><th>Pos</th><th>Your VPIP</th><th>Target</th><th>Hands</th></tr></thead><tbody>${posRows}</tbody></table>
       </div>` +
       (seatCoaching[seats] ? `<div class="insight-coaching">
         <div class="eyebrow c-warn">Coaching</div>

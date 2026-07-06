@@ -42,8 +42,8 @@ function _crRenderSentence(segment, segLabel) {
   }
 
   var sentence = "";
-  if (segLabel === "A" && _crState.compare) sentence += '<span class="sentence-seg-tag">A:</span> ';
-  if (segLabel === "B") sentence += '<span class="sentence-seg-tag">B:</span> ';
+  if (segLabel === "A" && _crState.compare) sentence += '<span class="tag tag-gold">A:</span> ';
+  if (segLabel === "B") sentence += '<span class="tag tag-gold">B:</span> ';
   sentence += '<span class="c-dim">Show me how I play</span> ';
   for (var pi = 0; pi < parts.length; pi++) {
     if (pi > 0) {

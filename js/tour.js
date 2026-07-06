@@ -135,7 +135,7 @@
     log: [
       { el: '.panel-header', intro: '<strong>Hand Log</strong><br>Every hand from your session, sortable and pageable.', pos: 'bottom' },
       { el: '.table', intro: '<strong>Hand Table</strong><br>Each row shows position, hole cards, board, action summary, and result. <strong>Click any row</strong> to open a full hand replay with every action, pot sizes, and coaching notes.', pos: 'top' },
-      { el: '.hrow-star', intro: '<strong>Star Hands</strong><br>Click the star on any hand to save it for later review. Starred hands appear in the Saved Hands section at the top of this page.', pos: 'left' },
+      { el: '[data-star-idx]', intro: '<strong>Star Hands</strong><br>Click the star on any hand to save it for later review. Starred hands appear in the Saved Hands section at the top of this page.', pos: 'left' },
       { el: '.saved-section', intro: '<strong>Saved Hands</strong><br>Your starred hands for study. Each card shows hole cards, board, and result. Click to replay. Add notes to remember what you were thinking.', pos: 'top',
         fallback: '<strong>Saved Hands</strong><br>When you star hands using the star button, they appear in a saved section at the top of this page for easy review.' },
       { el: null, intro: '<strong>Equity Simulation</strong><br>Inside any hand replay, look for the <strong>Run Equity Simulation</strong> button. It runs a Monte Carlo simulation calculating your equity (chance of winning) on each street against a random hand. It compares your actual calls, raises, and folds against the mathematical pot odds, showing whether each decision was profitable.' }

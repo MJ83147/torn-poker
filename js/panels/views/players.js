@@ -20,7 +20,7 @@ function renderPlayers(container, d, hands) {
   function playerRow(o, maxH, isWatched) {
     var wr = pct(o.won, o.won + o.lost);
     var barW = Math.round((o.hands / maxH) * 100);
-    return `<tr class="player-row link" data-player="${o.name}">
+    return `<tr class="link" data-player="${o.name}">
       <td class="watch-star${isWatched ? " watched" : ""}" data-watch="${o.name}" title="${isWatched ? "Unwatch" : "Watch"} player">${isWatched ? "&#9733;" : "&#9734;"}</td>
       <td>${o.name}</td><td>${o.hands}</td>
       <td class="spark-cell"><span class="spark" style="width:${barW}%;background:var(--gold2);"></span></td>
@@ -117,7 +117,7 @@ function renderPlayers(container, d, hands) {
         toggleWatch(this.getAttribute("data-watch"));
       };
     });
-    container.querySelectorAll(".player-row").forEach(function (row) {
+    container.querySelectorAll("tr[data-player]").forEach(function (row) {
       row.onclick = function () {
         renderPlayerHands(this.getAttribute("data-player"));
       };

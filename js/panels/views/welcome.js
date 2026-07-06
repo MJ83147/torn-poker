@@ -17,7 +17,7 @@ function renderWelcome(container, d, hands, meta) {
   }).join('');
 
   var wnSlides = WHATS_NEW.map(function(w, i) {
-    var inner = `<div class="badge badge-gold">${w.badge}</div>
+    var inner = `<div class="tag tag-gold">${w.badge}</div>
       <h3 class="c-gold">${w.title}</h3>
       ${w.paras.map(function(t) { return `<div class="text-body">${t}</div>`; }).join('')}
       ${w.cta ? `<div class="c-gold fw-semibold">${w.cta}</div>` : ''}`;

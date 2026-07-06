@@ -28,7 +28,7 @@ function heroStackLine(h) {
 
 function renderHandRow(h, idx, opts) {
   var starCol = opts && opts.starHtml ? `<td>${opts.starHtml}</td>` : "";
-  return `<tr class="hrow link" data-hand-idx="${idx}">
+  return `<tr class="link" data-hand-idx="${idx}">
     ${starCol}
     <td class="c-gold">${h.position || "?"}</td>
     <td>${h.hole && h.hole.length ? displayCards(h.hole.map(normCard)) : "?? ??"}</td>
