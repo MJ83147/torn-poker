@@ -46,9 +46,10 @@ function detectAllInCandidates(hands) {
     if (!allInFound || !heroInAllIn) continue;
     if (allInStreet === 'River') continue;
 
-    // Structured (v2) hands carry showdown reveals natively as
-    // { author, isMe, hole }. Take every non-hero revealed hand.
-    var reveals = h.reveals || [];
+    // Showdown reveals live on stacks[] in real exported hands and on a flat
+    // hand.reveals array in the older shape; getRevealedHands normalises both.
+    // Take every non-hero revealed hand as an opponent we ran the board against.
+    var reveals = getRevealedHands(h);
     if (!reveals.length) continue;
 
     var heroHole = [normCardCode(h.hole[0]), normCardCode(h.hole[1])];

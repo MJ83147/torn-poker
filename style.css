@@ -2276,6 +2276,28 @@ textarea#jin {
   text-align: center;
 }
 
+.reveals-grid {
+  display: flex;
+  flex-direction: column;
+}
+
+.reveals-grid .reveal-row {
+  display: grid;
+  grid-template-columns: max-content max-content minmax(0, 1fr);
+  gap: var(--sp-12);
+  align-items: baseline;
+  padding: var(--sp-8) 0;
+  border-bottom: var(--bw) solid color-mix(in srgb, var(--border) 55%, transparent);
+}
+
+.reveals-grid .reveal-row:last-child {
+  border-bottom: none;
+}
+
+.reveals-grid .reveal-hand {
+  text-align: right;
+}
+
 /* --- Equity simulator: the labelled equity-bar row (street | pct | track).
    The card is a .list, each street a .list, so all spacing comes from the
    generics — only the bar row's column widths live here. --- */

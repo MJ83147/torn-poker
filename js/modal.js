@@ -65,6 +65,58 @@ function buildModalActionLines(hand) {
   return html;
 }
 
+// Showdown block: how the hand ended. Lists each player who turned their cards
+// over (cards + the hand they made) and, below, who won the pot with what.
+// Hero is listed first. Renders nothing when nobody revealed.
+function buildShowdownBlock(hand) {
+  var revs = (typeof getRevealedHands === "function" ? getRevealedHands(hand) : []).slice();
+  if (!revs.length) return "";
+  var bb = getHandBB(hand);
+  revs.sort(function (a, b) {
+    return (b && b.isMe ? 1 : 0) - (a && a.isMe ? 1 : 0);
+  });
+  var rows = revs
+    .map(function (r) {
+      var name = r.isMe ? "You" : r.author || "?";
+      return (
+        '<div class="reveal-row">' +
+        '<span class="text-meta' +
+        (r.isMe ? " c-gold" : "") +
+        '">' +
+        name +
+        "</span>" +
+        '<span class="reveal-cards">' +
+        displayCards(r.hole.map(normCard)) +
+        "</span>" +
+        '<span class="text-meta c-dim reveal-hand">' +
+        (r.handName || "") +
+        "</span>" +
+        "</div>"
+      );
+    })
+    .join("");
+
+  var winnerHtml = "";
+  var winners = typeof getHandWinners === "function" ? getHandWinners(hand) : [];
+  for (var w = 0; w < winners.length; w++) {
+    var win = winners[w];
+    var wname = win.isMe ? "You" : win.author || "?";
+    winnerHtml +=
+      '<div class="text-body' +
+      (win.isMe ? " c-pos" : "") +
+      '">' +
+      wname +
+      " won " +
+      '<strong class="c-gold">' +
+      fmtBB(win.winnings, bb) +
+      "</strong>" +
+      (win.handName ? " with " + win.handName : "") +
+      "</div>";
+  }
+
+  return '<div class="inner-section">' + '<div class="section-head">Showdown</div>' + '<div class="reveals-grid">' + rows + "</div>" + winnerHtml + "</div>";
+}
+
 // Per-player "stack before -> after" block for the hand-replay modal.
 // Renders only when hand.stacks has entries. Every value is guarded: absent
 // stacks show as an em dash, never as 0. Hero is listed first, then others in
@@ -179,7 +231,7 @@ function showExampleHandModal(hand, coachingNote) {
 
   var stacksHtml = buildStacksBlock(hand);
 
-  var actionsHtml = buildModalActionLines(hand);
+  var actionsHtml = buildModalActionLines(hand) + buildShowdownBlock(hand);
 
   var coaching = coachingNote
     ? '<div class="inner-section">' + '<div class="section-head c-warn">What to improve</div>' + '<div class="card card-s2"><div class="text-body">' + coachingNote + "</div></div>" + "</div>"

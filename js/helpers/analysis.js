@@ -17,6 +17,54 @@ function getInvested(h) {
   return typeof h.invested === "number" ? h.invested : 0;
 }
 
+// The players who turned their cards over, with the richest source available.
+// Real exported (v2) hands carry this on stacks[] (revealed/handName/winnings);
+// the older dummy/import shape used a flat hand.reveals array with cards only.
+function getRevealedHands(hand) {
+  var out = [];
+  if (hand && hand.stacks && hand.stacks.length) {
+    for (var i = 0; i < hand.stacks.length; i++) {
+      var s = hand.stacks[i];
+      if (s && s.revealed && s.revealed.length >= 2) {
+        out.push({
+          author: s.name,
+          isMe: !!s.isHero,
+          hole: s.revealed.slice(0, 2),
+          handName: s.handName || "",
+          winnings: s.winnings || 0,
+          profit: typeof s.profit === "number" ? s.profit : 0,
+          status: s.status || "",
+        });
+      }
+    }
+    if (out.length) return out;
+  }
+  if (hand && hand.reveals && hand.reveals.length) {
+    for (var j = 0; j < hand.reveals.length; j++) {
+      var r = hand.reveals[j];
+      if (r && r.hole && r.hole.length >= 2) {
+        out.push({ author: r.author, isMe: !!r.isMe, hole: r.hole.slice(0, 2), handName: "", winnings: 0, profit: 0, status: "" });
+      }
+    }
+  }
+  return out;
+}
+
+// Players who won chips this hand (winnings > 0). Sourced from stacks[]; split
+// and side pots can return more than one. Empty when the data lacks stacks.
+function getHandWinners(hand) {
+  var winners = [];
+  if (hand && hand.stacks && hand.stacks.length) {
+    for (var i = 0; i < hand.stacks.length; i++) {
+      var s = hand.stacks[i];
+      if (s && (s.winnings || 0) > 0) {
+        winners.push({ author: s.name, isMe: !!s.isHero, winnings: s.winnings, handName: s.handName || "", hole: s.revealed && s.revealed.length >= 2 ? s.revealed.slice(0, 2) : null });
+      }
+    }
+  }
+  return winners;
+}
+
 function getHeroActions(h) {
   return parseActions(h.actions).filter(function (a) {
     return a.isMe;

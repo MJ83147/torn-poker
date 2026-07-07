@@ -35,7 +35,12 @@ function runEquitySimulation(hand) {
     var streetInfo = heroInfo.streets[sd.name];
     if (!streetInfo && sd.name !== "Preflop") continue;
 
-    var sim = simulateStreet(heroHole, streetBoard, sd.iters, allInInfo ? allInInfo.opponents : null);
+    // Use the opponents' real cards only on the street the money went in. On
+    // earlier streets the decision was made against a range, not their exact
+    // hand, so vs-a-random-hand keeps the pot-odds coaching honest instead of
+    // judging a call with hindsight.
+    var useKnownVillains = allInInfo && sd.name === allInInfo.street;
+    var sim = simulateStreet(heroHole, streetBoard, sd.iters, useKnownVillains ? allInInfo.opponents : null);
 
     var texture = streetBoard.length >= 3 ? classifyBoardTexture(streetBoard) : null;
     var madeHand = streetBoard.length >= 3 ? classifyMadeHand(heroHole, streetBoard) : null;
@@ -242,7 +247,10 @@ function renderEquityResults(container, simResult) {
     html += "</div>";
   }
 
-  if (curvePoints.length >= 2) {
+  // For all-in hands the earlier streets are vs-random and the all-in street is
+  // vs the actual cards, so a single curve would mix two different bases and
+  // read as a misleading trend. The per-street rows and the All-In block cover it.
+  if (curvePoints.length >= 2 && !allInEv) {
     // Stretches to the card width; the viewBox keeps the drawing proportional.
     var svgW = 560,
       svgH = 150,
@@ -284,7 +292,7 @@ function renderEquityResults(container, simResult) {
   });
   var caveats = '<div class="text-meta">';
   if (allInEv) {
-    caveats += "Equity calculated against the opponents' actual revealed cards at the all-in.";
+    caveats += "All-in equity is calculated against the opponents' actual revealed cards. Earlier streets are estimated against a random hand, since at the time the opponents' cards were unknown.";
   } else {
     caveats += "Equity calculated against a single random hand. In multiway pots, true equity may be lower.";
   }
