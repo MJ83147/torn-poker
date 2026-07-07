@@ -453,12 +453,31 @@
     }
     if (!rows.length) return null;
 
-    var openingParts = rows.map(function(r) {
-      return 'Against ' + BAND_LABELS[r.key] + ', across ' + r.n + ' spots, you fold ' +
-        Math.round(r.foldPct) + '%, call ' + Math.round(r.callPct) + '%, and raise ' +
-        Math.round(r.raisePct) + '%.';
-    });
-    var openingText = 'Here is how you respond to each bet size. ' + openingParts.join(' ');
+    // Summarise the shape rather than reciting every band: the takeaway is how
+    // hard your fold rate leans on the size in front of you. Per-band detail
+    // lives in the branch texts below (which only fire for actual leaks).
+    var totalSpots = 0, totalCall = 0, totalRaise = 0;
+    for (var ti = 0; ti < rows.length; ti++) {
+      totalSpots += rows[ti].n;
+      totalCall += bands[rows[ti].key].call;
+      totalRaise += bands[rows[ti].key].raise;
+    }
+    var lowBand = rows[0];
+    var highBand = rows[rows.length - 1];
+    var continueClause = totalRaise > totalCall
+      ? ' When you continue, you raise more often than you call.'
+      : ' The rest you mostly call.';
+    var openingText;
+    if (rows.length >= 2) {
+      openingText = 'Across ' + totalSpots + ' bets faced, your fold rate runs from ' +
+        Math.round(lowBand.foldPct) + '% against ' + BAND_SHORT[lowBand.key] + ' to ' +
+        Math.round(highBand.foldPct) + '% against ' + BAND_SHORT[highBand.key] +
+        '.' + continueClause;
+    } else {
+      openingText = 'Across ' + totalSpots + ' ' + BAND_SHORT[lowBand.key] + ' faced, you fold ' +
+        Math.round(lowBand.foldPct) + '%, call ' + Math.round(lowBand.callPct) + '%, and raise ' +
+        Math.round(lowBand.raisePct) + '%.';
+    }
 
     var branchTexts = [];
     var leaks = [];

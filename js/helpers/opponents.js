@@ -69,7 +69,9 @@ function classifyHandForPlayer(h, playerName) {
     }
   }
 
-  var handHasShowdown = false;
+  // v2 hands carry an explicit showdown boolean; legacy v1 hands only expose it
+  // through ' reveals ' text. Seed from the v2 flag, then let v1 text upgrade it.
+  var handHasShowdown = (typeof isShowdown === 'function' && isShowdown(h));
   var playerReveals = [];
   var raw = (h && h.actions) ? h.actions : [];
   for (var li = 0; li < raw.length; li++) {
@@ -85,6 +87,14 @@ function classifyHandForPlayer(h, playerName) {
         hasStrength: !!sm,
         isStrong: sm ? isStrongShowdownHand(sm[1]) : false
       });
+    }
+  }
+
+  // v2 hands have no 'won' action; winners live on stacks[] (winnings > 0).
+  if (!playerWon && typeof getHandWinners === 'function') {
+    var winners = getHandWinners(h);
+    for (var wi = 0; wi < winners.length; wi++) {
+      if (winners[wi].author === playerName) { playerWon = true; break; }
     }
   }
 
@@ -260,7 +270,8 @@ function computeAllOpponentStats(hands) {
     }
 
     var raw = (h && h.actions) ? h.actions : [];
-    var handHasShowdown = false;
+    // Seed showdown from the v2 boolean; v1 reveal text upgrades it below.
+    var handHasShowdown = (typeof isShowdown === 'function' && isShowdown(h));
     var revealStrengths = {};
     for (var li = 0; li < raw.length; li++) {
       var line = raw[li];
@@ -275,6 +286,15 @@ function computeAllOpponentStats(hands) {
           (revealStrengths[pname] = revealStrengths[pname] || []).push(info);
           break;
         }
+      }
+    }
+
+    // v2 hands have no 'won' action; winners live on stacks[] (winnings > 0).
+    if (typeof getHandWinners === 'function') {
+      var handWinners = getHandWinners(h);
+      for (var wi2 = 0; wi2 < handWinners.length; wi2++) {
+        var wp = perHand[handWinners[wi2].author];
+        if (wp) wp.playerWon = true;
       }
     }
 

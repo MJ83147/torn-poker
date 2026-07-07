@@ -296,6 +296,25 @@
       soWhatText = 'Filter the hand log to ' + position + ' and look for the postflop pattern that is unique to this seat.';
     }
 
+    // When the leak that fired is about how you play (too wide, too many weak
+    // hands) but the seat is actually winning money, the "cut this" advice reads
+    // as generic and contradicts the P&L shown in the opening. Reframe it as a
+    // forward-looking risk rather than a present loss.
+    var seatPnl = (d.posMap && d.posMap[position]) ? d.posMap[position].pnl : 0;
+    var seatProfitable = seatPnl > 0;
+    if (seatProfitable && !pnlFired && (freqFired || compFired) && impactText) {
+      var fmtP = (typeof fmtPnl === 'function') ? fmtPnl : function(v) { return String(Math.round(v)); };
+      var lc = function(s) { return s ? s.charAt(0).toLowerCase() + s.slice(1) : s; };
+      impactText = 'This seat is winning overall (' + fmtP(seatPnl) + ' across ' + cell.n +
+        ' hands), so it is not costing you chips right now. It is a forward-looking risk, not a present loss: ' +
+        lc(impactText);
+      if (soWhatText) {
+        soWhatText = 'No urgent change needed while this seat prints. If you want to tighten the edge before opponents adjust, ' + lc(soWhatText);
+      }
+      // A profitable seat is a note to watch, not a red leak. Cap the severity.
+      if (severity === 'r') severity = 'a';
+    }
+
     var examples = [];
     for (var p = 0; p < pillars.length; p++) {
       if (pillars[p].examples) examples.push(pillars[p].examples);

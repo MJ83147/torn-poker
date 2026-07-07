@@ -2711,3 +2711,104 @@ textarea#jin {
   color: var(--text);
   transition: opacity .3s;
 }
+
+/* ===== Searchable player picker (compare modal) =====
+   A text input with a floating, filterable option list — replaces the native
+   <select> so long player pools can be typed to search. */
+.compare-picker {
+  position: relative;
+  z-index: 2;
+}
+
+.combo {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+.combo-input {
+  width: 100%;
+}
+
+.combo-list {
+  position: absolute;
+  top: calc(100% + var(--sp-4));
+  left: 0;
+  right: 0;
+  max-height: 240px;
+  overflow-y: auto;
+  background: var(--menu-bg, var(--s2));
+  border: var(--bw) solid var(--tint-light-2, var(--border));
+  border-radius: var(--r-sm);
+  box-shadow: 0 8px 32px var(--bg-overlay);
+  z-index: 1002;
+}
+
+.combo-option {
+  padding: var(--sp-6) var(--sp-8);
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.combo-option:hover,
+.combo-option.selected {
+  background: var(--tint-light);
+  color: var(--gold);
+}
+
+.combo-empty {
+  padding: var(--sp-6) var(--sp-8);
+}
+
+/* ===== Phone layout =====
+   Rows are the side-by-side layout primitive (two containers, chart grids,
+   header bars). On a phone there is no room for two columns, so every .row
+   stacks and its children take the full width. This is what turns the 2x2
+   chart grids (Trends, Sessions, Custom) into a single column on mobile. */
+@media (max-width: 680px) {
+  .row {
+    flex-direction: column;
+    gap: var(--sp-12);
+  }
+
+  .row>.container,
+  .row>.story {
+    width: 100%;
+    flex-basis: auto;
+  }
+
+  /* Tighten the sticky header so the stat strip and nav are not cramped. */
+  .dash-header {
+    padding: 0 var(--sp-16);
+  }
+
+  .hero-strip,
+  .tab-nav {
+    margin: 0 calc(-1 * var(--sp-16));
+  }
+
+  /* The hero stat strip is a single squished flex row on desktop; on a phone
+     lay the six stats out on a grid so each gets room to breathe. */
+  .hero-strip {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .hs {
+    padding: var(--sp-8) var(--sp-12);
+  }
+
+  .hs-l,
+  .hs-v {
+    white-space: normal;
+    word-break: break-word;
+  }
+}
+
+@media (max-width: 440px) {
+  .hero-strip {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

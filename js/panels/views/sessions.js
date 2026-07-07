@@ -146,9 +146,12 @@ function _renderSessionDetail(session, ctx, stories) {
       "</div>",
   );
 
-  html += chartSection("Stack through the session", "sess-c-stack");
-  html += chartSection("How your play drifted", "sess-c-drift");
-  if (ctx.durationMs >= 90 * 60000) html += chartSection("Result over time played", "sess-c-time");
+  var sessCharts = [
+    { title: "Stack through the session", id: "sess-c-stack" },
+    { title: "How your play drifted", id: "sess-c-drift" },
+  ];
+  if (ctx.durationMs >= 90 * 60000) sessCharts.push({ title: "Result over time played", id: "sess-c-time" });
+  html += chartGrid("Charts", sessCharts);
 
   html += '<div class="section"><div class="section-head">The stories in this session</div>';
   if (stories.length) {

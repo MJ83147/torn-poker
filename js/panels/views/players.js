@@ -81,7 +81,6 @@ function renderPlayers(container, d, hands) {
 
     container.innerHTML =
       panelHeader("Players", "Opponent records, head-to-head stats, and watch list.") +
-      panelFindings("Players", d, hands, "Opponent pool is still forming.") +
       section(
         "Head-to-Head",
         `<div class="row between center">
@@ -89,6 +88,7 @@ function renderPlayers(container, d, hands) {
           <button class="btn btn-primary" id="open-compare-btn">Compare Players</button>
         </div>`,
       ) +
+      panelFindings("Players", d, hands, "Opponent pool is still forming.") +
       watchedHtml +
       section(
         "All Opponents",
@@ -296,31 +296,86 @@ function renderCompare(container, d, hands) {
     return;
   }
 
-  var p1Default = heroName;
-  var p2Default = playerNames[0] === heroName ? playerNames[1] : playerNames[0];
+  var selected = {
+    p1: heroName,
+    p2: playerNames[0] === heroName ? playerNames[1] : playerNames[0],
+  };
 
-  function buildOptions(selectedName) {
-    return playerNames
-      .map(function (n) {
-        return `<option value="${n}"${n === selectedName ? " selected" : ""}>${n} (${players.counts[n]})</option>`;
-      })
-      .join("");
+  function esc(s) {
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
+  function comboMarkup(side, selectedName) {
+    return `<div class="combo" data-combo="${side}">
+      <input type="text" class="combo-input" id="compare-${side}-input" placeholder="Search player&hellip;" value="${esc(selectedName)}" autocomplete="off">
+      <div class="combo-list" id="compare-${side}-list" hidden></div>
+    </div>`;
   }
 
   container.innerHTML =
     `<div class="panel-header">
       <div class="title title-lg c-gold">Head to Head</div>
-      <div class="text-body">Compare two players side by side.</div>
+      <div class="text-body">Compare two players side by side. Type to search.</div>
     </div>` +
     section(
       "",
-      `<div class="row center">
-        <select id="compare-p1">${buildOptions(p1Default)}</select>
+      `<div class="row center compare-picker">
+        ${comboMarkup("p1", selected.p1)}
         <span class="text-body fw-semibold">vs</span>
-        <select id="compare-p2">${buildOptions(p2Default)}</select>
+        ${comboMarkup("p2", selected.p2)}
       </div>
       <div id="compare-body" class="section"></div>`,
     );
+
+  // Wire each combobox: typing filters the list, clicking an option selects it.
+  function wireCombo(side) {
+    var input = container.querySelector("#compare-" + side + "-input");
+    var list = container.querySelector("#compare-" + side + "-list");
+    if (!input || !list) return;
+
+    function renderList(query) {
+      var q = (query || "").toLowerCase();
+      var matches = playerNames.filter(function (n) {
+        return !q || n.toLowerCase().indexOf(q) !== -1;
+      }).slice(0, 50);
+      if (!matches.length) {
+        list.innerHTML = '<div class="combo-empty text-meta">No players match.</div>';
+      } else {
+        list.innerHTML = matches.map(function (n) {
+          var cls = n === selected[side] ? " selected" : "";
+          return '<div class="combo-option' + cls + '" data-name="' + esc(n) + '">' +
+            esc(n) + ' <span class="text-meta">(' + players.counts[n] + ')</span></div>';
+        }).join("");
+      }
+      list.querySelectorAll(".combo-option").forEach(function (opt) {
+        opt.onmousedown = function (e) {
+          e.preventDefault();
+          var name = this.getAttribute("data-name");
+          selected[side] = name;
+          input.value = name;
+          list.hidden = true;
+          renderComparison();
+        };
+      });
+    }
+
+    input.onfocus = function () {
+      input.select();
+      renderList("");
+      list.hidden = false;
+    };
+    input.oninput = function () {
+      renderList(input.value);
+      list.hidden = false;
+    };
+    input.onblur = function () {
+      // Delay so an option's mousedown fires first; then restore a valid name.
+      setTimeout(function () {
+        list.hidden = true;
+        if (input.value !== selected[side]) input.value = selected[side];
+      }, 150);
+    };
+  }
 
   function getStats(name) {
     return name === heroName ? heroStatsMapped(d) : opponentStatsMapped(hands, name);
@@ -332,8 +387,8 @@ function renderCompare(container, d, hands) {
   }
 
   function renderComparison() {
-    var p1Name = container.querySelector("#compare-p1").value;
-    var p2Name = container.querySelector("#compare-p2").value;
+    var p1Name = selected.p1;
+    var p2Name = selected.p2;
     var body = container.querySelector("#compare-body");
     if (!body) return;
 
@@ -422,6 +477,6 @@ function renderCompare(container, d, hands) {
   }
 
   renderComparison();
-  container.querySelector("#compare-p1").onchange = renderComparison;
-  container.querySelector("#compare-p2").onchange = renderComparison;
+  wireCombo("p1");
+  wireCombo("p2");
 }
