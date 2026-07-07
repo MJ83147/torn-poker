@@ -257,7 +257,7 @@ function renderPlayers(container, d, hands) {
       document.getElementById("players-back").onclick = function () {
         renderPlayerList();
       };
-      container.querySelectorAll(".hrow[data-ph-idx]").forEach(function (row) {
+      container.querySelectorAll("[data-ph-idx]").forEach(function (row) {
         row.onclick = function () {
           var idx = parseInt(this.getAttribute("data-ph-idx"));
           if (!isNaN(idx) && playerHands[idx]) showExampleHandModal(playerHands[idx]);

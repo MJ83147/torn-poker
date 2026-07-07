@@ -127,7 +127,7 @@ function ins(sev, label, text, chips, coaching) {
       ? '<div class="insight-chips">' +
         chips
           .map((c) => {
-            var cls = "chip";
+            var cls = "tag";
             if (c.hi) cls += " " + (INS_C[sev] || "c-dim");
             return '<span class="' + cls + '">' + c.v + "</span>";
           })

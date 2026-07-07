@@ -17,8 +17,12 @@ function describeAction(a, hand) {
     case "call":
       return "called " + amt(a.amount);
     case "bet":
+      // A short all-in can arrive with no usable amount (Torn logs it as $0);
+      // fall back to the plain shove text rather than "bet $0".
+      if (a.allIn && !a.amount) return "moved all in";
       return "bet " + amt(a.amount) + (a.allIn ? " (all in)" : "");
     case "raise":
+      if (a.allIn && !a.raiseTo && !a.amount) return "moved all in";
       if (typeof a.raiseTo === "number" && a.raiseTo) {
         return "raised to " + amt(a.raiseTo) + (a.allIn ? " (all in)" : "");
       }

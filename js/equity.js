@@ -4,6 +4,15 @@ function runEquitySimulation(hand) {
   var heroInfo = getHeroStreetActions(hand);
   var results = [];
 
+  // If this hand was an all-in showdown, we know the opponents' actual cards, so
+  // equity is the true chance of winning the pot against them (run out over the
+  // real board) rather than an estimate against a random hand.
+  var allInInfo = null;
+  if (typeof detectAllInCandidates === "function") {
+    var cands = detectAllInCandidates([hand]);
+    if (cands && cands.length) allInInfo = cands[0];
+  }
+
   var streetDefs = [
     { name: "Preflop", boardSlice: 0, iters: 10000 },
     { name: "Flop", boardSlice: 3, iters: 10000 },
@@ -26,7 +35,7 @@ function runEquitySimulation(hand) {
     var streetInfo = heroInfo.streets[sd.name];
     if (!streetInfo && sd.name !== "Preflop") continue;
 
-    var sim = simulateStreet(heroHole, streetBoard, sd.iters);
+    var sim = simulateStreet(heroHole, streetBoard, sd.iters, allInInfo ? allInInfo.opponents : null);
 
     var texture = streetBoard.length >= 3 ? classifyBoardTexture(streetBoard) : null;
     var madeHand = streetBoard.length >= 3 ? classifyMadeHand(heroHole, streetBoard) : null;
@@ -45,6 +54,14 @@ function runEquitySimulation(hand) {
 
     var guidance = streetInfo ? generateGuidance(sim.equity, streetInfo, texture, madeHand, villainProfile, priorStreets) : { text: "", quality: "neutral" };
 
+    // On an all-in that reached showdown there is no fold equity and the money
+    // is already committed, so the decision-time coaching ("bluff raise",
+    // "value raise") reads as contradictory. The All-In EV block above carries
+    // the real story, so drop the per-street guidance line for that action.
+    if (allInInfo && streetInfo && streetInfo.action && streetInfo.action.allIn) {
+      guidance = { text: "", quality: "neutral" };
+    }
+
     var actionDesc = "";
     var heroActionType = "";
     var villainActionType = "";
@@ -53,9 +70,9 @@ function runEquitySimulation(hand) {
       heroActionType = a.type;
       if (a.type === "fold") actionDesc = "You folded.";
       else if (a.type === "check") actionDesc = "You checked.";
-      else if (a.type === "call") actionDesc = "You called " + fmt(a.amount) + ".";
-      else if (a.type === "raise") actionDesc = "You raised to " + fmt(a.amount) + ".";
-      else if (a.type === "bet") actionDesc = "You bet " + fmt(a.amount) + ".";
+      else if (a.type === "call") actionDesc = a.allIn && !a.amount ? "You moved all in." : "You called " + fmt(a.amount) + (a.allIn ? " (all in)" : "") + ".";
+      else if (a.type === "raise") actionDesc = a.allIn && !a.raiseTo && !a.amount ? "You moved all in." : "You raised to " + fmt(a.raiseTo || a.amount) + (a.allIn ? " (all in)" : "") + ".";
+      else if (a.type === "bet") actionDesc = a.allIn && !a.amount ? "You moved all in." : "You bet " + fmt(a.amount) + (a.allIn ? " (all in)" : "") + ".";
       else if (a.type === "sb") actionDesc = "Small blind.";
       else if (a.type === "bb") actionDesc = "Big blind.";
     }
@@ -94,12 +111,31 @@ function runEquitySimulation(hand) {
   var villainProfile = getPrimaryVillain(hand);
   var summary = generateHandSummary(results, hand, villainProfile);
 
-  return { streets: results, summary: summary };
+  var allInEv = null;
+  if (allInInfo) {
+    // Equity at the moment the money went in (the all-in street's board),
+    // computed against the opponents' actual cards.
+    var aiSim = simulateStreet(heroHole, allInInfo.boardAtAllIn, 10000, allInInfo.opponents);
+    var fairShare = aiSim.equity * allInInfo.potAtAllIn;
+    allInEv = {
+      street: allInInfo.street,
+      equity: aiSim.equity,
+      exact: aiSim.exact,
+      opponents: allInInfo.opponents,
+      pot: allInInfo.potAtAllIn,
+      fairShare: fairShare,
+      expectedValue: fairShare - allInInfo.heroInvested,
+      actualResult: allInInfo.actualResult,
+    };
+  }
+
+  return { streets: results, summary: summary, allInEv: allInEv };
 }
 
 function renderEquityResults(container, simResult) {
   var results = Array.isArray(simResult) ? simResult : simResult.streets;
   var summary = Array.isArray(simResult) ? null : simResult.summary;
+  var allInEv = Array.isArray(simResult) ? null : simResult.allInEv;
 
   var hasExact = false;
   var maxIters = 0;
@@ -119,6 +155,41 @@ function renderEquityResults(container, simResult) {
 
   var html = '<div class="section">';
   html += '<div class="head"><span class="section-head">Equity Simulation</span><span class="text-meta">' + headerNote + "</span></div>";
+
+  if (allInEv) {
+    var aiPct = fmtPct(allInEv.equity * 100);
+    var aiBar = Math.round(allInEv.equity * 100);
+    var evDiff = allInEv.actualResult - allInEv.expectedValue;
+    var evCls = evDiff >= 0 ? "c-pos" : "c-neg";
+    var oppText = allInEv.opponents
+      .map(function (o) {
+        return displayCards(o.map(normCard));
+      })
+      .join(", ");
+    html += '<div class="list">';
+    html += '<div class="row center">';
+    html += '<div class="c-gold fw-semibold eq-street">All-In (' + allInEv.street + ")</div>";
+    html += '<span class="tag">vs ' + oppText + "</span>";
+    html += '<div class="eq-pct fw-semibold">' + aiPct + "</div>";
+    html += '<div class="eq-bar-track"><div class="eq-bar-fill" style="width:' + aiBar + '%"></div></div>';
+    html += "</div>";
+    html +=
+      '<div class="text-meta">Fair share of ' +
+      fmt(Math.round(allInEv.pot)) +
+      " pot: " +
+      fmt(Math.round(allInEv.fairShare)) +
+      " · Expected " +
+      fmtPnl(Math.round(allInEv.expectedValue)) +
+      " · Actual " +
+      fmtPnl(Math.round(allInEv.actualResult)) +
+      ' · <span class="' +
+      evCls +
+      '">Luck ' +
+      (evDiff >= 0 ? "+" : "") +
+      fmt(Math.round(evDiff)) +
+      "</span></div>";
+    html += "</div>";
+  }
 
   var curvePoints = [];
 
@@ -212,7 +283,11 @@ function renderEquityResults(container, simResult) {
     return r.street === "Flop" || r.street === "Turn";
   });
   var caveats = '<div class="text-meta">';
-  caveats += "Equity calculated against a single random hand. In multiway pots, true equity may be lower.";
+  if (allInEv) {
+    caveats += "Equity calculated against the opponents' actual revealed cards at the all-in.";
+  } else {
+    caveats += "Equity calculated against a single random hand. In multiway pots, true equity may be lower.";
+  }
   if (hasFlopOrTurn) {
     caveats += " Pot odds comparisons use raw equity; implied odds (potential to win more on later streets) are not factored in and may justify calls that appear unprofitable.";
   }

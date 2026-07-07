@@ -1476,19 +1476,6 @@ a {
   color: var(--gold);
 }
 
-.sentence-seg-tag {
-  display: inline-block;
-  margin-right: var(--sp-8);
-  font-size: var(--fs-xs);
-
-  letter-spacing: var(--sp-2);
-
-  text-transform: uppercase;
-  color: var(--gold);
-  font-weight: var(--fw-bold);
-  vertical-align: middle;
-}
-
 /* Centered divider between segment A and segment B in compare mode: the word
    "vs" sits in the middle with a rule running out to each side. */
 .sentence-vs {
@@ -2004,21 +1991,6 @@ textarea#jin {
 .dynamics-vs.v-high {
   border-color: color-mix(in srgb, var(--red) 35%, transparent);
   background: color-mix(in srgb, var(--red) 8%, transparent);
-}
-
-.dynamics-pos-tbl tr.v-ok td:nth-child(2) {
-  color: var(--green);
-  font-weight: var(--fw-semibold);
-}
-
-.dynamics-pos-tbl tr.v-low td:nth-child(2) {
-  color: var(--amber);
-  font-weight: var(--fw-semibold);
-}
-
-.dynamics-pos-tbl tr.v-high td:nth-child(2) {
-  color: var(--red);
-  font-weight: var(--fw-semibold);
 }
 
 .watch-star {
@@ -2690,10 +2662,6 @@ textarea#jin {
 
 .wn-dot.on {
   background: var(--gold);
-}
-
-.card>.badge {
-  align-self: flex-start;
 }
 
 .tip-panel {

@@ -26,28 +26,24 @@ function detectAllInCandidates(hands) {
     var acts = parseActions(h.actions);
     var allInStreet = null;
     var allInFound = false;
-    var allInCalled = false;
-
     var heroInAllIn = false;
+
+    // Find every all-in and note whether the hero was ever all-in. The decisive
+    // street is the first all-in's street: once a player is all-in and the pot
+    // is contested, betting on that street is done. Scanning every action (not
+    // breaking on the first called all-in) is what catches the hero shoving
+    // over a villain's shove — the hero's all-in comes after the villain's.
     for (var ai = 0; ai < acts.length; ai++) {
       if (isAllInAction(acts, ai)) {
-        var a = acts[ai];
         allInFound = true;
-        allInStreet = a.street;
-        if (a.isMe) heroInAllIn = true;
-        for (var bi = ai + 1; bi < acts.length; bi++) {
-          var b = acts[bi];
-          if (b.street !== a.street) break;
-          if (b.type === 'call' || b.type === 'raise') {
-            allInCalled = true;
-            break;
-          }
-        }
-        if (allInCalled) break;
+        if (allInStreet === null) allInStreet = acts[ai].street;
+        if (acts[ai].isMe) heroInAllIn = true;
       }
     }
 
-    if (!allInFound || !allInCalled || !heroInAllIn) continue;
+    // Reaching showdown with a revealed opponent (checked below) is the proof
+    // the all-in was contested, so no separate "was it called" scan is needed.
+    if (!allInFound || !heroInAllIn) continue;
     if (allInStreet === 'River') continue;
 
     // Structured (v2) hands carry showdown reveals natively as
