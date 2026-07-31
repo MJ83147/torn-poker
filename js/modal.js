@@ -163,6 +163,114 @@ function buildStacksBlock(hand) {
   return '<div class="inner-section">' + '<div class="section-head">Stacks (before &rarr; after)</div>' + '<div class="stacks-grid">' + rows + "</div>" + "</div>";
 }
 
+// Plain-text hand history for the "copy" export. Mirrors the modal's structure
+// (header, board/pot/result, stacks, action-by-street, showdown) but emits
+// readable text lines rather than DOM. Suit glyphs stay as Unicode (A♠), which
+// paste cleanly into Discord/forums.
+function buildHandReplayText(hand) {
+  if (!hand) return "";
+  var bb = getHandBB(hand);
+  function cards(cs) {
+    return cs && cs.length ? cs.map(normCard).join(" ") : "";
+  }
+  var lines = [];
+
+  var hole = hand.hole && hand.hole.length ? cards(hand.hole) : "??";
+  lines.push(hole + "  ·  " + (hand.position || "?") + " position");
+
+  lines.push("Board: " + (hand.board && hand.board.length ? cards(hand.board) : "none"));
+  lines.push("Pot: " + fmtBB(hand.pot || 0, bb));
+  var pnl = getHandPnl(hand);
+  var res = hand.outcome ? hand.outcome.result : "?";
+  var resultLabel = res;
+  if (res === "folded" && pnl.text !== "folded") resultLabel = "folded " + pnl.text;
+  else if (res === "won") resultLabel = "won " + pnl.text;
+  else if (res === "lost") resultLabel = "lost " + pnl.text;
+  lines.push("Result: " + resultLabel);
+
+  if (hand.stacks && hand.stacks.length) {
+    var players = hand.stacks.slice();
+    players.sort(function (a, b) {
+      return (b && b.isHero ? 1 : 0) - (a && a.isHero ? 1 : 0);
+    });
+    lines.push("");
+    lines.push("Stacks (before -> after)");
+    players.forEach(function (p) {
+      if (!p) return;
+      var name = p.isHero ? "You" : p.name || "?";
+      var start = p.startStack != null ? fmtBB(p.startStack, bb) : "-";
+      var end = p.endStack != null ? fmtBB(p.endStack, bb) : "-";
+      var net = p.profit != null ? "  (" + fmtPnlBB(p.profit, bb) + ")" : "";
+      lines.push("  " + name + ": " + start + " -> " + end + net);
+    });
+  }
+
+  var acts = parseActions(hand.actions) || [];
+  var board = (hand.board || []).map(normCard);
+  var streetBoard = { Flop: board.slice(0, 3), Turn: board.slice(3, 4), River: board.slice(4, 5) };
+  var lastStreet = null;
+  for (var i = 0; i < acts.length; i++) {
+    var a = acts[i];
+    if (!a || !a.type) continue;
+    if (a.street && a.street !== lastStreet) {
+      lastStreet = a.street;
+      var bc = streetBoard[a.street] || [];
+      lines.push("");
+      lines.push(a.street + (bc.length ? " " + cards(bc) : ""));
+    }
+    var who = a.isMe ? "You" : a.author || "?";
+    lines.push((a.isMe ? "> " : "  ") + who + ": " + describeAction(a, hand));
+  }
+
+  var revs = (typeof getRevealedHands === "function" ? getRevealedHands(hand) : []).slice();
+  if (revs.length) {
+    revs.sort(function (a, b) {
+      return (b && b.isMe ? 1 : 0) - (a && a.isMe ? 1 : 0);
+    });
+    lines.push("");
+    lines.push("Showdown");
+    revs.forEach(function (r) {
+      var name = r.isMe ? "You" : r.author || "?";
+      lines.push("  " + name + ": " + cards(r.hole) + (r.handName ? "  (" + r.handName + ")" : ""));
+    });
+    var winners = typeof getHandWinners === "function" ? getHandWinners(hand) : [];
+    winners.forEach(function (win) {
+      var wname = win.isMe ? "You" : win.author || "?";
+      lines.push("  " + wname + " won " + fmtBB(win.winnings, bb) + (win.handName ? " with " + win.handName : ""));
+    });
+  }
+
+  return lines.join("\n");
+}
+
+// Copy text to the clipboard. Prefers the async Clipboard API; falls back to a
+// hidden-textarea execCommand for insecure contexts or browsers that block it.
+// cb(ok) reports success so the caller can flash button feedback.
+function copyTextToClipboard(text, cb) {
+  function fallback() {
+    try {
+      var ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      var ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+      cb(!!ok);
+    } catch (e) {
+      cb(false);
+    }
+  }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(function () {
+      cb(true);
+    }, fallback);
+  } else {
+    fallback();
+  }
+}
+
 function createExampleModal() {
   var existing = document.getElementById("example-hand-modal");
   if (existing) existing.remove();
@@ -197,6 +305,7 @@ function showExampleHandModal(hand, coachingNote) {
   if (typeof annotateHandDynamics === "function") annotateHandDynamics(hand);
 
   var closeBtn = '<button class="modal-close" id="modal-close-btn">&times;</button>';
+  var copyBtn = '<button class="btn btn-icon modal-copy-btn" id="modal-copy-btn" title="Copy hand history">&#10697;</button>';
   var tagStrip = handTagsHtml(hand);
   var header =
     '<div class="panel-header">' +
@@ -262,11 +371,28 @@ function showExampleHandModal(hand, coachingNote) {
     "</div>";
 
   var equitySlot = '<div class="eq-slot" id="equity-slot"></div>';
-  box.innerHTML = closeBtn + starBtn + header + metaHtml + stacksHtml + equitySlot + actionsHtml + coaching + notesSection;
+  box.innerHTML = closeBtn + copyBtn + starBtn + header + metaHtml + stacksHtml + equitySlot + actionsHtml + coaching + notesSection;
   mountExampleModal(overlay, box);
 
   if (typeof injectEquityButton === "function") {
     injectEquityButton(box, hand);
+  }
+
+  var copyEl = document.getElementById("modal-copy-btn");
+  if (copyEl) {
+    copyEl.onclick = function () {
+      var btn = this;
+      copyTextToClipboard(buildHandReplayText(hand), function (ok) {
+        btn.innerHTML = ok ? "&#10003;" : "&#10007;";
+        btn.classList.toggle("copied", ok);
+        btn.title = ok ? "Copied" : "Copy failed";
+        setTimeout(function () {
+          btn.innerHTML = "&#10697;";
+          btn.classList.remove("copied");
+          btn.title = "Copy hand history";
+        }, 1400);
+      });
+    };
   }
 
   document.getElementById("modal-star-btn").onclick = function () {

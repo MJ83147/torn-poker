@@ -978,6 +978,19 @@ a {
   right: 52px;
 }
 
+/* copy-hand-history button sits left of the star in the header corner */
+.modal-copy-btn {
+  position: absolute;
+  top: var(--sp-8);
+  right: 88px;
+  font-size: var(--fs-md);
+}
+
+.modal-copy-btn.copied {
+  color: var(--green);
+  border-color: var(--green);
+}
+
 /* --- Form controls (field base lives in the reset) ---
    .select adds the caret chrome; .toggle is the $/BB segmented switch. */
 .select {
