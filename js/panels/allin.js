@@ -26,24 +26,23 @@ function detectAllInCandidates(hands) {
     var acts = parseActions(h.actions);
     var allInStreet = null;
     var allInFound = false;
-    var heroInAllIn = false;
 
-    // Find every all-in and note whether the hero was ever all-in. The decisive
-    // street is the first all-in's street: once a player is all-in and the pot
-    // is contested, betting on that street is done. Scanning every action (not
-    // breaking on the first called all-in) is what catches the hero shoving
-    // over a villain's shove — the hero's all-in comes after the villain's.
+    // Find every all-in. The hero doesn't have to be the one all-in: a villain
+    // shoving and the hero calling is the same EV spot, so any all-in by any
+    // player qualifies as long as the hero saw it through (the folded check
+    // above and the reveals check below). The decisive street is the first
+    // all-in's street: once a player is all-in and the pot is contested,
+    // betting on that street is done.
     for (var ai = 0; ai < acts.length; ai++) {
       if (isAllInAction(acts, ai)) {
         allInFound = true;
         if (allInStreet === null) allInStreet = acts[ai].street;
-        if (acts[ai].isMe) heroInAllIn = true;
       }
     }
 
     // Reaching showdown with a revealed opponent (checked below) is the proof
     // the all-in was contested, so no separate "was it called" scan is needed.
-    if (!allInFound || !heroInAllIn) continue;
+    if (!allInFound) continue;
     if (allInStreet === 'River') continue;
 
     // Showdown reveals live on stacks[] in real exported hands and on a flat

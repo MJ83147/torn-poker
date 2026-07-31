@@ -53,7 +53,7 @@ function renderAllIn(container, d, hands) {
 
   if (!_allinHands.length) {
     container.innerHTML =
-      panelHeader(_ALLIN_TITLE, _ALLIN_DESC) + emptyState("No all-in showdown hands found yet. When you go all-in and both players show cards, those hands appear here with equity calculations.");
+      panelHeader(_ALLIN_TITLE, _ALLIN_DESC) + emptyState("No all-in showdown hands found yet. When you go all-in, or call an opponent's all-in, and the cards get shown, those hands appear here with equity calculations.");
     return;
   }
 

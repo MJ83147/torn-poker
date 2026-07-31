@@ -105,6 +105,61 @@ function getHandPnlValue(h) {
   return -invested;
 }
 
+// Hero's pnl this hand attributable to one specific opponent. A hand's full
+// swing does not belong to every player who acted in it — crediting every
+// opponent at a full table with hero's whole hand pnl multiplies one pot
+// across the entire table. getHandWinners() tells us who actually took money
+// out of the pot:
+//   - hero lost: only the winner(s) get debited, split by their winnings
+//     share (covers chopped pots).
+//   - hero won: hero is the winner; the opponents who did NOT win split the
+//     win evenly (no per-opponent contribution amount is tracked, so an even
+//     split is the closest available approximation).
+// When a hand has no winner data (pre-v2 imports without stacks[]), the flow
+// can't be reconstructed, so only an unambiguous heads-up hand (hero + one
+// opponent) attributes the raw hand pnl; anything wider attributes nothing.
+function getHandPnlVsOpponent(h, opponentName, participantNames) {
+  if (!h || !h.outcome) return 0;
+  var heroPnl = getHandPnlValue(h);
+  if (!heroPnl) return 0;
+  participantNames = participantNames || [];
+
+  var winners = getHandWinners(h);
+
+  if (heroPnl < 0) {
+    var nonHeroWinners = [];
+    for (var i = 0; i < winners.length; i++) {
+      if (!winners[i].isMe) nonHeroWinners.push(winners[i]);
+    }
+    if (!nonHeroWinners.length) {
+      return participantNames.length === 1 ? heroPnl : 0;
+    }
+    var totalWinnings = 0;
+    var oppWinnings = null;
+    for (var w = 0; w < nonHeroWinners.length; w++) {
+      totalWinnings += nonHeroWinners[w].winnings || 0;
+      if (nonHeroWinners[w].author === opponentName) oppWinnings = nonHeroWinners[w].winnings || 0;
+    }
+    if (oppWinnings === null || totalWinnings === 0) return 0;
+    return heroPnl * (oppWinnings / totalWinnings);
+  }
+
+  // heroPnl > 0: hero is the winner. Split across opponents who lost.
+  if (!winners.length) {
+    return participantNames.length === 1 ? heroPnl : 0;
+  }
+  var winnerNames = {};
+  for (var v = 0; v < winners.length; v++) winnerNames[winners[v].author] = true;
+  if (winnerNames[opponentName]) return 0; // co-winner (chop), not a loser
+
+  var losers = [];
+  for (var n = 0; n < participantNames.length; n++) {
+    if (!winnerNames[participantNames[n]]) losers.push(participantNames[n]);
+  }
+  if (!losers.length) return 0;
+  return losers.indexOf(opponentName) !== -1 ? heroPnl / losers.length : 0;
+}
+
 function inferTable(hand) {
   if (hand.tableId) {
     const num = String(hand.tableId).replace(/\D/g, "");

@@ -157,6 +157,14 @@
       }
     }
 
+    var recNote = (typeof Sections.recencyNote === 'function')
+      ? Sections.recencyNote(hands, { key: 'vpip', predicate: function(h) { return heroPlayed(h); } })
+      : null;
+    if (recNote) {
+      branchTexts.push(recNote.text);
+      if (recNote.adverse) maxDelta += 0.5;
+    }
+
     var severity = aggregateSeverity || 'g';
     var fired = branchTexts.length > 0 || severity === 'r' || severity === 'a';
     if (!fired) return null;
@@ -296,7 +304,7 @@
     if (classified['monitor'].length) {
       var mn = sortByImpact(classified['monitor']).slice(0, 3);
       var mnText = mn.map(function(h) { return h.key + ' (' + fmtPnl(h.pnl) + ')'; }).join(', ');
-      branchTexts.push('Outside your target range but profitable so far: ' + mnText + '. Worth watching as sample grows.');
+      branchTexts.push('Outside your target range but profitable so far: ' + mnText + '.');
     }
 
     if (!recommended) {

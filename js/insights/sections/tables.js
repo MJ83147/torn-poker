@@ -206,6 +206,13 @@
       var t = inferTable(h);
       return String(t != null ? t : 'unknown') === id;
     }
+    if (worst && typeof Sections.recencyPnlNote === 'function') {
+      var worstKeyId = String(worst.key);
+      var recNote = Sections.recencyPnlNote(hands, function(h) {
+        return tableMatches(h, worstKeyId);
+      }, 'Hands at ' + worst.label);
+      if (recNote) branchTexts.push(recNote.text);
+    }
     if (worst && worst.hands && worst.hands.length) {
       var worstId = String(worst.key);
       var worstLosses = pickHands(hands, function(h) { return tableMatches(h, worstId) && heroLost(h); }, 15);

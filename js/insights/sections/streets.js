@@ -251,6 +251,14 @@
       soWhatText = 'Look at the boards you are c-betting. The frequency is fine; the texture selection or sizing is off.';
     }
 
+    var recNote = (typeof Sections.recencyNote === 'function')
+      ? Sections.recencyNote(hands, { key: 'cbet', predicate: function(h) { return heroCbet(h); } })
+      : null;
+    if (recNote) {
+      branchTexts.push(recNote.text);
+      if (recNote.adverse) sev.deltaUnits = (sev.deltaUnits || 0) + 0.5;
+    }
+
     var fired = branchTexts.length > 0 || sev.severity === 'r' || sev.severity === 'a' || impactText != null;
     if (!fired) return null;
 
@@ -340,6 +348,14 @@
     } else if (pnlContinue.count >= MIN_CL && pnlContinue.pnl < 0) {
       impactText = 'Fold-to-c-bet rate is in band but the hands you continue are losing money on later streets.';
       soWhatText = 'Review the turns and rivers in the continue group. Continuing is correct; the leak is what you do once the next card lands.';
+    }
+
+    var recNote = (typeof Sections.recencyNote === 'function')
+      ? Sections.recencyNote(hands, { key: 'foldToCbet', predicate: function(h) { return heroFacedCbet(h); } })
+      : null;
+    if (recNote) {
+      branchTexts.push(recNote.text);
+      if (recNote.adverse) sev.deltaUnits = (sev.deltaUnits || 0) + 0.5;
     }
 
     var fired = branchTexts.length > 0 || sev.severity === 'r' || sev.severity === 'a' || impactText != null;
@@ -502,6 +518,18 @@
       soWhatText = 'Review the 3-bet hands. Selection looks fine in volume; the postflop execution after a called 3-bet needs work.';
     }
 
+    var recNote = (typeof Sections.recencyNote === 'function')
+      ? Sections.recencyNote(hands, {
+          rate: function(hs) { var c = compute3BetCounts(hs); return { done: c.done, opps: c.opps }; },
+          label: '3-bet rate',
+          minDelta: 3
+        })
+      : null;
+    if (recNote) {
+      branchTexts.push(recNote.text);
+      if (recNote.adverse) sev.deltaUnits = (sev.deltaUnits || 0) + 0.5;
+    }
+
     var fired = branchTexts.length > 0 || sev.severity === 'r' || sev.severity === 'a' || impactText != null;
     if (!fired) return null;
 
@@ -596,6 +624,17 @@
     } else if (pnlCont.count >= MIN_CL && pnlCont.pnl < 0) {
       impactText = 'Fold-to-3-bet is in band but the continues are losing. The hands you keep are underperforming in the 3-bet pot.';
       soWhatText = 'Check the continues for combos that play poorly out of position. Some of these probably should have folded.';
+    }
+
+    var recNote = (typeof Sections.recencyNote === 'function')
+      ? Sections.recencyNote(hands, {
+          key: 'foldTo3bet',
+          predicate: function(h) { var c = actionContext(h); return c && c.heroFaced3bet; }
+        })
+      : null;
+    if (recNote) {
+      branchTexts.push(recNote.text);
+      if (recNote.adverse) sev.deltaUnits = (sev.deltaUnits || 0) + 0.5;
     }
 
     var fired = branchTexts.length > 0 || sev.severity === 'r' || sev.severity === 'a' || impactText != null;
@@ -911,6 +950,11 @@
     }
 
     branchTexts.push('Limping in caps your hand at a flat call, so you cannot win the pot before the flop and you arrive without the betting lead.');
+
+    var recNote = (typeof Sections.recencyNote === 'function')
+      ? Sections.recencyNote(hands, { key: 'limp', predicate: function(h) { return heroLimped(h); } })
+      : null;
+    if (recNote) branchTexts.push(recNote.text);
 
     var severity = limp >= LIMP_CEIL * 2 ? 'r' : 'a';
 

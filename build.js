@@ -29,6 +29,7 @@ var panelViews = listJs('js/panels/views');
 var insightsOrder = [
   'js/insights/story-engine.js',
   'js/insights/story-builder.js',
+  'js/insights/recency.js',
   'js/insights/sections/range.js',
   'js/insights/sections/position.js',
   'js/insights/sections/showdown.js',

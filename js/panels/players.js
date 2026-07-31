@@ -8,26 +8,32 @@ function playersModel(hands) {
     var h = hands[i];
     var acts = parseActions(h.actions);
     var seenInHand = {};
+    var namesInHand = [];
     for (var j = 0; j < acts.length; j++) {
       var a = acts[j];
       if (a.isMe || !a.author || seenInHand[a.author]) continue;
       seenInHand[a.author] = true;
-      if (!oppMap[a.author]) {
-        oppMap[a.author] = { name: a.author, hands: 0, won: 0, lost: 0, folded: 0, profit: 0, handRefs: [] };
+      namesInHand.push(a.author);
+    }
+    for (var n = 0; n < namesInHand.length; n++) {
+      var name = namesInHand[n];
+      if (!oppMap[name]) {
+        oppMap[name] = { name: name, hands: 0, won: 0, lost: 0, folded: 0, profit: 0, handRefs: [] };
       }
-      oppMap[a.author].hands++;
-      oppMap[a.author].handRefs.push(i);
+      oppMap[name].hands++;
+      oppMap[name].handRefs.push(i);
       if (h.outcome) {
-        if (h.outcome.result === 'won') oppMap[a.author].won++;
-        else if (h.outcome.result === 'folded') oppMap[a.author].folded++;
-        else oppMap[a.author].lost++;
-        var pnlV = getHandPnlValue(h);
-        oppMap[a.author].profit += pnlV;
+        if (h.outcome.result === 'won') oppMap[name].won++;
+        else if (h.outcome.result === 'folded') oppMap[name].folded++;
+        else oppMap[name].lost++;
+        // Per-opponent pnl, not hero's whole-hand pnl: see getHandPnlVsOpponent.
+        var pnlV = getHandPnlVsOpponent(h, name, namesInHand);
+        oppMap[name].profit += pnlV;
         // BB-normalized so the $/BB toggle can show cross-stake profit in BB.
         var oppBB = getHandBB(h);
         if (oppBB > 0) {
-          oppMap[a.author].profitBB = (oppMap[a.author].profitBB || 0) + pnlV / oppBB;
-          oppMap[a.author].profitBBKnown = true;
+          oppMap[name].profitBB = (oppMap[name].profitBB || 0) + pnlV / oppBB;
+          oppMap[name].profitBBKnown = true;
         }
       }
     }

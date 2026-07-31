@@ -68,6 +68,14 @@
     return out;
   }
 
+  function heroPostflopBet(h) {
+    var w = walkHandForSizing(h);
+    for (var b = 0; b < w.heroBets.length; b++) {
+      if (w.heroBets[b].street !== 'Preflop') return true;
+    }
+    return false;
+  }
+
   function groupByStreet(rows) {
     var g = { Preflop: [], Flop: [], Turn: [], River: [] };
     for (var i = 0; i < rows.length; i++) {
@@ -211,8 +219,13 @@
       soWhatText = 'Once you have a default, start varying it by board: bigger on wet boards and against several players, smaller heads-up on dry boards.';
     } else {
       impactText = 'Sizing shape reads sensibly across streets. The defaults are doing strategic work.';
-      soWhatText = 'Keep building data on by-position and by-texture splits as the sample grows.';
     }
+
+    var recNote = (typeof Sections.recencyPnlNote === 'function')
+      ? Sections.recencyPnlNote(hands, heroPostflopBet, 'Your post-flop bets')
+      : null;
+    if (recNote) branchTexts.push(recNote.text);
+    if (severity === 'g' && !(recNote && recNote.adverse)) return null;
 
     var examples = [];
     if (hands && hands.length) {
@@ -291,36 +304,7 @@
       else { lost.count++; lost.sumFrac += avg; lost.fracs.push(avg); }
     }
 
-    if (won.count < MIN_CELL_LOCAL || lost.count < MIN_CELL_LOCAL) {
-      var thinExamples = [];
-      var anyBets = pickHands(hands, function(h) {
-        var w = walkHandForSizing(h);
-        for (var b = 0; b < w.heroBets.length; b++) {
-          if (w.heroBets[b].street !== 'Preflop') return true;
-        }
-        return false;
-      }, 12);
-      if (anyBets.length) {
-        thinExamples.push({
-          id: 'bets-value-vs-bluff-thin',
-          label: 'Hands where you bet post-flop',
-          hands: anyBets,
-          coachingNote: 'Browse these hands and ask whether the bet size matched what you held. As the showdown sample grows, this reading will sharpen into a real verdict.'
-        });
-      }
-      return F({
-        id: 'bets-value-vs-bluff',
-        name: 'Value vs Bluff Sizing',
-        severity: 'n',
-        magnitude: 0,
-        openingText: 'Not enough showdown bets to read whether your sizing tracks hand strength.',
-        branchTexts: ['Won showdowns with bets: ' + won.count + '. Lost showdowns with bets: ' + lost.count + '. Need at least ' + MIN_CELL_LOCAL + ' on each side.'],
-        impactText: null,
-        soWhatText: 'Keep logging hands. This reading sharpens as the showdown sample grows.',
-        examples: thinExamples,
-        meta: { won: won.count, lost: lost.count }
-      });
-    }
+    if (won.count < MIN_CELL_LOCAL || lost.count < MIN_CELL_LOCAL) return null;
 
     var avgWon = won.sumFrac / won.count;
     var avgLost = lost.sumFrac / lost.count;
@@ -351,6 +335,11 @@
       impactText = 'Same size across hand strength is a missed lever. Strong hands could be priced bigger; weak hands could be checked or sized small with intent. Right now the size is doing no work.';
       soWhatText = 'Start scaling up on value-heavy boards and lines, and either give up or size small with a plan on weak holdings.';
     }
+
+    var recNote2 = (typeof Sections.recencyPnlNote === 'function')
+      ? Sections.recencyPnlNote(hands, function(h) { return isShowdown(h) && heroPostflopBet(h); }, 'Showdowns where you bet post-flop')
+      : null;
+    if (recNote2) branchTexts.push(recNote2.text);
 
     var examples = [];
     var threshold = avgWon;
@@ -547,7 +536,7 @@
       soWhatText = 'Build the habit of widening defence against smaller bets and tightening against larger ones. The size in front of you should change the decision.';
     } else {
       impactText = 'Your response scales sensibly with the size of bets you face. You fold more to bigger bets and call more against smaller ones, which is the right shape.';
-      soWhatText = 'Hold the shape. Track call frequency against overbets specifically as the sample grows.';
+      soWhatText = 'Hold the shape. Overbets are the spot where it usually bends first, so watch your calls against those specifically.';
     }
 
     var examples = [];

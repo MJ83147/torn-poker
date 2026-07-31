@@ -140,6 +140,14 @@
       }
     }
 
+    var recNote = (typeof Sections.recencyNote === 'function')
+      ? Sections.recencyNote(hands, { key: 'wtsd', predicate: handIsShowdown })
+      : null;
+    if (recNote) {
+      branchTexts.push(recNote.text);
+      if (recNote.adverse) sev.deltaUnits += 0.5;
+    }
+
     var severity = sev.severity;
     var fired = branchTexts.length > 0 || severity === 'r' || severity === 'a' || impactText != null;
     if (!fired) return null;
@@ -264,6 +272,14 @@
       });
     }
 
+    var recNote = (typeof Sections.recencyNote === 'function')
+      ? Sections.recencyNote(hands, { key: 'wsd', predicate: handIsShowdown })
+      : null;
+    if (recNote) {
+      branchTexts.push(recNote.text);
+      if (recNote.adverse) sev.deltaUnits += 0.5;
+    }
+
     var severity = sev.severity;
     var fired = branchTexts.length > 0 || severity === 'r' || severity === 'a' || impactText != null;
     if (!fired) return null;
@@ -315,10 +331,8 @@
     var nsdPos = nsdPnl > 0;
 
     if (sdPos && nsdPos) {
-      severity = 'g';
-      branchTexts.push('Both lines profit. You win when you show down and you win when you do not.');
-      impactText = 'This is the structural shape of a profitable player. Both income streams are working.';
-      soWhatText = 'Keep playing. Watch for either line drifting negative as the sample grows.';
+      // Both lines profit: nothing to fix, say nothing.
+      return null;
     } else if (sdNeg && nsdNeg) {
       severity = 'r';
       branchTexts.push('Both lines are losing. Showdowns are at ' + fmtPnl(sdPnl) + ', non-showdowns at ' + fmtPnl(nsdPnl) + '.');
@@ -335,8 +349,8 @@
       impactText = 'Hands you do not get to showdown on are costing money. You are betting and being called or raised off pots without seeing the river.';
       soWhatText = 'Fewer c-bets and barrels in spots where opponents are calling. Pick bluff spots where folds are likely: dry boards, heads up, in position.';
     } else {
-      severity = 'n';
-      branchTexts.push('One line is near flat. Read the showdown and non-showdown stats above to see which is driving total P&L.');
+      // Near-flat split: no pattern worth a card.
+      return null;
     }
 
     var examples = [];
@@ -389,8 +403,7 @@
       }
     }
 
-    var fired = severity === 'r' || severity === 'g' || branchTexts.length > 0;
-    if (!fired) return null;
+    if (severity !== 'r') return null;
 
     return F({
       id: 'showdown-split',

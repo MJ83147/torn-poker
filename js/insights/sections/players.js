@@ -8,16 +8,20 @@
     if (!hands || !hands.length) return [];
 
     var nameToHandIdx = {};
+    var namesByHandIdx = {};
     for (var i = 0; i < hands.length; i++) {
       var acts = parseActions(hands[i].actions);
       var seen = {};
+      var names = [];
       for (var j = 0; j < acts.length; j++) {
         var a = acts[j];
         if (a.isMe || !a.author || seen[a.author]) continue;
         seen[a.author] = true;
+        names.push(a.author);
         if (!nameToHandIdx[a.author]) nameToHandIdx[a.author] = [];
         nameToHandIdx[a.author].push(i);
       }
+      namesByHandIdx[i] = names;
     }
 
     // One pass over all hands for every opponent's stats. Calling the
@@ -48,7 +52,8 @@
         if (h.outcome.result === 'won') heroWon++;
         else if (h.outcome.result === 'folded') heroFolded++;
         else heroLost++;
-        heroPnl += getHandPnlValue(h);
+        // Per-opponent pnl, not hero's whole-hand pnl: see getHandPnlVsOpponent.
+        heroPnl += getHandPnlVsOpponent(h, name, namesByHandIdx[idxs[k]]);
       }
 
       profiles.push({
@@ -256,6 +261,17 @@
         branchTexts.push('You reached showdown ' + totalShowdown + ' times against this group and won ' +
           Math.round(wsd) + '% of them.');
       }
+    }
+
+    if (typeof Sections.recencyPnlNote === 'function') {
+      var grpSet = new Set();
+      for (var gi = 0; gi < unionIdxs.length; gi++) {
+        if (hands[unionIdxs[gi]]) grpSet.add(hands[unionIdxs[gi]]);
+      }
+      var recNote = Sections.recencyPnlNote(hands, function(h) {
+        return grpSet.has(h);
+      }, 'Hands against ' + meta.shortPlural);
+      if (recNote) branchTexts.push(recNote.text);
     }
 
     var impactText = null;

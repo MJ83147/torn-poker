@@ -315,6 +315,13 @@
       if (severity === 'r') severity = 'a';
     }
 
+    var recNote = (typeof Sections.recencyPnlNote === 'function')
+      ? Sections.recencyPnlNote(hands, function(h) {
+          return (h.position || '?') === position && heroPlayed(h);
+        }, 'Hands you played from ' + position)
+      : null;
+    if (recNote) branchTexts.push(recNote.text);
+
     var examples = [];
     for (var p = 0; p < pillars.length; p++) {
       if (pillars[p].examples) examples.push(pillars[p].examples);

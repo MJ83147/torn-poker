@@ -1093,6 +1093,26 @@
       var sd = buildStrongDraws(d, buckets.strongDraw, overallPerHand);    if (sd) out.push(sd);
       var wd = buildWeakDraws(d, buckets.weakDraw, overallPerHand);        if (wd) out.push(wd);
       var a = buildAir(d, buckets.air, overallPerHand);                    if (a) out.push(a);
+
+      // "What's changed" line per bucket: how these hands pay lately vs usually.
+      if (typeof Sections.recencyPnlNote === 'function') {
+        var BUCKET_BY_ID = {
+          'cards-premium': { bucket: 'premium', label: 'Premium made hands' },
+          'cards-strong': { bucket: 'strong', label: 'Strong made hands' },
+          'cards-marginal': { bucket: 'marginal', label: 'Marginal made hands' },
+          'cards-strong-draws': { bucket: 'strongDraw', label: 'Strong draws' },
+          'cards-weak-draws': { bucket: 'weakDraw', label: 'Weak draws' },
+          'cards-air': { bucket: 'air', label: 'Air hands' }
+        };
+        for (var oi = 0; oi < out.length; oi++) {
+          var entry = BUCKET_BY_ID[out[oi].id];
+          if (!entry) continue;
+          var note = Sections.recencyPnlNote(hands, (function(bid) {
+            return function(h) { return classifyHandBucket(h) === bid; };
+          })(entry.bucket), entry.label);
+          if (note && out[oi].branchTexts) out[oi].branchTexts.push(note.text);
+        }
+      }
       return out;
     }
   });

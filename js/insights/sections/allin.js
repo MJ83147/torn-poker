@@ -51,6 +51,10 @@
       branchTexts.push('When you call shoves you win ' + Math.round(winPct) + '% of the time, across ' + calls + ' calls. Some of that is variance, but a number this low usually means the calling range is too wide for the spots you are in.');
     }
 
+    var recNote = (typeof Sections.recencyPnlNote === 'function')
+      ? Sections.recencyPnlNote(hands, handHadAllIn, 'Your all-in spots')
+      : null;
+
     var severity = 'g';
     var deltaUnits = 0;
     if (firedLow && firedWeakCall) {
@@ -62,9 +66,12 @@
     } else if (firedLow || firedWeakCall) {
       severity = 'a';
       deltaUnits = 0.6;
-    } else {
-      branchTexts.push('Your all-in posture is balanced: you fold the obvious value shoves and call the spots that should be called.');
+    } else if (!(recNote && recNote.adverse)) {
+      // Nothing off-pattern and nothing new in recent play: say nothing.
+      return null;
     }
+
+    if (recNote) branchTexts.push(recNote.text);
 
     var impactText = null;
     var soWhatText = null;

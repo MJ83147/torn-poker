@@ -101,6 +101,12 @@ function renderTableDynamicsReference(hands, d) {
       cardBody = `<div class="text-body c-dim">${nHands ? 'Not enough hands at this table size yet.' : 'No hands at this table size yet.'}</div>`;
     } else {
       var posRows = '';
+      // Collect the seats where this player actually deviates from their target
+      // band, so the coaching below can name them instead of reciting the same
+      // generic strategy note to everyone. Needs a real per-seat sample.
+      var devs = [];
+      var sampledCount = 0;
+      var COACH_MIN = 8;
       for (var pi = 0; pi < entry.positions.length; pi++) {
         var p = entry.positions[pi];
         if (!entry.guideByPos[p]) continue;
@@ -110,15 +116,45 @@ function renderTableDynamicsReference(hands, d) {
         var v = band ? bandVerdict(actPct, Math.round(band.tight), Math.round(band.loose)).cls : 'v-na';
         var vpipCls = v === 'v-ok' ? 'c-pos fw-semibold' : v === 'v-low' ? 'c-warn fw-semibold' : v === 'v-high' ? 'c-neg fw-semibold' : '';
         posRows += `<tr><td>${p}</td><td class="${vpipCls}">${actPct != null ? actPct + '%' : '-'}</td><td class="c-dim">${fmtBandRange(band)}</td><td class="c-dim">${pm ? pm.hands : 0}</td></tr>`;
+
+        if (band && actPct != null && pm && pm.hands >= COACH_MIN) {
+          sampledCount++;
+          var lo = Math.round(band.tight), hi = Math.round(band.loose);
+          if (v === 'v-high') devs.push({ p: p, dir: 'loose', mag: actPct - hi, actPct: actPct, lo: lo, hi: hi, desc: entry.guideByPos[p].desc });
+          else if (v === 'v-low') devs.push({ p: p, dir: 'tight', mag: lo - actPct, actPct: actPct, lo: lo, hi: hi, desc: entry.guideByPos[p].desc });
+        }
       }
+
+      var coachHtml = '';
+      if (devs.length) {
+        devs.sort(function (a, b) { return b.mag - a.mag; });
+        var items = devs.slice(0, 2).map(function (dv) {
+          var msg = dv.dir === 'loose'
+            ? 'too loose at ' + dv.actPct + '% (target ' + dv.lo + '-' + dv.hi + '%). Tighten up: ' + dv.desc
+            : 'too tight at ' + dv.actPct + '% (target ' + dv.lo + '-' + dv.hi + '%). Open wider: ' + dv.desc;
+          return '<li><strong>' + dv.p + '</strong> ' + msg + '</li>';
+        }).join('');
+        var more = devs.length > 2 ? '<div class="text-meta">+' + (devs.length - 2) + ' more seat' + (devs.length - 2 > 1 ? 's' : '') + ' off target (see the table above).</div>' : '';
+        coachHtml = `<div class="insight-coaching">
+          <div class="eyebrow c-warn">Coaching &middot; your seats to fix</div>
+          <ul class="text-body dynamics-coach-list">${items}</ul>${more}
+        </div>`;
+      } else if (sampledCount > 0) {
+        coachHtml = `<div class="insight-coaching">
+          <div class="eyebrow c-pos">On track</div>
+          <div class="text-body">Your VPIP by position lands on target at ${seats}-handed. ${seatCoaching[seats] || ''}</div>
+        </div>`;
+      } else if (seatCoaching[seats]) {
+        coachHtml = `<div class="insight-coaching">
+          <div class="eyebrow c-warn">Coaching</div>
+          <div class="text-body">Not enough hands per seat to grade you here yet. General guide: ${seatCoaching[seats]}</div>
+        </div>`;
+      }
+
       cardBody = `<div class="stat">
         <div class="eyebrow c-gold">Your play: VPIP by position</div>
         <table class="table"><thead><tr><th>Pos</th><th>Your VPIP</th><th>Target</th><th>Hands</th></tr></thead><tbody>${posRows}</tbody></table>
-      </div>` +
-      (seatCoaching[seats] ? `<div class="insight-coaching">
-        <div class="eyebrow c-warn">Coaching</div>
-        <div class="text-body">${seatCoaching[seats]}</div>
-      </div>` : '');
+      </div>` + coachHtml;
     }
 
     seatCards += `<div class="card dynamics-card">
@@ -151,13 +187,30 @@ function renderTableDynamicsReference(hands, d) {
         ideal: Math.max(0, cbetSeatBand.ideal + cbetMod),
         loose: Math.max(0, cbetSeatBand.loose + cbetMod)
       } : null;
+      // Lead the coaching with a verdict on THIS player's c-bet rather than the
+      // same generic flop note for everyone. Falls back to the note when the
+      // c-bet sample is too thin to grade.
+      var cbetVerdict = (cbetBand && cbetActual != null && subF.cbetOpps >= 5)
+        ? bandVerdict(cbetActual, Math.round(cbetBand.tight), Math.round(cbetBand.loose))
+        : null;
+      var cbetLine;
+      if (cbetVerdict && cbetVerdict.cls === 'v-low') {
+        cbetLine = 'You c-bet ' + cbetActual + '% here vs a ' + fmtBandRange(cbetBand) + ' target: you are giving up too many flops you raised. Fire more, even when you miss.';
+      } else if (cbetVerdict && cbetVerdict.cls === 'v-high') {
+        cbetLine = 'You c-bet ' + cbetActual + '% here vs a ' + fmtBandRange(cbetBand) + ' target: too often, so observant opponents can check-raise you off. Check back more of your air.';
+      } else if (cbetVerdict) {
+        cbetLine = 'Your c-bet (' + cbetActual + '%) sits in the ' + fmtBandRange(cbetBand) + ' target here. ' + fe.notes;
+      } else {
+        cbetLine = fe.notes;
+      }
+      var coachEyebrow = (cbetVerdict && cbetVerdict.cls !== 'v-ok') ? 'c-warn' : 'c-pos';
       flopBody = `<div class="stat">
         <div class="eyebrow c-gold">Your play</div>
         ${_vsRow('C-bet', cbetActual, subF.cbetOpps, fmtBandRange(cbetBand))}
       </div>
       <div class="insight-coaching">
-        <div class="eyebrow c-warn">Coaching</div>
-        <div class="text-body">${fe.notes}</div>
+        <div class="eyebrow ${coachEyebrow}">Coaching</div>
+        <div class="text-body">${cbetLine}</div>
         <div class="text-meta dynamics-card-kv row between"><span class="eyebrow c-muted">Bet sizing</span><span>${fe.cbetSizing}</span></div>
         <div class="text-meta dynamics-card-kv row between"><span class="eyebrow c-muted">Continue with</span><span>${fe.continueRange}</span></div>
       </div>`;

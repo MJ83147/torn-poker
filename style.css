@@ -714,6 +714,24 @@ a {
   border-top: var(--bw) solid var(--border);
 }
 
+/* Per-seat coaching bullets: named leaks generated from the player's own
+   VPIP deviations, so each line calls out a specific seat. */
+.dynamics-coach-list {
+  margin: 0;
+  padding-left: var(--sp-16);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+}
+
+.dynamics-coach-list li {
+  list-style: disc;
+}
+
+.dynamics-coach-list strong {
+  color: var(--gold);
+}
+
 /* --- Story card: an expandable insight (head + collapsible body) ---
    Compose on .box. One state class: add .open to expand (body shows,
    teaser hides, chevron flips); default (no .open) is collapsed. */
