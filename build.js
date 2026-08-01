@@ -56,6 +56,7 @@ var files = []
     'js/equity-monte-carlo.js',
     'js/equity-guidance.js',
     'js/equity.js',
+    'js/share-card.js',
     'js/tour.js',
     'app.js',
   ]);

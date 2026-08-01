@@ -991,6 +991,24 @@ a {
   border-color: var(--green);
 }
 
+/* export-as-png button sits left of the copy button */
+.modal-png-btn {
+  position: absolute;
+  top: var(--sp-8);
+  right: 124px;
+  font-size: var(--fs-lg);
+}
+
+.modal-png-btn.copied {
+  color: var(--green);
+  border-color: var(--green);
+}
+
+.modal-png-btn.busy {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
 /* --- Form controls (field base lives in the reset) ---
    .select adds the caret chrome; .toggle is the $/BB segmented switch. */
 .select {

@@ -306,6 +306,7 @@ function showExampleHandModal(hand, coachingNote) {
 
   var closeBtn = '<button class="modal-close" id="modal-close-btn">&times;</button>';
   var copyBtn = '<button class="btn btn-icon modal-copy-btn" id="modal-copy-btn" title="Copy hand history">&#10697;</button>';
+  var pngBtn = '<button class="btn btn-icon modal-png-btn" id="modal-png-btn" title="Export as PNG">&#8681;</button>';
   var tagStrip = handTagsHtml(hand);
   var header =
     '<div class="panel-header">' +
@@ -371,7 +372,7 @@ function showExampleHandModal(hand, coachingNote) {
     "</div>";
 
   var equitySlot = '<div class="eq-slot" id="equity-slot"></div>';
-  box.innerHTML = closeBtn + copyBtn + starBtn + header + metaHtml + stacksHtml + equitySlot + actionsHtml + coaching + notesSection;
+  box.innerHTML = closeBtn + pngBtn + copyBtn + starBtn + header + metaHtml + stacksHtml + equitySlot + actionsHtml + coaching + notesSection;
   mountExampleModal(overlay, box);
 
   if (typeof injectEquityButton === "function") {
@@ -390,6 +391,27 @@ function showExampleHandModal(hand, coachingNote) {
           btn.innerHTML = "&#10697;";
           btn.classList.remove("copied");
           btn.title = "Copy hand history";
+        }, 1400);
+      });
+    };
+  }
+
+  var pngEl = document.getElementById("modal-png-btn");
+  if (pngEl && typeof exportHandShareCardPng === "function") {
+    pngEl.onclick = function () {
+      var btn = this;
+      if (btn.classList.contains("busy")) return;
+      btn.classList.add("busy");
+      btn.title = "Rendering...";
+      exportHandShareCardPng(hand, function (ok) {
+        btn.classList.remove("busy");
+        btn.innerHTML = ok ? "&#10003;" : "&#10007;";
+        btn.classList.toggle("copied", ok);
+        btn.title = ok ? "Saved PNG" : "Export failed";
+        setTimeout(function () {
+          btn.innerHTML = "&#8681;";
+          btn.classList.remove("copied");
+          btn.title = "Export as PNG";
         }, 1400);
       });
     };
