@@ -66,6 +66,14 @@ var HOME_TIPS = [
 // What's-new carousel slides. goto (optional) makes the card a link to a tab.
 var WHATS_NEW = [
   {
+    badge: 'New', title: 'Export &amp; share hands', goto: 'log',
+    paras: [
+      'Open any hand replay and you can now copy the full hand history to your clipboard, or export it as a share card image: the hole cards, board, result and every action laid out on a clean graphic.',
+      'Made for posting a cooler or a bad beat straight into Discord or the forums.',
+    ],
+    cta: 'Open the Hand Log &rarr;',
+  },
+  {
     badge: 'New', title: 'Custom Report', goto: 'custom',
     paras: ['Want to dig into a specific part of your play? Answer questions like &ldquo;how do I play the button?&rdquo; or &ldquo;how do I play when I&rsquo;m short stacked?&rdquo; Pick your filters and get a full breakdown of how you play in exactly that spot.'],
     cta: 'Open the Custom Report &rarr;',

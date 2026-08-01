@@ -2582,6 +2582,14 @@ textarea#jin {
   gap: var(--sp-16);
   padding: var(--sp-24) var(--sp-24) var(--sp-16);
   min-height: 240px;
+  /* elevated surface so the boxes read clearly against the page */
+  background: linear-gradient(180deg, var(--s2), var(--s1));
+  border-color: #24382a;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.hub-card:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .hub-card h2 {
@@ -2683,9 +2691,7 @@ textarea#jin {
   grid-template-columns: 1.7fr 1fr;
   gap: var(--sp-24);
   align-items: stretch;
-  margin-top: var(--sp-24);
-  padding-top: var(--sp-24);
-  border-top: var(--bw) solid var(--border);
+  margin-top: var(--sp-16);
 }
 
 @media (max-width: 860px) {
@@ -2704,7 +2710,15 @@ textarea#jin {
 
 .whatsnew .card {
   text-align: left;
-  padding: var(--sp-16);
+  padding: var(--sp-24);
+  /* elevated surface, matching the area boxes */
+  background: linear-gradient(180deg, var(--s2), var(--s1));
+  border-color: #24382a;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.whatsnew .wn-slide.card-link:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .wn-slide {
@@ -2741,9 +2755,13 @@ textarea#jin {
   justify-content: center;
   gap: var(--sp-8);
 
-  border: var(--bw) solid var(--border);
+  border: var(--bw) solid #24382a;
+  border-left: 3px solid var(--gold2);
   border-radius: var(--r-lg);
   padding: var(--sp-24);
+  /* elevated surface, matching the area boxes; gold edge marks it as a tip */
+  background: linear-gradient(180deg, var(--s2), var(--s1));
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
 .tip-panel .tip-label {
