@@ -57,6 +57,7 @@ var files = []
     'js/equity-guidance.js',
     'js/equity.js',
     'js/share-card.js',
+    'js/hand2note-export.js',
     'js/tour.js',
     'app.js',
   ]);

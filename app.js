@@ -750,6 +750,44 @@ document.getElementById('export-btn').onclick = function () {
   exportAppData();
 };
 
+// Export every stored hand as a PokerStars-format hand-history .txt file, which
+// is the format Hand2Note imports. Like exportAppData this reads the full stored
+// dataset (not the filtered dashboard view) so the import is complete.
+function exportHand2Note() {
+  var btn = document.getElementById('export-h2n-btn');
+  if (btn) btn.disabled = true;
+  State.loadSaved(function (data) {
+    if (btn) btn.disabled = false;
+    var hands = (data && data.hands) || State.allHands || [];
+    if (!hands.length || typeof Hand2Note === 'undefined') return;
+    var result = Hand2Note.exportHands(hands);
+    if (!result.exported) return;
+    var stamp = new Date().toISOString().replace(/[:.]/g, '-');
+    var blob = new Blob([result.text], { type: 'text/plain' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'tc-poker-hand2note-' + stamp + '.txt';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () {
+      try { document.body.removeChild(a); URL.revokeObjectURL(url); } catch (e) {}
+    }, 0);
+    // Cash-only export: tournament hands are omitted (see Hand2Note.exportHands).
+    if (btn) {
+      var orig = btn.textContent;
+      btn.textContent = result.skippedTournament
+        ? result.exported + ' hands (skipped ' + result.skippedTournament + ' tourney)'
+        : result.exported + ' hands ✓';
+      setTimeout(function () { btn.textContent = orig; }, 3200);
+    }
+  });
+}
+
+document.getElementById('export-h2n-btn').onclick = function () {
+  exportHand2Note();
+};
+
 initStorage(function () {
   checkSavedSession();
 });
