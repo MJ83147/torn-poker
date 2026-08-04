@@ -38,6 +38,17 @@
     return (cs || []).map(h2nCard).join(' ');
   }
 
+  // Torn money is denominated in dollars, so hands are written in PokerStars
+  // real-money USD format ("$" amounts, "USD" in the header). This matters for
+  // compatibility as much as accuracy: trackers (PokerTracker 4, Hand2Note) treat
+  // real-money hands as first-class in stats, whereas play-money hands are often
+  // filtered out or not imported at all. Torn amounts are whole dollars, so we
+  // emit plain integers with a "$" prefix (no forced decimals), which is valid
+  // PokerStars for whole amounts.
+  function m(v) {
+    return '$' + (v || 0);
+  }
+
   // PokerStars screen names never contain spaces or colons, and the parser
   // tokenises action lines on ": ", so a name carrying either would break it.
   // Collapse whitespace to underscores and drop colons; leave everything else.
@@ -136,14 +147,14 @@
     // that claims fewer seats than are printed makes the history unparseable.
     var maxSeats = Math.max(hand.tableSize || 0, seated.seats.length);
 
-    L.push("PokerStars Hand #" + id + ":  Hold'em No Limit (" + sbAmt + "/" + bbAmt + ") - " + fmtStamp(hand.timestamp));
+    L.push("PokerStars Hand #" + id + ":  Hold'em No Limit (" + m(sbAmt) + "/" + m(bbAmt) + " USD) - " + fmtStamp(hand.timestamp));
     L.push("Table '" + (hand.table || ('Table ' + (hand.tableId != null ? hand.tableId : '?'))) +
       "' " + maxSeats + "-max Seat #" + seated.btnSeat + " is the button");
 
     for (var si = 0; si < seated.seats.length; si++) {
       var sp = seated.seats[si];
       L.push("Seat " + sp.seat + ": " + h2nName(sp.player.name) +
-        " (" + (sp.player.startStack || 0) + " in chips)");
+        " (" + m(sp.player.startStack || 0) + " in chips)");
     }
 
     // Blind posts sit above HOLE CARDS and are not part of the preflop action
@@ -151,8 +162,8 @@
     // flags, so the poster names always match the seat list.
     var sbName = sbAct ? sbAct.author : blindName(seated, 'sb');
     var bbName = bbAct ? bbAct.author : blindName(seated, 'bb');
-    if (sbName) L.push(h2nName(sbName) + ": posts small blind " + sbAmt);
-    if (bbName) L.push(h2nName(bbName) + ": posts big blind " + bbAmt);
+    if (sbName) L.push(h2nName(sbName) + ": posts small blind " + m(sbAmt));
+    if (bbName) L.push(h2nName(bbName) + ": posts big blind " + m(bbAmt));
 
     // Dead-blind posters who then just fold leave no action carrying their
     // chips: a late joiner posts to be dealt in, folds preflop, and Torn records
@@ -172,7 +183,7 @@
       }
       if (!voluntary && (dpl.invested || 0) > 0) {
         deadSeed[dpl.name] = dpl.invested;
-        L.push(h2nName(dpl.name) + ": posts big blind " + dpl.invested);
+        L.push(h2nName(dpl.name) + ": posts big blind " + m(dpl.invested));
       }
     }
 
@@ -258,12 +269,12 @@
     var netWon = distributePot(netPot, winners, weights, weightSum);
     for (var w = 0; w < winners.length; w++) {
       var col = netWon[winners[w].name] || 0;
-      if (col > 0) L.push(h2nName(winners[w].name) + " collected " + col + " from pot");
+      if (col > 0) L.push(h2nName(winners[w].name) + " collected " + m(col) + " from pot");
     }
 
     // Summary.
     L.push("*** SUMMARY ***");
-    L.push("Total pot " + netPot + " | Rake 0");
+    L.push("Total pot " + m(netPot) + " | Rake " + m(0));
     if (board.length) L.push("Board [" + board.join(' ') + "]");
     var foldStreet = foldStreets(actions);
     for (var sm = 0; sm < seated.seats.length; sm++) {
@@ -311,7 +322,7 @@
           if (level > 0 && (contrib[a.author] || 0) < level) {
             var shortfall = level - (contrib[a.author] || 0);
             contrib[a.author] = level;
-            L.push(who + ": posts big blind " + shortfall);
+            L.push(who + ": posts big blind " + m(shortfall));
           }
           L.push(who + ": checks");
           break;
@@ -329,15 +340,15 @@
             var postC = level - priorC - amtC;
             priorC += postC;
             contrib[a.author] = priorC;
-            L.push(who + ": posts big blind " + postC);
+            L.push(who + ": posts big blind " + m(postC));
           }
           contrib[a.author] = priorC + amtC;
-          L.push(who + ": calls " + amtC + allin);
+          L.push(who + ": calls " + m(amtC) + allin);
           break;
         case 'bet':
           contrib[a.author] = (contrib[a.author] || 0) + (a.amount || 0);
           if (a.amount > level) level = a.amount;
-          L.push(who + ": bets " + (a.amount || 0) + allin);
+          L.push(who + ": bets " + m(a.amount || 0) + allin);
           break;
         case 'raise':
           var already = contrib[a.author] || 0;
@@ -350,11 +361,11 @@
               // Opening wager on the street (Torn sometimes types an unopened
               // all-in as a "raise"): in PokerStars that is a bet, not a raise.
               level = to;
-              L.push(who + ": bets " + to + allin);
+              L.push(who + ": bets " + m(to) + allin);
             } else {
               var by = to - level;
               level = to;
-              L.push(who + ": raises " + by + " to " + to + allin);
+              L.push(who + ": raises " + m(by) + " to " + m(to) + allin);
             }
           } else {
             // Torn labels a short all-in (a shove that does not reach the current
@@ -362,7 +373,7 @@
             var add = to - already;
             if (add < 0) add = a.amount || 0;
             contrib[a.author] = already + add;
-            L.push(who + ": calls " + add + allin);
+            L.push(who + ": calls " + m(add) + allin);
           }
           break;
         default:
@@ -385,7 +396,7 @@
     var refund = null;
     if (top != null && !tie && top > second) {
       refund = { name: topName, amount: top - second };
-      L.push("Uncalled bet (" + refund.amount + ") returned to " + h2nName(topName));
+      L.push("Uncalled bet (" + m(refund.amount) + ") returned to " + h2nName(topName));
     }
     // net = chips this street leaves in the pot (gross committed minus refund).
     return { refund: refund, net: gross - (refund ? refund.amount : 0) };
@@ -479,10 +490,10 @@
 
     if (won > 0) {
       if (showed) {
-        return base + " showed [" + cardsList(p.revealed.slice(0, 2)) + "] and won (" + won + ")" +
+        return base + " showed [" + cardsList(p.revealed.slice(0, 2)) + "] and won (" + m(won) + ")" +
           (handName ? " with " + handName : "");
       }
-      return base + " collected (" + won + ")";
+      return base + " collected (" + m(won) + ")";
     }
     if (showed) {
       return base + " showed [" + cardsList(p.revealed.slice(0, 2)) + "] and lost" +

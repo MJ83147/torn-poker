@@ -87,19 +87,35 @@ function getHandPnl(h) {
   function money(v) {
     return (_displayBB && bb > 0) ? fmtBBRaw(v / bb) : fmt(v);
   }
+  // getHandPnlValue is the corrected P&L (stack delta when available); mirror it
+  // here so the per-hand figure matches the aggregates. See its comment.
+  var hasStacks = typeof h.startStack === "number" && typeof h.endStack === "number";
   if (h.outcome.result === "won") {
-    var profit = (h.outcome.amount || 0) - invested;
+    var profit = hasStacks ? getHandPnlValue(h) : (h.outcome.amount || 0) - invested;
     if (profit >= 0) return { cls: "c-pos", text: "+" + money(profit) };
     return { cls: "c-neg", text: "-" + money(Math.abs(profit)) };
   }
   if (h.outcome.result === "folded") {
-    return { cls: "c-neg", text: invested > 0 ? "-" + money(invested) : "folded" };
+    var lossF = hasStacks ? -getHandPnlValue(h) : invested;
+    return { cls: "c-neg", text: lossF > 0 ? "-" + money(lossF) : "folded" };
   }
-  return { cls: "c-neg", text: "-" + money(invested) };
+  var lossL = hasStacks ? -getHandPnlValue(h) : invested;
+  return { cls: "c-neg", text: "-" + money(lossL) };
 }
 
+// Hero's chip change this hand. The stack delta (endStack - startStack) is the
+// observed truth: the money the hero actually walked away with. Prefer it over
+// (winnings - invested) because the capture accrues `invested` from money drops
+// between frames, and on a won hand the hero's final bet is swallowed — the
+// frame after it is the payout, where money has already jumped up, so that drop
+// is never recorded. This understates `invested` and inflates profit on ~8% of
+// won hands. The stack delta has no such gap. Fall back to (winnings - invested)
+// only for legacy/import hands that never stored the stacks.
 function getHandPnlValue(h) {
   if (!h.outcome) return 0;
+  if (typeof h.startStack === "number" && typeof h.endStack === "number") {
+    return h.endStack - h.startStack;
+  }
   var invested = getInvested(h);
   if (h.outcome.result === "won") return (h.outcome.amount || 0) - invested;
   return -invested;
