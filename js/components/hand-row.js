@@ -6,6 +6,22 @@ function renderResult(h, tag, baseClass) {
   return `<${tag} class="${baseClass} ${pnl.cls}">${pnl.text}</${tag}>`;
 }
 
+// A P&L cell for an arbitrary signed value (used for the opponent column in the
+// per-player hand table). Honours the $/BB toggle like getHandPnl. A null value
+// (seat absent / no stack data) renders a muted dash; exactly 0 is muted too, so
+// "they were in but neither won nor lost chips" reads as neutral, not a win.
+function renderPnlValueCell(value, h, tag, baseClass) {
+  if (value == null) return `<${tag} class="${baseClass} c-muted">&mdash;</${tag}>`;
+  var bb = getHandBB(h);
+  function money(v) {
+    return (_displayBB && bb > 0) ? fmtBBRaw(v / bb) : fmt(v);
+  }
+  if (value === 0) return `<${tag} class="${baseClass} c-muted">${money(0)}</${tag}>`;
+  var cls = value > 0 ? "c-pos" : "c-neg";
+  var text = (value > 0 ? "+" : "-") + money(Math.abs(value));
+  return `<${tag} class="${baseClass} ${cls}">${text}</${tag}>`;
+}
+
 function handTagsHtml(h) {
   if (!h || !h.seatBucket) return "";
   var parts = [`<span class="tag tag-gold">${h.seatBucket}</span>`];
@@ -28,6 +44,11 @@ function heroStackLine(h) {
 
 function renderHandRow(h, idx, opts) {
   var starCol = opts && opts.starHtml ? `<td>${opts.starHtml}</td>` : "";
+  // Per-player view: append the named opponent's own outcome for the hand, so a
+  // multiway hand you lost to a third player does not read as a loss "to" them.
+  var oppCol = opts && opts.opponentName != null
+    ? renderPnlValueCell(getStackPnlByName(h, opts.opponentName), h, "td", "num")
+    : "";
   return `<tr class="link" data-hand-idx="${idx}">
     ${starCol}
     <td class="c-gold">${h.position || "?"}</td>
@@ -37,5 +58,6 @@ function renderHandRow(h, idx, opts) {
     <td>${fmtBB(h.pot || 0, getHandBB(h))}${heroStackLine(h)}</td>
     <td class="c-dim truncate">${getActsSummary(h)}</td>
     ${renderResult(h, "td", "num")}
+    ${oppCol}
   </tr>`;
 }

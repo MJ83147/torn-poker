@@ -121,6 +121,25 @@ function getHandPnlValue(h) {
   return -invested;
 }
 
+// Chip change this hand for a named seat (any player, hero or opponent). Same
+// stack-delta logic as getHandPnlValue: prefer endStack - startStack, the
+// observed truth, which avoids the understated-invested inflation on won hands.
+// Returns null when the seat isn't found or carries no stack data, so callers
+// can render a dash rather than a fabricated 0.
+function getStackPnlByName(h, name) {
+  if (!h || !h.stacks || name == null) return null;
+  for (var i = 0; i < h.stacks.length; i++) {
+    var s = h.stacks[i];
+    if (!s || s.name !== name) continue;
+    if (typeof s.startStack === "number" && typeof s.endStack === "number") {
+      return s.endStack - s.startStack;
+    }
+    if (typeof s.profit === "number") return s.profit;
+    return (s.winnings || 0) - (s.invested || 0);
+  }
+  return null;
+}
+
 // Hero's pnl this hand attributable to one specific opponent. A hand's full
 // swing does not belong to every player who acted in it — crediting every
 // opponent at a full table with hero's whole hand pnl multiplies one pot

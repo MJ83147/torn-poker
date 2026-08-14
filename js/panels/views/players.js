@@ -242,11 +242,12 @@ function renderPlayers(container, d, hands) {
 
       ph += `<div class="section"><div class="section-head">Shared Hands</div>
         <div class="row"><div class="container player-detail-section">
+          <div class="text-meta c-dim" style="margin-bottom:8px">Each hand shows your outcome and ${playerName}'s outcome. In multiway pots you can both lose the same hand: the money went to whoever won the pot, not necessarily to ${playerName}.</div>
           ${totalPages > 1 ? `<div class="row center end">${renderPagination(phPage, playerHands.length, PH_SIZE, "ph-prev", "ph-next")}</div>` : ""}
-          <div class="overflow-x"><table class="table"><thead><tr><th>Pos</th><th>Cards</th><th>Board</th><th>Pot</th><th>Actions</th><th>Result</th></tr></thead><tbody>
+          <div class="overflow-x"><table class="table"><thead><tr><th>Pos</th><th>Cards</th><th>Context</th><th>Board</th><th>Pot</th><th>Actions</th><th class="num">You</th><th class="num">${playerName}</th></tr></thead><tbody>
           ${page
             .map(function (h, pi) {
-              return renderHandRow(h, start + pi, null).replace("data-hand-idx", "data-ph-idx");
+              return renderHandRow(h, start + pi, { opponentName: playerName }).replace("data-hand-idx", "data-ph-idx");
             })
             .join("")}
           </tbody></table></div>
