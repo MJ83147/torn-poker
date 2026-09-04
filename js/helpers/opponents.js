@@ -574,12 +574,15 @@ function profileRevealedHand(h, name) {
   var sz = walkPlayerSizing(h, name);
   var maxFrac = 0;
   for (var i = 0; i < sz.bets.length; i++) if (sz.bets[i].frac > maxFrac) maxFrac = sz.bets[i].frac;
+  var pnl = getStackPnlByName(h, name);
   return {
     hand: h,
     tier: tier,
     aggressivePostflop: sz.aggressivePostflop,
     passiveOnly: sz.passiveOnly,
     overbet: maxFrac > 1.0,
+    won: pnl != null && pnl > 0,
+    lost: pnl != null && pnl < 0,
   };
 }
 
@@ -606,28 +609,31 @@ function revealedHoldingInsights(hands, playerName) {
     return ex;
   }
 
-  var bluffs = pick(function (x) { return x.aggressivePostflop && x.tier === 'air'; });
+  // Leak: they fired with air and got caught (lost). Shows the exploit working.
+  var bluffs = pick(function (x) { return x.aggressivePostflop && x.tier === 'air' && x.lost; });
   if (bluffs.length >= MIN_PATTERN) {
     out.push(insWithExample('r', 'Bluffs Postflop',
-      playerName + ' bet or raised postflop with no pair (just high card) in ' + times(bluffs.length) + ' they showed. Their aggression is often air, so do not over-fold to them.',
-      [{ v: bluffs.length + ' bluffs shown' }], exList(bluffs),
-      'These are hands ' + playerName + ' fired with nothing. Look them up before folding a real hand.'));
+      playerName + ' bet or raised postflop with no pair and got caught in ' + times(bluffs.length) + ' they showed. Their aggression is often air, so do not over-fold to them.',
+      [{ v: bluffs.length + ' caught bluffs' }], exList(bluffs),
+      'These are hands ' + playerName + ' fired with nothing and lost. Look them up before folding a real hand.'));
   }
 
-  var slow = pick(function (x) { return x.passiveOnly && x.tier === 'strong'; });
+  // Warning: strong hand played passively that won. Shows the trap paying off.
+  var slow = pick(function (x) { return x.passiveOnly && x.tier === 'strong' && x.won; });
   if (slow.length >= MIN_PATTERN) {
     out.push(insWithExample('a', 'Slow-plays Big Hands',
-      playerName + ' only checked and called with two pair or better in ' + times(slow.length) + ' they showed, instead of betting. They trap.',
-      [{ v: slow.length + ' traps shown' }], exList(slow),
-      'A passive line from ' + playerName + ' can hide a monster. These are examples.'));
+      playerName + ' checked and called a big hand to the win in ' + times(slow.length) + ' they showed, instead of betting. They trap.',
+      [{ v: slow.length + ' traps that hit' }], exList(slow),
+      'A passive line from ' + playerName + ' can hide a monster. These are hands they trapped and won with.'));
   }
 
-  var obValue = pick(function (x) { return x.overbet && x.tier === 'strong'; });
+  // Warning: overbet with a strong hand that won. Shows the big bet was real.
+  var obValue = pick(function (x) { return x.overbet && x.tier === 'strong' && x.won; });
   if (obValue.length >= MIN_PATTERN) {
     out.push(insWithExample('a', 'Overbets for Value',
-      playerName + ' bet more than the pot with two pair or better in ' + times(obValue.length) + ' they showed. Their huge bets are usually the real thing.',
-      [{ v: obValue.length + ' overbets' }], exList(obValue),
-      'When ' + playerName + ' overbets, these strong hands are what they had.'));
+      playerName + ' bet more than the pot with two pair or better and got paid in ' + times(obValue.length) + ' they showed. Their huge bets are usually the real thing.',
+      [{ v: obValue.length + ' overbets paid' }], exList(obValue),
+      'When ' + playerName + ' overbets, these are the strong hands they got paid with.'));
   }
 
   return out;
