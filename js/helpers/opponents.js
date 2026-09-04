@@ -126,16 +126,16 @@ function classifyHandForPlayer(h, playerName) {
 // win rate by seat, and how often they take each action. All from their own
 // stack delta and actions, not the hero's.
 var CHART_POS_ORDER = ['UTG', 'UTG+1', 'MP', 'LJ', 'HJ', 'CO', 'BTN', 'SB', 'BB'];
-// Result buckets in big blinds, loss to win. Anchors are the upper edge.
+// Result buckets in big blinds, biggest loss to biggest win. `max` is the upper
+// edge (a hand falls in the first bucket whose max it does not exceed); `tip` is
+// the bb range shown in the tooltip.
 var RESULT_BUCKETS = [
-  { key: 'le-20', label: '≤ -20', max: -20 },
-  { key: 'm20-8', label: '-20 to -8', max: -8 },
-  { key: 'm8-2', label: '-8 to -2', max: -2 },
-  { key: 'm2-0', label: '-2 to 0', max: 0 },
-  { key: 'p0-2', label: '0 to 2', max: 2 },
-  { key: 'p2-8', label: '2 to 8', max: 8 },
-  { key: 'p8-20', label: '8 to 20', max: 20 },
-  { key: 'ge20', label: '20+', max: Infinity },
+  { key: 'bigLoss', label: 'Big loss', tip: 'lost 25+ bb', max: -25 },
+  { key: 'medLoss', label: 'Med loss', tip: 'lost 8-25 bb', max: -8 },
+  { key: 'smallLoss', label: 'Small loss', tip: 'lost 0-8 bb', max: 0 },
+  { key: 'smallWin', label: 'Small win', tip: 'won 0-8 bb', max: 8 },
+  { key: 'medWin', label: 'Med win', tip: 'won 8-25 bb', max: 25 },
+  { key: 'bigWin', label: 'Big win', tip: 'won 25+ bb', max: Infinity },
 ];
 function computeOpponentCharts(playerHands, playerName) {
   var byPos = {};
@@ -157,8 +157,10 @@ function computeOpponentCharts(playerHands, playerName) {
       else if (pnl < 0) { lossCount++; lossSum += -pnl; if (-pnl > biggestLoss) biggestLoss = -pnl; }
       else evenCount++;
 
+      // Net-zero hands (folded for free, walks) are neither a win nor a loss, so
+      // leave them out of the win/loss size distribution or they swamp it.
       var bb = getHandBB(h);
-      if (bb) {
+      if (bb && pnl !== 0) {
         bbHands++;
         var inBB = pnl / bb;
         for (var k = 0; k < RESULT_BUCKETS.length; k++) {

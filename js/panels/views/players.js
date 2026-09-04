@@ -23,12 +23,12 @@ function mountPlayerCharts(data, playerName) {
           borderWidth: 1, borderRadius: 4,
         }],
       }, {
-        tooltip: chartTooltip(colors, { label: function (c) { return " " + c.parsed.y + " hand" + (c.parsed.y !== 1 ? "s" : ""); } }),
+        tooltip: chartTooltip(colors, { label: function (c) { return " " + c.parsed.y + " hand" + (c.parsed.y !== 1 ? "s" : "") + " (" + RESULT_BUCKETS[c.dataIndex].tip + ")"; } }),
         scales: { x: chartXScale(colors, { maxRotation: 0 }), y: chartYScale(colors, { tickCallback: intTicks }) },
       })
     );
   } else if (rc) {
-    rc.parentNode.innerHTML = '<div class="eyebrow">Result distribution (bb)</div><div class="text-body">No big-blind data for these hands.</div>';
+    rc.parentNode.innerHTML = '<div class="eyebrow">Result sizes</div><div class="text-body">No big-blind data for these hands.</div>';
   }
 
   // 2. Win rate by seat.
@@ -52,39 +52,34 @@ function mountPlayerCharts(data, playerName) {
         })
       );
     } else {
-      pc.parentNode.innerHTML = '<div class="eyebrow">Win rate by position</div><div class="text-body">Need at least two seats with data.</div>';
+      pc.parentNode.innerHTML = '<div class="eyebrow">Win rate by seat</div><div class="text-body">Need at least two seats with data.</div>';
     }
   }
 
-  // 3. Action breakdown: how often they fold / check / call / bet / raise.
+  // 3. Action mix: what share of the time they fold / check / call / bet / raise.
   var ac = document.getElementById("pl-actions");
   if (ac) {
     var a = data.actions;
-    var aVals = [a.fold, a.check, a.call, a.bet, a.raise];
-    var aTotal = aVals.reduce(function (x, y) { return x + y; }, 0);
+    var aCounts = [a.fold, a.check, a.call, a.bet, a.raise];
+    var aTotal = aCounts.reduce(function (x, y) { return x + y; }, 0);
     if (aTotal > 0) {
+      var aPct = aCounts.map(function (v) { return Math.round((v / aTotal) * 100); });
       charts.push(
-        new Chart(ac, {
-          type: "doughnut",
-          data: {
-            labels: ["Fold", "Check", "Call", "Bet", "Raise"],
-            datasets: [{
-              data: aVals,
-              backgroundColor: [colors.red + "cc", colors.dim + "cc", colors.gold + "cc", colors.amber + "cc", colors.green + "cc"],
-              borderColor: colors.border, borderWidth: 1,
-            }],
-          },
-          options: {
-            responsive: true, maintainAspectRatio: true, aspectRatio: 1.8,
-            plugins: {
-              legend: chartLegend(colors, true),
-              tooltip: chartTooltip(colors, { label: function (c) { return " " + c.label + ": " + c.parsed + " (" + Math.round((c.parsed / aTotal) * 100) + "%)"; } }),
-            },
-          },
+        createChart(ac, "bar", {
+          labels: ["Fold", "Check", "Call", "Bet", "Raise"],
+          datasets: [{
+            data: aPct,
+            backgroundColor: [colors.red + "99", colors.dim + "99", colors.gold + "99", colors.amber + "99", colors.green + "99"],
+            borderColor: [colors.red, colors.dim, colors.gold, colors.amber, colors.green],
+            borderWidth: 1, borderRadius: 4,
+          }],
+        }, {
+          tooltip: chartTooltip(colors, { label: function (c) { return " " + c.parsed.y + "% (" + aCounts[c.dataIndex] + " action" + (aCounts[c.dataIndex] !== 1 ? "s" : "") + ")"; } }),
+          scales: { x: chartXScale(colors), y: chartYScale(colors, { max: 100, tickCallback: function (v) { return v + "%"; } }) },
         })
       );
     } else {
-      ac.parentNode.innerHTML = '<div class="eyebrow">Action breakdown</div><div class="text-body">No actions recorded.</div>';
+      ac.parentNode.innerHTML = '<div class="eyebrow">Action mix</div><div class="text-body">No actions recorded.</div>';
     }
   }
 
@@ -355,11 +350,11 @@ function renderPlayers(container, d, hands) {
             ${renderMiniRow(kpis)}
           </div></div>
           <div class="row">
-            <div class="container"><div class="eyebrow">Result distribution (bb)</div><canvas id="pl-results"></canvas></div>
-            <div class="container"><div class="eyebrow">Win rate by position</div><canvas id="pl-position"></canvas></div>
+            <div class="container"><div class="eyebrow">Result sizes</div><div class="text-meta c-dim">How often they win or lose big vs small (per hand, in bb)</div><canvas id="pl-results"></canvas></div>
+            <div class="container"><div class="eyebrow">Win rate by seat</div><div class="text-meta c-dim">Share of hands they finished up, per position</div><canvas id="pl-position"></canvas></div>
           </div>
           <div class="row">
-            <div class="container"><div class="eyebrow">Action breakdown</div><canvas id="pl-actions"></canvas></div>
+            <div class="container"><div class="eyebrow">Action mix</div><div class="text-meta c-dim">Share of their actions that are fold / check / call / bet / raise</div><canvas id="pl-actions"></canvas></div>
           </div>
         </div>`;
       }
