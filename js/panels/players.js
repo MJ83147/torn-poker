@@ -124,21 +124,23 @@ function heroStatsMapped(d) {
   };
 }
 
-// One-line edge note for a compared stat. Gated by sample size.
-function compareEdgeText(stat, v1, v2, n1, n2) {
+// One-line edge note for a compared stat. Gated by sample size. name1/name2 are
+// the two players' names; the higher-value player is named in the note.
+function compareEdgeText(stat, v1, v2, n1, n2, name1, name2) {
   if (v1 === null || v2 === null) return '';
   var diff = v1 - v2;
   var smaller = Math.min(n1 || 0, n2 || 0);
   var gate = 3 * Math.max(1, Math.sqrt(40 / Math.max(1, smaller)));
   if (Math.abs(diff) < gate) return '';
+  var hi = v1 > v2 ? (name1 || 'P1') : (name2 || 'P2');
   switch (stat) {
-    case 'vpip': return (v1 > v2 ? 'P1' : 'P2') + ' is looser';
-    case 'pfr': return (v1 > v2 ? 'P1' : 'P2') + ' more aggressive pre';
-    case 'agg': return (v1 > v2 ? 'P1' : 'P2') + ' pressures more';
-    case 'cbet': return (v1 > v2 ? 'P1' : 'P2') + ' follows up more';
-    case 'foldToRaise': return (v1 > v2 ? 'P1' : 'P2') + ' more exploitable';
-    case 'wtsd': return (v1 > v2 ? 'P1' : 'P2') + ' calls down more';
-    case 'limp': return (v1 > v2 ? 'P1' : 'P2') + ' limps more';
+    case 'vpip': return hi + ' is looser';
+    case 'pfr': return hi + ' more aggressive pre';
+    case 'agg': return hi + ' pressures more';
+    case 'cbet': return hi + ' follows up more';
+    case 'foldToRaise': return hi + ' more exploitable';
+    case 'wtsd': return hi + ' calls down more';
+    case 'limp': return hi + ' limps more';
     default: return '';
   }
 }

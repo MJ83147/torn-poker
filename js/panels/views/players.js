@@ -587,7 +587,7 @@ function renderCompare(container, d, hands) {
       .map(function (sr) {
         var v1 = s1[sr.key];
         var v2 = s2[sr.key];
-        var edge = compareEdgeText(sr.key, v1, v2, s1.hands, s2.hands);
+        var edge = compareEdgeText(sr.key, v1, v2, s1.hands, s2.hands, p1Name, p2Name);
         var better1 =
           (v1 !== null && v2 !== null && v1 > v2 && sr.key !== "foldToRaise" && sr.key !== "limp") ||
           (sr.key === "foldToRaise" && v1 !== null && v2 !== null && v1 < v2) ||
