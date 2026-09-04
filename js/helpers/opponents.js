@@ -603,67 +603,59 @@ function revealedHoldingInsights(hands, playerName) {
   if (!profiles.length) return out;
 
   function pick(fn) { return profiles.filter(fn); }
-  function times(n) { return n + ' hand' + (n !== 1 ? 's' : ''); }
-  function money(v) { return (v >= 0 ? '+' : '-') + fmt(Math.abs(Math.round(v))); }
   function exList(list) {
     var ex = list.map(function (x) { return x.hand; });
     ex.opponentName = playerName;
     return ex;
   }
-  // The actual record of a tendency across the hands they showed: how many they
-  // won and their net chips. Severity follows this, not a preset assumption — a
-  // tendency that makes them money is not a leak; one that loses money is.
-  function rec(list) {
-    var w = 0, net = 0;
-    for (var i = 0; i < list.length; i++) { if (list[i].won) w++; net += list[i].pnl || 0; }
-    return { w: w, l: list.length - w, net: net, n: list.length };
+  // Net chips across a tendency's hands. Only used to decide direction (leak vs
+  // weapon); the sample is small so the count itself is not shown to the user.
+  function netOf(list) {
+    var net = 0;
+    for (var i = 0; i < list.length; i++) net += list[i].pnl || 0;
+    return net;
   }
 
-  // Bluffs postflop: bet/raise with no pair. Whether it is a leak depends on how
-  // it actually goes for them, so show all of them and let the net decide.
+  // Bluffs postflop: bet/raise with no pair. Leak if it loses them money, a
+  // weapon (call lighter) if it works.
   var bluffs = pick(function (x) { return x.aggressivePostflop && x.tier === 'air'; });
   if (bluffs.length >= MIN_PATTERN) {
-    var rb = rec(bluffs);
-    var bChips = [{ v: 'won ' + rb.w + '/' + rb.n }, { v: 'net ' + money(rb.net) }];
-    if (rb.net < 0) {
+    if (netOf(bluffs) < 0) {
       out.push(insWithExample('r', 'Bluffs Postflop',
-        playerName + ' bets or raises with no pair and it costs them: won only ' + rb.w + ' of ' + times(rb.n) + ' they showed, net ' + money(rb.net) + '. Do not over-fold to their aggression.',
-        bChips, exList(bluffs),
+        playerName + ' bets and raises postflop with no pair and gets caught. Do not over-fold to their aggression.',
+        [], exList(bluffs),
         'These are hands ' + playerName + ' fired with nothing. Their aggression is often air, so look them up before folding a real hand.'));
     } else {
       out.push(insWithExample('a', 'Aggressive With Air',
-        playerName + ' bets or raises with no pair and it works: won ' + rb.w + ' of ' + times(rb.n) + ' they showed, net ' + money(rb.net) + '. Their bluffs are getting through, so call lighter against them.',
-        bChips, exList(bluffs),
+        playerName + ' bets and raises postflop with no pair and gets away with it. Call lighter against their aggression.',
+        [], exList(bluffs),
         'These are hands ' + playerName + ' fired with nothing and still came out ahead. You may be folding too much to them.'));
     }
   }
 
-  // Strong hand (two pair+) played passively. Trapping if it wins overall, too
-  // passive (bleeds value / gets outdrawn) if it loses.
+  // Strong hand (two pair+) played passively: a trap if it works, too passive if
+  // it bleeds value / gets outdrawn.
   var slow = pick(function (x) { return x.passiveOnly && x.tier === 'strong'; });
   if (slow.length >= MIN_PATTERN) {
-    var rs = rec(slow);
-    var sChips = [{ v: 'won ' + rs.w + '/' + rs.n }, { v: 'net ' + money(rs.net) }];
-    if (rs.net >= 0) {
+    if (netOf(slow) >= 0) {
       out.push(insWithExample('a', 'Slow-plays Big Hands',
-        playerName + ' checks and calls strong hands instead of betting, and it works: won ' + rs.w + ' of ' + times(rs.n) + ' they showed, net ' + money(rs.net) + '. Their passive line can hide a monster.',
-        sChips, exList(slow),
+        playerName + ' checks and calls strong hands instead of betting. Their passive line can hide a monster.',
+        [], exList(slow),
         'A passive line from ' + playerName + ' can hide a monster. These are examples.'));
     } else {
       out.push(insWithExample('r', 'Too Passive With Strong Hands',
-        playerName + ' plays strong hands passively and it costs them: won only ' + rs.w + ' of ' + times(rs.n) + ' they showed, net ' + money(rs.net) + '. Bet into their checks and take cheap cards.',
-        sChips, exList(slow),
+        playerName + ' plays strong hands passively and lets them get outdrawn. Bet into their checks and take cheap cards.',
+        [], exList(slow),
         'When ' + playerName + ' checks a strong hand it often gets outdrawn or misses value. You can see free cards and value bet thinly.'));
     }
   }
 
-  // Overbet the pot with a strong hand (two pair+). Report how it actually goes.
+  // Overbet the pot with a strong hand (two pair+).
   var obValue = pick(function (x) { return x.overbet && x.tier === 'strong'; });
   if (obValue.length >= MIN_PATTERN) {
-    var ro = rec(obValue);
     out.push(insWithExample('a', 'Overbets for Value',
-      playerName + ' overbets the pot with two pair or better: won ' + ro.w + ' of ' + times(ro.n) + ' they showed, net ' + money(ro.net) + '. Their huge bets are usually the real thing.',
-      [{ v: 'won ' + ro.w + '/' + ro.n }, { v: 'net ' + money(ro.net) }], exList(obValue),
+      playerName + ' overbets the pot with two pair or better. Their huge bets are usually the real thing.',
+      [], exList(obValue),
       'When ' + playerName + ' overbets, these are the strong hands behind it.'));
   }
 
