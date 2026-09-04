@@ -35,24 +35,22 @@ function mountPlayerCharts(data, playerName) {
   var pc = document.getElementById("pl-position");
   if (pc) {
     var active = CHART_POS_ORDER.filter(function (p) { return data.byPos[p] && data.byPos[p].count > 0; });
-    if (active.length >= 2) {
-      var wrVals = active.map(function (p) { var b = data.byPos[p]; return Math.round((b.wins / b.count) * 100); });
+    if (active.length >= 1) {
       charts.push(
         createChart(pc, "bar", {
           labels: active,
-          datasets: [{
-            data: wrVals,
-            backgroundColor: wrVals.map(function (v) { return (v >= 50 ? colors.green : colors.red) + "99"; }),
-            borderColor: wrVals.map(function (v) { return v >= 50 ? colors.green : colors.red; }),
-            borderWidth: 1, borderRadius: 4,
-          }],
+          datasets: [
+            { label: "Played", data: active.map(function (p) { return data.byPos[p].count; }), backgroundColor: colors.dim + "88", borderColor: colors.dim, borderWidth: 1, borderRadius: 4 },
+            { label: "Won", data: active.map(function (p) { return data.byPos[p].wins; }), backgroundColor: colors.green + "99", borderColor: colors.green, borderWidth: 1, borderRadius: 4 },
+          ],
         }, {
-          tooltip: chartTooltip(colors, { label: function (c) { var b = data.byPos[active[c.dataIndex]]; return " " + c.parsed.y + "% won (" + b.count + " hand" + (b.count !== 1 ? "s" : "") + ")"; } }),
-          scales: { x: chartXScale(colors), y: chartYScale(colors, { max: 100, tickCallback: function (v) { return v + "%"; } }) },
+          legend: chartLegend(colors, true),
+          tooltip: chartTooltip(colors, { label: function (c) { var b = data.byPos[active[c.dataIndex]]; var wr = b.count ? Math.round((b.wins / b.count) * 100) : 0; return " " + c.dataset.label + ": " + c.parsed.y + (c.datasetIndex === 1 ? " of " + b.count + " (" + wr + "%)" : ""); } }),
+          scales: { x: chartXScale(colors), y: chartYScale(colors, { tickCallback: intTicks }) },
         })
       );
     } else {
-      pc.parentNode.innerHTML = '<div class="eyebrow">Win rate by seat</div><div class="text-body">Need at least two seats with data.</div>';
+      pc.parentNode.innerHTML = '<div class="eyebrow">Hands played vs won by seat</div><div class="text-body">No seat data for these hands.</div>';
     }
   }
 
@@ -80,6 +78,53 @@ function mountPlayerCharts(data, playerName) {
       );
     } else {
       ac.parentNode.innerHTML = '<div class="eyebrow">Action mix</div><div class="text-body">No actions recorded.</div>';
+    }
+  }
+
+  // 4. Starting-hand types they show down (only knowable from revealed hands).
+  var hc = document.getElementById("pl-holetypes");
+  if (hc) {
+    var htActive = HOLE_TYPE_ORDER.filter(function (t) { return data.holeTypes[t]; });
+    if (htActive.length >= 1) {
+      charts.push(
+        createChart(hc, "bar", {
+          labels: htActive,
+          datasets: [{
+            data: htActive.map(function (t) { return data.holeTypes[t]; }),
+            backgroundColor: colors.gold + "99", borderColor: colors.gold, borderWidth: 1, borderRadius: 4,
+          }],
+        }, {
+          tooltip: chartTooltip(colors, { label: function (c) { return " " + c.parsed.y + " time" + (c.parsed.y !== 1 ? "s" : "") + " shown"; } }),
+          scales: { x: chartXScale(colors, { maxRotation: 45 }), y: chartYScale(colors, { tickCallback: intTicks }) },
+        })
+      );
+    } else {
+      hc.parentNode.innerHTML = '<div class="eyebrow">Hands they show down, by type</div><div class="text-body">They have not revealed enough hands yet.</div>';
+    }
+  }
+
+  // 5. End-hand value vs money: net chips by the made hand they showed down.
+  var ec = document.getElementById("pl-endhand");
+  if (ec) {
+    var ehActive = MADE_ORDER.filter(function (m) { return data.endHand[m]; });
+    if (ehActive.length >= 1) {
+      var ehNet = ehActive.map(function (m) { return Math.round(data.endHand[m].net); });
+      charts.push(
+        createChart(ec, "bar", {
+          labels: ehActive,
+          datasets: [{
+            data: ehNet,
+            backgroundColor: ehNet.map(function (v) { return (v >= 0 ? colors.green : colors.red) + "99"; }),
+            borderColor: ehNet.map(function (v) { return v >= 0 ? colors.green : colors.red; }),
+            borderWidth: 1, borderRadius: 4,
+          }],
+        }, {
+          tooltip: chartTooltip(colors, { label: function (c) { var d = data.endHand[ehActive[c.dataIndex]]; return " " + (d.net >= 0 ? "+" : "-") + fmt(Math.abs(Math.round(d.net))) + " over " + d.count + " hand" + (d.count !== 1 ? "s" : ""); } }),
+          scales: { x: chartXScale(colors, { maxRotation: 45 }), y: chartYScaleZeroLine(colors, { tickCallback: function (v) { return fmt(v); } }) },
+        })
+      );
+    } else {
+      ec.parentNode.innerHTML = '<div class="eyebrow">End hand value vs profit</div><div class="text-body">They have not revealed enough hands yet.</div>';
     }
   }
 
@@ -351,10 +396,14 @@ function renderPlayers(container, d, hands) {
           </div></div>
           <div class="row">
             <div class="container"><div class="eyebrow">Result sizes</div><div class="text-meta c-dim">How often they win or lose big vs small (per hand, in bb)</div><canvas id="pl-results"></canvas></div>
-            <div class="container"><div class="eyebrow">Win rate by seat</div><div class="text-meta c-dim">Share of hands they finished up, per position</div><canvas id="pl-position"></canvas></div>
+            <div class="container"><div class="eyebrow">Played vs won by seat</div><div class="text-meta c-dim">Hands played and how many they finished up, per position</div><canvas id="pl-position"></canvas></div>
           </div>
           <div class="row">
             <div class="container"><div class="eyebrow">Action mix</div><div class="text-meta c-dim">Share of their actions that are fold / check / call / bet / raise</div><canvas id="pl-actions"></canvas></div>
+            <div class="container"><div class="eyebrow">Hands they show down, by type</div><div class="text-meta c-dim">Starting-hand types from hands they revealed at showdown</div><canvas id="pl-holetypes"></canvas></div>
+          </div>
+          <div class="row">
+            <div class="container"><div class="eyebrow">End hand value vs profit</div><div class="text-meta c-dim">Net chips by the made hand they showed down</div><canvas id="pl-endhand"></canvas></div>
           </div>
         </div>`;
       }

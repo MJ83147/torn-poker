@@ -126,6 +126,28 @@ function classifyHandForPlayer(h, playerName) {
 // win rate by seat, and how often they take each action. All from their own
 // stack delta and actions, not the hero's.
 var CHART_POS_ORDER = ['UTG', 'UTG+1', 'MP', 'LJ', 'HJ', 'CO', 'BTN', 'SB', 'BB'];
+// Display order for the two reveal-based charts (starting-hand type, made hand).
+var HOLE_TYPE_ORDER = ['Pocket Pairs', 'Broadway', 'Ace-Rag', 'Suited Connectors', 'Suited', 'Connectors', 'Offsuit Trash'];
+var MADE_ORDER = ['High card', 'Pair', 'Two pair', 'Trips', 'Straight', 'Flush', 'Full house', 'Quads', 'Straight flush'];
+
+// The made-hand rank a player showed down, from its name. Finer than madeTier:
+// used to plot end-hand value against money. null when folded / not revealed.
+// Order of tests matters ("straight flush" before straight/flush).
+function madeHandCategory(handName) {
+  if (!handName) return null;
+  var s = String(handName).toLowerCase();
+  if (s.indexOf('fold') !== -1) return null;
+  if (s.indexOf('straight flush') !== -1) return 'Straight flush';
+  if (s.indexOf('four of a kind') !== -1) return 'Quads';
+  if (s.indexOf('full house') !== -1) return 'Full house';
+  if (s.indexOf('flush') !== -1) return 'Flush';
+  if (s.indexOf('straight') !== -1) return 'Straight';
+  if (s.indexOf('three of a kind') !== -1) return 'Trips';
+  if (s.indexOf('two pair') !== -1) return 'Two pair';
+  if (s.indexOf('pair') !== -1) return 'Pair';
+  if (s.indexOf('high card') !== -1) return 'High card';
+  return null;
+}
 // Result buckets in big blinds, biggest loss to biggest win. `max` is the upper
 // edge (a hand falls in the first bucket whose max it does not exceed); `tip` is
 // the bb range shown in the tooltip.
@@ -146,6 +168,8 @@ function computeOpponentCharts(playerHands, playerName) {
   var winCount = 0, lossCount = 0, evenCount = 0;
   var winSum = 0, lossSum = 0, biggestWin = 0, biggestLoss = 0, net = 0;
   var bbHands = 0;
+  var holeTypes = {};   // starting-hand type -> count (revealed hands only)
+  var endHand = {};     // made-hand rank -> { net, count } (revealed hands only)
 
   for (var i = 0; i < playerHands.length; i++) {
     var h = playerHands[i];
@@ -182,6 +206,20 @@ function computeOpponentCharts(playerHands, playerName) {
       if (a.author !== playerName) continue;
       if (actionCounts.hasOwnProperty(a.type)) actionCounts[a.type]++;
     }
+
+    // Reveal-based: their starting-hand type and made-hand value, only knowable
+    // for hands they showed down.
+    var hole = getRevealedHoleByName(h, playerName);
+    if (hole && hole.length >= 2) {
+      var cat = classifyKey(parseHoleKey(hole.map(normCard)));
+      if (cat && cat !== 'unknown') holeTypes[cat] = (holeTypes[cat] || 0) + 1;
+    }
+    var mh = madeHandCategory(getRevealedHandName(h, playerName));
+    if (mh) {
+      var e = endHand[mh] || (endHand[mh] = { net: 0, count: 0 });
+      e.count++;
+      if (pnl != null) e.net += pnl;
+    }
   }
 
   return {
@@ -196,6 +234,8 @@ function computeOpponentCharts(playerHands, playerName) {
     histBB: histBB, bbHands: bbHands,
     byPos: byPos,
     actions: actionCounts,
+    holeTypes: holeTypes,
+    endHand: endHand,
   };
 }
 
