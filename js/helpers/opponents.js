@@ -141,6 +141,8 @@ function classifyHandForPlayer(h, playerName) {
 // win rate by seat, and how often they take each action. All from their own
 // stack delta and actions, not the hero's.
 var CHART_POS_ORDER = ['UTG', 'UTG+1', 'MP', 'LJ', 'HJ', 'CO', 'BTN', 'SB', 'BB'];
+var CHART_STREETS = ['Preflop', 'Flop', 'Turn', 'River'];
+var CHART_ACTIONS = ['fold', 'check', 'call', 'bet', 'raise'];
 // Display order for the two reveal-based charts (starting-hand type, made hand).
 var HOLE_TYPE_ORDER = ['Pocket Pairs', 'Broadway', 'Ace-Rag', 'Suited Connectors', 'Suited', 'Connectors', 'Offsuit Trash'];
 var MADE_ORDER = ['High card', 'Pair', 'Two pair', 'Trips', 'Straight', 'Flush', 'Full house', 'Quads', 'Straight flush'];
@@ -177,6 +179,8 @@ var RESULT_BUCKETS = [
 function computeOpponentCharts(playerHands, playerName) {
   var byPos = {};
   var actionCounts = { fold: 0, check: 0, call: 0, bet: 0, raise: 0 };
+  var actionsByStreet = {};
+  for (var st = 0; st < CHART_STREETS.length; st++) actionsByStreet[CHART_STREETS[st]] = { fold: 0, check: 0, call: 0, bet: 0, raise: 0 };
   var histBB = {};
   for (var b = 0; b < RESULT_BUCKETS.length; b++) histBB[RESULT_BUCKETS[b].key] = 0;
 
@@ -220,6 +224,7 @@ function computeOpponentCharts(playerHands, playerName) {
       var a = acts[j];
       if (a.author !== playerName) continue;
       if (actionCounts.hasOwnProperty(a.type)) actionCounts[a.type]++;
+      if (actionsByStreet[a.street] && actionsByStreet[a.street].hasOwnProperty(a.type)) actionsByStreet[a.street][a.type]++;
     }
 
     // Reveal-based: their starting-hand type and made-hand value, only knowable
@@ -249,6 +254,7 @@ function computeOpponentCharts(playerHands, playerName) {
     histBB: histBB, bbHands: bbHands,
     byPos: byPos,
     actions: actionCounts,
+    actionsByStreet: actionsByStreet,
     holeTypes: holeTypes,
     endHand: endHand,
   };
@@ -650,13 +656,75 @@ function revealedHoldingInsights(hands, playerName) {
     }
   }
 
-  // Overbet the pot with a strong hand (two pair+).
-  var obValue = pick(function (x) { return x.overbet && x.tier === 'strong'; });
-  if (obValue.length >= MIN_PATTERN) {
-    out.push(insWithExample('a', 'Overbets for Value',
-      playerName + ' overbets the pot with two pair or better. Their huge bets are usually the real thing.',
-      [], exList(obValue),
-      'When ' + playerName + ' overbets, these are the strong hands behind it.'));
+  return out;
+}
+
+// Aggression reads that do NOT need to see their cards. We know the actions and
+// who won the pot, so we can measure how they use bets/overbets and how often
+// their aggression simply takes the pot down (everyone folds, no showdown).
+function computeAggressionProfile(hands, playerName) {
+  var overbet = { hands: [], won: 0, uncontested: 0 };
+  var aggro = { hands: [], won: 0, uncontested: 0 };
+  for (var i = hands.length - 1; i >= 0; i--) {
+    var h = hands[i];
+    var sz = walkPlayerSizing(h, playerName);
+    if (!sz.aggressivePostflop) continue;
+    var pnl = getStackPnlByName(h, playerName);
+    var won = pnl != null && pnl > 0;
+    var showdown = typeof isShowdown === 'function' ? isShowdown(h) : false;
+    var uncontested = won && !showdown; // won the pot with no showdown = folds
+    var didOverbet = false;
+    for (var b = 0; b < sz.bets.length; b++) { if (sz.bets[b].frac > 1) { didOverbet = true; break; } }
+
+    aggro.hands.push(h);
+    if (won) aggro.won++;
+    if (uncontested) aggro.uncontested++;
+    if (didOverbet) {
+      overbet.hands.push(h);
+      if (won) overbet.won++;
+      if (uncontested) overbet.uncontested++;
+    }
+  }
+  return { overbet: overbet, aggro: aggro };
+}
+
+function actionAggressionInsights(hands, playerName) {
+  var out = [];
+  var MIN = 4;
+  var ap = computeAggressionProfile(hands, playerName);
+
+  function exList(list) {
+    var ex = list.slice(0, 20);
+    ex.opponentName = playerName;
+    return ex;
+  }
+
+  // Overbetting, measured on every hand (cards not needed). Whether it is
+  // pressure (takes pots down) or gets called shapes the read.
+  var ob = ap.overbet.hands;
+  if (ob.length >= MIN) {
+    var obSteal = ap.overbet.uncontested / ob.length;
+    if (obSteal >= 0.5) {
+      out.push(insWithExample('a', 'Overbets to Steal',
+        playerName + ' overbets the pot often and usually takes it down with no showdown. That is pressure, not always value, so do not fold everything to a big bet.',
+        [], exList(ob),
+        'These are hands where ' + playerName + ' overbet. Notice how often everyone folds.'));
+    } else {
+      out.push(insWithExample('a', 'Overbets Often',
+        playerName + ' overbets the pot often and gets called a fair amount, so their big sizing is a real range. Pick your spots against it.',
+        [], exList(ob),
+        'These are hands where ' + playerName + ' overbet the pot.'));
+    }
+  }
+
+  // Postflop aggression that keeps winning without a showdown = they generate
+  // folds and run people over. Exploit by calling and raising back lighter.
+  var ag = ap.aggro.hands;
+  if (ag.length >= MIN && (ap.aggro.uncontested / ag.length) >= 0.5) {
+    out.push(insWithExample('a', 'Wins Pots With Aggression',
+      playerName + ' bets and raises postflop and often wins the pot with no showdown. They generate folds, so call and raise back against them lighter.',
+      [], exList(ag),
+      'These are pots ' + playerName + ' took down with a bet or raise, no showdown needed.'));
   }
 
   return out;
@@ -745,9 +813,13 @@ function generateExploitInsights(s, playerName, hands) {
   }
 
   // Holding-conditioned reads from the hands where we saw their cards: what they
-  // actually do with each kind of holding (overbets Broadway, slow-plays pairs).
+  // actually do with each kind of holding (bluffs, slow-plays).
   var holdingIns = revealedHoldingInsights(hands || [], playerName);
   for (var hi2 = 0; hi2 < holdingIns.length; hi2++) insights.push(holdingIns[hi2]);
+
+  // Aggression reads that need no reveal (overbets, winning pots uncontested).
+  var aggroIns = actionAggressionInsights(hands || [], playerName);
+  for (var ai2 = 0; ai2 < aggroIns.length; ai2++) insights.push(aggroIns[ai2]);
 
   // insWithExample returns "" for claims with no backing example hands. Drop
   // them so an unbacked claim never renders and the counts below stay honest.

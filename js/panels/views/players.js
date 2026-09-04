@@ -81,6 +81,42 @@ function mountPlayerCharts(data, playerName) {
     }
   }
 
+  // 3b. Action by street: grouped bars, one group per street, a bar per action,
+  // as a share of their actions on that street, so the tallest bar per street is
+  // their most common action there.
+  var sc = document.getElementById("pl-streetactions");
+  if (sc) {
+    var abs = data.actionsByStreet || {};
+    var streets = CHART_STREETS.filter(function (st) {
+      var t = abs[st]; if (!t) return false;
+      return (t.fold + t.check + t.call + t.bet + t.raise) > 0;
+    });
+    if (streets.length >= 1) {
+      var actColor = { fold: colors.red, check: colors.dim, call: colors.gold, bet: colors.amber, raise: colors.green };
+      var actLabel = { fold: "Fold", check: "Check", call: "Call", bet: "Bet", raise: "Raise" };
+      var streetTotals = {};
+      streets.forEach(function (st) { var t = abs[st]; streetTotals[st] = t.fold + t.check + t.call + t.bet + t.raise; });
+      var datasets = CHART_ACTIONS.map(function (act) {
+        return {
+          label: actLabel[act],
+          data: streets.map(function (st) { return streetTotals[st] ? Math.round((abs[st][act] / streetTotals[st]) * 100) : 0; }),
+          backgroundColor: actColor[act] + "99",
+          borderColor: actColor[act],
+          borderWidth: 1, borderRadius: 3,
+        };
+      });
+      charts.push(
+        createChart(sc, "bar", { labels: streets, datasets: datasets }, {
+          legend: chartLegend(colors, true),
+          tooltip: chartTooltip(colors, { label: function (c) { var st = streets[c.dataIndex]; var act = c.dataset.label.toLowerCase(); return " " + c.dataset.label + ": " + c.parsed.y + "% (" + abs[st][act] + ")"; } }),
+          scales: { x: chartXScale(colors), y: chartYScale(colors, { max: 100, tickCallback: function (v) { return v + "%"; } }) },
+        })
+      );
+    } else {
+      sc.parentNode.innerHTML = '<div class="eyebrow">Action by street</div><div class="text-body">No actions recorded.</div>';
+    }
+  }
+
   // 4. Starting-hand types they show down (only knowable from revealed hands).
   var hc = document.getElementById("pl-holetypes");
   if (hc) {
@@ -400,6 +436,9 @@ function renderPlayers(container, d, hands) {
           </div>
           <div class="row">
             <div class="container"><div class="eyebrow">Action mix</div><div class="text-meta c-dim">Share of their actions that are fold / check / call / bet / raise</div><canvas id="pl-actions"></canvas></div>
+            <div class="container"><div class="eyebrow">Action by street</div><div class="text-meta c-dim">Their most common action on each street (share within the street)</div><canvas id="pl-streetactions"></canvas></div>
+          </div>
+          <div class="row">
             <div class="container"><div class="eyebrow">Hands they show down, by type</div><div class="text-meta c-dim">Starting-hand types from hands they revealed at showdown</div><canvas id="pl-holetypes"></canvas></div>
           </div>
           <div class="row">
