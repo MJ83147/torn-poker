@@ -493,34 +493,44 @@ function walkPlayerSizing(h, name) {
   return { bets: bets, aggressivePostflop: aggressivePostflop, passiveOnly: passivePostflop && !aggressivePostflop };
 }
 
-// For one hand the player revealed, what did they do with that known holding:
-// its starting-hand category, how they treated it preflop, and their postflop
-// line and sizing. Returns null when they never showed their cards this hand.
+// The strength tier of the made hand a player showed down, from its name:
+// 'air' = high card, no pair; 'pair' = one pair; 'strong' = two pair or better.
+// null when they folded / never revealed a made hand. This, not the starting
+// cards, separates a value bet from a bluff: betting top pair is value, not a
+// bluff, even though the starting hand (e.g. KQ) can look marginal.
+function madeTier(handName) {
+  if (!handName) return null;
+  var s = String(handName).toLowerCase();
+  if (s.indexOf('fold') !== -1) return null;
+  if (s.indexOf('high card') !== -1) return 'air';
+  if (isStrongShowdownHand(handName)) return 'strong';
+  if (s.indexOf('pair') !== -1) return 'pair';
+  return null;
+}
+
+// For one hand the player revealed, what did they do with the strength they
+// actually held: the made-hand tier at showdown plus their postflop line and
+// sizing. Returns null when they never showed a made hand this hand.
 function profileRevealedHand(h, name) {
-  var hole = getRevealedHoleByName(h, name);
-  if (!hole || hole.length < 2) return null;
-  var c = classifyHandForPlayer(h, name);
+  var tier = madeTier(getRevealedHandName(h, name));
+  if (!tier) return null;
   var sz = walkPlayerSizing(h, name);
   var maxFrac = 0;
   for (var i = 0; i < sz.bets.length; i++) if (sz.bets[i].frac > maxFrac) maxFrac = sz.bets[i].frac;
   return {
     hand: h,
-    category: classifyKey(parseHoleKey(hole.map(normCard))),
-    limpedPre: c.limpedPre,
-    raisedPre: c.raisedPre,
-    sawFlop: c.seenPostFlop,
+    tier: tier,
     aggressivePostflop: sz.aggressivePostflop,
     passiveOnly: sz.passiveOnly,
     overbet: maxFrac > 1.0,
   };
 }
 
-// Holding-conditioned reads: the hands where we saw their cards, reversed to see
-// what they did with each kind of holding. "Overbets Broadway", "slow-plays
-// pocket pairs", and so on. A pattern needs at least MIN_PATTERN revealed hands
-// so a one-off is not called a tendency; every claim is backed by those hands.
-var STRONG_CATS = { 'Pocket Pairs': true, 'Broadway': true };
-var WEAK_CATS = { 'Offsuit Trash': true, 'Connectors': true, 'Suited': true, 'Ace-Rag': true, 'Suited Connectors': true };
+// Made-hand reads: the hands where we saw their cards, reversed to see what they
+// did with the strength they actually held. Judged on the made hand at showdown,
+// not the starting cards, so a value bet with top pair is never called a bluff.
+// A pattern needs at least MIN_PATTERN revealed hands; every claim is backed by
+// those hands.
 function revealedHoldingInsights(hands, playerName) {
   var MIN_PATTERN = 2;
   var out = [];
@@ -531,12 +541,7 @@ function revealedHoldingInsights(hands, playerName) {
   }
   if (!profiles.length) return out;
 
-  var byCat = {};
-  for (var j = 0; j < profiles.length; j++) {
-    var cat = profiles[j].category || 'unknown';
-    (byCat[cat] = byCat[cat] || []).push(profiles[j]);
-  }
-
+  function pick(fn) { return profiles.filter(fn); }
   function times(n) { return n + ' hand' + (n !== 1 ? 's' : ''); }
   function exList(list) {
     var ex = list.map(function (x) { return x.hand; });
@@ -544,53 +549,30 @@ function revealedHoldingInsights(hands, playerName) {
     return ex;
   }
 
-  for (var cat in byCat) {
-    if (cat === 'unknown') continue;
-    var list = byCat[cat];
-    if (list.length < MIN_PATTERN) continue;
-
-    var overbets = list.filter(function (x) { return x.overbet; });
-    if (overbets.length >= MIN_PATTERN) {
-      out.push(insWithExample('a', 'Overbets ' + cat,
-        playerName + ' has bet more than the pot holding ' + cat + ' in ' + times(overbets.length) + ' they showed. Big sizing from them points at this range.',
-        [{ v: cat }, { v: overbets.length + ' overbets' }], exList(overbets),
-        'When ' + playerName + ' bets huge, these are the hands they turned over.'));
-      continue;
-    }
-
-    if (STRONG_CATS[cat]) {
-      var slow = list.filter(function (x) { return x.sawFlop && x.passiveOnly; });
-      if (slow.length >= MIN_PATTERN) {
-        out.push(insWithExample('a', 'Slow-plays ' + cat,
-          playerName + ' checked and called postflop with ' + cat + ' in ' + times(slow.length) + ' they showed, instead of betting. They trap with strong holdings.',
-          [{ v: cat }, { v: slow.length + ' played passively' }], exList(slow),
-          'A passive line from ' + playerName + ' is not always weakness. These are hands they slow-played.'));
-        continue;
-      }
-    }
-
-    if (WEAK_CATS[cat]) {
-      var aggr = list.filter(function (x) { return x.aggressivePostflop; });
-      if (aggr.length >= MIN_PATTERN) {
-        out.push(insWithExample('r', 'Bluffs with ' + cat,
-          playerName + ' bet or raised postflop with ' + cat + ' in ' + times(aggr.length) + ' they showed. They fire with weak holdings, so do not over-fold to them.',
-          [{ v: cat }, { v: aggr.length + ' as bluffs' }], exList(aggr),
-          'These are weak hands ' + playerName + ' turned into bets. Their aggression is not always real.'));
-        continue;
-      }
-    }
-
-    if (STRONG_CATS[cat]) {
-      var limp = list.filter(function (x) { return x.limpedPre; });
-      if (limp.length >= MIN_PATTERN) {
-        out.push(insWithExample('a', 'Limps ' + cat,
-          playerName + ' just limped or called preflop with ' + cat + ' in ' + times(limp.length) + ' they showed. They disguise strong hands by not raising.',
-          [{ v: cat }, { v: limp.length + ' limped' }], exList(limp),
-          'A limp from ' + playerName + ' can hide a strong hand. These are examples.'));
-        continue;
-      }
-    }
+  var bluffs = pick(function (x) { return x.aggressivePostflop && x.tier === 'air'; });
+  if (bluffs.length >= MIN_PATTERN) {
+    out.push(insWithExample('r', 'Bluffs Postflop',
+      playerName + ' bet or raised postflop with no pair (just high card) in ' + times(bluffs.length) + ' they showed. Their aggression is often air, so do not over-fold to them.',
+      [{ v: bluffs.length + ' bluffs shown' }], exList(bluffs),
+      'These are hands ' + playerName + ' fired with nothing. Look them up before folding a real hand.'));
   }
+
+  var slow = pick(function (x) { return x.passiveOnly && x.tier === 'strong'; });
+  if (slow.length >= MIN_PATTERN) {
+    out.push(insWithExample('a', 'Slow-plays Big Hands',
+      playerName + ' only checked and called with two pair or better in ' + times(slow.length) + ' they showed, instead of betting. They trap.',
+      [{ v: slow.length + ' traps shown' }], exList(slow),
+      'A passive line from ' + playerName + ' can hide a monster. These are examples.'));
+  }
+
+  var obValue = pick(function (x) { return x.overbet && x.tier === 'strong'; });
+  if (obValue.length >= MIN_PATTERN) {
+    out.push(insWithExample('a', 'Overbets for Value',
+      playerName + ' bet more than the pot with two pair or better in ' + times(obValue.length) + ' they showed. Their huge bets are usually the real thing.',
+      [{ v: obValue.length + ' overbets' }], exList(obValue),
+      'When ' + playerName + ' overbets, these strong hands are what they had.'));
+  }
+
   return out;
 }
 

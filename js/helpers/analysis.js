@@ -99,6 +99,16 @@ function getRevealedHoleByName(h, name) {
   return null;
 }
 
+// The made-hand name a named player showed down (e.g. "Pair of Kings", "High
+// card Ace", "Two Pairs: ..."), or "" if they never revealed one this hand.
+function getRevealedHandName(h, name) {
+  var revs = getRevealedHands(h);
+  for (var i = 0; i < revs.length; i++) {
+    if (revs[i].author === name) return revs[i].handName || "";
+  }
+  return "";
+}
+
 // A named player's own action sequence this hand, as "call · raise · fold".
 function getActsSummaryByName(h, name) {
   return parseActions(h.actions)
