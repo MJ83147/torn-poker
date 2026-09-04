@@ -121,6 +121,82 @@ function classifyHandForPlayer(h, playerName) {
   };
 }
 
+// Data for the player page's Analysis charts, computed from this opponent's
+// shared hands: their result distribution (win/loss frequency and size), their
+// win rate by seat, and how often they take each action. All from their own
+// stack delta and actions, not the hero's.
+var CHART_POS_ORDER = ['UTG', 'UTG+1', 'MP', 'LJ', 'HJ', 'CO', 'BTN', 'SB', 'BB'];
+// Result buckets in big blinds, loss to win. Anchors are the upper edge.
+var RESULT_BUCKETS = [
+  { key: 'le-20', label: '≤ -20', max: -20 },
+  { key: 'm20-8', label: '-20 to -8', max: -8 },
+  { key: 'm8-2', label: '-8 to -2', max: -2 },
+  { key: 'm2-0', label: '-2 to 0', max: 0 },
+  { key: 'p0-2', label: '0 to 2', max: 2 },
+  { key: 'p2-8', label: '2 to 8', max: 8 },
+  { key: 'p8-20', label: '8 to 20', max: 20 },
+  { key: 'ge20', label: '20+', max: Infinity },
+];
+function computeOpponentCharts(playerHands, playerName) {
+  var byPos = {};
+  var actionCounts = { fold: 0, check: 0, call: 0, bet: 0, raise: 0 };
+  var histBB = {};
+  for (var b = 0; b < RESULT_BUCKETS.length; b++) histBB[RESULT_BUCKETS[b].key] = 0;
+
+  var winCount = 0, lossCount = 0, evenCount = 0;
+  var winSum = 0, lossSum = 0, biggestWin = 0, biggestLoss = 0, net = 0;
+  var bbHands = 0;
+
+  for (var i = 0; i < playerHands.length; i++) {
+    var h = playerHands[i];
+    var pnl = getStackPnlByName(h, playerName);
+
+    if (pnl != null) {
+      net += pnl;
+      if (pnl > 0) { winCount++; winSum += pnl; if (pnl > biggestWin) biggestWin = pnl; }
+      else if (pnl < 0) { lossCount++; lossSum += -pnl; if (-pnl > biggestLoss) biggestLoss = -pnl; }
+      else evenCount++;
+
+      var bb = getHandBB(h);
+      if (bb) {
+        bbHands++;
+        var inBB = pnl / bb;
+        for (var k = 0; k < RESULT_BUCKETS.length; k++) {
+          if (inBB <= RESULT_BUCKETS[k].max) { histBB[RESULT_BUCKETS[k].key]++; break; }
+        }
+      }
+    }
+
+    var pos = getPositionByName(h, playerName);
+    if (pos) {
+      var pb = byPos[pos] || (byPos[pos] = { count: 0, wins: 0, net: 0 });
+      pb.count++;
+      if (pnl != null) { pb.net += pnl; if (pnl > 0) pb.wins++; }
+    }
+
+    var acts = parseActions(h.actions);
+    for (var j = 0; j < acts.length; j++) {
+      var a = acts[j];
+      if (a.author !== playerName) continue;
+      if (actionCounts.hasOwnProperty(a.type)) actionCounts[a.type]++;
+    }
+  }
+
+  return {
+    total: playerHands.length,
+    results: {
+      winCount: winCount, lossCount: lossCount, evenCount: evenCount,
+      avgWin: winCount ? winSum / winCount : 0,
+      avgLoss: lossCount ? lossSum / lossCount : 0,
+      biggestWin: biggestWin, biggestLoss: biggestLoss, net: net,
+      winRate: (winCount + lossCount) ? Math.round((winCount / (winCount + lossCount)) * 100) : null,
+    },
+    histBB: histBB, bbHands: bbHands,
+    byPos: byPos,
+    actions: actionCounts,
+  };
+}
+
 function computeOpponentStats(hands, playerName) {
   var s = {
     hands: 0,
@@ -355,6 +431,9 @@ function findInsightExamples(hands, playerName) {
     var c = classifyHandForPlayer(h, playerName);
     if (!c.hasPlayerActs) continue;
 
+    // VPIP is a frequency stat: tight/loose is about how often they voluntarily
+    // enter, read from their preflop actions. No reveal needed. The example just
+    // shows them entering (cards render as "??" when they never showed down).
     if (!full('vpip') && (c.raisedPre || c.calledPre)) ex.vpip.push(h);
     if (!full('limp') && c.limpedPre) ex.limp.push(h);
     if (!full('passive') && c.callCheckCount >= 2 && c.raiseCount === 0) ex.passive.push(h);
@@ -378,6 +457,143 @@ function findInsightExamples(hands, playerName) {
   return ex;
 }
 
+// Walk a hand tracking the running pot (summing each action's incremental
+// `amount`, the same reconstruction the sizing panels use) and pull out what the
+// named player did postflop: their bet sizes as a fraction of the pot at the
+// moment of the bet, and whether their postflop line was aggressive or passive.
+function walkPlayerSizing(h, name) {
+  var acts = parseActions(h.actions);
+  var pot = 0;
+  var bets = [];
+  var aggressivePostflop = false;
+  var passivePostflop = false;
+  for (var i = 0; i < acts.length; i++) {
+    var a = acts[i];
+    if (a.type === 'sb' || a.type === 'bb' || a.type === 'won') {
+      if (a.amount > 0) pot += a.amount;
+      continue;
+    }
+    if (a.type === 'fold') continue;
+    var potBefore = pot;
+    var isOurs = a.author === name;
+    var postflop = a.street !== 'Preflop';
+    if (a.type === 'bet' || a.type === 'raise') {
+      if (isOurs && postflop) {
+        aggressivePostflop = true;
+        if (potBefore > 0 && a.amount > 0) bets.push({ street: a.street, frac: a.amount / potBefore });
+      }
+      pot += a.amount;
+    } else if (a.type === 'call') {
+      if (isOurs && postflop) passivePostflop = true;
+      if (a.amount > 0) pot += a.amount;
+    } else if (a.type === 'check') {
+      if (isOurs && postflop) passivePostflop = true;
+    }
+  }
+  return { bets: bets, aggressivePostflop: aggressivePostflop, passiveOnly: passivePostflop && !aggressivePostflop };
+}
+
+// For one hand the player revealed, what did they do with that known holding:
+// its starting-hand category, how they treated it preflop, and their postflop
+// line and sizing. Returns null when they never showed their cards this hand.
+function profileRevealedHand(h, name) {
+  var hole = getRevealedHoleByName(h, name);
+  if (!hole || hole.length < 2) return null;
+  var c = classifyHandForPlayer(h, name);
+  var sz = walkPlayerSizing(h, name);
+  var maxFrac = 0;
+  for (var i = 0; i < sz.bets.length; i++) if (sz.bets[i].frac > maxFrac) maxFrac = sz.bets[i].frac;
+  return {
+    hand: h,
+    category: classifyKey(parseHoleKey(hole.map(normCard))),
+    limpedPre: c.limpedPre,
+    raisedPre: c.raisedPre,
+    sawFlop: c.seenPostFlop,
+    aggressivePostflop: sz.aggressivePostflop,
+    passiveOnly: sz.passiveOnly,
+    overbet: maxFrac > 1.0,
+  };
+}
+
+// Holding-conditioned reads: the hands where we saw their cards, reversed to see
+// what they did with each kind of holding. "Overbets Broadway", "slow-plays
+// pocket pairs", and so on. A pattern needs at least MIN_PATTERN revealed hands
+// so a one-off is not called a tendency; every claim is backed by those hands.
+var STRONG_CATS = { 'Pocket Pairs': true, 'Broadway': true };
+var WEAK_CATS = { 'Offsuit Trash': true, 'Connectors': true, 'Suited': true, 'Ace-Rag': true, 'Suited Connectors': true };
+function revealedHoldingInsights(hands, playerName) {
+  var MIN_PATTERN = 2;
+  var out = [];
+  var profiles = [];
+  for (var i = hands.length - 1; i >= 0; i--) {
+    var p = profileRevealedHand(hands[i], playerName);
+    if (p) profiles.push(p);
+  }
+  if (!profiles.length) return out;
+
+  var byCat = {};
+  for (var j = 0; j < profiles.length; j++) {
+    var cat = profiles[j].category || 'unknown';
+    (byCat[cat] = byCat[cat] || []).push(profiles[j]);
+  }
+
+  function times(n) { return n + ' hand' + (n !== 1 ? 's' : ''); }
+  function exList(list) {
+    var ex = list.map(function (x) { return x.hand; });
+    ex.opponentName = playerName;
+    return ex;
+  }
+
+  for (var cat in byCat) {
+    if (cat === 'unknown') continue;
+    var list = byCat[cat];
+    if (list.length < MIN_PATTERN) continue;
+
+    var overbets = list.filter(function (x) { return x.overbet; });
+    if (overbets.length >= MIN_PATTERN) {
+      out.push(insWithExample('a', 'Overbets ' + cat,
+        playerName + ' has bet more than the pot holding ' + cat + ' in ' + times(overbets.length) + ' they showed. Big sizing from them points at this range.',
+        [{ v: cat }, { v: overbets.length + ' overbets' }], exList(overbets),
+        'When ' + playerName + ' bets huge, these are the hands they turned over.'));
+      continue;
+    }
+
+    if (STRONG_CATS[cat]) {
+      var slow = list.filter(function (x) { return x.sawFlop && x.passiveOnly; });
+      if (slow.length >= MIN_PATTERN) {
+        out.push(insWithExample('a', 'Slow-plays ' + cat,
+          playerName + ' checked and called postflop with ' + cat + ' in ' + times(slow.length) + ' they showed, instead of betting. They trap with strong holdings.',
+          [{ v: cat }, { v: slow.length + ' played passively' }], exList(slow),
+          'A passive line from ' + playerName + ' is not always weakness. These are hands they slow-played.'));
+        continue;
+      }
+    }
+
+    if (WEAK_CATS[cat]) {
+      var aggr = list.filter(function (x) { return x.aggressivePostflop; });
+      if (aggr.length >= MIN_PATTERN) {
+        out.push(insWithExample('r', 'Bluffs with ' + cat,
+          playerName + ' bet or raised postflop with ' + cat + ' in ' + times(aggr.length) + ' they showed. They fire with weak holdings, so do not over-fold to them.',
+          [{ v: cat }, { v: aggr.length + ' as bluffs' }], exList(aggr),
+          'These are weak hands ' + playerName + ' turned into bets. Their aggression is not always real.'));
+        continue;
+      }
+    }
+
+    if (STRONG_CATS[cat]) {
+      var limp = list.filter(function (x) { return x.limpedPre; });
+      if (limp.length >= MIN_PATTERN) {
+        out.push(insWithExample('a', 'Limps ' + cat,
+          playerName + ' just limped or called preflop with ' + cat + ' in ' + times(limp.length) + ' they showed. They disguise strong hands by not raising.',
+          [{ v: cat }, { v: limp.length + ' limped' }], exList(limp),
+          'A limp from ' + playerName + ' can hide a strong hand. These are examples.'));
+        continue;
+      }
+    }
+  }
+  return out;
+}
+
 function generateExploitInsights(s, playerName, hands) {
   var insights = [];
   var MIN_HANDS = 10;
@@ -391,6 +607,11 @@ function generateExploitInsights(s, playerName, hands) {
   }
 
   var examples = findInsightExamples(hands || [], playerName);
+  // Tag each example list so the modal renders rows from this opponent's
+  // perspective (their seat/cards/result/actions), not the hero's.
+  for (var ek in examples) {
+    if (examples[ek]) examples[ek].opponentName = playerName;
+  }
 
   var vpip = pct(s.vpipHands, s.hands);
   var pfr = pct(s.pfrHands, s.hands);
@@ -404,7 +625,7 @@ function generateExploitInsights(s, playerName, hands) {
     if (vpip >= 55) {
       insights.push(insWithExample('r', 'Very Loose', playerName + ' plays ' + vpip + '% of hands. They enter pots with weak holdings constantly.', [{ v: 'VPIP: ' + vpip + '%' }], examples.vpip, 'This hand shows ' + playerName + ' entering the pot. Typical of their loose play style.'));
     } else if (vpip >= 40) {
-      insights.push(insWithExample('a', 'Loose', playerName + ' plays ' + vpip + '% of hands. Wider than average, often with marginal cards.', [{ v: 'VPIP: ' + vpip + '%' }], examples.vpip, 'Here ' + playerName + ' enters the pot with a marginal holding.'));
+      insights.push(insWithExample('a', 'Loose', playerName + ' plays ' + vpip + '% of hands. Wider than average, often with marginal cards.', [{ v: 'VPIP: ' + vpip + '%' }], examples.vpip, playerName + ' voluntarily entered the pot here. They do this with a wide range of hands.'));
     } else if (vpip <= 18) {
       insights.push(insWithExample('a', 'Very Tight', playerName + ' only plays ' + vpip + '% of hands. When they enter, they have something.', [{ v: 'VPIP: ' + vpip + '%' }], examples.vpip, 'One of the rare hands where ' + playerName + ' voluntarily entered the pot.'));
     }
@@ -454,6 +675,15 @@ function generateExploitInsights(s, playerName, hands) {
       insights.push(insWithExample('o', 'Strong at Showdown', playerName + ' shows strong hands ' + (100 - weakPct) + '% of the time. Respect their river calls.', [{ v: (100 - weakPct) + '% strong reveals' }], examples.strongReveal, playerName + ' shows a strong hand. Respect their showdown range.'));
     }
   }
+
+  // Holding-conditioned reads from the hands where we saw their cards: what they
+  // actually do with each kind of holding (overbets Broadway, slow-plays pairs).
+  var holdingIns = revealedHoldingInsights(hands || [], playerName);
+  for (var hi2 = 0; hi2 < holdingIns.length; hi2++) insights.push(holdingIns[hi2]);
+
+  // insWithExample returns "" for claims with no backing example hands. Drop
+  // them so an unbacked claim never renders and the counts below stay honest.
+  insights = insights.filter(function (x) { return x; });
 
   if (s.hands >= EXPLOIT_HANDS && insights.length > 0) {
     var exploits = [];

@@ -156,7 +156,12 @@ function ins(sev, label, text, chips, coaching) {
 function insWithExample(sev, label, text, chips, exampleHands, coachingNote, coaching) {
   const base = ins(sev, label, text, chips, coaching);
   var handsList = !exampleHands ? [] : Array.isArray(exampleHands) ? exampleHands : [exampleHands];
-  if (!handsList.length) return base;
+  // No example hands means nothing backs this claim, so don't make it. (Callers
+  // filter out the empty string before rendering / counting insights.)
+  if (!handsList.length) return "";
+  // Opponent tendency lists carry the player whose perspective the rows render
+  // from (set in generateExploitInsights); null for hero self-review examples.
+  var opponentName = handsList.opponentName || null;
   const btnId = "ex-" + Math.random().toString(36).slice(2, 8);
   const btn = '<button class="btn btn-ghost" id="' + btnId + '">See example hands</button>';
   const insertPoint = base.lastIndexOf("</div>");
@@ -165,7 +170,7 @@ function insWithExample(sev, label, text, chips, exampleHands, coachingNote, coa
     const el = document.getElementById(btnId);
     if (!el) return;
     el.onclick = function () {
-      showExampleHandListModal(label, handsList, coachingNote);
+      showExampleHandListModal(label, handsList, coachingNote, opponentName);
     };
   }, 50);
   return result;

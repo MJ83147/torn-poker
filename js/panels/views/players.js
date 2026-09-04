@@ -1,5 +1,96 @@
 // Players panel view: assembles the UI from shared components + playersModel.
 
+// Instantiate the player-page Analysis charts against the canvases already in the
+// DOM. Returns the Chart instances so the caller can destroy them on re-render.
+function mountPlayerCharts(data, playerName) {
+  if (typeof createChart !== "function" || typeof Chart === "undefined") return [];
+  var colors = getChartColors();
+  var charts = [];
+  var intTicks = function (v) { return v % 1 === 0 ? v : ""; };
+
+  // 1. Result distribution: how often each win/loss size happens, in big blinds.
+  var rc = document.getElementById("pl-results");
+  if (rc && data.bbHands >= 1) {
+    var rLabels = RESULT_BUCKETS.map(function (b) { return b.label; });
+    var rVals = RESULT_BUCKETS.map(function (b) { return data.histBB[b.key]; });
+    charts.push(
+      createChart(rc, "bar", {
+        labels: rLabels,
+        datasets: [{
+          data: rVals,
+          backgroundColor: RESULT_BUCKETS.map(function (b) { return (b.max <= 0 ? colors.red : colors.green) + "99"; }),
+          borderColor: RESULT_BUCKETS.map(function (b) { return b.max <= 0 ? colors.red : colors.green; }),
+          borderWidth: 1, borderRadius: 4,
+        }],
+      }, {
+        tooltip: chartTooltip(colors, { label: function (c) { return " " + c.parsed.y + " hand" + (c.parsed.y !== 1 ? "s" : ""); } }),
+        scales: { x: chartXScale(colors, { maxRotation: 0 }), y: chartYScale(colors, { tickCallback: intTicks }) },
+      })
+    );
+  } else if (rc) {
+    rc.parentNode.innerHTML = '<div class="eyebrow">Result distribution (bb)</div><div class="text-body">No big-blind data for these hands.</div>';
+  }
+
+  // 2. Win rate by seat.
+  var pc = document.getElementById("pl-position");
+  if (pc) {
+    var active = CHART_POS_ORDER.filter(function (p) { return data.byPos[p] && data.byPos[p].count > 0; });
+    if (active.length >= 2) {
+      var wrVals = active.map(function (p) { var b = data.byPos[p]; return Math.round((b.wins / b.count) * 100); });
+      charts.push(
+        createChart(pc, "bar", {
+          labels: active,
+          datasets: [{
+            data: wrVals,
+            backgroundColor: wrVals.map(function (v) { return (v >= 50 ? colors.green : colors.red) + "99"; }),
+            borderColor: wrVals.map(function (v) { return v >= 50 ? colors.green : colors.red; }),
+            borderWidth: 1, borderRadius: 4,
+          }],
+        }, {
+          tooltip: chartTooltip(colors, { label: function (c) { var b = data.byPos[active[c.dataIndex]]; return " " + c.parsed.y + "% won (" + b.count + " hand" + (b.count !== 1 ? "s" : "") + ")"; } }),
+          scales: { x: chartXScale(colors), y: chartYScale(colors, { max: 100, tickCallback: function (v) { return v + "%"; } }) },
+        })
+      );
+    } else {
+      pc.parentNode.innerHTML = '<div class="eyebrow">Win rate by position</div><div class="text-body">Need at least two seats with data.</div>';
+    }
+  }
+
+  // 3. Action breakdown: how often they fold / check / call / bet / raise.
+  var ac = document.getElementById("pl-actions");
+  if (ac) {
+    var a = data.actions;
+    var aVals = [a.fold, a.check, a.call, a.bet, a.raise];
+    var aTotal = aVals.reduce(function (x, y) { return x + y; }, 0);
+    if (aTotal > 0) {
+      charts.push(
+        new Chart(ac, {
+          type: "doughnut",
+          data: {
+            labels: ["Fold", "Check", "Call", "Bet", "Raise"],
+            datasets: [{
+              data: aVals,
+              backgroundColor: [colors.red + "cc", colors.dim + "cc", colors.gold + "cc", colors.amber + "cc", colors.green + "cc"],
+              borderColor: colors.border, borderWidth: 1,
+            }],
+          },
+          options: {
+            responsive: true, maintainAspectRatio: true, aspectRatio: 1.8,
+            plugins: {
+              legend: chartLegend(colors, true),
+              tooltip: chartTooltip(colors, { label: function (c) { return " " + c.label + ": " + c.parsed + " (" + Math.round((c.parsed / aTotal) * 100) + "%)"; } }),
+            },
+          },
+        })
+      );
+    } else {
+      ac.parentNode.innerHTML = '<div class="eyebrow">Action breakdown</div><div class="text-body">No actions recorded.</div>';
+    }
+  }
+
+  return charts;
+}
+
 function renderPlayers(container, d, hands) {
   var m = playersModel(hands);
   var oppMap = m.oppMap;
@@ -192,8 +283,15 @@ function renderPlayers(container, d, hands) {
     var PH_SIZE = 50;
 
     var oppStats = computeOpponentStats(hands, playerName);
+    var chartData = computeOpponentCharts(playerHands, playerName);
+    var _phCharts = [];
+    function destroyCharts() {
+      for (var i = 0; i < _phCharts.length; i++) if (_phCharts[i]) _phCharts[i].destroy();
+      _phCharts = [];
+    }
 
     function renderPage() {
+      destroyCharts();
       var start = phPage * PH_SIZE;
       var end = Math.min(start + PH_SIZE, playerHands.length);
       var page = playerHands.slice(start, end);
@@ -240,6 +338,32 @@ function renderPlayers(container, d, hands) {
         ph += `<div class="row"><div class="container"><div class="box lead">Need ${Math.max(0, 5 - oppStats.hands)} more shared hands to show tendency stats (${oppStats.hands}/5 hands).</div></div></div>`;
       }
 
+      if (oppStats.hands >= 5) {
+        var r = chartData.results;
+        var kpis = [
+          { l: "Win rate", v: r.winRate != null ? r.winRate + "%" : "-", c: r.winRate != null ? (r.winRate >= 50 ? "g" : "r") : "text" },
+          { l: "Won / Lost", v: r.winCount + " / " + r.lossCount, c: "text" },
+          { l: "Avg win", v: r.winCount ? "+" + fmt(Math.round(r.avgWin)) : "-", c: "g" },
+          { l: "Avg loss", v: r.lossCount ? "-" + fmt(Math.round(r.avgLoss)) : "-", c: "r" },
+          { l: "Biggest win", v: r.biggestWin ? "+" + fmt(r.biggestWin) : "-", c: "g" },
+          { l: "Biggest loss", v: r.biggestLoss ? "-" + fmt(r.biggestLoss) : "-", c: "r" },
+          { l: "Net vs you", v: (r.net >= 0 ? "+" : "-") + fmt(Math.abs(r.net)), c: r.net >= 0 ? "g" : "r" },
+        ];
+        ph += `<div class="section"><div class="section-head">Analysis</div>
+          <div class="row"><div class="container player-detail-section">
+            <div class="text-meta c-dim" style="margin-bottom:8px">${playerName}'s own results and actions across your ${chartData.total} shared hands.</div>
+            ${renderMiniRow(kpis)}
+          </div></div>
+          <div class="row">
+            <div class="container"><div class="eyebrow">Result distribution (bb)</div><canvas id="pl-results"></canvas></div>
+            <div class="container"><div class="eyebrow">Win rate by position</div><canvas id="pl-position"></canvas></div>
+          </div>
+          <div class="row">
+            <div class="container"><div class="eyebrow">Action breakdown</div><canvas id="pl-actions"></canvas></div>
+          </div>
+        </div>`;
+      }
+
       ph += `<div class="section"><div class="section-head">Shared Hands</div>
         <div class="row"><div class="container player-detail-section">
           <div class="text-meta c-dim" style="margin-bottom:8px">Each hand shows your outcome and ${playerName}'s outcome. In multiway pots you can both lose the same hand: the money went to whoever won the pot, not necessarily to ${playerName}.</div>
@@ -255,7 +379,9 @@ function renderPlayers(container, d, hands) {
       </div>`;
 
       container.innerHTML = ph;
+      if (oppStats.hands >= 5) _phCharts = mountPlayerCharts(chartData, playerName);
       document.getElementById("players-back").onclick = function () {
+        destroyCharts();
         renderPlayerList();
       };
       container.querySelectorAll("[data-ph-idx]").forEach(function (row) {

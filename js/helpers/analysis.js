@@ -79,6 +79,38 @@ function getActsSummary(h) {
     .join(" · ");
 }
 
+// Position of a named seat (hero or opponent) this hand, read from stacks[].
+// Returns null when the player isn't found or carries no position (legacy hands).
+function getPositionByName(h, name) {
+  if (!h || !h.stacks || name == null) return null;
+  for (var i = 0; i < h.stacks.length; i++) {
+    if (h.stacks[i] && h.stacks[i].name === name) return h.stacks[i].position || null;
+  }
+  return null;
+}
+
+// The hole cards a named player turned over at showdown, or null if they never
+// revealed. Their cards are unknowable otherwise, so callers must not fabricate.
+function getRevealedHoleByName(h, name) {
+  var revs = getRevealedHands(h);
+  for (var i = 0; i < revs.length; i++) {
+    if (revs[i].author === name && revs[i].hole && revs[i].hole.length >= 2) return revs[i].hole;
+  }
+  return null;
+}
+
+// A named player's own action sequence this hand, as "call · raise · fold".
+function getActsSummaryByName(h, name) {
+  return parseActions(h.actions)
+    .filter(function (a) {
+      return a.author === name;
+    })
+    .map(function (a) {
+      return a.type;
+    })
+    .join(" · ");
+}
+
 function getHandPnl(h) {
   if (!h.outcome) return { cls: "c-muted", text: "?" };
   var invested = getInvested(h);

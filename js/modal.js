@@ -476,29 +476,47 @@ function findExampleHand(filterFn) {
 
 // The one hand-row used by every panel's example-hands modal. .hand-row owns
 // its whole layout in CSS (a grid); each child carries a single class.
-function buildHandRow(h, idx) {
+// opponentName != null renders the row from that opponent's perspective (their
+// seat, their revealed cards, their chip swing, their action line) rather than
+// the hero's. Used by the per-opponent tendency examples, where showing the
+// hero's cards/result beside "they entered the pot" was the wrong player's data.
+function buildHandRow(h, idx, opponentName) {
+  var pos, holeHtml, resultHtml, actsHtml;
+  if (opponentName != null) {
+    var oppHole = getRevealedHoleByName(h, opponentName);
+    pos = getPositionByName(h, opponentName) || "?";
+    // Their cards only exist if they showed down; never fabricate a holding.
+    holeHtml = oppHole && oppHole.length ? displayCards(oppHole.map(normCard)) : "??";
+    resultHtml = renderPnlValueCell(getStackPnlByName(h, opponentName), h, "span", "hand-row-result");
+    actsHtml = getActsSummaryByName(h, opponentName);
+  } else {
+    pos = h.position || "?";
+    holeHtml = h.hole && h.hole.length ? displayCards(h.hole.map(normCard)) : "??";
+    resultHtml = renderResult(h, "span", "hand-row-result");
+    actsHtml = getActsSummary(h);
+  }
   return (
     '<div class="hand-row" data-ridx="' +
     idx +
     '">' +
     '<span class="hand-row-pos">' +
-    (h.position || "?") +
+    pos +
     "</span>" +
     '<span class="hand-row-hole">' +
-    (h.hole && h.hole.length ? displayCards(h.hole.map(normCard)) : "??") +
+    holeHtml +
     "</span>" +
     '<span class="hand-row-board">' +
     (h.board && h.board.length ? displayCards(h.board.map(normCard)) : "-") +
     "</span>" +
-    renderResult(h, "span", "hand-row-result") +
+    resultHtml +
     '<span class="hand-row-acts">' +
-    getActsSummary(h) +
+    actsHtml +
     "</span>" +
     "</div>"
   );
 }
 
-function showExampleHandListModal(title, handsList, coachingNote) {
+function showExampleHandListModal(title, handsList, coachingNote, opponentName) {
   var BATCH = 10;
   var shown = 0;
 
@@ -538,7 +556,7 @@ function showExampleHandListModal(title, handsList, coachingNote) {
     var end = Math.min(shown + BATCH, handsList.length);
     for (var i = shown; i < end; i++) {
       var tmp = document.createElement("div");
-      tmp.innerHTML = buildHandRow(handsList[i], i);
+      tmp.innerHTML = buildHandRow(handsList[i], i, opponentName);
       var row = tmp.firstChild;
       wireRow(row);
       rowsContainer.appendChild(row);
