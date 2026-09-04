@@ -36,7 +36,22 @@ function classifyHandForPlayer(h, playerName) {
     }
   }
 
-  var limpedPre = calledPre && !raisedPre;
+  // A limp is calling preflop with no raise before that call (open-limp or
+  // limp-behind into an unraised pot). Calling someone's raise is NOT a limp, so
+  // `calledPre && !raisedPre` alone overcounts. Mirror the hero limp logic.
+  var limpedPre = false;
+  if (calledPre && !raisedPre) {
+    var raiseBeforeCall = false;
+    for (var lp = 0; lp < acts.length; lp++) {
+      if (acts[lp].street !== 'Preflop') continue;
+      if (acts[lp].author === playerName && acts[lp].type === 'call') break;
+      if (acts[lp].author !== playerName && (acts[lp].type === 'raise' || acts[lp].type === 'bet')) {
+        raiseBeforeCall = true;
+        break;
+      }
+    }
+    limpedPre = !raiseBeforeCall;
+  }
 
   var cbetOpp = raisedPre && seenPostFlop;
   var cbetDone = false;
