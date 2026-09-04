@@ -297,12 +297,18 @@ function mountExampleModal(overlay, box) {
   document.getElementById("modal-close-btn").onclick = closeModal;
 }
 
-function showExampleHandModal(hand, coachingNote) {
+function showExampleHandModal(hand, coachingNote, opponentName) {
   var modal = createExampleModal();
   var overlay = modal.overlay;
   var box = modal.box;
 
   if (typeof annotateHandDynamics === "function") annotateHandDynamics(hand);
+
+  // Opponent examples describe the named player, so the header must show their
+  // cards/seat/result, not the hero's. Their cards only exist if they showed down.
+  var forOpp = opponentName != null;
+  var headHoleCards = forOpp ? getRevealedHoleByName(hand, opponentName) : (hand.hole && hand.hole.length ? hand.hole : null);
+  var headPos = forOpp ? getPositionByName(hand, opponentName) : hand.position;
 
   var closeBtn = '<button class="modal-close" id="modal-close-btn">&times;</button>';
   var copyBtn = '<button class="btn btn-icon modal-copy-btn" id="modal-copy-btn" title="Copy hand history">&#10697;</button>';
@@ -311,11 +317,12 @@ function showExampleHandModal(hand, coachingNote) {
   var header =
     '<div class="panel-header">' +
     '<div class="title title-lg c-gold">' +
-    (hand.hole && hand.hole.length ? displayCards(hand.hole.map(normCard)) : "??") +
+    (headHoleCards && headHoleCards.length ? displayCards(headHoleCards.map(normCard)) : "??") +
     "</div>" +
     '<div class="eyebrow">Example hand · ' +
-    (hand.position || "?") +
+    (headPos || "?") +
     " position" +
+    (forOpp ? " · " + opponentName + "'s hand" : "") +
     (tagStrip ? " · " + tagStrip : "") +
     "</div>" +
     "</div>";
@@ -329,6 +336,17 @@ function showExampleHandModal(hand, coachingNote) {
     fmtBB(hand.pot || 0, getHandBB(hand)) +
     "</strong></span>" +
     (function () {
+      if (forOpp) {
+        var v = getStackPnlByName(hand, opponentName);
+        var bb = getHandBB(hand);
+        var money = function (x) { return (_displayBB && bb > 0) ? fmtBBRaw(x / bb) : fmt(x); };
+        var lbl, cls;
+        if (v == null) { lbl = "&mdash;"; cls = "c-muted"; }
+        else if (v > 0) { lbl = "won +" + money(v); cls = "c-pos"; }
+        else if (v < 0) { lbl = "lost -" + money(Math.abs(v)); cls = "c-neg"; }
+        else { lbl = "even"; cls = "c-muted"; }
+        return '<span class="text-meta">Result: <strong class="' + cls + '">' + lbl + "</strong></span>";
+      }
       var pnl = getHandPnl(hand);
       var res = hand.outcome ? hand.outcome.result : "?";
       var label = res;
@@ -548,7 +566,7 @@ function showExampleHandListModal(title, handsList, coachingNote, opponentName) 
   function wireRow(row) {
     row.onclick = function () {
       var idx = parseInt(row.getAttribute("data-ridx"));
-      if (!isNaN(idx) && handsList[idx]) showExampleHandModal(handsList[idx], coachingNote);
+      if (!isNaN(idx) && handsList[idx]) showExampleHandModal(handsList[idx], coachingNote, opponentName);
     };
   }
 
