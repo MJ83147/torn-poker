@@ -25,6 +25,7 @@ function _newAnalyseState(n, hands) {
     handsWithOutcome: 0,
     totalWonAmount: 0,
     totalInvested: 0,
+    netPnl: 0,
     folds: 0,
     checks: 0,
     calls: 0,
@@ -77,13 +78,18 @@ function _aggregatePosition(state, h) {
     var invested = getInvested(h);
     if (cash) state.totalInvested += invested;
     var amount = h.outcome.amount || 0;
-    var pnlDelta = h.outcome.result === 'won' ? amount - invested : -invested;
+    // Single P&L source of truth: the stack delta (see getHandPnlValue). The old
+    // (won ? amount-invested : -invested) formula inflated profit on ~8% of won
+    // hands, so panels reading analyse().netPnl disagreed with panels that summed
+    // getHandPnlValue directly. Now both are the same number.
+    var pnlDelta = getHandPnlValue(h);
     if (h.outcome.result === 'won') {
       state.handsWon++;
       if (cash) state.totalWonAmount += amount;
       state.posMap[p].won++;
     }
     if (cash) {
+      state.netPnl += pnlDelta;
       state.posMap[p].pnl += pnlDelta;
       // BB-normalized P&L so aggregates spanning stakes can display in BB.
       if (handBB && handBB > 0) {
@@ -366,7 +372,7 @@ function _computeCoreMetrics(state) {
     agg:       calcAggression(state.raises, state.calls, state.checks),
     limpPct:   pct(state.limpHands, state.n),
     allinFold: pct(state.foldAllin, state.facedAllin),
-    netPnl:    state.totalWonAmount - state.totalInvested,
+    netPnl:    state.netPnl,
     netPnlBB:  state.pnlBBKnown ? state.pnlBB : null,
     ftrPct:    pct(state.foldedToRaise, state.facedRaise),
     cbetPct:   pct(state.cbetDone, state.cbetOpps),

@@ -443,7 +443,10 @@ function generateHandSummary(results, hand, villainProfile) {
   var outcome = hand.outcome || {};
   var won = outcome.result === 'won';
   var folded = outcome.result === 'folded';
-  var pnl = won ? (outcome.amount || 0) - invested : -invested;
+  // Single P&L source of truth (stack delta); falls back to winnings-invested
+  // only when the hand carries no stacks.
+  var pnl = (typeof getHandPnlValue === 'function') ? getHandPnlValue(hand)
+    : (won ? (outcome.amount || 0) - invested : -invested);
 
   var heroActions = [];
   var villainActions = [];

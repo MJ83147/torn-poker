@@ -60,6 +60,7 @@ var files = []
     'js/hand2note-export.js',
     'js/tour.js',
     'app.js',
+    'tcp-embed-receiver.js',
   ]);
 
 files.forEach(function(f) {

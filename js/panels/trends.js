@@ -10,8 +10,8 @@ function _trendsAccumulate(stats, h) {
   }
   var cash = isCashHand(h);
   if (cash && h.outcome) {
-    if (h.outcome.result === 'won') stats.totalWonAmount += h.outcome.amount || 0;
-    stats.totalInvested += getInvested(h);
+    // Same P&L source of truth as analyse(): sum getHandPnlValue (stack delta).
+    stats.netPnl += getHandPnlValue(h) || 0;
   }
   var acts = parseActions(h.actions);
   var heroPlayed = false;
@@ -27,7 +27,7 @@ function _trendsAccumulate(stats, h) {
 }
 
 function _newTrendsAccum() {
-  return { n: 0, handsWon: 0, handsWithOutcome: 0, vpip: 0, raises: 0, calls: 0, checks: 0, totalWonAmount: 0, totalInvested: 0 };
+  return { n: 0, handsWon: 0, handsWithOutcome: 0, vpip: 0, raises: 0, calls: 0, checks: 0, netPnl: 0 };
 }
 
 // How a single session's stats deviated from the player's overall baseline.
@@ -104,7 +104,7 @@ function trendsModel(hands) {
   }
 
   var points = [];
-  var cumWon = 0, cumOutcome = 0, cumVpip = 0, cumN = 0, cumRaise = 0, cumCalls = 0, cumChecks = 0, cumCashWon = 0, cumCashInvested = 0;
+  var cumWon = 0, cumOutcome = 0, cumVpip = 0, cumN = 0, cumRaise = 0, cumCalls = 0, cumChecks = 0, cumNet = 0;
   for (var si = 0; si < days.length; si++) {
     var dayHands = dayMap[days[si]];
     var dStats = _newTrendsAccum();
@@ -116,8 +116,7 @@ function trendsModel(hands) {
     cumRaise += dStats.raises;
     cumCalls += dStats.calls;
     cumChecks += dStats.checks;
-    cumCashWon += dStats.totalWonAmount;
-    cumCashInvested += dStats.totalInvested;
+    cumNet += dStats.netPnl;
     points.push({
       label: days[si],
       hands: dayHands.length,
@@ -126,7 +125,7 @@ function trendsModel(hands) {
       vpip: cumN > 0 ? Math.round(cumVpip / cumN * 100) : null,
       agg: calcAggression(cumRaise, cumCalls, cumChecks),
       sessionWr: dStats.handsWithOutcome > 0 ? Math.round(dStats.handsWon / dStats.handsWithOutcome * 100) : null,
-      netPnl: cumCashWon - cumCashInvested,
+      netPnl: cumNet,
     });
   }
 

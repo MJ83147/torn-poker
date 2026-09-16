@@ -26,7 +26,7 @@ function tablesModel(allHands) {
       blinds: tid !== 'unknown' && TABLE_META[tid] ? fmt(TABLE_META[tid].sb) + '/' + fmt(TABLE_META[tid].bb) : '',
       n: tD.n,
       wr: pct(tD.handsWon, tD.handsWithOutcome),
-      net: tD.totalWonAmount - tD.totalInvested,
+      net: tD.netPnl,
       vpipP: pct(tD.vpip, tD.n),
       aggP: calcAggression(tD.raises, tD.calls, tD.checks),
       avgPot: tD.handsWithOutcome > 0 ? Math.round((tD.totalWonAmount + tD.totalInvested) / tD.handsWithOutcome) : 0,
