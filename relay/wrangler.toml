@@ -1,0 +1,23 @@
+# Cloudflare Worker for the TC Poker Export relay.
+#
+# Before deploying:
+#   1. Create the KV namespace:   wrangler kv namespace create RELAY
+#      Paste the returned id below.
+#   2. Point the hostname at this Worker. Either:
+#        a. Custom domain relay.systoned.cc (must match RELAY_URL in the
+#           userscript and app): add it under the Worker's Settings > Domains &
+#           Routes in the dashboard, or uncomment the routes line below.
+#        b. Or use the default <name>.<account>.workers.dev URL and set that as
+#           RELAY_URL in tc-poker-export.user.js and js/relay-import.js instead.
+#   3. wrangler deploy
+name = "tcp-relay"
+main = "src/index.js"
+compatibility_date = "2024-11-01"
+
+kv_namespaces = [
+  { binding = "RELAY", id = "d52694364d1e4687beee9112a2a9d247" }
+]
+
+routes = [
+  { pattern = "relay.systoned.cc", custom_domain = true }
+]
