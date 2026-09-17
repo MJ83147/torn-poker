@@ -22,15 +22,23 @@
     history.replaceState(null, '', location.pathname + location.search);
   } catch (e) {}
 
-  function status(msg, isError) {
-    var el = document.getElementById('paste-error');
-    if (el) {
-      el.textContent = msg;
-      el.style.display = 'block';
-      el.style.color = isError ? '' : 'var(--c-muted, #8a7a5a)';
-    } else if (isError) {
-      alert(msg);
+  // Self-reporting banner: a fixed overlay independent of the app's own DOM, so
+  // every stage (and any failure) is visible on the page without a console.
+  var bar;
+  function banner(msg, kind) {
+    if (!bar) {
+      bar = document.createElement('div');
+      bar.id = 'tcp-relay-banner';
+      bar.style.cssText =
+        'position:fixed;top:0;left:0;right:0;z-index:2147483647;' +
+        'padding:12px 16px;font:600 14px/1.4 Georgia,serif;text-align:center;' +
+        'box-shadow:0 2px 12px rgba(0,0,0,.4)';
+      (document.body || document.documentElement).appendChild(bar);
     }
+    bar.style.background = kind === 'error' ? '#3a1616' : kind === 'ok' ? '#16351f' : '#1a2436';
+    bar.style.color = kind === 'error' ? '#ff9a9a' : kind === 'ok' ? '#9ff0b5' : '#cfe0ff';
+    bar.textContent = 'TCP relay: ' + msg;
+    if (kind === 'ok') setTimeout(function () { if (bar) bar.style.display = 'none'; }, 2500);
   }
 
   function b64urlToBytes(s) {
@@ -45,6 +53,7 @@
   // KV is eventually consistent; the object may not be readable the instant
   // after the write. Retry a 404 up to 5 times, 1s apart.
   function fetchBlob(tries) {
+    banner('fetching hands (id ' + id.slice(0, 6) + '...)' + (tries ? ' retry ' + tries : ''));
     return fetch(RELAY_URL + '/get/' + id, { cache: 'no-store' }).then(function (r) {
       if (r.status === 404 && tries < 5) {
         return new Promise(function (res) { setTimeout(res, 1000); }).then(function () {
@@ -52,16 +61,17 @@
         });
       }
       if (r.status === 404) throw new Error('expired');
-      if (!r.ok) throw new Error('HTTP ' + r.status);
+      if (!r.ok) throw new Error('relay HTTP ' + r.status);
       return r.arrayBuffer();
     });
   }
 
-  status('Loading your hands...', false);
+  banner('reading link, id ' + id.slice(0, 6) + '...');
   fetchBlob(0)
     .then(function (ab) {
+      banner('decrypting (' + Math.round(ab.byteLength / 1024) + ' KB)');
       var bytes = new Uint8Array(ab);
-      if (bytes[0] !== 1) throw new Error('bad version');
+      if (bytes[0] !== 1) throw new Error('bad payload version ' + bytes[0]);
       var gzip = (bytes[1] & 1) === 1;
       var iv = bytes.subarray(2, 14);
       var ct = bytes.subarray(14);
@@ -78,14 +88,17 @@
         })
         .then(function (plainBytes) {
           var envelope = JSON.parse(new TextDecoder().decode(plainBytes));
+          var n = (envelope && envelope.hands && envelope.hands.length) || 0;
+          banner('importing ' + n + ' hands', 'ok');
           processEnvelope(envelope);
         });
     })
     .catch(function (e) {
-      if (e && e.message === 'expired') {
-        status('Hand data has expired or was already loaded. Go back to Torn and try again.', true);
+      var msg = e && e.message ? e.message : String(e);
+      if (msg === 'expired') {
+        banner('link expired or already used. Go back to Torn and click again.', 'error');
       } else {
-        status('Could not read the hand data. Use Export file on Torn and upload it here instead.', true);
+        banner('failed: ' + msg + '. Use Export file on Torn instead.', 'error');
       }
     });
 })();
