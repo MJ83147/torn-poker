@@ -1,12 +1,9 @@
-// Receives hands from the TC Poker Export userscript via the encrypted relay.
-// The userscript uploads AES-GCM ciphertext to the relay and opens this app with
-// #relay=<id>&key=<b64url key>. We fetch the ciphertext, decrypt it locally with
-// the key from the fragment (which never reached the server), gunzip, and import.
-// This exists because torn.com sends Cross-Origin-Opener-Policy: same-origin,
-// which nulls window.opener in a cross-origin popup, ruling out a postMessage
-// handoff. Bundled last so processEnvelope is already defined.
+// Receives hands handed off from the TC Poker Tracker userscript. The userscript
+// opens this app with #relay=<id>&key=<key>; we fetch the payload, decrypt it
+// locally with the key from the fragment (which never left the device), and
+// import. Bundled last so processEnvelope and the loader DOM already exist, and
+// so we can override loader.js (which reveals the landing screen on every load).
 (function () {
-  // Must match RELAY_URL in the userscript and the Worker's custom domain.
   var RELAY_URL = "https://relay.systoned.cc";
 
   var hash = location.hash || "";
@@ -16,30 +13,37 @@
   var id = mId[1];
   var keyB64 = mKey[1];
 
-  // Wipe the key from the URL and history at once: it must not persist or be
-  // shareable.
+  // Strip the key from the URL and history immediately.
   try {
     history.replaceState(null, '', location.pathname + location.search);
   } catch (e) {}
 
-  // Self-reporting banner: a fixed overlay independent of the app's own DOM, so
-  // every stage (and any failure) is visible on the page without a console.
-  var bar;
-  function banner(msg, kind) {
-    if (!bar) {
-      bar = document.createElement('div');
-      bar.id = 'tcp-relay-banner';
-      bar.style.cssText =
-        'position:fixed;top:0;left:0;right:0;z-index:2147483647;' +
-        'padding:12px 16px;font:600 14px/1.4 Georgia,serif;text-align:center;' +
-        'box-shadow:0 2px 12px rgba(0,0,0,.4)';
-      (document.body || document.documentElement).appendChild(bar);
+  var appEl = document.getElementById('app');
+  var loaderEl = document.getElementById('loader');
+
+  // This is a sync open, not a manual visit. loader.js revealed the landing
+  // screen a moment ago (earlier in the bundle); undo that and show the loading
+  // animation before the first paint, so the landing screen never flashes.
+  function showLoader() {
+    if (appEl) appEl.classList.remove('on');
+    if (loaderEl) {
+      loaderEl.style.display = 'flex';
+      loaderEl.classList.remove('out');
     }
-    bar.style.background = kind === 'error' ? '#3a1616' : kind === 'ok' ? '#16351f' : '#1a2436';
-    bar.style.color = kind === 'error' ? '#ff9a9a' : kind === 'ok' ? '#9ff0b5' : '#cfe0ff';
-    bar.textContent = 'TCP relay: ' + msg;
-    if (kind === 'ok') setTimeout(function () { if (bar) bar.style.display = 'none'; }, 2500);
+    var cards = document.querySelectorAll('#loader .card-face');
+    for (var i = 0; i < cards.length; i++) cards[i].classList.add('show');
   }
+  // On failure, drop back to the landing screen with a plain-language message.
+  function fail(msg) {
+    if (loaderEl) loaderEl.style.display = 'none';
+    if (appEl) appEl.classList.add('on');
+    var el = document.getElementById('paste-error');
+    if (el) {
+      el.textContent = msg;
+      el.style.display = 'block';
+    }
+  }
+  showLoader();
 
   function b64urlToBytes(s) {
     s = s.replace(/-/g, '+').replace(/_/g, '/');
@@ -50,10 +54,9 @@
     return out;
   }
 
-  // KV is eventually consistent; the object may not be readable the instant
-  // after the write. Retry a 404 up to 5 times, 1s apart.
+  // The store may not be readable the instant after the write. Retry a 404 up to
+  // 5 times, 1s apart, before giving up.
   function fetchBlob(tries) {
-    banner('fetching hands (id ' + id.slice(0, 6) + '...)' + (tries ? ' retry ' + tries : ''));
     return fetch(RELAY_URL + '/get/' + id, { cache: 'no-store' }).then(function (r) {
       if (r.status === 404 && tries < 5) {
         return new Promise(function (res) { setTimeout(res, 1000); }).then(function () {
@@ -61,17 +64,15 @@
         });
       }
       if (r.status === 404) throw new Error('expired');
-      if (!r.ok) throw new Error('relay HTTP ' + r.status);
+      if (!r.ok) throw new Error('http');
       return r.arrayBuffer();
     });
   }
 
-  banner('reading link, id ' + id.slice(0, 6) + '...');
   fetchBlob(0)
     .then(function (ab) {
-      banner('decrypting (' + Math.round(ab.byteLength / 1024) + ' KB)');
       var bytes = new Uint8Array(ab);
-      if (bytes[0] !== 1) throw new Error('bad payload version ' + bytes[0]);
+      if (bytes[0] !== 1) throw new Error('format');
       var gzip = (bytes[1] & 1) === 1;
       var iv = bytes.subarray(2, 14);
       var ct = bytes.subarray(14);
@@ -88,17 +89,14 @@
         })
         .then(function (plainBytes) {
           var envelope = JSON.parse(new TextDecoder().decode(plainBytes));
-          var n = (envelope && envelope.hands && envelope.hands.length) || 0;
-          banner('importing ' + n + ' hands', 'ok');
           processEnvelope(envelope);
         });
     })
     .catch(function (e) {
-      var msg = e && e.message ? e.message : String(e);
-      if (msg === 'expired') {
-        banner('link expired or already used. Go back to Torn and click again.', 'error');
+      if (e && e.message === 'expired') {
+        fail('That link has expired. Go back to Torn and click "Open app with my hands" again.');
       } else {
-        banner('failed: ' + msg + '. Use Export file on Torn instead.', 'error');
+        fail('Could not load your hands. Try again, or use Export file on Torn and upload it here.');
       }
     });
 })();
