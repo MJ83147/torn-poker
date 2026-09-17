@@ -17,6 +17,16 @@ function b64url(bytes) {
   return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
+// Standard base64 -> ArrayBuffer. Torn PDA's native HTTP client can only send a
+// string body, so the userscript base64-encodes the ciphertext and sends it as
+// text/plain; we decode it back to bytes here.
+function base64ToArrayBuffer(b64) {
+  const bin = atob(b64.trim());
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out.buffer;
+}
+
 const PUT_CORS = {
   "Access-Control-Allow-Origin": PUT_ORIGIN,
   "Access-Control-Allow-Methods": "POST, OPTIONS",
@@ -31,7 +41,10 @@ async function handlePut(request, env) {
   if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: PUT_CORS });
   if (request.method !== "POST") return new Response("Method not allowed", { status: 405, headers: PUT_CORS });
 
-  const body = await request.arrayBuffer();
+  const contentType = request.headers.get("Content-Type") || "";
+  const body = contentType.indexOf("text/plain") !== -1
+    ? base64ToArrayBuffer(await request.text())
+    : await request.arrayBuffer();
   if (body.byteLength > MAX_BYTES) return new Response("Payload too large", { status: 413, headers: PUT_CORS });
 
   const idBytes = new Uint8Array(16);

@@ -16,7 +16,7 @@
     <link rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=IBM+Plex+Mono:wght@300;400;500&display=swap">
   </noscript>
-  <link rel="stylesheet" href="style.css?v=1789633438">
+  <link rel="stylesheet" href="style.css?v=1789634538">
 </head>
 
 <body>
@@ -53,14 +53,14 @@
         <div class="paste-suit">♠</div>
         <div class="panel-header">
           <div class="title title-lg">Analyse your session</div>
-          <div class="text-body">Click below to paste your tracked session data from the TC Poker Tracker</div>
+          <div class="text-body">In the TC Poker Tracker on Torn, click <strong>Open app with my hands</strong> and your session loads here automatically. If you saved a backup file instead, upload it below.</div>
         </div>
-        <button class="btn btn-primary" id="paste-btn">Paste from Clipboard</button>
-        <button class="btn btn-secondary" id="upload-nav-btn">Upload .json files instead</button>
+        <button class="btn btn-primary" id="upload-nav-btn">Upload a .json file</button>
+        <button class="btn btn-secondary hidden" id="paste-btn">Paste from Clipboard</button>
         <div id="paste-error" class="text-meta c-neg"></div>
         <div class="paste-manual section">
           <div class="list">
-            <div class="eyebrow">Or paste manually:</div>
+            <div class="eyebrow">Or paste JSON manually:</div>
             <textarea id="jin" placeholder="Paste JSON here..."></textarea>
           </div>
           <button class="btn btn-secondary" id="go-btn">Analyse Session</button>
@@ -79,7 +79,7 @@
         <div class="paste-suit">♣</div>
         <div class="panel-header">
           <div class="title title-lg">Upload hand files</div>
-          <div class="text-body">Use the Download Hands button in the TC Poker Tracker to save your hand data as a .json
+          <div class="text-body">Use the <strong>Export file</strong> button in the TC Poker Tracker to save your hand data as a .json
             file, then upload it here. You can upload multiple files to merge sessions from different devices.</div>
         </div>
         <input type="file" id="upload-input" accept=".json" multiple class="hidden">
@@ -209,15 +209,10 @@
             </div>
             <div class="step">
               <div class="step-num">4</div>
-              <div class="fw-semibold">Export your session</div>
-              <div class="text-body">Click the TC Poker Tracker button on the poker page, then hit Analyse Session. Your
-                hand data is copied to your clipboard.</div>
-            </div>
-            <div class="step">
-              <div class="step-num">5</div>
-              <div class="fw-semibold">Paste and analyse</div>
-              <div class="text-body">Come here and click Paste from Clipboard. Your full session is broken down
-                instantly.</div>
+              <div class="fw-semibold">Open the app with your hands</div>
+              <div class="text-body">Click the TC Poker Tracker button on the poker page, then <strong>Open app with my
+                hands</strong>. Your hands are encrypted on your device, handed off, and this app opens with your full
+                session broken down. No copy-paste, works on desktop and the Torn PDA app.</div>
             </div>
           </div>
         </div>
@@ -261,7 +256,7 @@
   </div>
 
   <!-- App (bundled + minified). Chart.js and intro.js are loaded on demand from app.min.js. -->
-  <script defer src="app.min.js?v=1789633438"></script>
+  <script defer src="app.min.js?v=1789634538"></script>
 </body>
 
 </html>
