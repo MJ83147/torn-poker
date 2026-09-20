@@ -226,7 +226,7 @@ function _renderSessionDetail(session, ctx, stories) {
     <div><div class="card-title">${tableName} <span class="c-dim">·</span> ${fmtDate(ctx.startTs)}, ${_fmtClock(ctx.startTs)}</div>
       <div class="text-meta">${fmtSessionDuration(ctx.durationMs)} · ${session.hands.length} hands${seatsTxt ? " · " + seatsTxt : ""}</div>
       <div class="row"><button class="btn btn-ghost" data-sess-allhands>View all ${session.hands.length} hands</button>
-      <button class="btn btn-ghost" data-sess-exportai title="Download this session's hands as a JSON file to hand to an AI for analysis">Export for AI (JSON)</button></div></div>
+      <button class="btn btn-ghost" data-sess-exportai title="Export this session's hands as JSON to copy or download">Export</button></div></div>
     <div class="text-right"><div class="value value-lg ${resCls}">${resTxt}</div>
       <div class="text-meta">peaked <span class="c-pos">${fmtPnlBB(peak.cum, bb)}</span> at hand ${peak.i} · low <span class="c-neg">${fmtPnlBB(low.cum, bb)}</span> at hand ${low.i}</div></div>
   </div></div>`,
@@ -477,8 +477,8 @@ function _openSessionDetail(container, session, base) {
       var obj = buildSessionJson(session, res.ctx);
       var stamp = new Date(res.ctx.startTs || Date.now()).toISOString().slice(0, 10);
       var tbl = (session.tableId ? getTableLabel(session.tableId) : "session").replace(/[^A-Za-z0-9]+/g, "-");
-      var title = (session.tableId ? getTableLabel(session.tableId) : "Session") + " · export for AI";
-      var sub = session.hands.length + " hands · JSON, amounts in big blinds — copy into an AI or download the file";
+      var title = (session.tableId ? getTableLabel(session.tableId) : "Session") + " · export";
+      var sub = session.hands.length + " hands · JSON, amounts in big blinds — copy or download";
       showTextExportModal(title, sub, JSON.stringify(obj, null, 2), "tc-poker-session-" + tbl + "-" + stamp + ".json", "application/json");
     };
 
