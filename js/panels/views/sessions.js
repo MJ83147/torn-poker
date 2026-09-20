@@ -99,6 +99,107 @@ function _sessPhaseRow(label, ph, pnl, bb) {
     <td class="${pnl >= 0 ? "c-pos" : "c-neg"}">${fmtPnlBB(pnl, bb)}</td></tr>`;
 }
 
+// Build a self-describing JSON object for the whole session, shaped for an LLM
+// to read: a summary block, a schema note, and every hand normalized to clean
+// field names with money expressed in big blinds. Money is per-hand divided by
+// that hand's big blind (correct even if the stake changed), so the numbers are
+// comparable across hands and free of Torn's raw chip magnitudes.
+function buildSessionJson(session, ctx) {
+  var sessBB = _sessBB(session);
+  var tableName = session.tableId ? getTableLabel(session.tableId) : "Unknown table";
+  var tour = session.hands.some(function (h) {
+    return !isCashHand(h);
+  });
+  function bbOf(h) {
+    return (h && h.bigBlind) || sessBB || null;
+  }
+  // Round to 2 decimals of a big blind; fall back to raw chips if the blind is
+  // unknown for a hand (rare — keeps the value rather than dropping it).
+  function toBB(amount, h) {
+    if (amount == null) return null;
+    var b = bbOf(h);
+    return b ? Math.round((amount / b) * 100) / 100 : amount;
+  }
+
+  var netBB = 0;
+  var hands = ctx.hands.map(function (h, i) {
+    var hero = null,
+      players = [];
+    var stacks = h.stacks || [];
+    for (var s = 0; s < stacks.length; s++) {
+      var p = stacks[s];
+      if (!p) continue;
+      var rec = {
+        name: p.isHero ? "You" : p.name || "?",
+        isHero: !!p.isHero,
+        position: p.position || null,
+        startStackBB: toBB(p.startStack, h),
+        endStackBB: toBB(p.endStack, h),
+        netBB: toBB(p.profit, h),
+        cardsShown: p.revealed && p.revealed.length >= 2 ? p.revealed.map(normCard) : null,
+        madeHand: p.handName && p.handName !== "Folded" ? p.handName : null,
+      };
+      players.push(rec);
+      if (p.isHero) hero = rec;
+    }
+
+    var acts = parseActions(h.actions) || [];
+    var actions = [];
+    for (var a = 0; a < acts.length; a++) {
+      var act = acts[a];
+      if (!act || !act.type) continue;
+      actions.push({
+        street: act.street || "Preflop",
+        player: act.isMe ? "You" : act.author || "?",
+        isHero: !!act.isMe,
+        action: act.type,
+        amountBB: act.type === "fold" || act.type === "check" ? null : toBB(act.amount, h),
+        allIn: !!act.allIn,
+      });
+    }
+
+    var heroNet = getHandPnlValue(h);
+    netBB += toBB(heroNet, h) || 0;
+
+    return {
+      index: i + 1,
+      heroPosition: h.position || null,
+      heroCards: (h.hole || []).map(normCard),
+      board: (h.board || []).map(normCard),
+      potBB: toBB(h.pot, h),
+      wentToShowdown: !!h.showdown,
+      result: h.outcome ? h.outcome.result : null,
+      heroNetBB: toBB(heroNet, h),
+      players: players,
+      actions: actions,
+    };
+  });
+
+  var c = ctx.sd && ctx.sd.core ? ctx.sd.core : {};
+  return {
+    format: "TC Poker session export",
+    game: "No Limit Texas Hold'em",
+    notes:
+      'One continuous sitting at one table, hands in the order played. All money is in big blinds (BB). isHero / "You" marks the player to analyse. Positions: BTN button, SB/BB blinds, CO cutoff, etc. Actions per street; blinds appear as sb/bb.',
+    session: {
+      table: tableName,
+      isTournament: tour,
+      bigBlindChips: sessBB || null,
+      startedAt: ctx.startTs ? new Date(ctx.startTs).toISOString() : null,
+      durationMinutes: Math.round(ctx.durationMs / 60000),
+      handCount: session.hands.length,
+      heroNetBB: Math.round(netBB * 100) / 100,
+      stats: {
+        vpipPct: c.vpipPct != null ? c.vpipPct : null,
+        pfrPct: c.pfrPct != null ? c.pfrPct : null,
+        aggressionPct: c.agg != null ? c.agg : null,
+        wtsdPct: c.wtsdPct != null ? c.wtsdPct : null,
+      },
+    },
+    hands: hands,
+  };
+}
+
 function _renderSessionDetail(session, ctx, stories) {
   var tour = session.hands.some(function (h) {
     return !isCashHand(h);
@@ -124,7 +225,8 @@ function _renderSessionDetail(session, ctx, stories) {
     `<div class="box"><div class="row between">
     <div><div class="card-title">${tableName} <span class="c-dim">·</span> ${fmtDate(ctx.startTs)}, ${_fmtClock(ctx.startTs)}</div>
       <div class="text-meta">${fmtSessionDuration(ctx.durationMs)} · ${session.hands.length} hands${seatsTxt ? " · " + seatsTxt : ""}</div>
-      <button class="btn btn-ghost" data-sess-allhands>View all ${session.hands.length} hands</button></div>
+      <div class="row"><button class="btn btn-ghost" data-sess-allhands>View all ${session.hands.length} hands</button>
+      <button class="btn btn-ghost" data-sess-exportai title="Download this session's hands as a JSON file to hand to an AI for analysis">Export for AI (JSON)</button></div></div>
     <div class="text-right"><div class="value value-lg ${resCls}">${resTxt}</div>
       <div class="text-meta">peaked <span class="c-pos">${fmtPnlBB(peak.cum, bb)}</span> at hand ${peak.i} · low <span class="c-neg">${fmtPnlBB(low.cum, bb)}</span> at hand ${low.i}</div></div>
   </div></div>`,
@@ -367,6 +469,17 @@ function _openSessionDetail(container, session, base) {
     allBtn.onclick = function () {
       var label = (session.tableId ? getTableLabel(session.tableId) : "Session") + " · all hands";
       showExampleHandListModal(label, res.ctx.hands, "Every hand in this session, in the order played.");
+    };
+
+  var exportBtn = det.querySelector("[data-sess-exportai]");
+  if (exportBtn)
+    exportBtn.onclick = function () {
+      var obj = buildSessionJson(session, res.ctx);
+      var stamp = new Date(res.ctx.startTs || Date.now()).toISOString().slice(0, 10);
+      var tbl = (session.tableId ? getTableLabel(session.tableId) : "session").replace(/[^A-Za-z0-9]+/g, "-");
+      var title = (session.tableId ? getTableLabel(session.tableId) : "Session") + " · export for AI";
+      var sub = session.hands.length + " hands · JSON, amounts in big blinds — copy into an AI or download the file";
+      showTextExportModal(title, sub, JSON.stringify(obj, null, 2), "tc-poker-session-" + tbl + "-" + stamp + ".json", "application/json");
     };
 
   var ctx = res.ctx;

@@ -601,3 +601,67 @@ function showExampleHandListModal(title, handsList, coachingNote, opponentName) 
 
   loadBatch();
 }
+
+// Show a block of exportable text (JSON, a hand history, etc.) in a modal with
+// Copy and Download actions and a scrollable preview. Reuses the shared modal
+// shell. `filename` is the download name; `mime` defaults to application/json.
+function showTextExportModal(title, subtitle, text, filename, mime) {
+  var modal = createExampleModal();
+  var overlay = modal.overlay;
+  var box = modal.box;
+
+  var header =
+    '<div class="panel-header">' +
+    '<div class="title title-lg c-gold">' + title + "</div>" +
+    (subtitle ? '<div class="text-meta">' + subtitle + "</div>" : "") +
+    "</div>";
+
+  var actions =
+    '<div class="row" style="gap:8px;margin-bottom:12px;">' +
+    '<button class="btn btn-ghost" id="text-export-copy">Copy</button>' +
+    '<button class="btn btn-ghost" id="text-export-download">Download</button>' +
+    "</div>";
+
+  var esc = String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  var preview =
+    '<pre id="text-export-pre" style="max-height:52vh;overflow:auto;white-space:pre-wrap;' +
+    'word-break:break-word;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;' +
+    'font-size:11px;line-height:1.5;margin:0;padding:12px;border:1px solid var(--border);' +
+    'border-radius:6px;background:var(--bg-2, rgba(0,0,0,0.25));">' + esc + "</pre>";
+
+  box.innerHTML = '<button class="modal-close" id="modal-close-btn">&times;</button>' + header + actions + preview;
+  mountExampleModal(overlay, box);
+
+  var copyBtn = document.getElementById("text-export-copy");
+  if (copyBtn)
+    copyBtn.onclick = function () {
+      var b = this;
+      copyTextToClipboard(text, function (ok) {
+        b.textContent = ok ? "Copied ✓" : "Copy failed";
+        setTimeout(function () { b.textContent = "Copy"; }, 1600);
+      });
+    };
+
+  var dlBtn = document.getElementById("text-export-download");
+  if (dlBtn)
+    dlBtn.onclick = function () {
+      var b = this;
+      var ok = true;
+      try {
+        var blob = new Blob([text], { type: mime || "application/json" });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement("a");
+        a.href = url;
+        a.download = filename || "export.json";
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(function () {
+          try { document.body.removeChild(a); URL.revokeObjectURL(url); } catch (e) {}
+        }, 0);
+      } catch (e) {
+        ok = false;
+      }
+      b.textContent = ok ? "Downloaded ✓" : "Download failed";
+      setTimeout(function () { b.textContent = "Download"; }, 1600);
+    };
+}
