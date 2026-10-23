@@ -84,89 +84,102 @@ function heroLegendHtml() {
   </div>`;
 }
 
+var RANGE_OVERALL = 'Overall';
+
 function renderRange(container, d, hands) {
   var stored = loadRangeState();
+  // Always open on the overall range (the user's complaint was that it used to
+  // reopen on a saved spot). Scenario is still remembered for convenience.
   var state = {
-    hero:     HERO_SEATS.indexOf(stored.hero) !== -1 ? stored.hero : 'BTN',
+    hero:     RANGE_OVERALL,
     scenario: stored.scenario || 'RFI',
   };
 
   function persist() { saveRangeState(state); }
 
-  // One scrolling page: your clickable range grid on top, the GTO-by-spot
-  // comparison below. No subtabs — nothing is hidden behind a toggle. Clicking
-  // any hand on either grid opens its full breakdown.
   container.innerHTML =
-    panelHeader('Range', 'Click any hand to see how you play it: win rate, P&L, preflop actions, and the hands behind it. The GTO-by-spot comparison is further down.') +
-    '<div id="range-overall"></div>' +
-    '<div id="range-spot-wrap"></div>';
+    panelHeader('Range', 'Your overall range to start. Use the filters to narrow to a position and compare against GTO. Click any hand for your history with those cards.') +
+    '<div id="range-body">' + section('Your range', '<div class="text-meta">Loading GTO chart &hellip;</div>') + '</div>';
 
-  renderOverall(document.getElementById('range-overall'));
-  renderSpotSection(document.getElementById('range-spot-wrap'));
+  var body = document.getElementById('range-body');
 
-  function renderOverall(body) {
-    if (!body) return;
-    var counts = overallRangeCounts(hands);
-    body.innerHTML = section('Your hands',
-      '<div class="text-meta">Every holding you have been dealt, shaded by how often you play it. Click any hand for its full breakdown: win rate, P&amp;L, preflop actions, and the hands behind it.</div>' +
-      buildOverallRangeGrid(counts) +
-      overallHeatLegend() +
-      Sections.findingsBlock(Sections.findingsForPanel(Sections.evaluateSections(d, {}, hands), 'Range'), 'Range data is still building.'));
+  // The spot view needs the GTO reference data; the overall view does not.
+  // Fetch once up front so switching filters is instant; if it fails, the
+  // overall grid still works and spots report the missing reference.
+  var gtoData = null, gtoFailed = false;
+  getRangeData().then(function(data) {
+    gtoData = data;
+    renderBody();
+  }).catch(function() {
+    gtoFailed = true;
+    renderBody();
+  });
 
-    var grid = body.querySelector('.cards-ov-grid');
-    if (grid) {
-      grid.addEventListener('click', function(e) {
-        var cell = e.target.closest('.rc[data-key]');
-        if (!cell) return;
-        var key = cell.getAttribute('data-key');
-        if (key) openHandAnalysisModal(key, hands);
-      });
+  function positionFilterHtml() {
+    var posOptions = [RANGE_OVERALL].concat(HERO_SEATS);
+    var scenarioSelect = '';
+    if (state.hero !== RANGE_OVERALL) {
+      var scenarios = HERO_CHARTS[state.hero] || [];
+      var scenarioOptions = scenarios.map(function(s) {
+        return `<option value="${s.key}"${s.key === state.scenario ? ' selected' : ''}>${s.label}</option>`;
+      }).join('');
+      scenarioSelect = `<div class="row center"><label class="eyebrow">Scenario</label><select class="select" id="range-scenario">${scenarioOptions}</select></div>`;
     }
+    return `<div class="range-filters">
+      <div class="eyebrow">See your range by position</div>
+      <div class="row center">
+        <div class="row center"><label class="eyebrow">Position</label>${positionSelector('range-hero', posOptions, state.hero)}</div>
+        ${scenarioSelect}
+      </div>
+    </div>`;
   }
 
-  function renderSpotSection(wrap) {
-    if (!wrap) return;
-    wrap.innerHTML = section('GTO by spot', '<div class="text-meta">Loading GTO chart &hellip;</div>');
-    getRangeData().then(function(data) {
-      renderSpot(wrap, data);
-    }).catch(function() {
-      wrap.innerHTML = section('GTO by spot', '<div class="text-body c-neg">Failed to load GTO chart data. Reload the page to try again.</div>');
-    });
+  function renderBody() {
+    if (!body) return;
+    if (state.hero === RANGE_OVERALL) {
+      var counts = overallRangeCounts(hands);
+      body.innerHTML = section('Your range',
+        '<div class="text-meta">Here is your overall range, shaded by how often you play each hand. Click any cell to see your history with those hole cards.</div>' +
+        buildOverallRangeGrid(counts) +
+        overallHeatLegend() +
+        positionFilterHtml() +
+        Sections.findingsBlock(Sections.findingsForPanel(Sections.evaluateSections(d, {}, hands), 'Range'), 'Range data is still building.'));
+    } else {
+      renderSpotBody();
+    }
+    wireFilters();
+    bindCellClicks(body);
   }
 
-  function renderSpot(body, data) {
-    if (HERO_SEATS.indexOf(state.hero) === -1) state.hero = 'BTN';
+  function renderSpotBody() {
     var scenarios = HERO_CHARTS[state.hero] || [];
     var keys = scenarios.map(function(s) { return s.key; });
-    if (keys.indexOf(state.scenario) === -1) {
-      state.scenario = keys[0] || '';
-      persist();
-    }
+    if (keys.indexOf(state.scenario) === -1) { state.scenario = keys[0] || ''; persist(); }
+
     var entry = findScenario(state.hero, state.scenario);
-    var chart = lookupChartFor(data, state.hero, state.scenario);
+    var label = entry ? entry.label : '';
+    var chart = gtoFailed ? null : lookupChartFor(gtoData, state.hero, state.scenario);
     var filtered = filterHandsForScenario(hands, state.hero, state.scenario);
     var scenarioType = entry ? entry.type : 'overall';
     var tallies = tallyByCombo(filtered, scenarioType);
-    var scenarioOptions = scenarios.map(function(s) {
-      return `<option value="${s.key}"${s.key === state.scenario ? ' selected' : ''}>${s.label}</option>`;
-    }).join('');
-    var label = entry ? entry.label : '';
+
     // Count only hands whose hole cards parse to a combo, so the headline number
-    // matches what the "your range" grid actually marks (tallyByCombo and
-    // heroComboBreakdown both skip unparseable holes).
+    // matches what the "your range" grid actually marks.
     var dealtCount = 0;
     for (var fi = 0; fi < filtered.length; fi++) {
       if (parseHoleKey(filtered[fi].hole)) dealtCount++;
     }
+    var noChartNote = gtoFailed
+      ? '<div class="text-meta c-neg">GTO reference failed to load. Your range still shows below.</div>'
+      : (chart ? '' : `<div class="text-meta">No GTO reference for ${state.hero} ${label} yet.</div>`);
+
     body.innerHTML =
-      section('GTO by spot',
-        '<div class="text-meta">Pick a position and scenario to compare what GTO does with what you actually did. Click any hand for its full breakdown.</div>' +
-        `<div class="row center">
-          <div class="row center"><label class="eyebrow">Position</label>${positionSelector('range-hero', HERO_SEATS, state.hero)}</div>
-          <div class="row center"><label class="eyebrow">Scenario</label><select class="select" id="range-scenario">${scenarioOptions}</select></div>
-        </div>` +
+      section('Your range',
+        '<div class="text-meta">Your range from ' + state.hero + ' · ' + label +
+          ' next to what GTO does. Click any cell to see your history with those cards in this spot.</div>' +
+        positionFilterHtml() +
         renderHeaderStats(dealtCount, state.hero + ' · ' + label) +
-        (chart ? '' : `<div class="text-meta">No GTO reference for ${state.hero} ${label} yet.</div>`)) +
+        noChartNote) +
       twoGridHtml(chart, filtered, scenarioType, tallies, dealtCount) +
       Sections.findingsBlock(
         buildSpotFindings(
@@ -179,18 +192,22 @@ function renderRange(container, d, hands) {
         ),
         'Play more hands from this spot to grade it.'
       );
+  }
+
+  function wireFilters() {
     bindSelector(body, 'range-hero', function(v) {
       state.hero = v;
-      state.scenario = (HERO_CHARTS[v] && HERO_CHARTS[v][0] && HERO_CHARTS[v][0].key) || '';
-      persist();
-      renderSpot(body, data);
+      if (v !== RANGE_OVERALL) {
+        state.scenario = (HERO_CHARTS[v] && HERO_CHARTS[v][0] && HERO_CHARTS[v][0].key) || '';
+        persist();
+      }
+      renderBody();
     });
     bindSelector(body, 'range-scenario', function(v) {
       state.scenario = v;
       persist();
-      renderSpot(body, data);
+      renderBody();
     });
-    bindCellClicks(body);
   }
 
   function renderHeaderStats(count, label) {
@@ -200,9 +217,10 @@ function renderRange(container, d, hands) {
     return `<div class="lead">${count} ${label} hand${count === 1 ? '' : 's'} on record</div>`;
   }
 
-  // Clicking any cell on either GTO-by-spot grid opens that holding's full
-  // breakdown, the same popup the top grid uses, so the behaviour is consistent
-  // wherever you click a hand. The modal handles never-dealt holdings itself.
+  // One delegated handler on the body: clicking any cell opens that holding's
+  // history. In overall mode it spans all your hands; in a spot it is scoped to
+  // that position/scenario. State is read at click time so it always matches the
+  // grid currently shown.
   function bindCellClicks(scope) {
     if (scope._cellHandlerBound) return;
     scope._cellHandlerBound = true;
@@ -210,7 +228,15 @@ function renderRange(container, d, hands) {
       var cell = e.target.closest('.rc[data-key]');
       if (!cell) return;
       var key = cell.getAttribute('data-key');
-      if (key) openHandAnalysisModal(key, hands);
+      if (!key) return;
+      if (state.hero === RANGE_OVERALL) {
+        openHandAnalysisModal(key, hands, null);
+        return;
+      }
+      var entry = findScenario(state.hero, state.scenario);
+      var label = entry ? entry.label : '';
+      var spotHands = filterHandsForScenario(hands, state.hero, state.scenario);
+      openHandAnalysisModal(key, spotHands, state.hero + ' · ' + label);
     });
   }
 }
@@ -266,10 +292,12 @@ function _ovPct(n, total) {
   return total > 0 ? Math.round(n / total * 100) + '%' : '0%';
 }
 
-// The stats/analysis block shown at the top of the hand modal.
-function handAnalysisStatsHtml(m) {
+// The stats/analysis block shown at the top of the hand modal. spotLabel, when
+// present, scopes the wording to a position/scenario (e.g. "BTN · RFI").
+function handAnalysisStatsHtml(m, spotLabel) {
   if (!m.dealt) {
-    return '<div class="inner-section"><div class="card card-s2"><div class="text-body">You have not been dealt ' + m.key + ' in the current filter.</div></div></div>';
+    var where = spotLabel ? ' from ' + spotLabel : ' in the current filter';
+    return '<div class="inner-section"><div class="card card-s2"><div class="text-body">You have not been dealt ' + m.key + where + '.</div></div></div>';
   }
 
   var mini = renderMiniRow([
@@ -316,13 +344,15 @@ function handAnalysisStatsHtml(m) {
       tableHead(['Pos', 'Dealt', 'Played', { tip: 'Win Rate' }, 'P/L']) + '</thead><tbody>' + posRows.join('') + '</tbody></table></div></div>'
     : '';
 
-  return '<div class="inner-section"><div class="section-head">' + m.key + ' · ' + m.cls + '</div>' + mini + '</div>' +
+  var heading = m.key + ' · ' + m.cls + (spotLabel ? '  ·  ' + spotLabel : '');
+  return '<div class="inner-section"><div class="section-head">' + heading + '</div>' + mini + '</div>' +
     '<div class="inner-section"><div class="section-head">Preflop action</div>' + preBar + legendRow(preLegendItems) + '</div>' +
     showdown + byPos;
 }
 
-function openHandAnalysisModal(key, hands) {
-  var m = handAnalysisModel(hands, key);
-  var title = m.dealt ? key + ' · ' + m.cls : key;
-  showExampleHandListModal(title, m.hands, null, null, handAnalysisStatsHtml(m));
+function openHandAnalysisModal(key, handsSet, spotLabel) {
+  var m = handAnalysisModel(handsSet, key);
+  var base = m.dealt ? key + ' · ' + m.cls : key;
+  var title = spotLabel ? base + '  ·  ' + spotLabel : base;
+  showExampleHandListModal(title, m.hands, null, null, handAnalysisStatsHtml(m, spotLabel));
 }
