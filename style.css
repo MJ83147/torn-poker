@@ -1477,6 +1477,41 @@ a {
   cursor: pointer;
 }
 
+/* Overall subtab: the all-hands range grid. Every holding is clickable and
+   shaded 0-4 by how often you play it (green = played most often). */
+.cards-ov-grid .rc[data-key] {
+  cursor: pointer;
+}
+
+.cards-ov-grid .rc[data-ov-heat="0"] {
+  background: var(--gto-empty-bg);
+  border: var(--bw) solid var(--border);
+}
+
+.cards-ov-grid .rc[data-ov-heat="0"] span {
+  color: var(--gto-empty-fg);
+}
+
+.cards-ov-grid .rc[data-ov-heat="1"] {
+  background: rgba(63, 173, 100, 0.25);
+}
+
+.cards-ov-grid .rc[data-ov-heat="2"] {
+  background: rgba(63, 173, 100, 0.45);
+}
+
+.cards-ov-grid .rc[data-ov-heat="3"] {
+  background: rgba(63, 173, 100, 0.68);
+}
+
+.cards-ov-grid .rc[data-ov-heat="4"] {
+  background: var(--green);
+}
+
+.cards-ov-legend {
+  margin-top: var(--sp-2);
+}
+
 /* --- Sentence builder: serif stem with clickable clause tokens --- */
 .sentence {
   font-family: var(--serif);

@@ -134,9 +134,22 @@ function renderRange(container, d, hands) {
   }
 
   function renderOverall(body) {
+    var counts = overallRangeCounts(hands);
     body.innerHTML = section('Your range',
-      '<div class="text-meta">How wide you play and which combos carry your results. The 13x13 chart, position by position, lives under By Spot.</div>' +
+      '<div class="text-meta">Every holding you have been dealt, shaded by how often you play it. Click any hand to see how you play it: win rate, P&amp;L, preflop actions, and the hands behind it.</div>' +
+      buildOverallRangeGrid(counts) +
+      overallHeatLegend() +
       Sections.findingsBlock(Sections.findingsForPanel(Sections.evaluateSections(d, {}, hands), 'Range'), 'Range data is still building.'));
+
+    var grid = body.querySelector('.cards-ov-grid');
+    if (grid) {
+      grid.addEventListener('click', function(e) {
+        var cell = e.target.closest('.rc[data-key]');
+        if (!cell) return;
+        var key = cell.getAttribute('data-key');
+        if (key) openHandAnalysisModal(key, hands);
+      });
+    }
   }
 
   function renderSpot(body, data) {
@@ -244,4 +257,102 @@ function bindSelector(scope, id, cb) {
   var el = scope.querySelector('#' + id);
   if (!el) return;
   el.onchange = function() { cb(el.value); };
+}
+
+// ---- Overall subtab: all-hands range grid + per-holding analysis modal ----
+
+// Hover tooltip for a grid cell. Lines are joined with "\n" and rendered
+// stacked by the .rc[data-tip] white-space:pre-line CSS rule.
+function _ovTip(key, rec) {
+  if (!rec || !rec.dealt) return key + '\nNot dealt';
+  var lines = [key];
+  if (rec.pnlKnown) lines.push('P/L: ' + fmtPnl(rec.pnl));
+  var vp = Math.round(rec.played / rec.dealt * 100);
+  lines.push('Played ' + rec.played + '/' + rec.dealt + ' (' + vp + '%)');
+  if (rec.played > 0) lines.push('Won ' + Math.round(rec.won / rec.played * 100) + '%');
+  return lines.join('\n');
+}
+
+// The clickable 13x13 grid, each cell shaded 0-4 by how often you play it.
+function buildOverallRangeGrid(counts) {
+  var html = '<div class="range-grid-sm cards-ov-grid">';
+  for (var r = 0; r < 13; r++) {
+    for (var c = 0; c < 13; c++) {
+      var key = rangeBuildKey(r, c);
+      var rec = counts.map[key];
+      var heat = (!rec || !rec.dealt) ? 0
+        : (counts.maxPlayed > 0 ? Math.max(1, Math.ceil(rec.played / counts.maxPlayed * 4)) : 1);
+      html += '<div class="rc" data-ov-heat="' + heat + '" data-key="' + key + '" data-tip="' + _ovTip(key, rec) + '"><span>' + key + '</span></div>';
+    }
+  }
+  return html + '</div>';
+}
+
+function overallHeatLegend() {
+  return '<div class="text-meta cards-ov-legend">Shade shows how often you play each holding: lighter = rarely, solid green = most often. Grey cells were never dealt.</div>';
+}
+
+function _ovPct(n, total) {
+  return total > 0 ? Math.round(n / total * 100) + '%' : '0%';
+}
+
+// The stats/analysis block shown at the top of the hand modal.
+function handAnalysisStatsHtml(m) {
+  if (!m.dealt) {
+    return '<div class="inner-section"><div class="card card-s2"><div class="text-body">You have not been dealt ' + m.key + ' in the current filter.</div></div></div>';
+  }
+
+  var mini = renderMiniRow([
+    { l: 'Dealt', v: m.dealt, c: 'text' },
+    { l: 'Played', v: m.vpipPct == null ? '-' : m.vpipPct + '%', c: 'text' },
+    { l: 'Win rate', v: m.wrPct == null ? '-' : m.wrPct + '%', c: m.wrPct == null ? 'text' : (m.wrPct >= 50 ? 'g' : 'r') },
+    { l: 'Net P/L', v: m.cashCount ? fmtPnl(m.pnlChips) : '-', c: m.cashCount ? (m.pnlChips >= 0 ? 'g' : 'r') : 'text' },
+    { l: 'bb/100', v: m.bb100 == null ? '-' : (m.bb100 > 0 ? '+' : '') + m.bb100, c: m.bb100 == null ? 'text' : (m.bb100 >= 0 ? 'g' : 'r') },
+  ]);
+
+  var total = m.dealt;
+  var preBar = barStack([
+    { p: m.pre.raise / total * 100, bg: 'bg-gold' },
+    { p: m.pre.call / total * 100, bg: 'bg-pos' },
+    { p: m.pre.fold / total * 100, bg: 'bg-muted' },
+    { p: m.pre.other / total * 100, bg: 'bg-dim' },
+  ]);
+  var preLegendItems = [
+    { cls: 'bg-gold', label: 'Raised ' + _ovPct(m.pre.raise, total) },
+    { cls: 'bg-pos', label: 'Called ' + _ovPct(m.pre.call, total) },
+    { cls: 'bg-muted', label: 'Folded ' + _ovPct(m.pre.fold, total) },
+  ];
+  if (m.pre.other) preLegendItems.push({ cls: 'bg-dim', label: 'Checked/other ' + _ovPct(m.pre.other, total) });
+
+  var showdown = '';
+  if (m.played) {
+    showdown = '<div class="inner-section"><div class="section-head">Showdown</div><div class="text-body">Reached showdown ' +
+      m.reachedSd + ' of the ' + m.played + ' hand' + (m.played === 1 ? '' : 's') + ' you played' +
+      (m.sdWinPct != null ? ', winning ' + m.sdWinPct + '% of them' : '') + '.</div></div>';
+  }
+
+  var posRows = [];
+  for (var pi = 0; pi < POSITION_ORDER.length; pi++) {
+    var p = POSITION_ORDER[pi];
+    var b = m.byPos[p];
+    if (!b) continue;
+    var wr = b.played > 0 ? pct(b.won, b.played) : null;
+    posRows.push('<tr><td>' + p + '</td><td>' + b.dealt + '</td><td>' + b.played + '</td><td>' +
+      (wr == null ? '-' : wr + '%') + '</td><td class="' + (b.pnlKnown ? pnlCls(b.pnl) : '') + '">' +
+      (b.pnlKnown ? fmtPnl(b.pnl) : '-') + '</td></tr>');
+  }
+  var byPos = posRows.length
+    ? '<div class="inner-section"><div class="section-head">By position</div><div class="overflow-x"><table class="table"><thead>' +
+      tableHead(['Pos', 'Dealt', 'Played', { tip: 'Win Rate' }, 'P/L']) + '</thead><tbody>' + posRows.join('') + '</tbody></table></div></div>'
+    : '';
+
+  return '<div class="inner-section"><div class="section-head">' + m.key + ' · ' + m.cls + '</div>' + mini + '</div>' +
+    '<div class="inner-section"><div class="section-head">Preflop action</div>' + preBar + legendRow(preLegendItems) + '</div>' +
+    showdown + byPos;
+}
+
+function openHandAnalysisModal(key, hands) {
+  var m = handAnalysisModel(hands, key);
+  var title = m.dealt ? key + ' · ' + m.cls : key;
+  showExampleHandListModal(title, m.hands, null, null, handAnalysisStatsHtml(m));
 }

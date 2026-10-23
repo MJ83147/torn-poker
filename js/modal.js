@@ -534,7 +534,7 @@ function buildHandRow(h, idx, opponentName) {
   );
 }
 
-function showExampleHandListModal(title, handsList, coachingNote, opponentName) {
+function showExampleHandListModal(title, handsList, coachingNote, opponentName, statsHtml) {
   var BATCH = 10;
   var shown = 0;
 
@@ -559,7 +559,7 @@ function showExampleHandListModal(title, handsList, coachingNote, opponentName) 
       '<div class="inner-section">' + '<div class="section-head c-warn">What to look for</div>' + '<div class="card card-s2"><div class="text-body">' + coachingNote + "</div></div>" + "</div>";
   }
 
-  box.innerHTML = '<button class="modal-close" id="modal-close-btn">&times;</button>' + header + '<div id="hand-list-rows"></div>';
+  box.innerHTML = '<button class="modal-close" id="modal-close-btn">&times;</button>' + header + (statsHtml || '') + '<div id="hand-list-rows"></div>';
 
   var rowsContainer = box.querySelector("#hand-list-rows");
 

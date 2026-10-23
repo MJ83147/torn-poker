@@ -457,6 +457,116 @@ function heroTipForCombo(key, rec, target) {
   return lines.join('\n');
 }
 
+// ---- Overall subtab: per-holding analysis ("how I play AA") ----
+
+// Hero's first voluntary preflop action with this hand: raise/call/fold, or
+// 'other' when the only preflop action was a blind post / check option.
+function _haPreBucket(h) {
+  var acts = parseActions(h.actions);
+  for (var i = 0; i < acts.length; i++) {
+    var a = acts[i];
+    if (a.street !== 'Preflop' || !a.isMe) continue;
+    if (a.type === 'sb' || a.type === 'bb' || a.type === 'won') continue;
+    if (a.type === 'raise' || a.type === 'bet') return 'raise';
+    if (a.type === 'call') return 'call';
+    if (a.type === 'fold') return 'fold';
+    return 'other';
+  }
+  return 'other';
+}
+
+// Did hero fold at any point this hand. Used to tell whether hero actually
+// reached showdown (isShowdown is hand-level: it is true whenever ANY players
+// show down, even in hands hero folded out of).
+function _haHeroFolded(h) {
+  var acts = parseActions(h.actions);
+  for (var i = 0; i < acts.length; i++) {
+    if (acts[i].isMe && acts[i].type === 'fold') return true;
+  }
+  return false;
+}
+
+// Per-holding dealt/played/won/pnl across the given hands, plus the max played
+// count for shading the grid. One pass over all hands.
+function overallRangeCounts(hands) {
+  var map = {};
+  var maxPlayed = 0;
+  for (var i = 0; i < hands.length; i++) {
+    var h = hands[i];
+    if (!h || !h.hole) continue;
+    var k = parseHoleKey(h.hole);
+    if (!k) continue;
+    if (!map[k]) map[k] = { dealt: 0, played: 0, won: 0, pnl: 0, pnlKnown: false };
+    var rec = map[k];
+    rec.dealt++;
+    var didPlay = heroPlayed(h);
+    if (didPlay) {
+      rec.played++;
+      if (rec.played > maxPlayed) maxPlayed = rec.played;
+      if (h.outcome && h.outcome.result === 'won') rec.won++;
+    }
+    if (h.outcome && isCashHand(h)) {
+      rec.pnl += getHandPnlValue(h);
+      rec.pnlKnown = true;
+    }
+  }
+  return { map: map, maxPlayed: maxPlayed };
+}
+
+// Full stats for one holding (e.g. 'AA') across the given hands: counts, win
+// rate, P&L, bb/100, preflop-action split, showdown, by-position, and the hands
+// themselves (most-recent first) for the modal's replay list.
+function handAnalysisModel(hands, key) {
+  var m = {
+    key: key,
+    cls: classifyKey(key),
+    dealt: 0, played: 0, won: 0, foldedPre: 0,
+    pnlChips: 0, pnlBB: 0, bbKnown: false, cashCount: 0,
+    pre: { raise: 0, call: 0, fold: 0, other: 0 },
+    reachedSd: 0, wonSd: 0,
+    byPos: {},
+    hands: [],
+  };
+  for (var i = hands.length - 1; i >= 0; i--) {
+    var h = hands[i];
+    if (!h || !h.hole) continue;
+    if (parseHoleKey(h.hole) !== key) continue;
+    m.dealt++;
+    m.hands.push(h);
+
+    var pos = h.position || '?';
+    if (!m.byPos[pos]) m.byPos[pos] = { dealt: 0, played: 0, won: 0, pnl: 0, pnlKnown: false };
+    m.byPos[pos].dealt++;
+
+    var didPlay = heroPlayed(h);
+    if (didPlay) { m.played++; m.byPos[pos].played++; }
+
+    var pb = _haPreBucket(h);
+    m.pre[pb]++;
+    if (pb === 'fold') m.foldedPre++;
+
+    var isWin = !!(h.outcome && h.outcome.result === 'won');
+    if (didPlay && isWin) { m.won++; m.byPos[pos].won++; }
+
+    if (isShowdown(h) && !_haHeroFolded(h)) { m.reachedSd++; if (isWin) m.wonSd++; }
+
+    if (h.outcome && isCashHand(h)) {
+      var v = getHandPnlValue(h);
+      m.pnlChips += v;
+      m.byPos[pos].pnl += v;
+      m.byPos[pos].pnlKnown = true;
+      var bb = getHandBB(h);
+      if (bb && bb > 0) { m.pnlBB += v / bb; m.bbKnown = true; }
+      m.cashCount++;
+    }
+  }
+  m.vpipPct = pct(m.played, m.dealt);
+  m.wrPct = m.played > 0 ? pct(m.won, m.played) : null;
+  m.sdWinPct = m.reachedSd > 0 ? pct(m.wonSd, m.reachedSd) : null;
+  m.bb100 = m.cashCount > 0 ? Math.round((m.pnlBB / m.cashCount) * 100 * 10) / 10 : null;
+  return m;
+}
+
 function heroActionBucket(h, scenarioType) {
   var act = classifyPreflopAction(h);
   if (scenarioType === 'rfi') {
