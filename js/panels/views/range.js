@@ -87,56 +87,28 @@ function heroLegendHtml() {
 function renderRange(container, d, hands) {
   var stored = loadRangeState();
   var state = {
-    subTab:   stored.subTab   || 'overall',
     hero:     HERO_SEATS.indexOf(stored.hero) !== -1 ? stored.hero : 'BTN',
     scenario: stored.scenario || 'RFI',
   };
-  if (state.subTab !== 'overall' && state.subTab !== 'spot') state.subTab = 'overall';
 
   function persist() { saveRangeState(state); }
 
+  // One scrolling page: your clickable range grid on top, the GTO-by-spot
+  // comparison below. No subtabs — nothing is hidden behind a toggle. Clicking
+  // any hand on either grid opens its full breakdown.
   container.innerHTML =
-    panelHeader('Range', 'Overall shows your play and win rate by hand type. By Spot compares what GTO does with what you did, position by position.') +
-    `<div class="subtabs" id="range-subtabs">${subTabBtn('overall', 'Overall', state)}${subTabBtn('spot', 'By Spot', state)}</div>
-    <div id="range-subtab-body"></div>`;
+    panelHeader('Range', 'Click any hand to see how you play it: win rate, P&L, preflop actions, and the hands behind it. The GTO-by-spot comparison is further down.') +
+    '<div id="range-overall"></div>' +
+    '<div id="range-spot-wrap"></div>';
 
-  var subtabs = document.getElementById('range-subtabs');
-  subtabs.addEventListener('click', function(e) {
-    var btn = e.target.closest('.subtab');
-    if (!btn) return;
-    var t = btn.getAttribute('data-subtab');
-    if (!t || t === state.subTab) return;
-    state.subTab = t;
-    persist();
-    refreshSubTabButtons();
-    renderBody();
-  });
-
-  function refreshSubTabButtons() {
-    subtabs.querySelectorAll('.subtab').forEach(function(b) {
-      b.classList.toggle('active', b.getAttribute('data-subtab') === state.subTab);
-    });
-  }
-
-  function renderBody() {
-    var body = document.getElementById('range-subtab-body');
-    if (!body) return;
-    if (state.subTab === 'overall') {
-      renderOverall(body);
-      return;
-    }
-    body.innerHTML = '<div class="text-meta">Loading GTO chart &hellip;</div>';
-    getRangeData().then(function(data) {
-      renderSpot(body, data);
-    }).catch(function() {
-      body.innerHTML = '<div class="text-body c-neg">Failed to load GTO chart data. Reload the page to try again.</div>';
-    });
-  }
+  renderOverall(document.getElementById('range-overall'));
+  renderSpotSection(document.getElementById('range-spot-wrap'));
 
   function renderOverall(body) {
+    if (!body) return;
     var counts = overallRangeCounts(hands);
-    body.innerHTML = section('Your range',
-      '<div class="text-meta">Every holding you have been dealt, shaded by how often you play it. Click any hand to see how you play it: win rate, P&amp;L, preflop actions, and the hands behind it.</div>' +
+    body.innerHTML = section('Your hands',
+      '<div class="text-meta">Every holding you have been dealt, shaded by how often you play it. Click any hand for its full breakdown: win rate, P&amp;L, preflop actions, and the hands behind it.</div>' +
       buildOverallRangeGrid(counts) +
       overallHeatLegend() +
       Sections.findingsBlock(Sections.findingsForPanel(Sections.evaluateSections(d, {}, hands), 'Range'), 'Range data is still building.'));
@@ -150,6 +122,16 @@ function renderRange(container, d, hands) {
         if (key) openHandAnalysisModal(key, hands);
       });
     }
+  }
+
+  function renderSpotSection(wrap) {
+    if (!wrap) return;
+    wrap.innerHTML = section('GTO by spot', '<div class="text-meta">Loading GTO chart &hellip;</div>');
+    getRangeData().then(function(data) {
+      renderSpot(wrap, data);
+    }).catch(function() {
+      wrap.innerHTML = section('GTO by spot', '<div class="text-body c-neg">Failed to load GTO chart data. Reload the page to try again.</div>');
+    });
   }
 
   function renderSpot(body, data) {
@@ -177,7 +159,8 @@ function renderRange(container, d, hands) {
       if (parseHoleKey(filtered[fi].hole)) dealtCount++;
     }
     body.innerHTML =
-      section('',
+      section('GTO by spot',
+        '<div class="text-meta">Pick a position and scenario to compare what GTO does with what you actually did. Click any hand for its full breakdown.</div>' +
         `<div class="row center">
           <div class="row center"><label class="eyebrow">Position</label>${positionSelector('range-hero', HERO_SEATS, state.hero)}</div>
           <div class="row center"><label class="eyebrow">Scenario</label><select class="select" id="range-scenario">${scenarioOptions}</select></div>
@@ -217,6 +200,9 @@ function renderRange(container, d, hands) {
     return `<div class="lead">${count} ${label} hand${count === 1 ? '' : 's'} on record</div>`;
   }
 
+  // Clicking any cell on either GTO-by-spot grid opens that holding's full
+  // breakdown, the same popup the top grid uses, so the behaviour is consistent
+  // wherever you click a hand. The modal handles never-dealt holdings itself.
   function bindCellClicks(scope) {
     if (scope._cellHandlerBound) return;
     scope._cellHandlerBound = true;
@@ -224,25 +210,9 @@ function renderRange(container, d, hands) {
       var cell = e.target.closest('.rc[data-key]');
       if (!cell) return;
       var key = cell.getAttribute('data-key');
-      if (!key) return;
-      // Re-derive the spot's hands at click time so the modal reflects the
-      // current Position/Scenario selection.
-      var active = filterHandsForScenario(hands, state.hero, state.scenario);
-      // Open only YOUR hands of this combo in the current spot. A GTO-reference
-      // cell (or any combo) you were never dealt here has no matching hands and
-      // so does nothing, on either grid.
-      var matched = active.filter(function(h) { return parseHoleKey(h.hole) === key; });
-      if (!matched.length) return;
-      showExampleHandListModal(key, matched);
+      if (key) openHandAnalysisModal(key, hands);
     });
   }
-
-  refreshSubTabButtons();
-  renderBody();
-}
-
-function subTabBtn(id, label, state) {
-  return `<button class="subtab${state.subTab === id ? ' active' : ''}" data-subtab="${id}">${label}</button>`;
 }
 
 function positionSelector(id, options, current) {
